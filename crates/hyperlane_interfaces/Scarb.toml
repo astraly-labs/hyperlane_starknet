@@ -1,0 +1,13 @@
+[package]
+name = "hyperlane_interfaces"
+version = "0.1.0"
+description = "Interfaces to interact with the hyperlane protocol."
+homepage = "https://github.com/astraly-labs/hyperlane-starknet/tree/main/crates/hyperlane_interfaces"
+edition = "2023_11"
+
+[tool]
+fmt.workspace = true
+
+[dependencies]
+starknet.workspace = true
+alexandria_bytes.workspace = true

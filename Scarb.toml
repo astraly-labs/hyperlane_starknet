@@ -1,5 +1,4 @@
-[workspace]
-members = ["crates/hyperlane_interfaces"]
+[package]
 name = "hyperlane_starknet"
 description = "Implementation of the Hyperlane protocol on Starknet."
 version = "0.1.0"
@@ -8,14 +7,15 @@ cairo-version = "2.6.3"
 
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
-[workspace.dependencies]
+[dependencies]
 starknet = "2.6.3"
 alexandria_bytes = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", rev = "f22438c" }
 
-[workspace.dev-dependencies]
+[dev-dependencies]
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v0.22.0" }
 
-[workspace.tool.fmt]
+[tool.fmt]
 sort-module-level-items = true
 
 [[target.starknet-contract]]

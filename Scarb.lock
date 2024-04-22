@@ -54,8 +54,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "hyperlane_interfaces"
+name = "hyperlane_starknet"
 version = "0.1.0"
 dependencies = [
  "alexandria_bytes",
+ "openzeppelin",
+ "snforge_std",
 ]
+
+[[package]]
+name = "openzeppelin"
+version = "0.10.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?rev=f22438c#f22438cca0e81c807d7c1742e83050ebd0ffcb3b"
+
+[[package]]
+name = "snforge_std"
+version = "0.22.0"
+source = "git+https://github.com/foundry-rs/starknet-foundry?tag=v0.22.0#9b215944c6c5871c738381b4ded61bbf06e7ba35"

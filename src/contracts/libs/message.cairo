@@ -1,6 +1,7 @@
 use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+use core::keccak::keccak_u256s_be_inputs;
 use core::poseidon::poseidon_hash_span;
-
+use hyperlane_starknet::utils::keccak256::reverse_endianness;
 use starknet::{ContractAddress, contract_address_const};
 
 
@@ -29,29 +30,26 @@ pub impl MessageImpl of MessageTrait {
         }
     }
 
-    fn id(self: Message) -> felt252 {
-        let message_array: Array<felt252> = array![
-            self.version.into(),
-            self.nonce.into(),
-            self.origin.into(),
-            self.sender.into(),
-            self.destination.into(),
-            self.recipient.into()
-        ];
-        poseidon_hash_span(message_array.span())
-    }
+    fn format_message(message: Message) -> u256 {
+        let sender: felt252 = message.sender.into();
+        let recipient: felt252 = message.recipient.into();
 
-    fn format_message(_version: u8, _nonce: u32, _origin_domain: u32, _sender: ContractAddress, _destination_domain: u32, _recipient: ContractAddress, _message_body: Bytes)-> u256{
-        // POSEIDON MAY BE BETTER HERE
-        let mut bytes: Bytes = BytesTrait::new(0, array![]);
-        bytes.append_u8(_version);
-        bytes.append_u32(_nonce);
-        bytes.append_u32(_origin_domain);
-        bytes.append_address(_sender);
-        bytes.append_u32(_destination_domain);
-        bytes.append_address(_recipient);
-        // bytes.append_bytes31(_message_body);
-        let keccak_hash = bytes.keccak();
-        keccak_hash
-        }
+        let mut input: Array<u256> = array![
+            message.version.into(),
+            message.origin.into(),
+            sender.into(),
+            message.destination.into(),
+            recipient.into(),
+            message.body.size().into()
+        ];
+        let mut message_data = message.body.data();
+        loop {
+            match message_data.pop_front() {
+                Option::Some(data) => { input.append(data.into()); },
+                Option::None(_) => { break (); }
+            };
+        };
+        let hash = keccak_u256s_be_inputs(input.span());
+        reverse_endianness(hash)
+    }
 }

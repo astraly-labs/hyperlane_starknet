@@ -58,6 +58,7 @@ name = "hyperlane_starknet"
 version = "0.1.0"
 dependencies = [
  "alexandria_bytes",
+ "alexandria_math",
  "openzeppelin",
  "snforge_std",
 ]

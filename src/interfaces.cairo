@@ -43,7 +43,7 @@ pub trait IMailbox<TContractState> {
 
     fn get_local_domain(self: @TContractState) -> u32;
 
-    fn delivered(self: @TContractState, _message_id: felt252) -> bool;
+    fn delivered(self: @TContractState, _message_id: u256) -> bool;
 
     fn get_default_ism(self: @TContractState) -> ContractAddress;
 
@@ -51,7 +51,7 @@ pub trait IMailbox<TContractState> {
 
     fn get_required_hook(self: @TContractState) -> ContractAddress;
 
-    fn get_latest_dispatched_id(self: @TContractState) -> Bytes;
+    fn get_latest_dispatched_id(self: @TContractState) -> u256;
 
     fn dispatch(
         ref self: TContractState,
@@ -60,7 +60,7 @@ pub trait IMailbox<TContractState> {
         _message_body: Bytes,
         _custom_hook_metadata: Option<Bytes>,
         _custom_hook: Option<ContractAddress>,
-    ) -> Bytes;
+    ) -> u256;
 
     fn quote_dispatch(
         ref self: TContractState,
@@ -82,6 +82,10 @@ pub trait IMailbox<TContractState> {
     fn set_required_hook(ref self: TContractState, _hook: ContractAddress);
 
     fn set_local_domain(ref self: TContractState, _local_domain: u32);
+
+    fn processor(self: @TContractState, _id: u256) -> ContractAddress;
+
+    fn processed_at(self: @TContractState, _id: u256) -> u64;
 }
 
 
@@ -113,14 +117,50 @@ pub trait IPostDispatchHook<TContractState> {
 
     fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
 
-    fn post_dispatch(ref self: TContractState, _metadata: Bytes, _message: Bytes);
+    fn post_dispatch(ref self: TContractState, _metadata: Bytes, _message: u256);
 
-    fn quote_dispatch(ref self: TContractState, _metadata: Bytes, _message: Bytes) -> u256;
+    fn quote_dispatch(ref self: TContractState, _metadata: Bytes, _message: u256) -> u256;
 }
 
 
+#[starknet::interface]
+pub trait IMessageRecipient<TContractState> {
+    fn handle(self: @TContractState, origin: u32, _sender: ContractAddress, _message: Bytes);
+}
+
 
 #[starknet::interface]
-pub trait IMessageRecipient<TContractState>{
-    fn handle(self: @TContractState, origin: u32, _sender: ContractAddress, _message: Bytes);
+pub trait IMailboxClient<TContractState> {
+    fn set_hook(ref self: TContractState, _hook: ContractAddress);
+
+    fn set_interchain_security_module(ref self: TContractState, _module: ContractAddress);
+
+    fn _MailboxClient_initialize(
+        ref self: TContractState,
+        _hook: ContractAddress,
+        _interchain_security_module: ContractAddress,
+        _owner: ContractAddress
+    );
+
+    fn _is_latest_dispatched(self: @TContractState, _id: u256) -> bool;
+
+    fn _is_delivered(self: @TContractState, _id: u256) -> bool;
+
+    fn _dispatch(
+        self: @TContractState,
+        _destination_domain: u32,
+        _recipient: ContractAddress,
+        _message_body: Bytes,
+        _value: Option<u256>,
+        _hook_metadata: Option<Bytes>,
+    ) -> Bytes;
+
+    fn quote_dispatch(
+        self: @TContractState,
+        _destination_domain: u32,
+        _recipient: ContractAddress,
+        _message_body: Bytes,
+        _hook_metadata: Option<Bytes>,
+        _hook: Option<ContractAddress>
+    );
 }

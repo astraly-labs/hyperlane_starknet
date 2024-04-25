@@ -5,3 +5,6 @@ mod contracts {
         pub mod message;
     }
 }
+mod utils {
+    pub mod keccak256;
+}

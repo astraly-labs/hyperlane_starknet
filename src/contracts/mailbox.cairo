@@ -293,7 +293,7 @@ mod mailbox {
                 - hook.quote_dispatch(hook_metadata, message)
         }
 
-        fn recipient_ism(ref self: ContractState, _recipient: ContractAddress) -> ContractAddress {
+        fn recipient_ism(self: @ContractState, _recipient: ContractAddress) -> ContractAddress {
             let mut call_data: Array<felt252> = ArrayTrait::new();
             let mut res = starknet::syscalls::call_contract_syscall(
                 _recipient, selector!("interchain_security_module"), call_data.span()

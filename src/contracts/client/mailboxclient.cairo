@@ -82,15 +82,9 @@ mod mailboxclient {
             _destination_domain: u32,
             _recipient: ContractAddress,
             _message_body: Bytes,
-            _value: Option<u256>,
             _hook_metadata: Option<Bytes>,
             _hook: Option<ContractAddress>
         ) {
-            // TODO: refer to Interchain Gas Payment for msg.value usage
-            let value = match _value {
-                Option::Some(val) => val,
-                Option::None(()) => starknet::get_tx_info().unbox().max_fee.into()
-            };
             let hook_metadata = match _hook_metadata {
                 Option::Some(metadata) => metadata,
                 Option::None(()) => BytesTrait::new_empty()

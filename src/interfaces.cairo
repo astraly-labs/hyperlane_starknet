@@ -73,7 +73,7 @@ pub trait IMailbox<TContractState> {
 
     fn process(ref self: TContractState, _metadata: Bytes, _message: Message,);
 
-    fn recipient_ism(ref self: TContractState, _recipient: ContractAddress) -> ContractAddress;
+    fn recipient_ism(self: @TContractState, _recipient: ContractAddress) -> ContractAddress;
 
     fn set_default_ism(ref self: TContractState, _module: ContractAddress);
 
@@ -86,6 +86,8 @@ pub trait IMailbox<TContractState> {
     fn processor(self: @TContractState, _id: u256) -> ContractAddress;
 
     fn processed_at(self: @TContractState, _id: u256) -> u64;
+
+
 }
 
 
@@ -151,7 +153,6 @@ pub trait IMailboxClient<TContractState> {
         _destination_domain: u32,
         _recipient: ContractAddress,
         _message_body: Bytes,
-        _value: Option<u256>,
         _hook_metadata: Option<Bytes>,
     ) -> Bytes;
 
@@ -163,4 +164,12 @@ pub trait IMailboxClient<TContractState> {
         _hook_metadata: Option<Bytes>,
         _hook: Option<ContractAddress>
     );
+}
+
+
+#[starknet::interface]
+pub trait IInterchainGasPaymaster<TContractState> {
+    fn pay_for_gas(ref self: TContractState, _message_id: u256, _destination_domain: u32, _gas_amount: u256, _payment: u256); 
+
+    fn quote_gas_payment(ref self: TContractState, _destination_domain: u32, _gas_amount: u256) -> u256;
 }

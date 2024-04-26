@@ -2,11 +2,12 @@
 mod mailboxclient {
     use hyperlane_starknet::interfaces::{
         IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait,
+        IInterchainSecurityModuleDispatcherTrait, IMailboxClient,
     };
+    use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use starknet::{ContractAddress, contract_address_const};
+    use starknet::{ContractAddress, contract_address_const, ClassHash};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -14,6 +15,8 @@ mod mailboxclient {
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
+
     #[storage]
     struct Storage {
         mailbox: ContractAddress,
@@ -26,13 +29,24 @@ mod mailboxclient {
         upgradeable: UpgradeableComponent::Storage,
     }
 
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
+    }
+
+
 
     #[constructor]
     fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress) {
-        self.mailbox.write(mailbox);
+        self.mailbox.write(_mailbox);
         let mailbox = IMailboxDispatcher { contract_address: _mailbox };
         let local_domain = mailbox.get_local_domain();
-        self.ownable.initializer(owner);
+        self.local_domain.write(local_domain);
+        self.ownable.initializer(_owner);
     }
     #[abi(embed_v0)]
     impl Upgradeable of IUpgradeable<ContractState> {
@@ -61,19 +75,19 @@ mod mailboxclient {
             _interchain_security_module: ContractAddress,
         ) {
             self.ownable.assert_only_owner();
-            set_hook(_hook);
-            set_interchain_security_module(_interchain_security_module);
+            self.set_hook(_hook);
+            self.set_interchain_security_module(_interchain_security_module);
         }
 
         fn _is_latest_dispatched(self: @ContractState, _id: u256) -> bool {
             let mailbox_address = self.mailbox.read();
-            let mailbox = IMailbox { contract_address: mailbox_address };
-            mailbox.latest_dispatched_id() == _id
+            let mailbox = IMailboxDispatcher { contract_address: mailbox_address };
+            mailbox.get_latest_dispatched_id() == _id
         }
 
         fn _is_delivered(self: @ContractState, _id: u256) -> bool {
             let mailbox_address = self.mailbox.read();
-            let mailbox = IMailbox { contract_address: mailbox_address };
+            let mailbox = IMailboxDispatcher { contract_address: mailbox_address };
             mailbox.delivered(_id)
         }
 
@@ -84,18 +98,10 @@ mod mailboxclient {
             _message_body: Bytes,
             _hook_metadata: Option<Bytes>,
             _hook: Option<ContractAddress>
-        ) {
-            let hook_metadata = match _hook_metadata {
-                Option::Some(metadata) => metadata,
-                Option::None(()) => BytesTrait::new_empty()
-            };
-            let hook = match _hook {
-                Option::Some(address) => address,
-                Option::None(()) => contract_address_const::<0>()
-            };
+        )  -> u256{
             let mailbox_address = self.mailbox.read();
-            let mailbox = IMailbox { contract_address: mailbox_address };
-            mailbox.dispatch(_destination_domain, _recipient, _message_body, _hook_metadata, hook);
+            let mailbox = IMailboxDispatcher { contract_address: mailbox_address };
+            mailbox.dispatch(_destination_domain, _recipient, _message_body, _hook_metadata, _hook)
         }
 
         fn quote_dispatch(
@@ -106,19 +112,11 @@ mod mailboxclient {
             _hook_metadata: Option<Bytes>,
             _hook: Option<ContractAddress>
         ) {
-            let hook_metadata = match _hook_metadata {
-                Option::Some(metadata) => metadata,
-                Option::None(()) => BytesTrait::new_empty()
-            };
-            let hook = match _hook {
-                Option::Some(address) => address,
-                Option::None(()) => contract_address_const::<0>()
-            };
             let mailbox_address = self.mailbox.read();
-            let mailbox = IMailbox { contract_address: mailbox_address };
+            let mailbox = IMailboxDispatcher { contract_address: mailbox_address };
             mailbox
                 .quote_dispatch(
-                    _destination_domain, _recipient, _message_body, _hook_metadata, hook
+                    _destination_domain, _recipient, _message_body, _hook_metadata, _hook
                 );
         }
     }

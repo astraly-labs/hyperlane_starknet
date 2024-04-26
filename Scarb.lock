@@ -54,11 +54,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "alexandria_storage"
+version = "0.3.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#22349afa62ad9be63f83b520be04c68515902561"
+
+[[package]]
 name = "hyperlane_starknet"
 version = "0.1.0"
 dependencies = [
  "alexandria_bytes",
  "alexandria_math",
+ "alexandria_storage",
  "openzeppelin",
  "snforge_std",
 ]

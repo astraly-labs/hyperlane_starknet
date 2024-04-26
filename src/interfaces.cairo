@@ -141,7 +141,6 @@ pub trait IMailboxClient<TContractState> {
         ref self: TContractState,
         _hook: ContractAddress,
         _interchain_security_module: ContractAddress,
-        _owner: ContractAddress
     );
 
     fn _is_latest_dispatched(self: @TContractState, _id: u256) -> bool;
@@ -154,7 +153,8 @@ pub trait IMailboxClient<TContractState> {
         _recipient: ContractAddress,
         _message_body: Bytes,
         _hook_metadata: Option<Bytes>,
-    ) -> Bytes;
+        _hook: Option<ContractAddress>
+    ) -> u256;
 
     fn quote_dispatch(
         self: @TContractState,
@@ -172,4 +172,23 @@ pub trait IInterchainGasPaymaster<TContractState> {
     fn pay_for_gas(ref self: TContractState, _message_id: u256, _destination_domain: u32, _gas_amount: u256, _payment: u256); 
 
     fn quote_gas_payment(ref self: TContractState, _destination_domain: u32, _gas_amount: u256) -> u256;
+}
+
+
+use alexandria_storage::list::{List, ListTrait};
+
+#[starknet::interface]
+pub trait IRouter<TContractState> {
+
+    fn routers(self: @TContractState, _domain: u32) -> ContractAddress;
+
+    fn unenroll_remote_router(ref self: TContractState, _domain: u32);
+
+    fn enroll_remote_router(ref self: TContractState, _domain: u32, _router: ContractAddress);
+
+    fn enroll_remote_routers(ref self: TContractState, _domains: Span<u32>, _routers: Span<ContractAddress>);
+
+    fn unenroll_remote_routers(ref self: TContractState, _domains: Span<u32>);
+
+    fn handle(self: @TContractState, _origin: u32, _sender: ContractAddress, _message: Message);
 }

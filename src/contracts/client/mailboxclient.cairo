@@ -1,10 +1,10 @@
 #[starknet::contract]
 mod mailboxclient {
+    use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
     use hyperlane_starknet::interfaces::{
         IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, IMailboxClient,
     };
-    use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::{ContractAddress, contract_address_const, ClassHash};
@@ -37,7 +37,6 @@ mod mailboxclient {
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
     }
-
 
 
     #[constructor]
@@ -98,7 +97,7 @@ mod mailboxclient {
             _message_body: Bytes,
             _hook_metadata: Option<Bytes>,
             _hook: Option<ContractAddress>
-        )  -> u256{
+        ) -> u256 {
             let mailbox_address = self.mailbox.read();
             let mailbox = IMailboxDispatcher { contract_address: mailbox_address };
             mailbox.dispatch(_destination_domain, _recipient, _message_body, _hook_metadata, _hook)

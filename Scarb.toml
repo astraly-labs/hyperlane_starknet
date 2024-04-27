@@ -10,9 +10,7 @@ cairo-version = "2.6.3"
 [dependencies]
 starknet = "2.6.3"
 alexandria_bytes = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", rev = "f22438c" }
-alexandria_storage = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 
 
 [dev-dependencies]

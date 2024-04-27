@@ -1,5 +1,5 @@
 #[starknet::contract]
-mod mailbox {
+pub mod mailbox {
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
     use core::starknet::SyscallResultTrait;
     use core::starknet::event::EventEmitter;
@@ -49,7 +49,7 @@ mod mailbox {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         DefaultIsmSet: DefaultIsmSet,
         DefaultHookSet: DefaultHookSet,
         RequiredHookSet: RequiredHookSet,
@@ -64,43 +64,43 @@ mod mailbox {
     }
 
     #[derive(starknet::Event, Drop)]
-    struct DefaultIsmSet {
-        module: ContractAddress
+    pub struct DefaultIsmSet {
+        pub module: ContractAddress
     }
 
     #[derive(starknet::Event, Drop)]
-    struct DefaultHookSet {
-        hook: ContractAddress
+    pub struct DefaultHookSet {
+        pub hook: ContractAddress
     }
 
     #[derive(starknet::Event, Drop)]
-    struct RequiredHookSet {
-        hook: ContractAddress
+    pub struct RequiredHookSet {
+        pub hook: ContractAddress
     }
 
     #[derive(starknet::Event, Drop)]
-    struct Process {
-        origin: u32,
-        sender: ContractAddress,
-        recipient: ContractAddress
+    pub struct Process {
+        pub origin: u32,
+        pub sender: ContractAddress,
+        pub recipient: ContractAddress
     }
 
     #[derive(starknet::Event, Drop)]
-    struct ProcessId {
-        id: u256
+    pub struct ProcessId {
+        pub id: u256
     }
 
     #[derive(starknet::Event, Drop)]
-    struct Dispatch {
-        sender: ContractAddress,
-        destination_domain: u32,
-        recipient_address: ContractAddress,
-        message: u256
+    pub struct Dispatch {
+        pub sender: ContractAddress,
+        pub destination_domain: u32,
+        pub recipient_address: ContractAddress,
+        pub message: u256
     }
 
     #[derive(starknet::Event, Drop)]
-    struct DispatchId {
-        id: u256
+    pub struct DispatchId {
+        pub id: u256
     }
 
 
@@ -110,6 +110,8 @@ mod mailbox {
         pub const ALREADY_DELIVERED: felt252 = 'Mailbox: already delivered';
         pub const ISM_VERIFICATION_FAILED: felt252 = 'Mailbox:ism verification failed';
         pub const NO_ISM_FOUND: felt252 = 'ISM: no ISM found';
+        pub const NEW_OWNER_IS_ZERO: felt252 = 'Ownable: new owner cannot be 0';
+        pub const ALREADY_OWNER: felt252 = 'Ownable: already owner';
     }
 
     #[constructor]
@@ -139,6 +141,7 @@ mod mailbox {
             self.set_default_hook(_default_hook);
             self.set_required_hook(_required_hook);
         }
+
 
         fn get_local_domain(self: @ContractState) -> u32 {
             self.local_domain.read()
@@ -219,18 +222,21 @@ mod mailbox {
                     }
                 );
             self.emit(DispatchId { id: id });
-            let required_hook_address = self.required_hook.read();
-            let required_hook = IPostDispatchHookDispatcher {
-                contract_address: required_hook_address
-            };
-            let hook = IPostDispatchHookDispatcher { contract_address: hook };
-            let mut required_value = required_hook.quote_dispatch(hook_metadata.clone(), message);
-            let max_fee = starknet::get_tx_info().unbox().max_fee.into();
-            if (max_fee < required_value) {
-                required_value = max_fee;
-            }
-            required_hook.post_dispatch(hook_metadata.clone(), message);
-            hook.post_dispatch(hook_metadata, message);
+
+            //
+            // HOOKS
+            //
+
+            // let required_hook_address = self.required_hook.read();
+            // let required_hook = IPostDispatchHookDispatcher {
+            //     contract_address: required_hook_address
+            // };
+            // if (hook != contract_address_const::<0>() ){
+            //     let hook = IPostDispatchHookDispatcher { contract_address: hook };
+            //     hook.post_dispatch(hook_metadata.clone(), message);
+            // }
+            // required_hook.post_dispatch(hook_metadata, message);
+
             id
         }
 
@@ -247,8 +253,18 @@ mod mailbox {
             let caller = get_caller_address();
             let block_number = get_block_number();
             assert(!self.delivered(id), Errors::ALREADY_DELIVERED);
-            let recipient_ism = self.recipient_ism(_message.recipient);
-            let ism = IInterchainSecurityModuleDispatcher { contract_address: recipient_ism };
+
+            // 
+            // ISM
+            // 
+
+            // let recipient_ism = self.recipient_ism(_message.recipient);
+            // let ism = IInterchainSecurityModuleDispatcher { contract_address: recipient_ism };
+
+            //
+            //
+            //
+
             self.deliveries.write(id, Delivery { processor: caller, block_number: block_number });
             self
                 .emit(
@@ -259,14 +275,23 @@ mod mailbox {
                     }
                 );
             self.emit(ProcessId { id: id });
-            assert(ism.verify(_metadata, _message.clone()), Errors::ISM_VERIFICATION_FAILED);
+
+            // 
+            // ISM
+            // 
+
+            // assert(ism.verify(_metadata, _message.clone()), Errors::ISM_VERIFICATION_FAILED);
+
+            //
+            //
+            //
             let message_recipient = IMessageRecipientDispatcher {
                 contract_address: _message.recipient
             };
             message_recipient.handle(_message.origin, _message.sender, _message.body);
         }
         fn quote_dispatch(
-            ref self: ContractState,
+            self: @ContractState,
             _destination_domain: u32,
             _recipient_address: ContractAddress,
             _message_body: Bytes,
@@ -282,7 +307,7 @@ mod mailbox {
                 Option::None(()) => BytesTrait::new_empty(),
             };
             let message = build_message(
-                @self, _destination_domain, _recipient_address, _message_body.clone()
+                self, _destination_domain, _recipient_address, _message_body.clone()
             );
             let required_hook_address = self.required_hook.read();
             let required_hook = IPostDispatchHookDispatcher {

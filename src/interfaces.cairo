@@ -63,7 +63,7 @@ pub trait IMailbox<TContractState> {
     ) -> u256;
 
     fn quote_dispatch(
-        ref self: TContractState,
+        self: @TContractState,
         _destination_domain: u32,
         _recipient_address: ContractAddress,
         _message_body: Bytes,
@@ -86,8 +86,6 @@ pub trait IMailbox<TContractState> {
     fn processor(self: @TContractState, _id: u256) -> ContractAddress;
 
     fn processed_at(self: @TContractState, _id: u256) -> u64;
-
-
 }
 
 
@@ -127,7 +125,13 @@ pub trait IPostDispatchHook<TContractState> {
 
 #[starknet::interface]
 pub trait IMessageRecipient<TContractState> {
-    fn handle(self: @TContractState, origin: u32, _sender: ContractAddress, _message: Bytes);
+    fn handle(ref self: TContractState, _origin: u32, _sender: ContractAddress, _message: Bytes);
+
+    fn get_origin(self: @TContractState) -> u32;
+
+    fn get_sender(self: @TContractState) -> ContractAddress;
+
+    fn get_message(self: @TContractState) -> Bytes;
 }
 
 
@@ -169,26 +173,34 @@ pub trait IMailboxClient<TContractState> {
 
 #[starknet::interface]
 pub trait IInterchainGasPaymaster<TContractState> {
-    fn pay_for_gas(ref self: TContractState, _message_id: u256, _destination_domain: u32, _gas_amount: u256, _payment: u256); 
+    fn pay_for_gas(
+        ref self: TContractState,
+        _message_id: u256,
+        _destination_domain: u32,
+        _gas_amount: u256,
+        _payment: u256
+    );
 
-    fn quote_gas_payment(ref self: TContractState, _destination_domain: u32, _gas_amount: u256) -> u256;
+    fn quote_gas_payment(
+        ref self: TContractState, _destination_domain: u32, _gas_amount: u256
+    ) -> u256;
 }
 
 
-use alexandria_storage::list::{List, ListTrait};
-
 #[starknet::interface]
 pub trait IRouter<TContractState> {
-
     fn routers(self: @TContractState, _domain: u32) -> ContractAddress;
 
     fn unenroll_remote_router(ref self: TContractState, _domain: u32);
 
     fn enroll_remote_router(ref self: TContractState, _domain: u32, _router: ContractAddress);
 
-    fn enroll_remote_routers(ref self: TContractState, _domains: Span<u32>, _routers: Span<ContractAddress>);
+    fn enroll_remote_routers(
+        ref self: TContractState, _domains: Span<u32>, _routers: Span<ContractAddress>
+    );
 
     fn unenroll_remote_routers(ref self: TContractState, _domains: Span<u32>);
 
     fn handle(self: @TContractState, _origin: u32, _sender: ContractAddress, _message: Message);
 }
+

@@ -45,6 +45,8 @@ pub trait IMailbox<TContractState> {
 
     fn delivered(self: @TContractState, _message_id: u256) -> bool;
 
+    fn nonce(self: @TContractState) -> u32;
+
     fn get_default_ism(self: @TContractState) -> ContractAddress;
 
     fn get_default_hook(self: @TContractState) -> ContractAddress;

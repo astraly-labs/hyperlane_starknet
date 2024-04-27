@@ -244,6 +244,10 @@ pub mod mailbox {
             self.deliveries.read(_message_id).block_number > 0
         }
 
+        fn nonce(self: @ContractState) -> u32 {
+            self.nonce.read()
+        }
+
         fn process(ref self: ContractState, _metadata: Bytes, _message: Message) {
             assert(_message.version == HYPERLANE_VERSION, Errors::WRONG_HYPERLANE_VERSION);
             assert(

@@ -221,5 +221,94 @@ fn test_process() {
     assert(mock_recipient.get_origin() == LOCAL_DOMAIN, 'Failed to retrieve origin');
     assert(mock_recipient.get_sender() == OWNER(), 'Failed to retrieve sender');
     assert(mock_recipient.get_message() == metadata, 'Failed to retrieve metadata');
-
 }
+
+
+#[test]
+#[should_panic(expected: ('Wrong hyperlane version',))]
+fn test_process_fails_if_version_mismatch() {
+    let (mailbox, _) = setup();
+    let mock_recipient = mock_setup();
+    let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    mailbox.set_local_domain(DESTINATION_DOMAIN);
+    let array = array![
+        0x01020304050607080910111213141516,
+        0x01020304050607080910111213141516,
+        0x01020304050607080910000000000000
+    ];
+
+    let message_body = BytesTrait::new(42, array);
+    let message = Message {
+        version: HYPERLANE_VERSION + 1,
+        nonce: 0,
+        origin: LOCAL_DOMAIN,
+        sender: OWNER(),
+        destination: DESTINATION_DOMAIN,
+        recipient: mock_recipient.contract_address,
+        body: message_body.clone()
+    };
+    let metadata = message_body;
+    mailbox.process(metadata.clone(), message);
+}
+
+#[test]
+#[should_panic(expected: ('Unexpected destination',))]
+fn test_process_fails_if_destination_domain_does_not_match_local_domain() {
+    let (mailbox, _) = setup();
+    let mock_recipient = mock_setup();
+    let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    mailbox.set_local_domain(DESTINATION_DOMAIN);
+    let array = array![
+        0x01020304050607080910111213141516,
+        0x01020304050607080910111213141516,
+        0x01020304050607080910000000000000
+    ];
+
+    let message_body = BytesTrait::new(42, array);
+    let message = Message {
+        version: HYPERLANE_VERSION,
+        nonce: 0,
+        origin: LOCAL_DOMAIN,
+        sender: OWNER(),
+        destination: DESTINATION_DOMAIN + 1,
+        recipient: mock_recipient.contract_address,
+        body: message_body.clone()
+    };
+    let metadata = message_body;
+    mailbox.process(metadata.clone(), message);
+}
+
+
+#[test]
+#[should_panic(expected: ('Mailbox: already delivered',))]
+fn test_process_fails_if_already_delivered() {
+    let (mailbox, _) = setup();
+    let mock_recipient = mock_setup();
+    let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    mailbox.set_local_domain(DESTINATION_DOMAIN);
+    let array = array![
+        0x01020304050607080910111213141516,
+        0x01020304050607080910111213141516,
+        0x01020304050607080910000000000000
+    ];
+
+    let message_body = BytesTrait::new(42, array);
+    let message = Message {
+        version: HYPERLANE_VERSION,
+        nonce: 0,
+        origin: LOCAL_DOMAIN,
+        sender: OWNER(),
+        destination: DESTINATION_DOMAIN,
+        recipient: mock_recipient.contract_address,
+        body: message_body.clone()
+    };
+    let metadata = message_body;
+    mailbox.process(metadata.clone(), message.clone());
+    let message_id = MessageTrait::format_message(message.clone());
+    assert(mailbox.delivered(message_id), 'Delivered status did not change');
+    mailbox.process(metadata.clone(), message);
+}
+

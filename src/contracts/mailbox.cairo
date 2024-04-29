@@ -34,12 +34,19 @@ pub mod mailbox {
 
     #[storage]
     struct Storage {
+        // Domain of chain on which the contract is deployed
         local_domain: u32,
+        // A monotonically increasing nonce for outbound unique message IDs.
         nonce: u32,
+        // The latest dispatched message ID used for auth in post-dispatch hooks.
         latest_dispatched_id: u256,
+        // The default ISM, used if the recipient fails to specify one.
         default_ism: ContractAddress,
+        // The default post dispatch hook, used for post processing of opting-in dispatches.
         default_hook: ContractAddress,
+        // The required post dispatch hook, used for post processing of ALL dispatches.
         required_hook: ContractAddress,
+        // Mapping of message ID to delivery context that processed the message.
         deliveries: LegacyMap::<u256, Delivery>,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
@@ -163,30 +170,66 @@ pub mod mailbox {
             self.latest_dispatched_id.read()
         }
 
-
+        /// Sets the default ISM for the Mailbox.
+        /// Callable only by the admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * `_hook` - The new default ISM
         fn set_default_ism(ref self: ContractState, _module: ContractAddress) {
             self.ownable.assert_only_owner();
             self.default_ism.write(_module);
             self.emit(DefaultIsmSet { module: _module });
         }
 
+        /// Sets the default post dispatch hook for the Mailbox.
+        /// Callable only by the admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * `_hook` - The new default post dispatch hook. 
         fn set_default_hook(ref self: ContractState, _hook: ContractAddress) {
             self.ownable.assert_only_owner();
             self.default_hook.write(_hook);
             self.emit(DefaultHookSet { hook: _hook });
         }
 
+        /// Sets the required post dispatch hook for the Mailbox.
+        /// Callable only by the admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * `_hook` - The new required post dispatch hook. 
         fn set_required_hook(ref self: ContractState, _hook: ContractAddress) {
             self.ownable.assert_only_owner();
             self.required_hook.write(_hook);
             self.emit(RequiredHookSet { hook: _hook });
         }
 
+        /// Sets the domain of chain for the mailbox
+        /// Callable only by the admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * `_local_domain` - The new local domain
         fn set_local_domain(ref self: ContractState, _local_domain: u32) {
             self.ownable.assert_only_owner();
             self.local_domain.write(_local_domain);
         }
 
+        /// Dispatches a message to the destination domain & recipient using the default hook and empty metadata.
+        /// 
+        /// # Arguments
+        /// 
+        /// * `_destination_domain` - Domain of destination chain
+        /// * `_recipient_address` -  Address of recipient on destination chain 
+        /// * `_message_body` - Raw bytes content of message body
+        /// * `_custom_hook_metadata` - Metadata used by the post dispatch hook
+        /// * `_custom_hook` - Custom hook to use instead of the default
+        /// 
+        ///  # Returns
+        /// 
+        /// * The message ID inserted into the Mailbox's merkle tree
         fn dispatch(
             ref self: ContractState,
             _destination_domain: u32,
@@ -240,6 +283,15 @@ pub mod mailbox {
             id
         }
 
+        /// Returns true if the message has been processed.
+        /// 
+        /// # Arguments
+        /// 
+        /// * `_message_id` - The message ID to check.
+        /// 
+        ///  # Returns
+        /// 
+        /// * True if the message has been delivered.
         fn delivered(self: @ContractState, _message_id: u256) -> bool {
             self.deliveries.read(_message_id).block_number > 0
         }
@@ -248,6 +300,12 @@ pub mod mailbox {
             self.nonce.read()
         }
 
+        /// Attempts to deliver `_message` to its recipient. Verifies `_message` via the recipient's ISM using the provided `_metadata`
+        /// 
+        /// # Arguments
+        /// 
+        /// * `_metadata` - Metadata used by the ISM to verify `_message`.
+        /// * `_message` -  Formatted Hyperlane message (ref: message.cairo) 
         fn process(ref self: ContractState, _metadata: Bytes, _message: Message) {
             assert(_message.version == HYPERLANE_VERSION, Errors::WRONG_HYPERLANE_VERSION);
             assert(
@@ -294,6 +352,20 @@ pub mod mailbox {
             };
             message_recipient.handle(_message.origin, _message.sender, _message.body);
         }
+
+        /// Computes quote for dispatching a message to the destination domain & recipient.
+        /// 
+        /// # Arguments
+        /// 
+        /// * `_destination_domain` - Domain of destination chain
+        /// * `_recipient_address` -  Address of recipient on destination chain 
+        /// * `_message_body` - Raw bytes content of message body
+        /// * `_custom_hook_metadata` - Metadata used by the post dispatch hook
+        /// * `_custom_hook` - Custom hook to use instead of the default
+        /// 
+        ///  # Returns
+        /// 
+        /// * The message ID inserted into the Mailbox's merkle tree
         fn quote_dispatch(
             self: @ContractState,
             _destination_domain: u32,
@@ -322,6 +394,15 @@ pub mod mailbox {
                 - hook.quote_dispatch(hook_metadata, message)
         }
 
+        /// Returns the ISM to use for the recipient, defaulting to the default ISM if none is specified.
+        /// 
+        /// # Arguments
+        /// 
+        /// * `_recipient` - The message recipient whose ISM should be returned.
+        /// 
+        ///  # Returns
+        /// 
+        /// * The ISM to use for `_recipient`
         fn recipient_ism(self: @ContractState, _recipient: ContractAddress) -> ContractAddress {
             let mut call_data: Array<felt252> = ArrayTrait::new();
             let mut res = starknet::syscalls::call_contract_syscall(
@@ -343,10 +424,28 @@ pub mod mailbox {
             self.default_ism.read()
         }
 
+        /// Returns the account that processed the message.
+        /// 
+        /// # Arguments
+        /// 
+        /// * `_id` - The message ID to check.
+        /// 
+        ///  # Returns
+        /// 
+        /// * The account that processed the message.
         fn processor(self: @ContractState, _id: u256) -> ContractAddress {
             self.deliveries.read(_id).processor
         }
 
+        ///  Returns the account that processed the message.
+        /// 
+        /// # Arguments
+        /// 
+        /// * `_id` - The message ID to check.
+        /// 
+        ///  # Returns
+        /// 
+        /// * The number of the block that the message was processed at.
         fn processed_at(self: @ContractState, _id: u256) -> u64 {
             self.deliveries.read(_id).block_number
         }

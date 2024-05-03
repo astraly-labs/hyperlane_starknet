@@ -3,13 +3,13 @@ pub mod mailbox {
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
     use core::starknet::SyscallResultTrait;
     use core::starknet::event::EventEmitter;
-    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
+    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
     use hyperlane_starknet::interfaces::{
         IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, IPostDispatchHookDispatcher,
         ISpecifiesInterchainSecurityModuleDispatcher,
         ISpecifiesInterchainSecurityModuleDispatcherTrait, IPostDispatchHookDispatcherTrait,
-        HYPERLANE_VERSION, IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait,
+        IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait,
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
@@ -391,7 +391,7 @@ pub mod mailbox {
             };
             let hook = IPostDispatchHookDispatcher { contract_address: hook_address };
             required_hook.quote_dispatch(hook_metadata.clone(), message.clone())
-                - hook.quote_dispatch(hook_metadata, message)
+                + hook.quote_dispatch(hook_metadata, message)
         }
 
         /// Returns the ISM to use for the recipient, defaulting to the default ISM if none is specified.

@@ -4,6 +4,8 @@ use core::poseidon::poseidon_hash_span;
 use hyperlane_starknet::utils::keccak256::reverse_endianness;
 use starknet::{ContractAddress, contract_address_const};
 
+pub const HYPERLANE_VERSION: u8 = 3;
+
 
 #[derive(Serde, starknet::Store, Drop, Clone)]
 pub struct Message {
@@ -16,8 +18,14 @@ pub struct Message {
     pub body: Bytes,
 }
 
+
 #[generate_trait]
 pub impl MessageImpl of MessageTrait {
+    /// Generate a default empty message
+    /// 
+    ///  # Returns
+    /// 
+    /// * An empty message structure
     fn default() -> Message {
         Message {
             version: 3_u8,
@@ -30,19 +38,28 @@ pub impl MessageImpl of MessageTrait {
         }
     }
 
-    fn format_message(message: Message) -> u256 {
-        let sender: felt252 = message.sender.into();
-        let recipient: felt252 = message.recipient.into();
+    /// Format an input message, using reverse keccak big endian
+    /// 
+    /// # Arguments
+    /// 
+    /// * `_message` - Message to hash
+    /// 
+    ///  # Returns
+    /// 
+    /// * u256 representing the hash of the message
+    fn format_message(_message: Message) -> u256 {
+        let sender: felt252 = _message.sender.into();
+        let recipient: felt252 = _message.recipient.into();
 
         let mut input: Array<u256> = array![
-            message.version.into(),
-            message.origin.into(),
+            _message.version.into(),
+            _message.origin.into(),
             sender.into(),
-            message.destination.into(),
+            _message.destination.into(),
             recipient.into(),
-            message.body.size().into()
+            _message.body.size().into()
         ];
-        let mut message_data = message.body.data();
+        let mut message_data = _message.body.data();
         loop {
             match message_data.pop_front() {
                 Option::Some(data) => { input.append(data.into()); },

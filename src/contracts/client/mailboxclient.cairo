@@ -110,13 +110,13 @@ mod mailboxclient {
             _message_body: Bytes,
             _hook_metadata: Option<Bytes>,
             _hook: Option<ContractAddress>
-        ) {
+        ) -> u256 {
             let mailbox_address = self.mailbox.read();
             let mailbox = IMailboxDispatcher { contract_address: mailbox_address };
             mailbox
                 .quote_dispatch(
                     _destination_domain, _recipient, _message_body, _hook_metadata, _hook
-                );
+                )
         }
     }
 }

@@ -30,8 +30,6 @@ pub enum ModuleType {
     CCIP_READ,
 }
 
-pub const HYPERLANE_VERSION: u8 = 3;
-
 #[starknet::interface]
 pub trait IMailbox<TContractState> {
     fn initializer(
@@ -169,7 +167,7 @@ pub trait IMailboxClient<TContractState> {
         _message_body: Bytes,
         _hook_metadata: Option<Bytes>,
         _hook: Option<ContractAddress>
-    );
+    ) -> u256;
 }
 
 

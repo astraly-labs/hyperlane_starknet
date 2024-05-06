@@ -35,20 +35,18 @@ jobs:
           cd ..
           sha256sum artifacts.zip > artifacts.zip.sha256
           md5sum artifacts.zip > artifacts.zip.md5
-  release:
-    needs: artifact
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: filtered_artifacts
-          path: ./filtered_artifacts
+  
+      - name: Find zip files
+        run: |
+          find ./filtered_artifacts -type f -name '*.zip' -exec echo "::set-output name=zip_files::{}" \;
+        id: find_zip_files
 
       - name: Release Artifact
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            filtered_artifacts/*
-          tag_name: ${{ github.ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+            artifacts.zip
+            artifacts.zip.sha256
+            artifacts.zip.md5
+
+            

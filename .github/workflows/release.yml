@@ -14,20 +14,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: software-mansion/setup-scarb@v1
       - name: Build contracts
         run: scarb build
       - name: Archive contracts
-        uses: actions/upload-artifact@v2
-        with:
-          name: artifacts
-          path: ./target/dev
+        run: |
+          mkdir -p filtered_artifacts
+          find ./target/dev -type f -name '*.contract_class.json' -exec cp {} filtered_artifacts/ \;
       - name: Generate checksums
         run: |
-          cd ./target/dev 
+          cd filtered_artifacts
           for file in *; do
             sha256sum "$file" > "$file.sha256"
             md5sum "$file" > "$file.md5"
           done
+      - name: Build artifact zip
+        run: |
+          cd filtered_artifacts
+          zip -r ../artifacts.zip .
+          cd ..
+          sha256sum artifacts.zip > artifacts.zip.sha256
+          md5sum artifacts.zip > artifacts.zip.md5
   release:
     needs: artifact
     runs-on: ubuntu-latest
@@ -35,11 +42,13 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v2
         with:
-          name: artifacts
-          path: ./target/dev
+          name: filtered_artifacts
+          path: ./filtered_artifacts
 
       - name: Release Artifact
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./target/dev/*
+            filtered_artifacts/*
+          tag_name: ${{ github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}

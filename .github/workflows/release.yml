@@ -10,7 +10,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-
     name: artifact
     runs-on: ubuntu-latest
     steps:
@@ -22,7 +21,7 @@ jobs:
         with:
           name: artifacts
           path: ./target/dev
-       - name: Generate checksums
+      - name: Generate checksums
         run: |
           cd ./target/dev 
           for file in *; do

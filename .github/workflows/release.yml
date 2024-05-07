@@ -45,8 +45,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            artifacts.zip
-            artifacts.zip.sha256
-            artifacts.zip.md5
+            hyerlane-starknet-${{ github.ref_name }}.zip
+            hyerlane-starknet-${{ github.ref_name }}.zip.sha256
+            hyerlane-starknet-${{ github.ref_name }}.zip.md5
 
             

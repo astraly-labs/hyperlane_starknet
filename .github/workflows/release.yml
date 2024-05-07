@@ -31,10 +31,10 @@ jobs:
       - name: Build artifact zip
         run: |
           cd filtered_artifacts
-          zip -r ../hyerlane-starknet-${{ github.ref_name }}.zip .
+          zip -r ../hyperlane-starknet-${{ github.ref_name }}.zip .
           cd ..
-          sha256sum hyerlane-starknet-${{ github.ref_name }}.zip > hyerlane-starknet-${{ github.ref_name }}.CHECKSUM
-          md5sum hyerlane-starknet-${{ github.ref_name }}.zip > hyerlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
+          sha256sum hyperlane-starknet-${{ github.ref_name }}.zip > hyperlane-starknet-${{ github.ref_name }}.CHECKSUM
+          md5sum hyperlane-starknet-${{ github.ref_name }}.zip > hyperlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
   
       - name: Find zip files
         run: |
@@ -45,8 +45,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            hyerlane-starknet-${{ github.ref_name }}.zip
-            hyerlane-starknet-${{ github.ref_name }}.CHECKSUM
-            hyerlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
+            hyperlane-starknet-${{ github.ref_name }}.zip
+            hyperlane-starknet-${{ github.ref_name }}.CHECKSUM
+            hyperlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
 
             

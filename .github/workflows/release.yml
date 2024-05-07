@@ -33,8 +33,8 @@ jobs:
           cd filtered_artifacts
           zip -r ../artifacts.zip .
           cd ..
-          sha256sum artifacts.zip > artifacts.zip.sha256
-          md5sum artifacts.zip > artifacts.zip.md5
+          sha256sum artifacts.zip > hyerlane-starknet-${{ github.ref_name }}.CHECKSUM
+          md5sum artifacts.zip > hyerlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
   
       - name: Find zip files
         run: |
@@ -46,7 +46,7 @@ jobs:
         with:
           files: |
             hyerlane-starknet-${{ github.ref_name }}.zip
-            hyerlane-starknet-${{ github.ref_name }}.zip.sha256
-            hyerlane-starknet-${{ github.ref_name }}.zip.md5
+            hyerlane-starknet-${{ github.ref_name }}.CHECKSUM
+            hyerlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
 
             

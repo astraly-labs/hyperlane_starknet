@@ -31,10 +31,10 @@ jobs:
       - name: Build artifact zip
         run: |
           cd filtered_artifacts
-          zip -r ../artifacts.zip .
+          zip -r ../hyerlane-starknet-${{ github.ref_name }}.zip .
           cd ..
-          sha256sum artifacts.zip > hyerlane-starknet-${{ github.ref_name }}.CHECKSUM
-          md5sum artifacts.zip > hyerlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
+          sha256sum hyerlane-starknet-${{ github.ref_name }}.zip > hyerlane-starknet-${{ github.ref_name }}.CHECKSUM
+          md5sum hyerlane-starknet-${{ github.ref_name }}.zip > hyerlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
   
       - name: Find zip files
         run: |

@@ -1,0 +1,63 @@
+[workspace]
+members = ["hyperlane-starknet-rs"]
+resolver = "2"
+
+[profile.test]
+opt-level = 2
+overflow-checks = true
+
+[profile.release]
+codegen-units = 1
+debug = false
+debug-assertions = false
+incremental = false
+lto = true
+opt-level = 3
+overflow-checks = true
+panic = "abort"
+rpath = false
+
+[workspace.package]
+version = "0.0.1"
+authors = ["0xevolve <matthias@pragma.build>"]
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/astraly-labs/hyperlane-starknet"
+homepage = "https://www.hyperlane.xyz/"
+documentation = "https://docs.hyperlane.xyz/"
+keywords = ["hyperlane", "starknet", "cairo"]
+
+[workspace.dependencies]
+# starknet
+starknet = { version = "0.9.0" }
+
+cw20-base = { version = "1.1.2", features = ["library"] }
+
+# utilities
+thiserror = { version = "1.0.37" }
+anyhow = { version = "1.0.71", features = ["backtrace"] }
+eyre = { version = "0.6.8" }
+
+# encoding
+base64 = "0.21.2"
+serde = { version = "1.0.162", default-features = false, features = ["derive"] }
+serde_json = "1.0.96"
+schemars = "0.8.12"
+prost = { version = "0.12.1", default-features = false, features = [
+    "prost-derive",
+] }
+prost-types = { version = "0.12.1", default-features = false }
+hex-literal = { version = "0.4.1" }
+
+# cryptography
+sha3 = "0.10.8"
+sha2 = { version = "0.10.6", default-features = false }
+ripemd = "0.1.3"
+k256 = { version = "0.13.1", default-features = false, features = ["ecdsa"] }
+digest = { version = "0.10.7" }
+
+# testing
+rstest = "0.18.2"
+
+tokio = { version = "1", features = ["full"] }
+ethers = "2.0.7"

@@ -1,4 +1,5 @@
 use alexandria_bytes::Bytes;
+use hyperlane_starknet::contracts::isms::multisig::multisig_ism::multisig_ism::ValidatorInformations;
 use hyperlane_starknet::contracts::libs::message::Message;
 use starknet::ContractAddress;
 
@@ -20,15 +21,16 @@ pub enum Types {
 
 #[derive(Serde)]
 pub enum ModuleType {
-    UNUSED,
-    ROUTING,
-    AGGREGATION,
-    LEGACY_MULTISIG,
-    MERKLE_ROOT_MULTISIG,
-    MESSAGE_ID_MULTISIG,
+    UNUSED: ContractAddress,
+    ROUTING: ContractAddress,
+    AGGREGATION: ContractAddress,
+    LEGACY_MULTISIG: ContractAddress,
+    MERKLE_ROOT_MULTISIG: ContractAddress,
+    MESSAGE_ID_MULTISIG: ContractAddress,
     NULL, // used with relayer carrying no metadata
-    CCIP_READ,
+    CCIP_READ: ContractAddress,
 }
+
 
 pub const HYPERLANE_VERSION: u8 = 3;
 
@@ -104,12 +106,12 @@ pub trait IInterchainSecurityModule<TContractState> {
     /// * `_metadata` - Off-chain metadata provided by a relayer, specific to the security model encoded by 
     /// the module (e.g. validator signatures)
     /// * `_message` - Hyperlane encoded interchain message
-    fn verify(self: @TContractState, _metadata: Bytes, _message: Message) -> bool;
+    fn verify(self: @TContractState, _metadata: Span<Bytes>, _message: Message,_validator_configuration: ContractAddress) -> bool;
 }
 
 #[starknet::interface]
 pub trait ISpecifiesInterchainSecurityModule<TContractState> {
-    fn interchain_security_module(self: @TContractState) -> ContractAddress;
+    fn interchain_security_module(self: @TContractState) -> ModuleType;
 }
 
 
@@ -188,7 +190,6 @@ pub trait IInterchainGasPaymaster<TContractState> {
     ) -> u256;
 }
 
-
 #[starknet::interface]
 pub trait IRouter<TContractState> {
     fn routers(self: @TContractState, _domain: u32) -> ContractAddress;
@@ -206,3 +207,44 @@ pub trait IRouter<TContractState> {
     fn handle(self: @TContractState, _origin: u32, _sender: ContractAddress, _message: Message);
 }
 
+
+#[starknet::interface]
+pub trait IMultisigIsm<TContractState> {
+    fn validators_and_threshold(
+        self: @TContractState, _message: Message
+    ) -> (Span<ValidatorInformations>, u32);
+
+    fn get_validators(self: @TContractState) -> Span<ValidatorInformations>;
+
+    fn get_threshold(self: @TContractState) -> u32;
+
+    fn set_validators(ref self: TContractState, _validators: Span<ValidatorInformations>);
+
+    fn set_threshold(ref self: TContractState, _threshold: u32);
+}
+
+#[starknet::interface]
+pub trait IDefaultFallbackRoutingIsm<TContractState> {
+    /// Returns an enum that represents the type of security model encoded by this ISM.
+    /// Relayers infer how to fetch and format metadata.
+    fn module_type(self: @TContractState) -> ModuleType;
+
+    fn route(self: @TContractState, _message: Message) -> ContractAddress;
+
+    fn verify(self: @TContractState, _metadata: Bytes, _message: Message) -> bool;
+}
+
+#[starknet::interface]
+pub trait IDomainRoutingIsm<TContractState> {
+    fn initialize(ref self: TContractState, _domains: Span<u32>, _modules: Span<ContractAddress>);
+
+    fn set(ref self: TContractState, _domain: u32, _module: ContractAddress);
+
+    fn remove(ref self: TContractState, _domain: u32);
+
+    fn domains(self: @TContractState) -> Span<u32>;
+
+    fn module(self: @TContractState, _origin: u32) -> ContractAddress;
+
+    fn route(self: @TContractState, _message: Message) -> ContractAddress;
+}

@@ -1,6 +1,5 @@
 use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
 use core::keccak::keccak_u256s_be_inputs;
-use core::poseidon::poseidon_hash_span;
 use hyperlane_starknet::utils::keccak256::reverse_endianness;
 use starknet::{ContractAddress, contract_address_const};
 

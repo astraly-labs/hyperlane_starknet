@@ -391,7 +391,7 @@ pub mod mailbox {
             };
             let hook = IPostDispatchHookDispatcher { contract_address: hook_address };
             required_hook.quote_dispatch(hook_metadata.clone(), message.clone())
-                - hook.quote_dispatch(hook_metadata, message)
+                + hook.quote_dispatch(hook_metadata, message)
         }
 
         /// Returns the ISM to use for the recipient, defaulting to the default ISM if none is specified.

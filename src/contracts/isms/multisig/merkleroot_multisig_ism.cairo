@@ -6,8 +6,9 @@ pub mod merkleroot_multisig_ism {
     use core::ecdsa::check_ecdsa_signature;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::interfaces::{
-         IMultisigIsm, IMultisigIsmDispatcher, IMultisigIsmDispatcherTrait,
-        ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
+        IMultisigIsm, IMultisigIsmDispatcher, IMultisigIsmDispatcherTrait, ModuleType,
+        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+        IInterchainSecurityModuleDispatcherTrait,
     };
 
     use starknet::ContractAddress;
@@ -18,6 +19,8 @@ pub mod merkleroot_multisig_ism {
         pub const NO_MULTISIG_THRESHOLD_FOR_MESSAGE: felt252 = 'No MultisigISM treshold present';
         pub const VERIFICATION_FAILED_THRESHOLD_NOT_REACHED: felt252 = 'Verify failed, < threshold';
     }
+
+    #[abi(embed_v0)]
     impl IMerklerootMultisigIsmImpl of IInterchainSecurityModule<ContractState> {
         fn module_type(self: @ContractState) -> ModuleType {
             ModuleType::MERKLE_ROOT_MULTISIG(starknet::get_contract_address())
@@ -25,7 +28,7 @@ pub mod merkleroot_multisig_ism {
 
         fn verify(
             self: @ContractState,
-            _metadata: Span<Bytes>,
+            _metadata: Bytes,
             _message: Message,
             _validator_configuration: ContractAddress
         ) -> bool {
@@ -54,8 +57,8 @@ pub mod merkleroot_multisig_ism {
                     if (cur_idx == validators.len()) {
                         break false;
                     }
-                    let signer = *validators.at(cur_idx).public_key;
-                    if check_ecdsa_signature(digest, signer, signature_r, signature_s) {
+                    let signer = *validators.at(cur_idx).address;
+                    if check_ecdsa_signature(digest, signer.try_into().unwrap(), signature_r, signature_s) {
                         // we found a match
                         break true;
                     }
@@ -79,11 +82,11 @@ pub mod merkleroot_multisig_ism {
         }
     }
 
-    fn digest(_metadata: Span<Bytes>, _message: Message) -> felt252 {
+    fn digest(_metadata: Bytes, _message: Message) -> felt252 {
         return 0;
     }
 
-    fn get_signature_at(_metadata: Span<Bytes>, index: u32) -> (felt252, felt252) {
+    fn get_signature_at(_metadata: Bytes, index: u32) -> (felt252, felt252) {
         (0, 0)
     }
 }

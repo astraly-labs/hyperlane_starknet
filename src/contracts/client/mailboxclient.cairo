@@ -68,6 +68,19 @@ mod mailboxclient {
             self.interchain_security_module.write(_module);
         }
 
+        fn get_local_domain(self: @ContractState) -> u32 {
+            self.local_domain.read()
+        }
+
+        fn get_hook(self: @ContractState) -> ContractAddress {
+            self.hook.read()
+        }
+
+        fn get_interchain_security_module(self: @ContractState) -> ContractAddress {
+            self.interchain_security_module.read()
+        }
+
+
         fn _MailboxClient_initialize(
             ref self: ContractState,
             _hook: ContractAddress,

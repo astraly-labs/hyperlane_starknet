@@ -2,24 +2,27 @@
 pub mod messageid_multisig_ism {
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
     use core::ecdsa::check_ecdsa_signature;
-    use starknet::eth_signature::is_eth_signature_valid;
-    use starknet::EthAddress;
-    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
-    use hyperlane_starknet::interfaces::{
-     IMultisigIsm, IMultisigIsmDispatcher, IMultisigIsmDispatcherTrait,
-        ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-    };
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
+    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::contracts::libs::multisig::message_id_ism_metadata::message_id_ism_metadata::MessageIdIsmMetadata;
+    use hyperlane_starknet::interfaces::{
+        IMultisigIsm, IMultisigIsmDispatcher, IMultisigIsmDispatcherTrait, ModuleType,
+        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+        IInterchainSecurityModuleDispatcherTrait,
+    };
     use starknet::ContractAddress;
-    use starknet::secp256_trait::{Signature,signature_from_vrs};
+    use starknet::EthAddress;
+    use starknet::eth_signature::is_eth_signature_valid;
+    use starknet::secp256_trait::{Signature, signature_from_vrs};
     #[storage]
     struct Storage {}
 
     mod Errors {
         pub const NO_MULTISIG_THRESHOLD_FOR_MESSAGE: felt252 = 'No MultisigISM treshold present';
         pub const VERIFICATION_FAILED_THRESHOLD_NOT_REACHED: felt252 = 'Verify failed, < threshold';
+        pub const EMPTY_METADATA: felt252 = 'Empty metadata';
     }
+    #[abi(embed_v0)]
     impl IMessageidMultisigIsmImpl of IInterchainSecurityModule<ContractState> {
         fn module_type(self: @ContractState) -> ModuleType {
             ModuleType::MESSAGE_ID_MULTISIG(starknet::get_contract_address())
@@ -27,10 +30,11 @@ pub mod messageid_multisig_ism {
 
         fn verify(
             self: @ContractState,
-            _metadata: Span<Bytes>,
+            _metadata: Bytes,
             _message: Message,
             _validator_configuration: ContractAddress
         ) -> bool {
+            assert(_metadata.clone().data().len()>0, Errors::EMPTY_METADATA); 
             let digest = digest(_metadata.clone(), _message.clone());
             let validator_configuration = IMultisigIsmDispatcher {
                 contract_address: _validator_configuration
@@ -56,8 +60,10 @@ pub mod messageid_multisig_ism {
                     if (cur_idx == validators.len()) {
                         break false;
                     }
-                    let signer = *validators.at(cur_idx).public_key;
-                    if bool_is_eth_signature_valid(digest.into(), signature, signer.try_into().unwrap()) {
+                    let signer = *validators.at(cur_idx).address;
+                    if bool_is_eth_signature_valid(
+                        digest.into(), signature, signer.try_into().unwrap()
+                    ) {
                         // we found a match
                         break true;
                     }
@@ -81,22 +87,33 @@ pub mod messageid_multisig_ism {
         }
     }
 
-    fn digest(_metadata: Span<Bytes>, _message: Message) -> felt252 {
-        let origin_merkle_tree_hook = MessageIdIsmMetadata::origin_merkle_tree_hook(_metadata.clone());
+    fn digest(_metadata: Bytes, _message: Message) -> felt252 {
+        let origin_merkle_tree_hook = MessageIdIsmMetadata::origin_merkle_tree_hook(
+            _metadata.clone()
+        );
         let root = MessageIdIsmMetadata::root(_metadata.clone());
-        let index = MessageIdIsmMetadata::index(_metadata.clone()); 
-        CheckpointLib::digest(_message.origin,origin_merkle_tree_hook.into(), root.into(), index, MessageTrait::format_message(_message)).try_into().unwrap()
+        let index = MessageIdIsmMetadata::index(_metadata.clone());
+        CheckpointLib::digest(
+            _message.origin,
+            origin_merkle_tree_hook.into(),
+            root.into(),
+            index,
+            MessageTrait::format_message(_message)
+        )
+            .try_into()
+            .unwrap()
     }
 
-    fn get_signature_at(_metadata: Span<Bytes>, _index: u32) -> Signature {
-        let (v,r,s) = MessageIdIsmMetadata::signature_at(_metadata, _index); 
-        signature_from_vrs(v.into(),r,s)
-
+    fn get_signature_at(_metadata: Bytes, _index: u32) -> Signature {
+        let (v, r, s) = MessageIdIsmMetadata::signature_at(_metadata, _index);
+        signature_from_vrs(v.into(), r, s)
     }
 
-    fn bool_is_eth_signature_valid(msg_hash: u256, signature: Signature, signer: EthAddress) -> bool {
+    fn bool_is_eth_signature_valid(
+        msg_hash: u256, signature: Signature, signer: EthAddress
+    ) -> bool {
         match is_eth_signature_valid(msg_hash, signature, signer) {
-            Result::Ok(()) => true, 
+            Result::Ok(()) => true,
             Result::Err(_) => false
         }
     }

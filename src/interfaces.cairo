@@ -1,8 +1,9 @@
 use alexandria_bytes::Bytes;
+use core::array::ArrayTrait;
 use hyperlane_starknet::contracts::isms::multisig::multisig_ism::multisig_ism::ValidatorInformations;
 use hyperlane_starknet::contracts::libs::message::Message;
 use starknet::ContractAddress;
-
+use starknet::EthAddress;
 #[derive(Serde)]
 pub enum Types {
     UNUSED,
@@ -19,7 +20,7 @@ pub enum Types {
 }
 
 
-#[derive(Serde)]
+#[derive(Serde, Drop, PartialEq)]
 pub enum ModuleType {
     UNUSED: ContractAddress,
     ROUTING: ContractAddress,
@@ -106,7 +107,12 @@ pub trait IInterchainSecurityModule<TContractState> {
     /// * `_metadata` - Off-chain metadata provided by a relayer, specific to the security model encoded by 
     /// the module (e.g. validator signatures)
     /// * `_message` - Hyperlane encoded interchain message
-    fn verify(self: @TContractState, _metadata: Span<Bytes>, _message: Message,_validator_configuration: ContractAddress) -> bool;
+    fn verify(
+        self: @TContractState,
+        _metadata: Bytes,
+        _message: Message,
+        _validator_configuration: ContractAddress
+    ) -> bool;
 }
 
 #[starknet::interface]
@@ -150,6 +156,12 @@ pub trait IMailboxClient<TContractState> {
         _hook: ContractAddress,
         _interchain_security_module: ContractAddress,
     );
+
+    fn get_hook(self: @TContractState) -> ContractAddress;
+
+    fn get_local_domain(self: @TContractState) -> u32;
+
+    fn get_interchain_security_module(self: @TContractState) -> ContractAddress;
 
     fn _is_latest_dispatched(self: @TContractState, _id: u256) -> bool;
 
@@ -247,4 +259,23 @@ pub trait IDomainRoutingIsm<TContractState> {
     fn module(self: @TContractState, _origin: u32) -> ContractAddress;
 
     fn route(self: @TContractState, _message: Message) -> ContractAddress;
+}
+
+
+#[starknet::interface]
+pub trait IValidatorAnnounce<TContractState> {
+    fn get_announced_validators(self: @TContractState) -> Span<EthAddress>;
+
+    fn get_announced_storage_locations(
+        self: @TContractState, _validators: Span<EthAddress>
+    ) -> Span<Span<felt252>>;
+
+    fn announce(
+        ref self: TContractState,
+        _validator: EthAddress,
+        _storage_location: felt252,
+        _signature: Bytes
+    ) -> bool;
+
+    fn get_announcement_digest(self: @TContractState, _storage_location: felt252) -> u256;
 }

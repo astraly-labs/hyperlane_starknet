@@ -1,11 +1,11 @@
 #[starknet::contract]
 pub mod domain_routing_ism {
+    use core::panic_with_felt252;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::interfaces::IDomainRoutingIsm;
 
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use core::panic_with_felt252;
 
     use starknet::{ContractAddress, contract_address_const};
 
@@ -41,7 +41,7 @@ pub mod domain_routing_ism {
         pub const LENGTH_MISMATCH: felt252 = 'Length mismatch';
         pub const ORIGIN_NOT_FOUND: felt252 = 'Origin not found';
         pub const MODULE_CANNOT_BE_ZERO: felt252 = 'Module cannot be zero';
-        pub const DOMAIN_NOT_FOUND : felt252= 'Domain not found';
+        pub const DOMAIN_NOT_FOUND: felt252 = 'Domain not found';
     }
 
     #[constructor]
@@ -49,6 +49,7 @@ pub mod domain_routing_ism {
         self.ownable.initializer(_owner);
     }
 
+    #[abi(embed_v0)]
     impl IDomainRoutingIsmImpl of IDomainRoutingIsm<ContractState> {
         fn initialize(
             ref self: ContractState, _domains: Span<u32>, _modules: Span<ContractAddress>
@@ -126,8 +127,8 @@ pub mod domain_routing_ism {
     }
 
     fn _remove(ref self: ContractState, _domain: u32) {
-        let domain_index = match find_domain_index(@self,_domain){
-            Option::Some(index) => index, 
+        let domain_index = match find_domain_index(@self, _domain) {
+            Option::Some(index) => index,
             Option::None(()) => {
                 panic_with_felt252(Errors::DOMAIN_NOT_FOUND);
                 0
@@ -138,8 +139,8 @@ pub mod domain_routing_ism {
     }
 
     fn _set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
-        match find_domain_index(@self,_domain) {
-            Option::Some(_) =>{} , 
+        match find_domain_index(@self, _domain) {
+            Option::Some(_) => {},
             Option::None(()) => {
                 let latest_domain = find_last_domain(@self);
                 self.domains.write(latest_domain, _domain);

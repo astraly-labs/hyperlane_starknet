@@ -2,11 +2,10 @@
 pub mod multisig_ism {
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::interfaces::IMultisigIsm;
-    use starknet::{ContractAddress, contract_address_const};
-    use starknet::eth_address::EthAddress;
-
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use starknet::eth_address::EthAddress;
+    use starknet::{ContractAddress, contract_address_const};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -16,10 +15,10 @@ pub mod multisig_ism {
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
     type Index = felt252;
 
-    #[derive(Serde, Copy, starknet::Store, Drop, partialEq)]
+    #[derive(Serde, Copy, starknet::Store, Drop, PartialEq)]
     pub struct ValidatorInformations {
         pub address: EthAddress,
-        pub public_key: felt252
+        pub public_key: u256
     }
 
     #[storage]
@@ -31,7 +30,7 @@ pub mod multisig_ism {
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
     }
-    
+
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
@@ -41,6 +40,10 @@ pub mod multisig_ism {
         UpgradeableEvent: UpgradeableComponent::Event,
     }
 
+    #[constructor]
+    fn constructor(ref self: ContractState, _owner: ContractAddress) {
+        self.ownable.initializer(_owner);
+    }
 
 
     mod Errors {
@@ -71,7 +74,7 @@ pub mod multisig_ism {
                     validator.address != 0.try_into().unwrap(),
                     Errors::VALIDATOR_ADDRESS_CANNOT_BE_NULL
                 );
-                assert(validator.public_key != 0, Errors::VALIDATOR_PUBLIC_KEY_CANNOT_BE_NULL);
+                // assert(validator.public_key != 0, Errors::VALIDATOR_PUBLIC_KEY_CANNOT_BE_NULL);
                 self.validators.write(cur_idx.into(), validator);
                 cur_idx += 1;
             }
@@ -97,7 +100,7 @@ pub mod multisig_ism {
         let mut cur_idx = 0;
         loop {
             let validator = self.validators.read(cur_idx);
-            if (validator.address ==0.try_into().unwrap()) {
+            if (validator.address == 0.try_into().unwrap()) {
                 break ();
             }
             validators.append(validator);

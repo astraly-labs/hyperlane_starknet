@@ -14,6 +14,7 @@ mod contracts {
     }
     pub mod mocks {
         pub mod message_recipient;
+        pub mod ism;
     }
     pub mod isms {
         pub mod multisig {

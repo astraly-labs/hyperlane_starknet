@@ -1,10 +1,8 @@
 use alexandria_bytes::{Bytes, BytesTrait};
-use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
+use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 use hyperlane_starknet::contracts::mailbox::mailbox;
 use hyperlane_starknet::interfaces::IMessageRecipientDispatcherTrait;
-use hyperlane_starknet::interfaces::{
-    IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, HYPERLANE_VERSION
-};
+use hyperlane_starknet::interfaces::{IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait};
 use hyperlane_starknet::tests::setup::{
     setup, mock_setup, OWNER, LOCAL_DOMAIN, NEW_OWNER, DEFAULT_ISM, DEFAULT_HOOK, REQUIRED_HOOK,
     NEW_DEFAULT_ISM, NEW_DEFAULT_HOOK, NEW_REQUIRED_HOOK, DESTINATION_DOMAIN, RECIPIENT_ADDRESS

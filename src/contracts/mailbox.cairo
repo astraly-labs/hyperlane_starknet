@@ -3,13 +3,13 @@ pub mod mailbox {
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
     use core::starknet::SyscallResultTrait;
     use core::starknet::event::EventEmitter;
-    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
+    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
     use hyperlane_starknet::interfaces::{
         IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, IPostDispatchHookDispatcher,
         ISpecifiesInterchainSecurityModuleDispatcher,
         ISpecifiesInterchainSecurityModuleDispatcherTrait, IPostDispatchHookDispatcherTrait,
-        HYPERLANE_VERSION, IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait,
+        IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait,
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};

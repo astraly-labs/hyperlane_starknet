@@ -14,7 +14,8 @@ use hyperlane_starknet::interfaces::{
 };
 use hyperlane_starknet::tests::setup::{
     setup, mock_setup, setup_messageid_multisig_ism, setup_multisig_ism, OWNER, NEW_OWNER,
-    VALIDATOR_ADDRESS, VALIDATOR_PUBLIC_KEY,setup_validator_announce, get_message_and_signature, LOCAL_DOMAIN, DESTINATION_DOMAIN,RECIPIENT_ADDRESS
+    VALIDATOR_ADDRESS, VALIDATOR_PUBLIC_KEY, setup_validator_announce, get_message_and_signature,
+    LOCAL_DOMAIN, DESTINATION_DOMAIN, RECIPIENT_ADDRESS
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
@@ -75,12 +76,9 @@ fn test_set_threshold_fails_if_caller_not_owner() {
 fn test_message_id_ism_metadata() {
     let origin_merkle_tree_hook = array![
         // origin_merkle_tree_hook
-        0x01020304050607080910111213141516,
-        0x16151413121110090807060504030201];
-    let root = array![
-        0x01020304050607080910111213141516,
-        0x01020304050607080920111213141516,
+        0x01020304050607080910111213141516, 0x16151413121110090807060504030201
     ];
+    let root = array![0x01020304050607080910111213141516, 0x01020304050607080920111213141516,];
     let index = array![0x00000013000000000000000000000000];
     let index_u32 = 0x13;
     let signature_1 = array![
@@ -114,29 +112,48 @@ fn test_message_id_ism_metadata() {
     metadata = metadata.concat(@signature_3);
     let bytes_metadata = BytesTrait::new(496, metadata);
     assert(
-        MessageIdIsmMetadata::origin_merkle_tree_hook(bytes_metadata.clone()) == u256 {low: *origin_merkle_tree_hook.at(1), high: *origin_merkle_tree_hook.at(0)},
+        MessageIdIsmMetadata::origin_merkle_tree_hook(
+            bytes_metadata.clone()
+        ) == u256 { low: *origin_merkle_tree_hook.at(1), high: *origin_merkle_tree_hook.at(0) },
         'wrong merkle tree hook'
     );
     assert(
-        MessageIdIsmMetadata::root(bytes_metadata.clone()) == u256 {low: *root.at(1), high: *root.at(0)},
+        MessageIdIsmMetadata::root(
+            bytes_metadata.clone()
+        ) == u256 { low: *root.at(1), high: *root.at(0) },
         'wrong root'
     );
+    assert(MessageIdIsmMetadata::index(bytes_metadata.clone()) == index_u32, 'wrong index');
+    let (test, test_1, test_2) = MessageIdIsmMetadata::signature_at(bytes_metadata.clone(), 1);
+    println!("aight {}, {}, {}", test, test_1, test_2);
     assert(
-        MessageIdIsmMetadata::index(bytes_metadata.clone()) == index_u32,
-        'wrong index'
-    );
-    let (test, test_1, test_2) = MessageIdIsmMetadata::signature_at(bytes_metadata.clone(),1);
-    println!("aight {}, {}, {}",test, test_1, test_2);
-    assert(
-        MessageIdIsmMetadata::signature_at(bytes_metadata.clone(),0) == (signature_1_v, u256{low:*signature_1.at(1), high: *signature_1.at(0) }, u256 {low: *signature_1.at(3), high: *signature_1.at(2)}),
+        MessageIdIsmMetadata::signature_at(
+            bytes_metadata.clone(), 0
+        ) == (
+            signature_1_v,
+            u256 { low: *signature_1.at(1), high: *signature_1.at(0) },
+            u256 { low: *signature_1.at(3), high: *signature_1.at(2) }
+        ),
         'wrong signature 1'
     );
     assert(
-        MessageIdIsmMetadata::signature_at(bytes_metadata.clone(),1) == (signature_2_v, u256{low:*signature_2.at(1), high: *signature_2.at(0) }, u256 {low: *signature_2.at(3), high: *signature_2.at(2)}),
+        MessageIdIsmMetadata::signature_at(
+            bytes_metadata.clone(), 1
+        ) == (
+            signature_2_v,
+            u256 { low: *signature_2.at(1), high: *signature_2.at(0) },
+            u256 { low: *signature_2.at(3), high: *signature_2.at(2) }
+        ),
         'wrong signature 2'
     );
     assert(
-        MessageIdIsmMetadata::signature_at(bytes_metadata.clone(),2) == (signature_3_v, u256{low:*signature_3.at(1), high: *signature_3.at(0) }, u256 {low: *signature_3.at(3), high: *signature_3.at(2)}),
+        MessageIdIsmMetadata::signature_at(
+            bytes_metadata.clone(), 2
+        ) == (
+            signature_3_v,
+            u256 { low: *signature_3.at(1), high: *signature_3.at(0) },
+            u256 { low: *signature_3.at(3), high: *signature_3.at(2) }
+        ),
         'wrong signature 3'
     );
 }
@@ -170,27 +187,32 @@ fn test_message_id_multisig_verify() {
         body: message_body.clone()
     };
     let messageid = setup_messageid_multisig_ism();
-    let (msg_hash, signature, public_key_x, public_key_y, eth_address) = get_message_and_signature(false);
+    let (msg_hash, signature, public_key_x, public_key_y, eth_address) = get_message_and_signature(
+        false
+    );
     let validators = setup_multisig_ism();
     let new_validators = array![
-        ValidatorInformations { address: eth_address, public_key: 0.try_into().unwrap()}
+        ValidatorInformations { address: eth_address, public_key: 0.try_into().unwrap() }
     ];
-    let metadata = array![ 
+    let metadata = array![
         0x01020304050607080910111213141516,
-         0x16151413121110090807060504030201, 
-         0x01020304050607080910111213141516,
-         0x01020304050607080920111213141516,
-         0x00000010000000000000000000000000, 
+        0x16151413121110090807060504030201,
+        0x01020304050607080910111213141516,
+        0x01020304050607080920111213141516,
+        0x00000010000000000000000000000000,
         signature.r.high,
-        signature.r.low ,
+        signature.r.low,
         signature.s.high,
-        signature.s.low, 
+        signature.s.low,
         0x00000010000000000000000000000000
-         ];
+    ];
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     validators.set_validators(new_validators.span());
     validators.set_threshold(1);
     let bytes_metadata = BytesTrait::new(42, metadata);
-    assert(messageid.verify(bytes_metadata, message,validators.contract_address) == true, 'verification failed');
+    assert(
+        messageid.verify(bytes_metadata, message, validators.contract_address) == true,
+        'verification failed'
+    );
 }

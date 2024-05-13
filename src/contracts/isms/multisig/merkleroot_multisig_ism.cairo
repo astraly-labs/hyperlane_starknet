@@ -58,7 +58,9 @@ pub mod merkleroot_multisig_ism {
                         break false;
                     }
                     let signer = *validators.at(cur_idx).address;
-                    if check_ecdsa_signature(digest, signer.try_into().unwrap(), signature_r, signature_s) {
+                    if check_ecdsa_signature(
+                        digest, signer.try_into().unwrap(), signature_r, signature_s
+                    ) {
                         // we found a match
                         break true;
                     }

@@ -13,8 +13,8 @@ mod contracts {
         pub mod router;
     }
     pub mod mocks {
-        pub mod message_recipient;
         pub mod ism;
+        pub mod message_recipient;
     }
     pub mod isms {
         pub mod multisig {

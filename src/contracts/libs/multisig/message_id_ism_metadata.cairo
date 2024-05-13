@@ -31,7 +31,7 @@ pub mod message_id_ism_metadata {
         fn signature_at(_metadata: Bytes, _index: u32) -> (u8, u256, u256) {
             // the first signer index is 0
             let (_, r) = _metadata.read_u256(SIGNATURE_OFFSET + 96 * _index);
-            let (_, s) = _metadata.read_u256(SIGNATURE_OFFSET + 96 * _index );
+            let (_, s) = _metadata.read_u256(SIGNATURE_OFFSET + 96 * _index);
             let (_, v) = _metadata.read_u8(SIGNATURE_OFFSET + 96 * _index + 32);
             (v, r, s)
         }

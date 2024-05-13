@@ -21,7 +21,7 @@ mod contracts {
             pub mod merkleroot_multisig_ism;
             pub mod messageid_multisig_ism;
             pub mod multisig_ism;
-            pub mod validator_annonce;
+            pub mod validator_announce;
         }
         pub mod routing {
             pub mod domain_routing_ism;

@@ -32,7 +32,7 @@ pub mod messageid_multisig_ism {
             self: @ContractState,
             _metadata: Bytes,
             _message: Message,
-            _validator_configuration: ContractAddress
+            _validator_configuration: ContractAddress, 
         ) -> bool {
             assert(_metadata.clone().data().len()>0, Errors::EMPTY_METADATA); 
             let digest = digest(_metadata.clone(), _message.clone());

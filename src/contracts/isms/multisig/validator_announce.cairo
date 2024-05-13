@@ -1,5 +1,5 @@
 #[starknet::contract]
-pub mod validator_annonce {
+pub mod validator_announce {
     use alexandria_bytes::{Bytes, BytesTrait};
     use core::keccak::keccak_u256s_be_inputs;
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::{

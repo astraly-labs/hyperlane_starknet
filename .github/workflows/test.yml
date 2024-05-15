@@ -3,14 +3,15 @@ on:
   push:
   pull_request:
 jobs:
-  env: 
-    working-directory: ./contracts
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: software-mansion/setup-scarb@v1
       - uses: foundry-rs/setup-snfoundry@v3
-      - run: scarb fmt --check
-      - run: scarb build
-      - run: snforge test
+      - working-directory: ./contracts
+        run: scarb fmt --check
+      - working-directory: ./contracts
+        run: scarb build
+      - working-directory: ./contracts
+        run: snforge test

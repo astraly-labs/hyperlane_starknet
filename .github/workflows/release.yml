@@ -6,14 +6,14 @@ on:
       - 'v*.*.*'
 
 jobs:
-  env: 
-    working-directory: ./contracts
   artifact:
     permissions:
       contents: write
       pull-requests: write
     name: artifact
     runs-on: ubuntu-latest
+    env: 
+      working-directory: ./contracts
     steps:
       - uses: actions/checkout@v4
       - uses: software-mansion/setup-scarb@v1

@@ -3,10 +3,10 @@ on:
   push:
   pull_request:
 jobs:
-  env: 
-    working-directory: ./contracts
   check:
     runs-on: ubuntu-latest
+    env: 
+      working-directory: ./contracts
     steps:
       - uses: actions/checkout@v3
       - uses: software-mansion/setup-scarb@v1

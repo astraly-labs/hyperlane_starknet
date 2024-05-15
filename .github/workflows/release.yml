@@ -6,6 +6,8 @@ on:
       - 'v*.*.*'
 
 jobs:
+  env: 
+    working-directory: ./contracts
   artifact:
     permissions:
       contents: write

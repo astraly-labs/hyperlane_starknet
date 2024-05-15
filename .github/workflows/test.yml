@@ -3,6 +3,8 @@ on:
   push:
   pull_request:
 jobs:
+  env: 
+    working-directory: ./contracts
   check:
     runs-on: ubuntu-latest
     steps:

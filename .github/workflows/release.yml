@@ -49,12 +49,11 @@ jobs:
         id: find_zip_files
 
       - name: Release Artifact
-        working-directory: ${{ env.working-directory}}
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            hyperlane-starknet-${{ github.ref_name }}.zip
-            hyperlane-starknet-${{ github.ref_name }}.CHECKSUM
-            hyperlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
+            ./contracts/hyperlane-starknet-${{ github.ref_name }}.zip
+            ./contracts/hyperlane-starknet-${{ github.ref_name }}.CHECKSUM
+            ./contracts/hyperlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
 
             

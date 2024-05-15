@@ -20,7 +20,7 @@ jobs:
       - name: Archive contracts
         run: |
           mkdir -p filtered_artifacts
-          find ./target/dev -type f -name '*.contract_class.json' -exec cp {} filtered_artifacts/ \;
+          find ./contracts/target/dev -type f -name '*.contract_class.json' -exec cp {} filtered_artifacts/ \;
       - name: Generate checksums
         run: |
           cd filtered_artifacts

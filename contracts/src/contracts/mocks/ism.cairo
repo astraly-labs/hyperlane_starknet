@@ -7,6 +7,7 @@ pub mod ism {
         IInterchainSecurityModuleDispatcherTrait, ModuleType
     };
     use starknet::ContractAddress;
+    use starknet::EthAddress;
 
     #[storage]
     struct Storage {}
@@ -20,9 +21,26 @@ pub mod ism {
             self: @ContractState,
             _metadata: Bytes,
             _message: Message,
-            _validator_configuration: ContractAddress
         ) -> bool {
             true
         }
+
+        fn validators_and_threshold(
+            self: @ContractState, _message: Message
+        ) -> (Span<EthAddress>, u32) {
+            (array![].span(),0)
+        }
+    
+        fn get_validators(self: @ContractState) -> Span<EthAddress>{
+            array![].span()
+        }
+    
+        fn get_threshold(self: @ContractState) -> u32{
+            0
+        }
+    
+        fn set_validators(ref self: ContractState, _validators: Span<EthAddress>){}
+    
+        fn set_threshold(ref self: ContractState, _threshold: u32){}
     }
 }

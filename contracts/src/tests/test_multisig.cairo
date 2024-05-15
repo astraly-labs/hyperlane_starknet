@@ -6,13 +6,12 @@ use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERL
 use hyperlane_starknet::contracts::libs::multisig::message_id_ism_metadata::message_id_ism_metadata::MessageIdIsmMetadata;
 use hyperlane_starknet::contracts::mailbox::mailbox;
 use hyperlane_starknet::interfaces::IMessageRecipientDispatcherTrait;
-use hyperlane_starknet::interfaces::IMultisigIsmDispatcherTrait;
 use hyperlane_starknet::interfaces::{
     IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, ModuleType,
-    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait
+    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait, IInterchainSecurityModule
 };
 use hyperlane_starknet::tests::setup::{
-    setup, mock_setup, setup_messageid_multisig_ism, setup_multisig_ism, OWNER, NEW_OWNER,
+    setup, mock_setup, setup_messageid_multisig_ism, OWNER, NEW_OWNER,
     VALIDATOR_ADDRESS, VALIDATOR_PUBLIC_KEY, setup_validator_announce, get_message_and_signature,
     LOCAL_DOMAIN, DESTINATION_DOMAIN, RECIPIENT_ADDRESS
 };
@@ -25,7 +24,7 @@ use starknet::secp256_trait::Signature;
 #[test]
 fn test_set_validators() {
     let new_validators = array![VALIDATOR_ADDRESS()].span();
-    let validators = setup_multisig_ism();
+    let validators = setup_messageid_multisig_ism();
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     validators.set_validators(new_validators);
@@ -37,7 +36,7 @@ fn test_set_validators() {
 #[test]
 fn test_set_threshold() {
     let new_threshold = 3;
-    let validators = setup_multisig_ism();
+    let validators = setup_messageid_multisig_ism();
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     validators.set_threshold(new_threshold);
@@ -49,7 +48,7 @@ fn test_set_threshold() {
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_validators_fails_if_caller_not_owner() {
     let new_validators = array![VALIDATOR_ADDRESS(),].span();
-    let validators = setup_multisig_ism();
+    let validators = setup_messageid_multisig_ism();
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER());
     validators.set_validators(new_validators);
@@ -59,7 +58,7 @@ fn test_set_validators_fails_if_caller_not_owner() {
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_threshold_fails_if_caller_not_owner() {
     let new_threshold = 3;
-    let validators = setup_multisig_ism();
+    let validators = setup_messageid_multisig_ism();
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER());
     validators.set_threshold(new_threshold);
@@ -180,7 +179,7 @@ fn test_message_id_multisig_verify() {
     };
     let messageid = setup_messageid_multisig_ism();
     let (msg_hash, validators_address, signatures) = get_message_and_signature(false);
-    let validators = setup_multisig_ism();
+    let validators = setup_messageid_multisig_ism();
     let metadata = array![
         0x01020304050607080910111213141516,
         0x16151413121110090807060504030201,

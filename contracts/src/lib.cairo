@@ -18,9 +18,7 @@ mod contracts {
     }
     pub mod isms {
         pub mod multisig {
-            pub mod merkleroot_multisig_ism;
             pub mod messageid_multisig_ism;
-            pub mod multisig_ism;
             pub mod validator_announce;
         }
         pub mod routing {
@@ -37,5 +35,4 @@ mod utils {
 mod tests {
     pub mod setup;
     pub mod test_mailbox;
-    pub mod test_multisig;
 }

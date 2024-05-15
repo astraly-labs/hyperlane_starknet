@@ -3,8 +3,7 @@ use hyperlane_starknet::contracts::mocks::message_recipient::message_recipient;
 use hyperlane_starknet::interfaces::{
     IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
     IMessageRecipientDispatcherTrait, IInterchainSecurityModule,
-    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-    IMultisigIsmDispatcher, IMultisigIsmDispatcherTrait, IValidatorAnnounceDispatcher,
+    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait, IValidatorAnnounceDispatcher,
     IValidatorAnnounceDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait
 };
 use snforge_std::{
@@ -82,12 +81,6 @@ pub fn setup_messageid_multisig_ism() -> IInterchainSecurityModuleDispatcher {
 
     let (messageid_multisig_addr, _) = messageid_multisig_class.deploy(@array![]).unwrap();
     IInterchainSecurityModuleDispatcher { contract_address: messageid_multisig_addr }
-}
-
-pub fn setup_multisig_ism() -> IMultisigIsmDispatcher {
-    let multisig_ism_class = declare("multisig_ism").unwrap();
-    let (multisig_ism_addr, _) = multisig_ism_class.deploy(@array![OWNER().into()]).unwrap();
-    IMultisigIsmDispatcher { contract_address: multisig_ism_addr }
 }
 
 pub fn setup_mailbox_client() -> IMailboxClientDispatcher {

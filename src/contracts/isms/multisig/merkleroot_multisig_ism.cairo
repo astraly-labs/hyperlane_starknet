@@ -51,13 +51,13 @@ pub mod merkleroot_multisig_ism {
                 }
                 let (signature_r, signature_s) = get_signature_at(_metadata.clone(), i);
 
-                // we loop on the validators list public kew in order to find a match
+                // we loop on the validators list public key in order to find a match
                 let mut cur_idx = 0;
                 let is_signer_in_list = loop {
                     if (cur_idx == validators.len()) {
                         break false;
                     }
-                    let signer = *validators.at(cur_idx).address;
+                    let signer = *validators.at(cur_idx);
                     if check_ecdsa_signature(
                         digest, signer.try_into().unwrap(), signature_r, signature_s
                     ) {

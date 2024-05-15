@@ -1,6 +1,5 @@
 use alexandria_bytes::Bytes;
 use core::array::ArrayTrait;
-use hyperlane_starknet::contracts::isms::multisig::multisig_ism::multisig_ism::ValidatorInformations;
 use hyperlane_starknet::contracts::libs::message::Message;
 use starknet::ContractAddress;
 use starknet::EthAddress;
@@ -222,13 +221,13 @@ pub trait IRouter<TContractState> {
 pub trait IMultisigIsm<TContractState> {
     fn validators_and_threshold(
         self: @TContractState, _message: Message
-    ) -> (Span<ValidatorInformations>, u32);
+    ) -> (Span<EthAddress>, u32);
 
-    fn get_validators(self: @TContractState) -> Span<ValidatorInformations>;
+    fn get_validators(self: @TContractState) -> Span<EthAddress>;
 
     fn get_threshold(self: @TContractState) -> u32;
 
-    fn set_validators(ref self: TContractState, _validators: Span<ValidatorInformations>);
+    fn set_validators(ref self: TContractState, _validators: Span<EthAddress>);
 
     fn set_threshold(ref self: TContractState, _threshold: u32);
 }

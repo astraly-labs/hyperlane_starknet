@@ -15,15 +15,10 @@ pub mod multisig_ism {
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
     type Index = felt252;
 
-    #[derive(Serde, Copy, starknet::Store, Drop, PartialEq)]
-    pub struct ValidatorInformations {
-        pub address: EthAddress,
-        pub public_key: u256
-    }
 
     #[storage]
     struct Storage {
-        validators: LegacyMap<u32, ValidatorInformations>,
+        validators: LegacyMap<u32, EthAddress>,
         threshold: u32,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
@@ -48,12 +43,11 @@ pub mod multisig_ism {
 
     mod Errors {
         pub const VALIDATOR_ADDRESS_CANNOT_BE_NULL: felt252 = 'Validator address cannot be 0';
-        pub const VALIDATOR_PUBLIC_KEY_CANNOT_BE_NULL: felt252 = 'Validator pk cannot be 0';
     }
 
     #[abi(embed_v0)]
     impl IMultisigIsmImpl of IMultisigIsm<ContractState> {
-        fn get_validators(self: @ContractState) -> Span<ValidatorInformations> {
+        fn get_validators(self: @ContractState) -> Span<EthAddress> {
             build_validators_span(self)
         }
 
@@ -61,7 +55,7 @@ pub mod multisig_ism {
             self.threshold.read()
         }
 
-        fn set_validators(ref self: ContractState, _validators: Span<ValidatorInformations>) {
+        fn set_validators(ref self: ContractState, _validators: Span<EthAddress>) {
             self.ownable.assert_only_owner();
             let mut cur_idx = 0;
 
@@ -71,10 +65,8 @@ pub mod multisig_ism {
                 }
                 let validator = *_validators.at(cur_idx);
                 assert(
-                    validator.address != 0.try_into().unwrap(),
-                    Errors::VALIDATOR_ADDRESS_CANNOT_BE_NULL
+                    validator != 0.try_into().unwrap(), Errors::VALIDATOR_ADDRESS_CANNOT_BE_NULL
                 );
-                // assert(validator.public_key != 0, Errors::VALIDATOR_PUBLIC_KEY_CANNOT_BE_NULL);
                 self.validators.write(cur_idx.into(), validator);
                 cur_idx += 1;
             }
@@ -87,7 +79,7 @@ pub mod multisig_ism {
 
         fn validators_and_threshold(
             self: @ContractState, _message: Message
-        ) -> (Span<ValidatorInformations>, u32) {
+        ) -> (Span<EthAddress>, u32) {
             // USER CONTRACT DEFINITION HERE
             // USER CAN SPECIFY VALIDATORS SELECTION CONDITIONS
             let threshold = self.threshold.read();
@@ -95,12 +87,12 @@ pub mod multisig_ism {
         }
     }
 
-    fn build_validators_span(self: @ContractState) -> Span<ValidatorInformations> {
+    fn build_validators_span(self: @ContractState) -> Span<EthAddress> {
         let mut validators = ArrayTrait::new();
         let mut cur_idx = 0;
         loop {
             let validator = self.validators.read(cur_idx);
-            if (validator.address == 0.try_into().unwrap()) {
+            if (validator == 0.try_into().unwrap()) {
                 break ();
             }
             validators.append(validator);

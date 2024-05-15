@@ -19,7 +19,7 @@ pub mod messageid_multisig_ism {
 
     mod Errors {
         pub const NO_MULTISIG_THRESHOLD_FOR_MESSAGE: felt252 = 'No MultisigISM treshold present';
-        pub const VERIFICATION_FAILED_THRESHOLD_NOT_REACHED: felt252 = 'Verify failed, < threshold';
+        pub const NO_MATCH_FOR_SIGNATURE: felt252 = 'No match for given signature';
         pub const EMPTY_METADATA: felt252 = 'Empty metadata';
     }
     #[abi(embed_v0)]
@@ -42,8 +42,6 @@ pub mod messageid_multisig_ism {
             let (validators, threshold) = validator_configuration
                 .validators_and_threshold(_message);
             assert(threshold > 0, Errors::NO_MULTISIG_THRESHOLD_FOR_MESSAGE);
-            let validator_count = validators.len();
-            let mut unmatched_signatures = 0;
             let mut matched_signatures = 0;
             let mut i = 0;
 
@@ -53,41 +51,28 @@ pub mod messageid_multisig_ism {
                     break ();
                 }
                 let signature = get_signature_at(_metadata.clone(), i);
-
-                // we loop on the validators list public kew in order to find a match
+                // we loop on the validators list public key in order to find a match
                 let mut cur_idx = 0;
                 let is_signer_in_list = loop {
                     if (cur_idx == validators.len()) {
                         break false;
                     }
-                    let signer = *validators.at(cur_idx).address;
-                    if bool_is_eth_signature_valid(
-                        digest.into(), signature, signer.try_into().unwrap()
-                    ) {
+                    let signer = *validators.at(cur_idx);
+                    if bool_is_eth_signature_valid(digest, signature, signer) {
                         // we found a match
                         break true;
                     }
                     cur_idx += 1;
                 };
-                if (!is_signer_in_list) {
-                    unmatched_signatures += 1;
-                } else {
-                    matched_signatures += 1;
-                }
-                assert(
-                    unmatched_signatures < validator_count - threshold,
-                    Errors::VERIFICATION_FAILED_THRESHOLD_NOT_REACHED
-                );
+                assert(is_signer_in_list, Errors::NO_MATCH_FOR_SIGNATURE);
                 i += 1;
             };
-            assert(
-                matched_signatures >= threshold, Errors::VERIFICATION_FAILED_THRESHOLD_NOT_REACHED
-            );
+            println!("matched_signatures: {}", matched_signatures);
             true
         }
     }
 
-    fn digest(_metadata: Bytes, _message: Message) -> felt252 {
+    fn digest(_metadata: Bytes, _message: Message) -> u256 {
         let origin_merkle_tree_hook = MessageIdIsmMetadata::origin_merkle_tree_hook(
             _metadata.clone()
         );
@@ -100,8 +85,6 @@ pub mod messageid_multisig_ism {
             index,
             MessageTrait::format_message(_message)
         )
-            .try_into()
-            .unwrap()
     }
 
     fn get_signature_at(_metadata: Bytes, _index: u32) -> Signature {

@@ -130,10 +130,10 @@ pub mod validator_announce {
         let mailboxclient = IMailboxClientDispatcher {
             contract_address: self.mailboxclient.read()
         };
-        let mailboxcient_address: felt252 = self.mailboxclient.read().try_into().unwrap();
+        let mailboxclient_address: felt252 = self.mailboxclient.read().try_into().unwrap();
         let mut input: Array<u256> = array![
             mailboxclient.get_local_domain().into(),
-            mailboxcient_address.try_into().unwrap(),
+            mailboxclient_address.try_into().unwrap(),
             HYPERLANE_ANNOUNCEMENT.into()
         ];
         let hash = keccak_u256s_be_inputs(input.span());

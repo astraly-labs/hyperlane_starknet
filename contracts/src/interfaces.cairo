@@ -1,7 +1,8 @@
 use alexandria_bytes::Bytes;
+use core::array::ArrayTrait;
 use hyperlane_starknet::contracts::libs::message::Message;
 use starknet::ContractAddress;
-
+use starknet::EthAddress;
 #[derive(Serde)]
 pub enum Types {
     UNUSED,
@@ -18,17 +19,18 @@ pub enum Types {
 }
 
 
-#[derive(Serde)]
+#[derive(Serde, Drop, PartialEq)]
 pub enum ModuleType {
-    UNUSED,
-    ROUTING,
-    AGGREGATION,
-    LEGACY_MULTISIG,
-    MERKLE_ROOT_MULTISIG,
-    MESSAGE_ID_MULTISIG,
+    UNUSED: ContractAddress,
+    ROUTING: ContractAddress,
+    AGGREGATION: ContractAddress,
+    LEGACY_MULTISIG: ContractAddress,
+    MERKLE_ROOT_MULTISIG: ContractAddress,
+    MESSAGE_ID_MULTISIG: ContractAddress,
     NULL, // used with relayer carrying no metadata
-    CCIP_READ,
+    CCIP_READ: ContractAddress,
 }
+
 
 #[starknet::interface]
 pub trait IMailbox<TContractState> {
@@ -102,12 +104,24 @@ pub trait IInterchainSecurityModule<TContractState> {
     /// * `_metadata` - Off-chain metadata provided by a relayer, specific to the security model encoded by 
     /// the module (e.g. validator signatures)
     /// * `_message` - Hyperlane encoded interchain message
-    fn verify(self: @TContractState, _metadata: Bytes, _message: Message) -> bool;
+    fn verify(self: @TContractState, _metadata: Bytes, _message: Message,) -> bool;
+
+    fn validators_and_threshold(
+        self: @TContractState, _message: Message
+    ) -> (Span<EthAddress>, u32);
+
+    fn get_validators(self: @TContractState) -> Span<EthAddress>;
+
+    fn get_threshold(self: @TContractState) -> u32;
+
+    fn set_validators(ref self: TContractState, _validators: Span<EthAddress>);
+
+    fn set_threshold(ref self: TContractState, _threshold: u32);
 }
 
 #[starknet::interface]
 pub trait ISpecifiesInterchainSecurityModule<TContractState> {
-    fn interchain_security_module(self: @TContractState) -> ContractAddress;
+    fn interchain_security_module(self: @TContractState) -> ModuleType;
 }
 
 
@@ -146,6 +160,12 @@ pub trait IMailboxClient<TContractState> {
         _hook: ContractAddress,
         _interchain_security_module: ContractAddress,
     );
+
+    fn get_hook(self: @TContractState) -> ContractAddress;
+
+    fn get_local_domain(self: @TContractState) -> u32;
+
+    fn get_interchain_security_module(self: @TContractState) -> ContractAddress;
 
     fn _is_latest_dispatched(self: @TContractState, _id: u256) -> bool;
 
@@ -186,7 +206,6 @@ pub trait IInterchainGasPaymaster<TContractState> {
     ) -> u256;
 }
 
-
 #[starknet::interface]
 pub trait IRouter<TContractState> {
     fn routers(self: @TContractState, _domain: u32) -> ContractAddress;
@@ -204,3 +223,48 @@ pub trait IRouter<TContractState> {
     fn handle(self: @TContractState, _origin: u32, _sender: ContractAddress, _message: Message);
 }
 
+
+#[starknet::interface]
+pub trait IDefaultFallbackRoutingIsm<TContractState> {
+    /// Returns an enum that represents the type of security model encoded by this ISM.
+    /// Relayers infer how to fetch and format metadata.
+    fn module_type(self: @TContractState) -> ModuleType;
+
+    fn route(self: @TContractState, _message: Message) -> ContractAddress;
+
+    fn verify(self: @TContractState, _metadata: Bytes, _message: Message) -> bool;
+}
+
+#[starknet::interface]
+pub trait IDomainRoutingIsm<TContractState> {
+    fn initialize(ref self: TContractState, _domains: Span<u32>, _modules: Span<ContractAddress>);
+
+    fn set(ref self: TContractState, _domain: u32, _module: ContractAddress);
+
+    fn remove(ref self: TContractState, _domain: u32);
+
+    fn domains(self: @TContractState) -> Span<u32>;
+
+    fn module(self: @TContractState, _origin: u32) -> ContractAddress;
+
+    fn route(self: @TContractState, _message: Message) -> ContractAddress;
+}
+
+
+#[starknet::interface]
+pub trait IValidatorAnnounce<TContractState> {
+    fn get_announced_validators(self: @TContractState) -> Span<EthAddress>;
+
+    fn get_announced_storage_locations(
+        self: @TContractState, _validators: Span<EthAddress>
+    ) -> Span<Span<felt252>>;
+
+    fn announce(
+        ref self: TContractState,
+        _validator: EthAddress,
+        _storage_location: felt252,
+        _signature: Bytes
+    ) -> bool;
+
+    fn get_announcement_digest(self: @TContractState, _storage_location: felt252) -> u256;
+}

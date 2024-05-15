@@ -5,10 +5,15 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    env: 
+      working-directory: ./contracts
     steps:
       - uses: actions/checkout@v3
       - uses: software-mansion/setup-scarb@v1
       - uses: foundry-rs/setup-snfoundry@v3
-      - run: scarb fmt --check
-      - run: scarb build
-      - run: snforge test
+      - working-directory: ${{ env.working-directory}}
+        run: scarb fmt --check
+      - working-directory: ${{ env.working-directory}}
+        run: scarb build
+      - working-directory: ${{ env.working-directory}}
+        run: snforge test

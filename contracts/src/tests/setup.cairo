@@ -3,8 +3,9 @@ use hyperlane_starknet::contracts::mocks::message_recipient::message_recipient;
 use hyperlane_starknet::interfaces::{
     IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
     IMessageRecipientDispatcherTrait, IInterchainSecurityModule,
-    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait, IValidatorAnnounceDispatcher,
-    IValidatorAnnounceDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait
+    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
+    IValidatorAnnounceDispatcher, IValidatorAnnounceDispatcherTrait, IMailboxClientDispatcher,
+    IMailboxClientDispatcherTrait
 };
 use snforge_std::{
     declare, ContractClassTrait, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn

@@ -104,11 +104,7 @@ pub trait IInterchainSecurityModule<TContractState> {
     /// * `_metadata` - Off-chain metadata provided by a relayer, specific to the security model encoded by 
     /// the module (e.g. validator signatures)
     /// * `_message` - Hyperlane encoded interchain message
-    fn verify(
-        self: @TContractState,
-        _metadata: Bytes,
-        _message: Message,
-    ) -> bool;
+    fn verify(self: @TContractState, _metadata: Bytes, _message: Message,) -> bool;
 
     fn validators_and_threshold(
         self: @TContractState, _message: Message

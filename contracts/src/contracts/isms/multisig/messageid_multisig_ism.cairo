@@ -5,22 +5,22 @@ pub mod messageid_multisig_ism {
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::contracts::libs::multisig::message_id_ism_metadata::message_id_ism_metadata::MessageIdIsmMetadata;
-    use hyperlane_starknet::interfaces::{ ModuleType,
-        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+    use hyperlane_starknet::interfaces::{
+        ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait,
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use starknet::ContractAddress;
+    use starknet::EthAddress;
+    use starknet::eth_signature::is_eth_signature_valid;
+    use starknet::secp256_trait::{Signature, signature_from_vrs};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
-    use starknet::ContractAddress;
-    use starknet::EthAddress;
-    use starknet::eth_signature::is_eth_signature_valid;
-    use starknet::secp256_trait::{Signature, signature_from_vrs};
     #[storage]
     struct Storage {
         validators: LegacyMap<u32, EthAddress>,
@@ -47,7 +47,7 @@ pub mod messageid_multisig_ism {
         UpgradeableEvent: UpgradeableComponent::Event,
     }
 
-    
+
     #[constructor]
     fn constructor(ref self: ContractState, _owner: ContractAddress) {
         self.ownable.initializer(_owner);
@@ -59,11 +59,7 @@ pub mod messageid_multisig_ism {
             ModuleType::MESSAGE_ID_MULTISIG(starknet::get_contract_address())
         }
 
-        fn verify(
-            self: @ContractState,
-            _metadata: Bytes,
-            _message: Message,
-        ) -> bool {
+        fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
             assert(_metadata.clone().data().len() > 0, Errors::EMPTY_METADATA);
             let digest = digest(_metadata.clone(), _message.clone());
             let (validators, threshold) = self.validators_and_threshold(_message);

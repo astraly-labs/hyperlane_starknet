@@ -1,0 +1,3 @@
+tests/contracts/eth/bind/*.rs
+!tests/contracts/eth/bind/mod.rs
+target/

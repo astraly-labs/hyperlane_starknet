@@ -8,16 +8,19 @@ on:
 jobs:
   rust_build:
     runs-on: ubuntu-latest
+    env: 
+      working-directory: ./rust
     steps:
       - uses: actions/checkout@v3
-      - run: cd rust
 
       # selecting a toolchain either by action or manual `rustup` calls should happen
       # before the plugin, as the cache uses the current rustc version as its cache key
-      - run: rustup show
+      - working-directory: ${{ env.working-directory}}
+        run: rustup show
 
       - uses: Swatinem/rust-cache@v2
 
       - name: Build the project
+        working-directory: ${{ env.working-directory}}
         run: |
           cargo build --release

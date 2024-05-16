@@ -1,13 +1,14 @@
 use std::sync::Arc;
 
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
+use cairo_lang_starknet_classes::contract_class::ContractClass;
 use starknet::{
     accounts::{Account, ConnectedAccount, SingleOwnerAccount},
     contract::ContractFactory,
     core::types::{
         contract::{CompiledClass, SierraClass},
-        BlockId, BlockTag, ContractClass, FieldElement, FlattenedSierraClass,
-        InvokeTransactionResult, StarknetError,
+        BlockId, BlockTag, FieldElement, FlattenedSierraClass, InvokeTransactionResult,
+        StarknetError,
     },
     providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, ProviderError, Url},
     signers::{LocalWallet, SigningKey},
@@ -102,17 +103,14 @@ pub fn build_single_owner_account(
 /// The contract artifact.
 fn contract_artifact(contract_name: &str) -> eyre::Result<(FlattenedSierraClass, FieldElement)> {
     let artifact_path = format!("{BUILD_PATH_PREFIX}{contract_name}.contract_class.json");
-    let file = std::fs::File::open(artifact_path).unwrap_or_else(|_| {
-        panic!(
-            "Compiled contract {} not found: run `scarb build` in ../contracts",
-            contract_name
-        )
-    });
+    let file = std::fs::File::open(artifact_path.clone())?;
     let sierra_class: SierraClass = serde_json::from_reader(file)?;
 
+    let file = std::fs::File::open(artifact_path)?;
     let casm_contract_class: ContractClass = serde_json::from_reader(file)?;
-    let casm_contract = CasmContractClass::from_contract_class(casm_contract_class, true)
-        .map_err(|e| eyre::eyre!("CasmContractClass from ContractClass error: {e}"))?;
+    let casm_contract =
+        CasmContractClass::from_contract_class(casm_contract_class, true, usize::MAX)
+            .map_err(|e| eyre::eyre!("CasmContractClass from ContractClass error: {e}"))?;
     let res = serde_json::to_string_pretty(&casm_contract)?;
     let compiled_class: CompiledClass = serde_json::from_str(&res)?;
 

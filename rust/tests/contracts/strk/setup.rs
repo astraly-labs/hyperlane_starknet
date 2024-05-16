@@ -34,7 +34,7 @@ impl Env {
     }
 }
 
-pub async fn setup_env(hrp: &str, domain: u32, validators: &[TestValidators]) -> eyre::Result<Env> {
+pub async fn setup_env(domain: u32, validators: &[TestValidators]) -> eyre::Result<Env> {
     let owner = get_dev_account(0);
     let deployer = get_dev_account(1);
     let tester = get_dev_account(2);

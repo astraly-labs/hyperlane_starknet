@@ -101,18 +101,16 @@ pub fn build_single_owner_account(
 /// * `path` - The path to the contract artifact.
 /// # Returns
 /// The contract artifact.
-fn contract_artifact(contract_name: &str) -> eyre::Result<(FlattenedSierraClass, FieldElement)> {
+fn contract_artifacts(contract_name: &str) -> eyre::Result<(FlattenedSierraClass, FieldElement)> {
     let artifact_path = format!("{BUILD_PATH_PREFIX}{contract_name}.contract_class.json");
+
     let file = std::fs::File::open(artifact_path.clone())?;
     let sierra_class: SierraClass = serde_json::from_reader(file)?;
 
+    let artifact_path = format!("{BUILD_PATH_PREFIX}{contract_name}.compiled_contract_class.json");
     let file = std::fs::File::open(artifact_path)?;
-    let casm_contract_class: ContractClass = serde_json::from_reader(file)?;
-    let casm_contract =
-        CasmContractClass::from_contract_class(casm_contract_class, true, usize::MAX)
-            .map_err(|e| eyre::eyre!("CasmContractClass from ContractClass error: {e}"))?;
-    let res = serde_json::to_string_pretty(&casm_contract)?;
-    let compiled_class: CompiledClass = serde_json::from_str(&res)?;
+
+    let compiled_class: CompiledClass = serde_json::from_reader(file)?;
 
     Ok((sierra_class.flatten()?, compiled_class.class_hash()?))
 }
@@ -171,7 +169,7 @@ async fn declare_contract(
     contract_name: &str,
 ) -> eyre::Result<FieldElement> {
     // Load the contract artifact.
-    let (flattened_class, compiled_class_hash) = contract_artifact(contract_name)?;
+    let (flattened_class, compiled_class_hash) = contract_artifacts(contract_name)?;
     let class_hash = flattened_class.class_hash();
 
     // Declare the contract class if it is not already declared.

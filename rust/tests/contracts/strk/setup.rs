@@ -7,6 +7,7 @@ use crate::validator::TestValidators;
 use super::{
     deploy_core, get_dev_account,
     hook::Hook,
+    ism::prepare_routing_ism,
     types::{Codes, CoreDeployments},
     StarknetAccount,
 };

@@ -1767,6 +1767,8 @@ dependencies = [
  "cainome",
  "ethers",
  "eyre",
+ "futures",
+ "k256",
  "rstest",
  "serde",
  "serde_json",

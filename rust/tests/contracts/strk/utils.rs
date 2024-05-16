@@ -1,8 +1,9 @@
 use starknet::{
     accounts::SingleOwnerAccount,
-    core::types::FieldElement,
+    contract::ContractFactory,
+    core::types::{BlockId, BlockTag, FieldElement, InvokeTransactionResult},
     providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Url},
-    signers::LocalWallet,
+    signers::{LocalWallet, SigningKey},
 };
 
 use super::StarknetAccount;
@@ -28,12 +29,27 @@ const KATANA_CHAIN_ID: u32 = 82743958523457;
 
 /// Returns a pre-funded account for a local katana chain.
 pub fn get_dev_account(index: u32) -> StarknetAccount {
-    let (address, private_key) = KATANA_PREFUNDED_ACCOUNTS
+    let (address, private_key) = *KATANA_PREFUNDED_ACCOUNTS
         .get(index as usize)
         .expect("Invalid index");
 
-    let signer = LocalWallet::from_signing_key(private_key);
-    build_single_owner_account(KATANA_RPC_URL, signer, address, false, KATANA_CHAIN_ID)
+    let signer = LocalWallet::from_signing_key(SigningKey::from_secret_scalar(
+        FieldElement::from_hex_be(&private_key).unwrap(),
+    ));
+
+    let mut account = build_single_owner_account(
+        &Url::parse(KATANA_RPC_URL).expect("Invalid rpc url"),
+        signer,
+        &FieldElement::from_hex_be(address).unwrap(),
+        false,
+        KATANA_CHAIN_ID,
+    );
+
+    // `SingleOwnerAccount` defaults to checking nonce and estimating fees against the latest
+    // block. Optionally change the target block to pending with the following line:
+    account.set_block_id(BlockId::Tag(BlockTag::Pending));
+
+    account
 }
 
 /// Creates a single owner account for a given signer and account address.
@@ -65,7 +81,25 @@ pub fn build_single_owner_account(
         rpc_client,
         signer,
         *account_address,
-        chain_id,
+        chain_id.into(),
         execution_encoding,
+    )
+}
+
+/// Deploys a contract with the given class hash, constructor calldata, and salt.
+/// Returns the deployed address and the transaction result.
+pub async fn deploy_contract(
+    class_hash: FieldElement,
+    constructor_calldata: Vec<FieldElement>,
+    salt: FieldElement,
+    deployer: &StarknetAccount,
+) -> (FieldElement, InvokeTransactionResult) {
+    let contract_factory = ContractFactory::new(class_hash, deployer);
+
+    let deployment = contract_factory.deploy(constructor_calldata, salt, false);
+
+    (
+        deployment.deployed_address(),
+        deployment.send().await.expect("Failed to deploy contract"),
     )
 }

@@ -1,6 +1,9 @@
 use std::collections::BTreeMap;
 
-use starknet::{accounts::SingleOwnerAccount, providers::AnyProvider, signers::LocalWallet};
+use starknet::{
+    accounts::SingleOwnerAccount, core::types::FieldElement, providers::AnyProvider,
+    signers::LocalWallet,
+};
 
 pub type StarknetAccount = SingleOwnerAccount<AnyProvider, LocalWallet>;
 
@@ -15,32 +18,32 @@ impl FromIterator<(String, u64)> for CodesMap {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Codes {
-    pub mailbox: String,
+    pub mailbox: FieldElement,
     #[serde(rename = "validator_announce")]
-    pub va: String,
+    pub va: FieldElement,
 
-    pub hook_aggregate: String,
-    pub hook_merkle: String,
-    pub hook_pausable: String,
-    pub hook_routing: String,
-    pub hook_routing_custom: String,
-    pub hook_routing_fallback: String,
+    pub hook_aggregate: FieldElement,
+    pub hook_merkle: FieldElement,
+    pub hook_pausable: FieldElement,
+    pub hook_routing: FieldElement,
+    pub hook_routing_custom: FieldElement,
+    pub hook_routing_fallback: FieldElement,
 
-    pub igp: String,
-    pub igp_oracle: String,
+    pub igp: FieldElement,
+    pub igp_oracle: FieldElement,
 
-    pub ism_aggregate: String,
-    pub ism_multisig: String,
-    pub ism_routing: String,
+    pub ism_aggregate: FieldElement,
+    pub ism_multisig: FieldElement,
+    pub ism_routing: FieldElement,
 
-    pub test_mock_hook: String,
-    pub test_mock_ism: String,
-    pub test_mock_msg_receiver: String,
+    pub test_mock_hook: FieldElement,
+    pub test_mock_ism: FieldElement,
+    pub test_mock_msg_receiver: FieldElement,
 
-    pub warp_strk20: String,
-    pub warp_native: String,
+    pub warp_strk20: FieldElement,
+    pub warp_native: FieldElement,
 
-    pub strk20_base: String,
+    pub strk20_base: FieldElement,
 }
 
 impl TryFrom<CodesMap> for Codes {
@@ -55,13 +58,13 @@ impl TryFrom<CodesMap> for Codes {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Default, serde::Serialize, serde::Deserialize)]
 pub struct CoreDeployments {
-    pub mailbox: String,
-    pub default_ism: String,
-    pub default_hook: String,
-    pub required_hook: String,
-    pub msg_receiver: String,
+    pub mailbox: FieldElement,
+    pub default_ism: FieldElement,
+    pub default_hook: FieldElement,
+    pub required_hook: FieldElement,
+    pub msg_receiver: FieldElement,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]

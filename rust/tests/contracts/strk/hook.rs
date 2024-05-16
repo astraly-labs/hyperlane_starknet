@@ -11,6 +11,7 @@ pub enum Hook {
     },
 
     Merkle {},
+    Igp(u32),
 
     Pausable {},
 

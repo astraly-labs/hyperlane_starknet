@@ -1,3 +1,9 @@
+#[allow(dead_code)]
+mod constants;
+mod contracts;
+mod event;
+mod validator;
+
 use contracts::strk::mailbox::{mailbox, Bytes};
 use ethers::{
     prelude::parse_log, providers::Middleware, signers::Signer, types::TransactionReceipt,
@@ -14,11 +20,6 @@ use crate::{
     contracts::{eth, strk},
     validator::TestValidators,
 };
-
-mod constants;
-mod contracts;
-mod event;
-mod validator;
 
 async fn send_msg_strk_to_evm<M, S>(
     from: &strk::Env,

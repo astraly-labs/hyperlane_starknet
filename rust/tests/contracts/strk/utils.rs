@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use cairo_lang_starknet::casm_contract_class::CasmContractClass;
+use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use starknet::{
     accounts::{Account, ConnectedAccount, SingleOwnerAccount},
     contract::ContractFactory,

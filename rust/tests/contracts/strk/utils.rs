@@ -1,12 +1,19 @@
+use std::sync::Arc;
+
 use starknet::{
-    accounts::SingleOwnerAccount,
+    accounts::{Account, ConnectedAccount, SingleOwnerAccount},
     contract::ContractFactory,
-    core::types::{BlockId, BlockTag, FieldElement, InvokeTransactionResult},
-    providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Url},
+    core::types::{
+        contract::SierraClass, BlockId, BlockTag, FieldElement, InvokeTransactionResult,
+        StarknetError,
+    },
+    providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, ProviderError, Url},
     signers::{LocalWallet, SigningKey},
 };
 
-use super::StarknetAccount;
+use super::{types::Codes, StarknetAccount};
+
+const BUILD_PATH_PREFIX: &str = "../target/dev/hyperlane_starknet_";
 
 const KATANA_RPC_URL: &str = "http://localhost:5050";
 
@@ -25,7 +32,7 @@ const KATANA_PREFUNDED_ACCOUNTS: [(&str, &str); 3] = [
     ),
 ];
 
-const KATANA_CHAIN_ID: u32 = 82743958523457;
+const KATANA_CHAIN_ID: u64 = 82743958523457;
 
 /// Returns a pre-funded account for a local katana chain.
 pub fn get_dev_account(index: u32) -> StarknetAccount {
@@ -66,7 +73,7 @@ pub fn build_single_owner_account(
     signer: LocalWallet,
     account_address: &FieldElement,
     is_legacy: bool,
-    chain_id: u32,
+    chain_id: u64,
 ) -> StarknetAccount {
     let rpc_client =
         AnyProvider::JsonRpcHttp(JsonRpcClient::new(HttpTransport::new(rpc_url.clone())));
@@ -86,6 +93,22 @@ pub fn build_single_owner_account(
     )
 }
 
+/// Get the contract artifact from the build directory.
+/// # Arguments
+/// * `path` - The path to the contract artifact.
+/// # Returns
+/// The contract artifact.
+fn contract_artifact(contract_name: &str) -> eyre::Result<SierraClass> {
+    let artifact_path = format!("{BUILD_PATH_PREFIX}{contract_name}.contract_class.json");
+    let file = std::fs::File::open(artifact_path).unwrap_or_else(|_| {
+        panic!(
+            "Compiled contract {} not found: run `scarb build` in ../contracts",
+            contract_name
+        )
+    });
+    serde_json::from_reader(file).map_err(Into::into)
+}
+
 /// Deploys a contract with the given class hash, constructor calldata, and salt.
 /// Returns the deployed address and the transaction result.
 pub async fn deploy_contract(
@@ -102,4 +125,89 @@ pub async fn deploy_contract(
         deployment.deployed_address(),
         deployment.send().await.expect("Failed to deploy contract"),
     )
+}
+
+/// Check if a contract class is already declared.
+/// # Arguments
+/// * `provider` - The StarkNet provider.
+/// * `class_hash` - The contract class hash.
+/// # Returns
+/// `true` if the contract class is already declared, `false` otherwise.
+async fn is_already_declared<P>(provider: &P, class_hash: &FieldElement) -> eyre::Result<bool>
+where
+    P: Provider,
+{
+    match provider
+        .get_class(BlockId::Tag(BlockTag::Pending), class_hash)
+        .await
+    {
+        Ok(_) => {
+            eprintln!("Not declaring class as it's already declared. Class hash:");
+            println!("{}", format!("{:#064x}", class_hash));
+
+            Ok(true)
+        }
+        Err(ProviderError::StarknetError(StarknetError::ClassHashNotFound)) => Ok(false),
+        Err(err) => Err(err.into()),
+    }
+}
+
+/// Declare a contract class. If the contract class is already declared, do nothing.
+/// # Arguments
+/// * `account` - The StarkNet account.
+/// * `contract_name` - The contract name.
+/// # Returns
+/// The contract class hash.
+async fn declare_contract(
+    account: &StarknetAccount,
+    contract_name: &str,
+) -> eyre::Result<FieldElement> {
+    // Load the contract artifact.
+    let contract_artifact = contract_artifact(contract_name)?;
+
+    // Compute the contract class hash.
+    let class_hash = contract_artifact.class_hash()?;
+
+    // Declare the contract class if it is not already declared.
+    if !is_already_declared(account.provider(), &class_hash).await? {
+        println!("\n==> Declaring Contract: {contract_name}");
+        let flattened_class = contract_artifact.flatten()?;
+        account
+            .declare(Arc::new(flattened_class), class_hash)
+            .send()
+            .await?;
+        println!("Declared Class Hash: {}", format!("{:#064x}", class_hash));
+    };
+
+    Ok(class_hash)
+}
+
+pub async fn declare_all(deployer: &StarknetAccount) -> eyre::Result<Codes> {
+    let mailbox = declare_contract(deployer, "mailbox").await?;
+    let va = declare_contract(deployer, "validator_announce").await?;
+    let ism_multisig = declare_contract(deployer, "messageid_multisig_ism").await?;
+    let test_mock_ism = declare_contract(deployer, "ism").await?;
+    let ism_routing = declare_contract(deployer, "domain_routing_ism").await?;
+
+    Ok(Codes {
+        mailbox,
+        va,
+        hook_aggregate: FieldElement::ZERO,
+        hook_merkle: FieldElement::ZERO,
+        hook_pausable: FieldElement::ZERO,
+        hook_routing: FieldElement::ZERO,
+        hook_routing_custom: FieldElement::ZERO,
+        hook_routing_fallback: FieldElement::ZERO,
+        igp: FieldElement::ZERO,
+        igp_oracle: FieldElement::ZERO,
+        ism_aggregate: FieldElement::ZERO,
+        ism_multisig,
+        ism_routing,
+        test_mock_hook: FieldElement::ZERO,
+        test_mock_ism,
+        test_mock_msg_receiver: FieldElement::ZERO,
+        warp_strk20: FieldElement::ZERO,
+        warp_native: FieldElement::ZERO,
+        strk20_base: FieldElement::ZERO,
+    })
 }

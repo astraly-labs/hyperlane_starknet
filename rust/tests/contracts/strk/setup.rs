@@ -5,7 +5,7 @@ use starknet::core::types::FieldElement;
 use crate::validator::TestValidators;
 
 use super::{
-    deploy_core, get_dev_account,
+    declare_all, deploy_core, get_dev_account,
     hook::Hook,
     ism::prepare_routing_ism,
     types::{Codes, CoreDeployments},
@@ -34,12 +34,7 @@ impl Env {
     }
 }
 
-pub fn setup_env(
-    artifacts: Option<impl Into<PathBuf>>,
-    hrp: &str,
-    domain: u32,
-    validators: &[TestValidators],
-) -> eyre::Result<Env> {
+pub async fn setup_env(hrp: &str, domain: u32, validators: &[TestValidators]) -> eyre::Result<Env> {
     let owner = get_dev_account(0);
     let deployer = get_dev_account(1);
     let tester = get_dev_account(2);
@@ -53,7 +48,7 @@ pub fn setup_env(
         hooks: vec![Hook::Merkle {}],
     };
 
-    let declared_classes = declare_all(&deployer, artifacts)?;
+    let declared_classes = declare_all(&deployer).await?;
     let core = deploy_core(
         &owner,
         &deployer,

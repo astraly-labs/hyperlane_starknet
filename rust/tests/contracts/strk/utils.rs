@@ -1,11 +1,13 @@
 use std::sync::Arc;
 
+use cairo_lang_starknet::casm_contract_class::CasmContractClass;
 use starknet::{
     accounts::{Account, ConnectedAccount, SingleOwnerAccount},
     contract::ContractFactory,
     core::types::{
-        contract::SierraClass, BlockId, BlockTag, FieldElement, InvokeTransactionResult,
-        StarknetError,
+        contract::{CompiledClass, SierraClass},
+        BlockId, BlockTag, ContractClass, FieldElement, FlattenedSierraClass,
+        InvokeTransactionResult, StarknetError,
     },
     providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, ProviderError, Url},
     signers::{LocalWallet, SigningKey},
@@ -98,7 +100,7 @@ pub fn build_single_owner_account(
 /// * `path` - The path to the contract artifact.
 /// # Returns
 /// The contract artifact.
-fn contract_artifact(contract_name: &str) -> eyre::Result<SierraClass> {
+fn contract_artifact(contract_name: &str) -> eyre::Result<(FlattenedSierraClass, FieldElement)> {
     let artifact_path = format!("{BUILD_PATH_PREFIX}{contract_name}.contract_class.json");
     let file = std::fs::File::open(artifact_path).unwrap_or_else(|_| {
         panic!(
@@ -106,7 +108,15 @@ fn contract_artifact(contract_name: &str) -> eyre::Result<SierraClass> {
             contract_name
         )
     });
-    serde_json::from_reader(file).map_err(Into::into)
+    let sierra_class: SierraClass = serde_json::from_reader(file)?;
+
+    let casm_contract_class: ContractClass = serde_json::from_reader(file)?;
+    let casm_contract = CasmContractClass::from_contract_class(casm_contract_class, true)
+        .map_err(|e| eyre::eyre!("CasmContractClass from ContractClass error: {e}"))?;
+    let res = serde_json::to_string_pretty(&casm_contract)?;
+    let compiled_class: CompiledClass = serde_json::from_str(&res)?;
+
+    Ok((sierra_class.flatten()?, compiled_class.class_hash()?))
 }
 
 /// Deploys a contract with the given class hash, constructor calldata, and salt.
@@ -163,17 +173,14 @@ async fn declare_contract(
     contract_name: &str,
 ) -> eyre::Result<FieldElement> {
     // Load the contract artifact.
-    let contract_artifact = contract_artifact(contract_name)?;
-
-    // Compute the contract class hash.
-    let class_hash = contract_artifact.class_hash()?;
+    let (flattened_class, compiled_class_hash) = contract_artifact(contract_name)?;
+    let class_hash = flattened_class.class_hash();
 
     // Declare the contract class if it is not already declared.
     if !is_already_declared(account.provider(), &class_hash).await? {
         println!("\n==> Declaring Contract: {contract_name}");
-        let flattened_class = contract_artifact.flatten()?;
         account
-            .declare(Arc::new(flattened_class), class_hash)
+            .declare(Arc::new(flattened_class), compiled_class_hash)
             .send()
             .await?;
         println!("Declared Class Hash: {}", format!("{:#064x}", class_hash));

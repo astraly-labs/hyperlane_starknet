@@ -41,6 +41,7 @@ cainome = { git = "https://github.com/cartridge-gg/cainome", tag = "v0.2.9", fea
     "abigen-rs",
 ] }
 starknet = "0.10.0"
+cairo-lang-starknet = "2.6.3"
 
 # eth
 ethers = "2.0.7"

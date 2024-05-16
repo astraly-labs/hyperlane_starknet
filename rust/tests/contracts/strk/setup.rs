@@ -57,7 +57,8 @@ pub async fn setup_env(hrp: &str, domain: u32, validators: &[TestValidators]) ->
         default_ism,
         default_hook,
         required_hook,
-    )?;
+    )
+    .await?;
 
     Ok(Env {
         validators: validators.iter().map(|v| (v.domain, v.clone())).collect(),

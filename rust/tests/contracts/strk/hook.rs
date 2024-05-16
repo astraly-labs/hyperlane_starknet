@@ -46,72 +46,71 @@ impl Hook {
 }
 
 impl Hook {
-    fn deploy_mock(
+    async fn deploy_mock(
         codes: &Codes,
         gas: FieldElement,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<String> {
+    ) -> eyre::Result<FieldElement> {
         // deploy mock hook
 
         // invoke set gas amount
 
-        Ok("mock".to_string())
+        Ok(FieldElement::ZERO)
     }
 
-    fn deploy_merkle(
+    async fn deploy_merkle(
         codes: &Codes,
-        mailbox: String,
+        mailbox: FieldElement,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<String> {
+    ) -> eyre::Result<FieldElement> {
         // deploy merkle hook
 
-        Ok("merkle".to_string())
+        Ok(FieldElement::ZERO)
     }
 
-    fn deploy_pausable(
+    async fn deploy_pausable(
         codes: &Codes,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<String> {
+    ) -> eyre::Result<FieldElement> {
         todo!("not implemented")
     }
 
-    fn deploy_routing(
+    async fn deploy_routing(
         code: u64,
         codes: &Codes,
-        mailbox: String,
+        mailbox: FieldElement,
         routes: Vec<(u32, Self)>,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<String> {
+    ) -> eyre::Result<FieldElement> {
         todo!("not implemented")
     }
 
-    fn deploy_aggregate(
+    async fn deploy_aggregate(
         code: u64,
         codes: &Codes,
-        mailbox: String,
+        mailbox: FieldElement,
         hooks: Vec<Self>,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<String> {
+    ) -> eyre::Result<FieldElement> {
         todo!("not implemented")
     }
 
-    pub fn deploy(
+    pub async fn deploy(
         self,
-
         codes: &Codes,
-        mailbox: String,
+        mailbox: FieldElement,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<String> {
+    ) -> eyre::Result<FieldElement> {
         match self {
-            Hook::Mock { gas } => Self::deploy_mock(codes, gas, deployer),
+            Hook::Mock { gas } => Self::deploy_mock(codes, gas, deployer).await,
             Hook::Igp(igp) => todo!("not implemented"),
-            Hook::Merkle {} => Self::deploy_merkle(codes, mailbox, owner, deployer),
-            Hook::Pausable {} => Self::deploy_pausable(codes, owner, deployer),
+            Hook::Merkle {} => Self::deploy_merkle(codes, mailbox, owner, deployer).await,
+            Hook::Pausable {} => Self::deploy_pausable(codes, owner, deployer).await,
             Hook::Routing { routes } => todo!("not implemented"),
             Hook::RoutingCustom {
                 routes,

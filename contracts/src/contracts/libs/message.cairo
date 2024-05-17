@@ -5,7 +5,6 @@ use hyperlane_starknet::utils::keccak256::reverse_endianness;
 use starknet::{ContractAddress, contract_address_const};
 
 pub const HYPERLANE_VERSION: u8 = 3;
-pub const BYTES_ARRAY_SIZE: u16 = 16;
 
 
 #[derive(Serde, starknet::Store, Drop, Clone)]

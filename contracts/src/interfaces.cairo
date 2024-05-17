@@ -3,7 +3,7 @@ use core::array::ArrayTrait;
 use hyperlane_starknet::contracts::libs::message::Message;
 use starknet::ContractAddress;
 use starknet::EthAddress;
-#[derive(Serde)]
+#[derive(Serde, Drop)]
 pub enum Types {
     UNUSED,
     ROUTING,
@@ -131,9 +131,9 @@ pub trait IPostDispatchHook<TContractState> {
 
     fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
 
-    fn post_dispatch(ref self: TContractState, _metadata: Bytes, _message: u256);
+    fn post_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message);
 
-    fn quote_dispatch(ref self: TContractState, _metadata: Bytes, _message: u256) -> u256;
+    fn quote_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message) -> u256;
 }
 
 
@@ -268,3 +268,4 @@ pub trait IValidatorAnnounce<TContractState> {
 
     fn get_announcement_digest(self: @TContractState, _storage_location: felt252) -> u256;
 }
+

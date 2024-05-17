@@ -145,7 +145,7 @@ fn test_dispatch() {
         recipient: RECIPIENT_ADDRESS(),
         body: message_body.clone()
     };
-    let message_id = MessageTrait::format_message(message.clone());
+    let (message_id, message) = MessageTrait::format_message(message.clone());
     mailbox
         .dispatch(
             DESTINATION_DOMAIN, RECIPIENT_ADDRESS(), message_body, Option::None, Option::None
@@ -155,7 +155,7 @@ fn test_dispatch() {
             sender: OWNER(),
             destination_domain: DESTINATION_DOMAIN,
             recipient_address: RECIPIENT_ADDRESS(),
-            message: message_id
+            message: message
         }
     );
     let expected_event_id = mailbox::Event::DispatchId(mailbox::DispatchId { id: message_id });
@@ -195,7 +195,7 @@ fn test_process() {
         recipient: mock_recipient.contract_address,
         body: message_body.clone()
     };
-    let message_id = MessageTrait::format_message(message.clone());
+    let (message_id, _) = MessageTrait::format_message(message.clone());
     let metadata = message_body;
     mailbox.process(metadata.clone(), message);
     let expected_event = mailbox::Event::Process(
@@ -305,7 +305,7 @@ fn test_process_fails_if_already_delivered() {
     };
     let metadata = message_body;
     mailbox.process(metadata.clone(), message.clone());
-    let message_id = MessageTrait::format_message(message.clone());
+    let (message_id, _) = MessageTrait::format_message(message.clone());
     assert(mailbox.delivered(message_id), 'Delivered status did not change');
     mailbox.process(metadata.clone(), message);
 }

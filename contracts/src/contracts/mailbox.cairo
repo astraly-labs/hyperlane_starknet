@@ -102,7 +102,7 @@ pub mod mailbox {
         pub sender: ContractAddress,
         pub destination_domain: u32,
         pub recipient_address: ContractAddress,
-        pub message: u256
+        pub message: Bytes
     }
 
     #[derive(starknet::Event, Drop)]
@@ -247,10 +247,9 @@ pub mod mailbox {
                 Option::None(()) => BytesTrait::new_empty()
             };
 
-            let message = build_message(
+            let (id,message) = build_message(
                 @self, _destination_domain, _recipient_address, _message_body
             );
-            let id = message;
             self.latest_dispatched_id.write(id);
             let current_nonce = self.nonce.read();
             self.nonce.write(current_nonce + 1);
@@ -311,7 +310,7 @@ pub mod mailbox {
             assert(
                 _message.destination == self.local_domain.read(), Errors::UNEXPECTED_DESTINATION
             );
-            let id = MessageTrait::format_message(_message.clone());
+            let (id,_) = MessageTrait::format_message(_message.clone());
             let caller = get_caller_address();
             let block_number = get_block_number();
             assert(!self.delivered(id), Errors::ALREADY_DELIVERED);
@@ -382,7 +381,7 @@ pub mod mailbox {
                 Option::Some(hook_metadata) => hook_metadata,
                 Option::None(()) => BytesTrait::new_empty(),
             };
-            let message = build_message(
+            let (id,message) = build_message(
                 self, _destination_domain, _recipient_address, _message_body.clone()
             );
             let required_hook_address = self.required_hook.read();
@@ -456,7 +455,7 @@ pub mod mailbox {
         _destination_domain: u32,
         _recipient_address: ContractAddress,
         _message_body: Bytes
-    ) -> u256 {
+    ) -> (u256, Bytes) {
         let nonce = self.nonce.read();
         let local_domain = self.local_domain.read();
         let caller = get_caller_address();

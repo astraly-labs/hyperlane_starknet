@@ -67,9 +67,12 @@ where
         .await?;
 
     let dispatch = match dispatch_receipt {
-        MaybePendingTransactionReceipt::PendingReceipt(_) => {
-            return Err(eyre::eyre!("Transaction is pending"))
-        }
+        MaybePendingTransactionReceipt::PendingReceipt(pending_receipt) => match pending_receipt {
+            starknet::core::types::PendingTransactionReceipt::Invoke(receipt) => {
+                parse_dispatch_from_res(&receipt.events)
+            }
+            _ => return Err(eyre::eyre!("Unexpected receipt type, check the hash")),
+        },
         MaybePendingTransactionReceipt::Receipt(receipt) => match receipt {
             starknet::core::types::TransactionReceipt::Invoke(receipt) => {
                 parse_dispatch_from_res(&receipt.events)
@@ -77,6 +80,8 @@ where
             _ => return Err(eyre::eyre!("Unexpected receipt type, check the hash")),
         },
     };
+
+    println!("\nDispatched: {:?}", dispatch);
 
     let process_tx = to.core.mailbox.process(
         vec![].into(),

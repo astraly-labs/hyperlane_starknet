@@ -1,3 +1,4 @@
+use std::future::Future;
 use std::sync::Arc;
 
 use starknet::{
@@ -6,7 +7,7 @@ use starknet::{
     core::types::{
         contract::{CompiledClass, SierraClass},
         BlockId, BlockTag, ExecutionResult, FieldElement, FlattenedSierraClass,
-        InvokeTransactionResult, StarknetError,
+        InvokeTransactionResult, MaybePendingTransactionReceipt, StarknetError,
     },
     macros::felt,
     providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, ProviderError, Url},
@@ -35,6 +36,40 @@ const KATANA_PREFUNDED_ACCOUNTS: [(&str, &str); 3] = [
 ];
 
 const KATANA_CHAIN_ID: u64 = 82743958523457;
+
+pub async fn assert_poll<F, Fut>(f: F, polling_time_ms: u64, max_poll_count: u32)
+where
+    F: Fn() -> Fut,
+    Fut: Future<Output = bool>,
+{
+    for _poll_count in 0..max_poll_count {
+        if f().await {
+            return; // The provided function returned true, exit safely.
+        }
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(polling_time_ms)).await;
+    }
+
+    panic!("Max poll count exceeded.");
+}
+
+type TransactionReceiptResult = Result<MaybePendingTransactionReceipt, ProviderError>;
+
+pub async fn get_transaction_receipt(
+    rpc: &AnyProvider,
+    transaction_hash: FieldElement,
+) -> TransactionReceiptResult {
+    // there is a delay between the transaction being available at the client
+    // and the sealing of the block, hence sleeping for 100ms
+    assert_poll(
+        || async { rpc.get_transaction_receipt(transaction_hash).await.is_ok() },
+        100,
+        20,
+    )
+    .await;
+
+    rpc.get_transaction_receipt(transaction_hash).await
+}
 
 /// Returns a pre-funded account for a local katana chain.
 pub fn get_dev_account(index: u32) -> StarknetAccount {
@@ -128,9 +163,7 @@ pub async fn deploy_contract(
 
     let deploy_res = deployment.send().await.expect("Failed to deploy contract");
 
-    let receipt = deployer
-        .provider()
-        .get_transaction_receipt(deploy_res.transaction_hash)
+    let receipt = get_transaction_receipt(deployer.provider(), deploy_res.transaction_hash)
         .await
         .expect("Failed to get transaction receipt");
 
@@ -202,6 +235,7 @@ pub async fn declare_all(deployer: &StarknetAccount) -> eyre::Result<Codes> {
     let ism_multisig = declare_contract(deployer, "messageid_multisig_ism").await?;
     let test_mock_ism = declare_contract(deployer, "ism").await?;
     let ism_routing = declare_contract(deployer, "domain_routing_ism").await?;
+    let test_mock_msg_receiver = declare_contract(deployer, "message_recipient").await?;
 
     Ok(Codes {
         mailbox,
@@ -219,7 +253,7 @@ pub async fn declare_all(deployer: &StarknetAccount) -> eyre::Result<Codes> {
         ism_routing,
         test_mock_hook: FieldElement::ZERO,
         test_mock_ism,
-        test_mock_msg_receiver: FieldElement::ZERO,
+        test_mock_msg_receiver,
         warp_strk20: FieldElement::ZERO,
         warp_native: FieldElement::ZERO,
         strk20_base: FieldElement::ZERO,

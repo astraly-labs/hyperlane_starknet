@@ -145,7 +145,7 @@ fn test_dispatch() {
         recipient: RECIPIENT_ADDRESS(),
         body: message_body.clone()
     };
-    let (message_id, message) = MessageTrait::format_message(message.clone());
+    let (message_id, _) = MessageTrait::format_message(message.clone());
     mailbox
         .dispatch(
             DESTINATION_DOMAIN, RECIPIENT_ADDRESS(), message_body, Option::None, Option::None

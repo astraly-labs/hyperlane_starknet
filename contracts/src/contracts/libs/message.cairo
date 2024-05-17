@@ -50,8 +50,6 @@ pub impl MessageImpl of MessageTrait {
     fn format_message(_message: Message) -> (u256, Message) {
         let sender: felt252 = _message.sender.into();
         let recipient: felt252 = _message.recipient.into();
-        let u256_sender: u256 = sender.into();
-        let u256_recipient: u256 = recipient.into();
 
         let mut input: Array<u256> = array![
             _message.version.into(),
@@ -61,23 +59,10 @@ pub impl MessageImpl of MessageTrait {
             recipient.into(),
             _message.body.size().into()
         ];
-        let mut bytes_input: Array<u128> = array![
-            _message.version.into(),
-            _message.origin.into(),
-            u256_sender.high,
-            u256_sender.low,
-            _message.destination.into(),
-            u256_recipient.high,
-            u256_recipient.low,
-            _message.body.size().into()
-        ];
         let mut message_data = _message.clone().body.data();
         loop {
             match message_data.pop_front() {
-                Option::Some(data) => {
-                    input.append(data.into());
-                    bytes_input.append(data)
-                },
+                Option::Some(data) => { input.append(data.into()); },
                 Option::None(_) => { break (); }
             };
         };

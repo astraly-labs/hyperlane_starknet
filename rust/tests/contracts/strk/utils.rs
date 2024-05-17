@@ -5,9 +5,10 @@ use starknet::{
     contract::ContractFactory,
     core::types::{
         contract::{CompiledClass, SierraClass},
-        BlockId, BlockTag, FieldElement, FlattenedSierraClass, InvokeTransactionResult,
-        StarknetError,
+        BlockId, BlockTag, ExecutionResult, FieldElement, FlattenedSierraClass,
+        InvokeTransactionResult, StarknetError,
     },
+    macros::felt,
     providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, ProviderError, Url},
     signers::{LocalWallet, SigningKey},
 };
@@ -118,17 +119,29 @@ fn contract_artifacts(contract_name: &str) -> eyre::Result<(FlattenedSierraClass
 pub async fn deploy_contract(
     class_hash: FieldElement,
     constructor_calldata: Vec<FieldElement>,
-    salt: FieldElement,
     deployer: &StarknetAccount,
 ) -> (FieldElement, InvokeTransactionResult) {
     let contract_factory = ContractFactory::new(class_hash, deployer);
+    let salt = felt!("0");
 
     let deployment = contract_factory.deploy(constructor_calldata, salt, false);
 
-    (
-        deployment.deployed_address(),
-        deployment.send().await.expect("Failed to deploy contract"),
-    )
+    let deploy_res = deployment.send().await.expect("Failed to deploy contract");
+
+    let receipt = deployer
+        .provider()
+        .get_transaction_receipt(deploy_res.transaction_hash)
+        .await
+        .expect("Failed to get transaction receipt");
+
+    match receipt.execution_result() {
+        ExecutionResult::Reverted { reason } => {
+            panic!("Deployment reverted: {}", reason)
+        }
+        _ => {}
+    }
+
+    (deployment.deployed_address(), deploy_res)
 }
 
 /// Check if a contract class is already declared.

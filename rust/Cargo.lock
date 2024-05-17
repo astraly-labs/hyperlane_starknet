@@ -1997,6 +1997,7 @@ dependencies = [
  "rstest",
  "serde",
  "serde_json",
+ "sha3",
  "starknet",
  "thiserror",
  "tokio",

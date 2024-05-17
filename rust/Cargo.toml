@@ -59,6 +59,7 @@ anyhow = { version = "1.0.71", features = ["backtrace"] }
 eyre = { version = "0.6.8" }
 
 # crypto
+sha3 = "0.10.8"
 k256 = { version = "0.13.1", default-features = false, features = ["ecdsa"] }
 
 

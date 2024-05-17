@@ -37,7 +37,7 @@ impl Ism {
 
 impl Ism {
     async fn deploy_mock(codes: &Codes, deployer: &StarknetAccount) -> eyre::Result<FieldElement> {
-        let res = deploy_contract(codes.test_mock_ism, vec![], felt!("0"), deployer).await;
+        let res = deploy_contract(codes.test_mock_ism, vec![], deployer).await;
         Ok(res.0)
     }
 
@@ -47,13 +47,7 @@ impl Ism {
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
     ) -> eyre::Result<FieldElement> {
-        let res = deploy_contract(
-            codes.ism_multisig,
-            vec![owner.address()],
-            felt!("0"),
-            deployer,
-        )
-        .await;
+        let res = deploy_contract(codes.ism_multisig, vec![owner.address()], deployer).await;
 
         let contract = messageid_multisig_ism::new(res.0, owner);
         contract
@@ -75,13 +69,7 @@ impl Ism {
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
     ) -> eyre::Result<FieldElement> {
-        let res = deploy_contract(
-            codes.ism_routing,
-            vec![owner.address()],
-            felt!("0"),
-            deployer,
-        )
-        .await;
+        let res = deploy_contract(codes.ism_routing, vec![owner.address()], deployer).await;
 
         let futures = FuturesUnordered::new();
 
@@ -98,7 +86,7 @@ impl Ism {
 
         let modules: Vec<_> = results
             .iter()
-            .map(|a| ContractAddress(*a.as_ref().unwrap()))
+            .map(|a| ContractAddress(*a.as_ref().expect("Failed to deploy ISM")))
             .collect();
 
         let contract = domain_routing_ism::new(res.0, owner);
@@ -132,7 +120,7 @@ impl Ism {
 
         let ism_addrs: Vec<_> = results.iter().map(|a| *a.as_ref().unwrap()).collect();
 
-        let res = deploy_contract(codes.ism_aggregate, ism_addrs, felt!("0"), deployer).await;
+        let res = deploy_contract(codes.ism_aggregate, ism_addrs, deployer).await;
 
         Ok(res.0)
     }
@@ -160,13 +148,7 @@ pub fn prepare_routing_ism(info: Vec<(u32, TestValidators)>) -> Ism {
     let mut isms = vec![];
 
     for (domain, set) in info {
-        isms.push((
-            domain,
-            Ism::Aggregate {
-                isms: vec![Ism::multisig(set)],
-                threshold: 1,
-            },
-        ));
+        isms.push((domain, Ism::multisig(set)));
     }
 
     Ism::routing(isms)

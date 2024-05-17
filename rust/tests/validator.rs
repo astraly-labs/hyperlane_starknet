@@ -32,9 +32,20 @@ impl TestValidator {
     }
 
     pub fn eth_addr(&self) -> EthAddress {
-        EthAddress(
-            FieldElement::from_byte_slice_be(&self.pub_key.to_encoded_point(false).as_bytes())
-                .unwrap(),
+        let hash = keccak256_hash(&self.pub_key.to_encoded_point(false).as_bytes()[1..]);
+
+        let mut bytes = [0u8; 20];
+        bytes.copy_from_slice(&hash.as_slice()[12..]);
+
+        EthAddress(FieldElement::from_byte_slice_be(&bytes).unwrap())
+    }
+
+    pub fn sign(&self, digest: [u8; 32]) -> (FieldElement, RecoveryId) {
+        let (sign, recov_id) = self.priv_key.sign_prehash_recoverable(&digest).unwrap();
+
+        (
+            FieldElement::from_byte_slice_be(sign.to_bytes().as_slice()).unwrap(),
+            recov_id,
         )
     }
 }
@@ -77,4 +88,14 @@ impl TestValidators {
             threshold,
         }
     }
+}
+
+pub fn keccak256_hash(bz: &[u8]) -> Vec<u8> {
+    use sha3::{Digest, Keccak256};
+
+    let mut hasher = Keccak256::new();
+    hasher.update(bz);
+    let hash = hasher.finalize().to_vec();
+
+    hash
 }

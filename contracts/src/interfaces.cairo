@@ -271,13 +271,15 @@ pub trait IValidatorAnnounce<TContractState> {
 
 #[starknet::interface]
 pub trait IAggregation<TContractState> {
-    fn module_type(self: @TContractState) -> ModuleType; 
+    fn module_type(self: @TContractState) -> ModuleType;
 
-    fn modules_and_threshold(self: @TContractState, _message: Message) -> (Span<ContractAddress>, u8);
+    fn modules_and_threshold(
+        self: @TContractState, _message: Message
+    ) -> (Span<ContractAddress>, u8);
 
     fn verify(self: @TContractState, _metadata: Bytes, _message: Message,) -> bool;
 
-    fn get_modules(self: @TContractState) -> Span<ContractAddress> ;
+    fn get_modules(self: @TContractState) -> Span<ContractAddress>;
 
     fn get_threshold(self: @TContractState) -> u8;
 

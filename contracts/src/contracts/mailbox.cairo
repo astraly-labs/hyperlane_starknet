@@ -247,7 +247,7 @@ pub mod mailbox {
                 Option::None(()) => BytesTrait::new_empty()
             };
 
-            let (id,message) = build_message(
+            let (id, message) = build_message(
                 @self, _destination_domain, _recipient_address, _message_body
             );
             self.latest_dispatched_id.write(id);
@@ -310,7 +310,7 @@ pub mod mailbox {
             assert(
                 _message.destination == self.local_domain.read(), Errors::UNEXPECTED_DESTINATION
             );
-            let (id,_) = MessageTrait::format_message(_message.clone());
+            let (id, _) = MessageTrait::format_message(_message.clone());
             let caller = get_caller_address();
             let block_number = get_block_number();
             assert(!self.delivered(id), Errors::ALREADY_DELIVERED);
@@ -381,7 +381,7 @@ pub mod mailbox {
                 Option::Some(hook_metadata) => hook_metadata,
                 Option::None(()) => BytesTrait::new_empty(),
             };
-            let (id,message) = build_message(
+            let (id, message) = build_message(
                 self, _destination_domain, _recipient_address, _message_body.clone()
             );
             let required_hook_address = self.required_hook.read();

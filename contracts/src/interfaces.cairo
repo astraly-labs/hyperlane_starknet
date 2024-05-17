@@ -131,9 +131,9 @@ pub trait IPostDispatchHook<TContractState> {
 
     fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
 
-    fn post_dispatch(ref self: TContractState, _metadata: Bytes, _message: Bytes);
+    fn post_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message);
 
-    fn quote_dispatch(ref self: TContractState, _metadata: Bytes, _message: Bytes) -> u256;
+    fn quote_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message) -> u256;
 }
 
 

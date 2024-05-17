@@ -5,6 +5,7 @@ use hyperlane_starknet::utils::keccak256::reverse_endianness;
 use starknet::{ContractAddress, contract_address_const};
 
 pub const HYPERLANE_VERSION: u8 = 3;
+pub const BYTES_ARRAY_SIZE: u16 = 16;
 
 
 #[derive(Serde, starknet::Store, Drop, Clone)]
@@ -47,7 +48,7 @@ pub impl MessageImpl of MessageTrait {
     ///  # Returns
     /// 
     /// * u256 representing the hash of the message
-    fn format_message(_message: Message) -> (u256, Bytes) {
+    fn format_message(_message: Message) -> (u256, Message) {
         let sender: felt252 = _message.sender.into();
         let recipient: felt252 = _message.recipient.into();
         let u256_sender: u256 = sender.into();
@@ -82,7 +83,6 @@ pub impl MessageImpl of MessageTrait {
             };
         };
         let hash = keccak_u256s_be_inputs(input.span());
-        let size = 77 + _message.body.size() * 16;
-        (reverse_endianness(hash), BytesTrait::new(size, bytes_input))
+        (reverse_endianness(hash), _message)
     }
 }

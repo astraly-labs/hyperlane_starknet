@@ -102,7 +102,7 @@ pub mod mailbox {
         pub sender: ContractAddress,
         pub destination_domain: u32,
         pub recipient_address: ContractAddress,
-        pub message: Bytes
+        pub message: Message
     }
 
     #[derive(starknet::Event, Drop)]
@@ -455,7 +455,7 @@ pub mod mailbox {
         _destination_domain: u32,
         _recipient_address: ContractAddress,
         _message_body: Bytes
-    ) -> (u256, Bytes) {
+    ) -> (u256, Message) {
         let nonce = self.nonce.read();
         let local_domain = self.local_domain.read();
         let caller = get_caller_address();

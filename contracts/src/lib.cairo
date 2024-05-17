@@ -7,6 +7,7 @@ mod contracts {
         pub mod multisig {
             pub mod message_id_ism_metadata;
         }
+        pub mod aggregation_ism_metadata;
     }
     pub mod client {
         pub mod mailboxclient;
@@ -15,6 +16,7 @@ mod contracts {
     pub mod mocks {
         pub mod ism;
         pub mod message_recipient;
+        pub mod hook;
     }
     pub mod isms {
         pub mod multisig {
@@ -23,6 +25,9 @@ mod contracts {
         }
         pub mod routing {
             pub mod domain_routing_ism;
+        }
+        pub mod aggregation {
+            pub mod aggregation;
         }
     }
 }
@@ -35,4 +40,5 @@ mod utils {
 mod tests {
     pub mod setup;
     pub mod test_mailbox;
+    pub mod test_multisig;
 }

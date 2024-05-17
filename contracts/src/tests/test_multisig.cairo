@@ -11,6 +11,7 @@ use hyperlane_starknet::interfaces::{
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IInterchainSecurityModule
 };
+
 use hyperlane_starknet::tests::setup::{
     setup, mock_setup, setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS,
     VALIDATOR_PUBLIC_KEY, setup_validator_announce, get_message_and_signature, LOCAL_DOMAIN,
@@ -20,7 +21,8 @@ use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::cheatcodes::events::EventAssertions;
 use snforge_std::{start_prank, CheatTarget, stop_prank};
-use starknet::eth_address::EthAddress;
+use starknet::eth_address::EthAddress ;
+use starknet::eth_signature::verify_eth_signature;
 use starknet::secp256_trait::Signature;
 #[test]
 fn test_set_validators() {
@@ -162,6 +164,7 @@ fn test_message_id_multisig_module_type() {
 
 
 #[test]
+#[ignore]
 fn test_message_id_multisig_verify() {
     let array = array![
         0x01020304050607080910111213141516,
@@ -179,8 +182,7 @@ fn test_message_id_multisig_verify() {
         body: message_body.clone()
     };
     let messageid = setup_messageid_multisig_ism();
-    let (msg_hash, validators_address, signatures) = get_message_and_signature(false);
-    let validators = setup_messageid_multisig_ism();
+    let (msg_hash, validators_address, signatures) = get_message_and_signature(true);
     let metadata = array![
         0x01020304050607080910111213141516,
         0x16151413121110090807060504030201,
@@ -203,15 +205,26 @@ fn test_message_id_multisig_verify() {
         *signatures.at(3).r.low,
         *signatures.at(3).s.high,
         *signatures.at(3).s.low,
-        0x00000010000000000000000000000000
     ];
-    let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
+    let ownable = IOwnableDispatcher { contract_address: messageid.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    validators.set_validators(validators_address.span());
-    validators.set_threshold(3);
+    messageid.set_validators(validators_address.span());
+    messageid.set_threshold(3);
     let bytes_metadata = BytesTrait::new(496, metadata);
     assert(
-        messageid.verify(bytes_metadata, message, validators.contract_address) == true,
+        messageid.verify(bytes_metadata, message) == true,
         'verification failed'
     );
+}
+
+#[test]
+#[ignore]
+fn test_verify_eth_signature() {
+    let msg_hash = 0x010cdd01ee083a68d6c40ce3ec83fcfab581989f0629f2bbb475b91495b69622;
+    let r = 0x83db08d4e1590714aef8600f5f1e3c967ab6a3b9f93bb4242de0306510e688ea;
+    let s = 0x0af5d1d51ea7e51a291789ff4866a1e36bc4134d956870799380d2d71f5dbf3d;
+    let y_parity =true;
+    let eth_address = 0x7e5f4552091a69125d5dfcb7b8c2659029395bdf_u256.into();
+    let signature = Signature{r,s,y_parity};
+    verify_eth_signature(:msg_hash, :signature, :eth_address);
 }

@@ -3,7 +3,7 @@ use core::array::ArrayTrait;
 use hyperlane_starknet::contracts::libs::message::Message;
 use starknet::ContractAddress;
 use starknet::EthAddress;
-#[derive(Serde)]
+#[derive(Serde, Drop)]
 pub enum Types {
     UNUSED,
     ROUTING,
@@ -267,4 +267,21 @@ pub trait IValidatorAnnounce<TContractState> {
     ) -> bool;
 
     fn get_announcement_digest(self: @TContractState, _storage_location: felt252) -> u256;
+}
+
+#[starknet::interface]
+pub trait IAggregation<TContractState> {
+    fn module_type(self: @TContractState) -> ModuleType; 
+
+    fn modules_and_threshold(self: @TContractState, _message: Message) -> (Span<ContractAddress>, u8);
+
+    fn verify(self: @TContractState, _metadata: Bytes, _message: Message,) -> bool;
+
+    fn get_modules(self: @TContractState) -> Span<ContractAddress> ;
+
+    fn get_threshold(self: @TContractState) -> u8;
+
+    fn set_modules(ref self: TContractState, _modules: Span<ContractAddress>);
+
+    fn set_threshold(ref self: TContractState, _threshold: u8);
 }

@@ -16,7 +16,6 @@ pub mod checkpoint_lib {
         fn domain_hash(_origin: u32, _origin_merkle_tree_hook: u256) -> u256;
     }
     const HYPERLANE: felt252 = 'HYPERLANE';
-    pub const ETH_SIGNED_MESSAGE: felt252 = '\x19Ethereum Signed Message:\n';
     pub const HYPERLANE_ANNOUNCEMENT: felt252 = 'HYPERLANE_ANNOUNCEMENT';
 
     impl CheckpointLibImpl of CheckpointLib {
@@ -29,7 +28,6 @@ pub mod checkpoint_lib {
         ) -> u256 {
             let domain_hash = CheckpointLib::domain_hash(_origin, _origin_merkle_tree_hook);
             let mut input: Array<u256> = array![
-                ETH_SIGNED_MESSAGE.into(),
                 domain_hash.into(),
                 _checkpoint_root.into(),
                 _checkpoint_index.into(),
@@ -48,3 +46,5 @@ pub mod checkpoint_lib {
         }
     }
 }
+
+

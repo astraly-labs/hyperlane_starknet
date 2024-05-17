@@ -3,11 +3,11 @@ pub mod validator_announce {
     use alexandria_bytes::{Bytes, BytesTrait};
     use core::keccak::keccak_u256s_be_inputs;
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::{
-        HYPERLANE_ANNOUNCEMENT, ETH_SIGNED_MESSAGE
+        HYPERLANE_ANNOUNCEMENT
     };
     use hyperlane_starknet::interfaces::IValidatorAnnounce;
     use hyperlane_starknet::interfaces::{IMailboxClientDispatcher, IMailboxClientDispatcherTrait};
-    use hyperlane_starknet::utils::keccak256::reverse_endianness;
+    use hyperlane_starknet::utils::keccak256::{reverse_endianness,to_eth_signature};
     use hyperlane_starknet::utils::store_arrays::StoreFelt252Array;
 
     use starknet::ContractAddress;
@@ -105,11 +105,9 @@ pub mod validator_announce {
         }
         fn get_announcement_digest(self: @ContractState, _storage_location: felt252) -> u256 {
             let domain_hash = domain_hash(self);
-            let mut input: Array<u256> = array![
-                ETH_SIGNED_MESSAGE.into(), domain_hash.into(), _storage_location.into(),
-            ];
-            let hash = keccak_u256s_be_inputs(input.span());
-            reverse_endianness(hash)
+            let arguments = keccak_u256s_be_inputs(array![domain_hash.into(), _storage_location.into()].span());
+            let reverse_args = reverse_endianness(arguments);
+            to_eth_signature(reverse_args)
         }
     }
 

@@ -37,7 +37,7 @@ jobs:
 
       - name: Run katana
         run: |
-          katana -b 1000
+          katana -b 1000 &
 
       - name: Run evm -> strk test
         run: |
@@ -49,7 +49,7 @@ jobs:
 
       - name: run katana
         run: |
-          katana -b 1000
+          katana -b 1000 &
           
       - name: Run strk -> evm test
         run: |

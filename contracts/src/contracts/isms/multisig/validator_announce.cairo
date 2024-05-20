@@ -7,7 +7,7 @@ pub mod validator_announce {
     };
     use hyperlane_starknet::interfaces::IValidatorAnnounce;
     use hyperlane_starknet::interfaces::{IMailboxClientDispatcher, IMailboxClientDispatcherTrait};
-    use hyperlane_starknet::utils::keccak256::{reverse_endianness,to_eth_signature};
+    use hyperlane_starknet::utils::keccak256::{reverse_endianness, to_eth_signature};
     use hyperlane_starknet::utils::store_arrays::StoreFelt252Array;
 
     use starknet::ContractAddress;
@@ -105,7 +105,9 @@ pub mod validator_announce {
         }
         fn get_announcement_digest(self: @ContractState, _storage_location: felt252) -> u256 {
             let domain_hash = domain_hash(self);
-            let arguments = keccak_u256s_be_inputs(array![domain_hash.into(), _storage_location.into()].span());
+            let arguments = keccak_u256s_be_inputs(
+                array![domain_hash.into(), _storage_location.into()].span()
+            );
             let reverse_args = reverse_endianness(arguments);
             to_eth_signature(reverse_args)
         }

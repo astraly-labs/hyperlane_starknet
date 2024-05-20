@@ -1,5 +1,5 @@
 use core::integer::u128_byte_reverse;
-use core::keccak::{keccak_u256s_be_inputs,keccak_u256s_le_inputs};
+use core::keccak::{keccak_u256s_be_inputs, keccak_u256s_le_inputs};
 pub const ETH_SIGNED_MESSAGE: felt252 = '\x19Ethereum Signed Message:\n32';
 
 /// Reverse the endianness of an u256
@@ -27,5 +27,4 @@ mod tests {
             reverse_endianness(big_endian_number) == expected_result, 'Failed to realise reverse'
         );
     }
-
 }

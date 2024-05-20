@@ -1,14 +1,16 @@
 #[starknet::contract]
 pub mod aggregation {
-    use starknet::{ContractAddress, contract_address_const}; 
-    use hyperlane_starknet::interfaces::{IAggregationDispatcher,IAggregation,
-         IAggregationDispatcherTrait, ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-         IInterchainSecurityModuleDispatcherTrait,};
-    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
-    use hyperlane_starknet::contracts::libs::aggregation_ism_metadata::aggregation_ism_metadata::AggregationIsmMetadata;
     use alexandria_bytes::Bytes;
+    use hyperlane_starknet::contracts::libs::aggregation_ism_metadata::aggregation_ism_metadata::AggregationIsmMetadata;
+    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
+    use hyperlane_starknet::interfaces::{
+        IAggregationDispatcher, IAggregation, IAggregationDispatcherTrait, ModuleType,
+        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+        IInterchainSecurityModuleDispatcherTrait,
+    };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use starknet::{ContractAddress, contract_address_const};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     #[abi(embed_v0)]
@@ -19,7 +21,7 @@ pub mod aggregation {
 
     #[storage]
     struct Storage {
-        modules : LegacyMap::<ContractAddress, ContractAddress>, 
+        modules: LegacyMap::<ContractAddress, ContractAddress>,
         threshold: u8,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
@@ -48,38 +50,42 @@ pub mod aggregation {
         self.ownable.initializer(_owner);
     }
 
-    
+
     #[abi(embed_v0)]
     impl IAggregationImpl of IAggregation<ContractState> {
         fn module_type(self: @ContractState) -> ModuleType {
             ModuleType::AGGREGATION(starknet::get_contract_address())
         }
 
-        fn modules_and_threshold(self: @ContractState, _message:Message)-> (Span<ContractAddress>, u8){
+        fn modules_and_threshold(
+            self: @ContractState, _message: Message
+        ) -> (Span<ContractAddress>, u8) {
             // THE USER CAN DEFINE HERE CONDITIONS FOR THE MODULE AND THRESHOLD SELECTION
             let threshold = self.threshold.read();
-            (build_modules_span(self),threshold)
-        }   
-        
-        fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool{
+            (build_modules_span(self), threshold)
+        }
+
+        fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
             let (isms, mut threshold) = self.modules_and_threshold(_message.clone());
             let modules = build_modules_span(self);
             let mut cur_idx: u8 = 0;
             loop {
-                if(cur_idx.into() == isms.len()) {
-                    break();
+                if (cur_idx.into() == isms.len()) {
+                    break ();
                 }
                 if (!AggregationIsmMetadata::has_metadata(_metadata.clone(), cur_idx)) {
-                    cur_idx +=1;
+                    cur_idx += 1;
                     continue;
                 }
-                let ism = IInterchainSecurityModuleDispatcher{contract_address: *modules.at(cur_idx.into())};
+                let ism = IInterchainSecurityModuleDispatcher {
+                    contract_address: *modules.at(cur_idx.into())
+                };
                 let metadata = AggregationIsmMetadata::metadata_at(_metadata.clone(), cur_idx);
                 assert(ism.verify(metadata, _message.clone()), Errors::VERIFICATION_FAILED);
-                threshold -=1;
-                cur_idx +=1;
+                threshold -= 1;
+                cur_idx += 1;
             };
-            assert(threshold ==0,Errors::THRESHOLD_NOT_REACHED);
+            assert(threshold == 0, Errors::THRESHOLD_NOT_REACHED);
             true
         }
 
@@ -113,15 +119,13 @@ pub mod aggregation {
             self.ownable.assert_only_owner();
             self.threshold.write(_threshold);
         }
-
-
     }
 
     fn find_last_module(self: @ContractState) -> ContractAddress {
         let mut current_module = self.modules.read(contract_address_const::<0>());
         loop {
             let next_module = self.modules.read(current_module);
-            if next_module ==contract_address_const::<0>() {
+            if next_module == contract_address_const::<0>() {
                 break current_module;
             }
             current_module = next_module;
@@ -133,14 +137,12 @@ pub mod aggregation {
         let mut modules = array![];
         loop {
             let next_address = self.modules.read(cur_address);
-            if (next_address == contract_address_const::<0>()){
-                break();
+            if (next_address == contract_address_const::<0>()) {
+                break ();
             }
             modules.append(cur_address);
             cur_address = next_address
         };
         modules.span()
-
     }
-
 }

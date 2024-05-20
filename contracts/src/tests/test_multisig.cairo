@@ -21,7 +21,7 @@ use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::cheatcodes::events::EventAssertions;
 use snforge_std::{start_prank, CheatTarget, stop_prank};
-use starknet::eth_address::EthAddress ;
+use starknet::eth_address::EthAddress;
 use starknet::eth_signature::verify_eth_signature;
 use starknet::secp256_trait::Signature;
 #[test]
@@ -211,10 +211,7 @@ fn test_message_id_multisig_verify() {
     messageid.set_validators(validators_address.span());
     messageid.set_threshold(3);
     let bytes_metadata = BytesTrait::new(496, metadata);
-    assert(
-        messageid.verify(bytes_metadata, message) == true,
-        'verification failed'
-    );
+    assert(messageid.verify(bytes_metadata, message) == true, 'verification failed');
 }
 
 #[test]
@@ -223,8 +220,8 @@ fn test_verify_eth_signature() {
     let msg_hash = 0x010cdd01ee083a68d6c40ce3ec83fcfab581989f0629f2bbb475b91495b69622;
     let r = 0x83db08d4e1590714aef8600f5f1e3c967ab6a3b9f93bb4242de0306510e688ea;
     let s = 0x0af5d1d51ea7e51a291789ff4866a1e36bc4134d956870799380d2d71f5dbf3d;
-    let y_parity =true;
+    let y_parity = true;
     let eth_address = 0x7e5f4552091a69125d5dfcb7b8c2659029395bdf_u256.into();
-    let signature = Signature{r,s,y_parity};
+    let signature = Signature { r, s, y_parity };
     verify_eth_signature(:msg_hash, :signature, :eth_address);
 }

@@ -1,7 +1,10 @@
 #[starknet::contract]
 pub mod hook {
-    use hyperlane_starknet::interfaces::{IPostDispatchHook, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait, Types};
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+    use hyperlane_starknet::contracts::libs::message::Message;
+    use hyperlane_starknet::interfaces::{
+        IPostDispatchHook, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait, Types
+    };
 
 
     #[storage]
@@ -13,13 +16,13 @@ pub mod hook {
             Types::UNUSED(())
         }
 
-        fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool{
+        fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
             true
         }
 
-        fn post_dispatch(ref self: ContractState, _metadata: Bytes, _message: u256){}
-    
-        fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: u256) -> u256{
+        fn post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) {}
+
+        fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
             0_u256
         }
     }

@@ -80,7 +80,9 @@ pub fn mock_setup() -> IMessageRecipientDispatcher {
 pub fn setup_messageid_multisig_ism() -> IInterchainSecurityModuleDispatcher {
     let messageid_multisig_class = declare("messageid_multisig_ism").unwrap();
 
-    let (messageid_multisig_addr, _) = messageid_multisig_class.deploy(@array![OWNER().into()]).unwrap();
+    let (messageid_multisig_addr, _) = messageid_multisig_class
+        .deploy(@array![OWNER().into()])
+        .unwrap();
     IInterchainSecurityModuleDispatcher { contract_address: messageid_multisig_addr }
 }
 

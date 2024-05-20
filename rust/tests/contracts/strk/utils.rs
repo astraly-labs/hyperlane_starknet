@@ -161,6 +161,7 @@ pub async fn deploy_contract(
 
     let deployment = contract_factory.deploy(constructor_calldata, salt, false);
 
+    tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
     let deploy_res = deployment.send().await.expect("Failed to deploy contract");
 
     let receipt = get_transaction_receipt(deployer.provider(), deploy_res.transaction_hash)

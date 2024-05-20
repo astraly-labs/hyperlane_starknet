@@ -5,7 +5,10 @@ mod validator;
 
 use bytes::{BufMut, BytesMut};
 use cainome::cairo_serde::CairoSerde;
-use contracts::strk::mailbox::{mailbox, Bytes, Dispatch as DispatchEvent, Message};
+use contracts::{
+    eth::mailbox::{DispatchFilter, DispatchIdFilter},
+    strk::mailbox::{mailbox, Bytes, Dispatch as DispatchEvent, Message},
+};
 use ethers::{
     prelude::parse_log, providers::Middleware, signers::Signer, types::TransactionReceipt,
 };
@@ -59,6 +62,36 @@ fn to_eth_message_bytes(starknet_message: Message) -> Vec<u8> {
     println!("ETH message bytes: {:?}", buf.to_vec());
 
     buf.to_vec()
+}
+
+/// Convert a dispatch event to a starknet message
+fn eth_dispatch_event_to_strk_message(event: DispatchFilter) -> Message {
+    let sender = cainome::cairo_serde::ContractAddress(
+        FieldElement::from_byte_slice_be(event.sender.as_bytes()).expect("Invalid sender"),
+    );
+    let recipient = cainome::cairo_serde::ContractAddress(
+        FieldElement::from_bytes_be(&event.recipient).expect("Invalid recipient"),
+    );
+    let destination = event.destination;
+
+    let m = event.message;
+
+    let version = m[0];
+    let nonce = u32::from_be_bytes(m[1..5].try_into().unwrap());
+    let origin = u32::from_be_bytes(m[5..9].try_into().unwrap());
+    let body = m[77..].try_into().unwrap();
+
+    println!("Starknet message: {:?}", m);
+
+    Message {
+        version,
+        nonce,
+        origin,
+        sender,
+        destination,
+        recipient,
+        body: to_strk_message_bytes(body),
+    }
 }
 
 /// Convert a byte slice to a starknet message
@@ -144,6 +177,57 @@ where
     Ok(process_tx_res)
 }
 
+async fn send_msg_evm_to_strk<M, S>(
+    from: &eth::Env<M, S>,
+    to: &strk::Env,
+) -> eyre::Result<MaybePendingTransactionReceipt>
+where
+    M: Middleware + 'static,
+    S: Signer + 'static,
+{
+    // prepare message arguments
+    // let sender = bech32_encode("osmo", from.acc_owner.address().as_bytes())?;
+    let receiver = to.core.msg_receiver.to_bytes_be();
+    let msg_body = b"hello world";
+
+    let version = from.core.mailbox.version().call().await?;
+    println!("version: {:?}", version);
+
+    // dispatch
+    let dispatch_tx_call = from
+        .core
+        .mailbox
+        .dispatch(DOMAIN_STRK, receiver, msg_body.into());
+    let dispatch_res = dispatch_tx_call.send().await?.await?.unwrap();
+
+    let dispatch: DispatchFilter = parse_log(dispatch_res.logs[0].clone())?;
+    let dispatch_id: DispatchIdFilter = parse_log(dispatch_res.logs[1].clone())?;
+
+    // dispatch
+    let mailbox_contract = mailbox::new(to.core.mailbox, &to.acc_tester);
+    println!(
+        "message: {:?}",
+        eth_dispatch_event_to_strk_message(dispatch.clone())
+    );
+    let process_res = mailbox_contract
+        .process(
+            &Bytes {
+                size: 0,
+                data: vec![],
+            },
+            &eth_dispatch_event_to_strk_message(dispatch),
+        )
+        .send()
+        .await?;
+
+    let strk_provider: &AnyProvider = to.acc_owner.provider();
+    let process_receipt = strk_provider
+        .get_transaction_receipt(process_res.transaction_hash)
+        .await?;
+
+    Ok(process_receipt)
+}
+
 #[tokio::test]
 async fn test_mailbox_strk_to_evm() -> eyre::Result<()> {
     // init starknet env
@@ -153,6 +237,19 @@ async fn test_mailbox_strk_to_evm() -> eyre::Result<()> {
     let anvil = eth::setup_env(DOMAIN_EVM).await?;
 
     let _ = send_msg_strk_to_evm(&strk, &anvil).await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_mailbox_evm_to_strk() -> eyre::Result<()> {
+    // init starknet env
+    let strk = strk::setup_env(DOMAIN_STRK, &[TestValidators::new(DOMAIN_EVM, 5, 3)]).await?;
+
+    // init eth env
+    let anvil = eth::setup_env(DOMAIN_EVM).await?;
+
+    let _ = send_msg_evm_to_strk(&anvil, &strk).await?;
 
     Ok(())
 }

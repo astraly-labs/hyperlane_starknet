@@ -4,6 +4,7 @@ use hyperlane_starknet::contracts::libs::message::Message;
 use starknet::ContractAddress;
 use starknet::EthAddress;
 #[derive(Serde, Drop)]
+#[derive(Serde, Drop)]
 pub enum Types {
     UNUSED,
     ROUTING,
@@ -131,9 +132,9 @@ pub trait IPostDispatchHook<TContractState> {
 
     fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
 
-    fn post_dispatch(ref self: TContractState, _metadata: Bytes, _message: u256);
+    fn post_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message);
 
-    fn quote_dispatch(ref self: TContractState, _metadata: Bytes, _message: u256) -> u256;
+    fn quote_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message) -> u256;
 }
 
 

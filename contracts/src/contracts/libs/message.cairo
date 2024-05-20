@@ -47,7 +47,7 @@ pub impl MessageImpl of MessageTrait {
     ///  # Returns
     /// 
     /// * u256 representing the hash of the message
-    fn format_message(_message: Message) -> u256 {
+    fn format_message(_message: Message) -> (u256, Message) {
         let sender: felt252 = _message.sender.into();
         let recipient: felt252 = _message.recipient.into();
 
@@ -59,7 +59,7 @@ pub impl MessageImpl of MessageTrait {
             recipient.into(),
             _message.body.size().into()
         ];
-        let mut message_data = _message.body.data();
+        let mut message_data = _message.clone().body.data();
         loop {
             match message_data.pop_front() {
                 Option::Some(data) => { input.append(data.into()); },
@@ -67,6 +67,6 @@ pub impl MessageImpl of MessageTrait {
             };
         };
         let hash = keccak_u256s_be_inputs(input.span());
-        reverse_endianness(hash)
+        (reverse_endianness(hash), _message)
     }
 }

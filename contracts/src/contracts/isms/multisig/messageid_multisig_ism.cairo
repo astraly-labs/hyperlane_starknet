@@ -136,12 +136,9 @@ pub mod messageid_multisig_ism {
         );
         let root = MessageIdIsmMetadata::root(_metadata.clone());
         let index = MessageIdIsmMetadata::index(_metadata.clone());
+        let (format_message, _) = MessageTrait::format_message(_message.clone());
         CheckpointLib::digest(
-            _message.origin,
-            origin_merkle_tree_hook.into(),
-            root.into(),
-            index,
-            MessageTrait::format_message(_message)
+            _message.origin, origin_merkle_tree_hook.into(), root.into(), index, format_message
         )
     }
 

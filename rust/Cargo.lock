@@ -1988,6 +1988,7 @@ name = "hyperlane-starknet"
 version = "0.0.2"
 dependencies = [
  "anyhow",
+ "bytes",
  "cainome",
  "cairo-lang-starknet-classes",
  "ethers",

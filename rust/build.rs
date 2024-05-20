@@ -52,6 +52,7 @@ fn main() {
         ("FastHypERC20Collateral", "fast_hyp_erc20_collateral"),
         ("TestMultisigIsm", "test_mock_ism"),
         ("TestRecipient", "test_mock_msg_receiver"),
+        ("TestMerkleTreeHook", "test_merkle_tree_hook"),
     ];
 
     for (abi_file, bind_out) in eth_deployments {

@@ -197,7 +197,7 @@ where
     let dispatch_tx_call = from
         .core
         .mailbox
-        .dispatch(DOMAIN_STRK, receiver, msg_body.into());
+        .dispatch_0(DOMAIN_STRK, receiver, msg_body.into());
     let dispatch_res = dispatch_tx_call.send().await?.await?.unwrap();
 
     let dispatch: DispatchFilter = parse_log(dispatch_res.logs[0].clone())?;

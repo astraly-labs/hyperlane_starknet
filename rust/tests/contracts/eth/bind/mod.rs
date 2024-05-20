@@ -8,3 +8,5 @@ pub mod mailbox;
 pub mod test_mock_ism;
 #[allow(clippy::all)]
 pub mod test_mock_msg_receiver;
+#[allow(clippy::all)]
+pub mod test_merkle_tree_hook;

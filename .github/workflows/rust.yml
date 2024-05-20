@@ -32,7 +32,7 @@ jobs:
       
       - name: Install dojo
         run: |-
-          /home/runner/.config/.dojo/bin/dojoup -v 0.6.1-alpha.3
+          /home/runner/.config/.dojo/bin/dojoup -v 0.7.0-alpha.2
           sudo mv /home/runner/.config/.dojo/bin/katana /usr/local/bin/
 
       - name: Run katana

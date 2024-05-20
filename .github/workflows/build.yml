@@ -16,7 +16,12 @@ jobs:
       - run: rustup show
 
       - uses: Swatinem/rust-cache@v2
+      - uses: software-mansion/setup-scarb@v1
 
-      - name: Build the project
+      - name: Build contracts
+        run: |
+          cd contracts && scarb build
+
+      - name: Build the rust code
         run: |
           cd rust && cargo build --release

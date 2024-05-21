@@ -35,6 +35,9 @@ jobs:
           /home/runner/.config/.dojo/bin/dojoup -v 0.7.0-alpha.2
           sudo mv /home/runner/.config/.dojo/bin/katana /usr/local/bin/
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
       - name: Run katana
         run: |
           katana -b 1000 &

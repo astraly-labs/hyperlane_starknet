@@ -11,10 +11,9 @@ use hyperlane_starknet::interfaces::{
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IInterchainSecurityModule
 };
-
 use hyperlane_starknet::tests::setup::{
-    setup, mock_setup, setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS,
-    VALIDATOR_PUBLIC_KEY, setup_validator_announce, get_message_and_signature, LOCAL_DOMAIN,
+    setup, mock_setup, setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1,
+    VALIDATOR_ADDRESS_2, setup_validator_announce, get_message_and_signature, LOCAL_DOMAIN,
     DESTINATION_DOMAIN, RECIPIENT_ADDRESS
 };
 use openzeppelin::access::ownable::OwnableComponent;
@@ -24,9 +23,10 @@ use snforge_std::{start_prank, CheatTarget, stop_prank};
 use starknet::eth_address::EthAddress;
 use starknet::eth_signature::verify_eth_signature;
 use starknet::secp256_trait::Signature;
+use starknet::secp256_trait::signature_from_vrs;
 #[test]
 fn test_set_validators() {
-    let new_validators = array![VALIDATOR_ADDRESS()].span();
+    let new_validators = array![VALIDATOR_ADDRESS_1(), VALIDATOR_ADDRESS_2()].span();
     let validators = setup_messageid_multisig_ism();
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
@@ -50,7 +50,18 @@ fn test_set_threshold() {
 #[test]
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_validators_fails_if_caller_not_owner() {
-    let new_validators = array![VALIDATOR_ADDRESS(),].span();
+    let new_validators = array![VALIDATOR_ADDRESS_1()].span();
+    let validators = setup_messageid_multisig_ism();
+    let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER());
+    validators.set_validators(new_validators);
+}
+
+
+#[test]
+#[should_panic(expected: ('Caller is not the owner',))]
+fn test_set_validators_fails_if_null_validator() {
+    let new_validators = array![VALIDATOR_ADDRESS_1(), 0.try_into().unwrap()].span();
     let validators = setup_messageid_multisig_ism();
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER());
@@ -164,8 +175,7 @@ fn test_message_id_multisig_module_type() {
 
 
 #[test]
-#[ignore]
-fn test_message_id_multisig_verify() {
+fn test_message_id_multisig_verify_with_4_valid_signatures() {
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -182,7 +192,8 @@ fn test_message_id_multisig_verify() {
         body: message_body.clone()
     };
     let messageid = setup_messageid_multisig_ism();
-    let (msg_hash, validators_address, signatures) = get_message_and_signature(true);
+    let (_, validators_address, signatures) = get_message_and_signature();
+    let y_parity = 0x01000000000000000000000000000000; // parity set to false
     let metadata = array![
         0x01020304050607080910111213141516,
         0x16151413121110090807060504030201,
@@ -193,35 +204,115 @@ fn test_message_id_multisig_verify() {
         *signatures.at(0).r.low,
         *signatures.at(0).s.high,
         *signatures.at(0).s.low,
+        y_parity,
         *signatures.at(1).r.high,
         *signatures.at(1).r.low,
         *signatures.at(1).s.high,
         *signatures.at(1).s.low,
+        y_parity,
         *signatures.at(2).r.high,
         *signatures.at(2).r.low,
         *signatures.at(2).s.high,
         *signatures.at(2).s.low,
+        y_parity,
         *signatures.at(3).r.high,
         *signatures.at(3).r.low,
         *signatures.at(3).s.high,
         *signatures.at(3).s.low,
+        y_parity,
     ];
     let ownable = IOwnableDispatcher { contract_address: messageid.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     messageid.set_validators(validators_address.span());
-    messageid.set_threshold(3);
+    messageid.set_threshold(4);
     let bytes_metadata = BytesTrait::new(496, metadata);
     assert(messageid.verify(bytes_metadata, message) == true, 'verification failed');
 }
 
+
 #[test]
-#[ignore]
-fn test_verify_eth_signature() {
-    let msg_hash = 0x010cdd01ee083a68d6c40ce3ec83fcfab581989f0629f2bbb475b91495b69622;
-    let r = 0x83db08d4e1590714aef8600f5f1e3c967ab6a3b9f93bb4242de0306510e688ea;
-    let s = 0x0af5d1d51ea7e51a291789ff4866a1e36bc4134d956870799380d2d71f5dbf3d;
-    let y_parity = true;
-    let eth_address = 0x7e5f4552091a69125d5dfcb7b8c2659029395bdf_u256.into();
-    let signature = Signature { r, s, y_parity };
-    verify_eth_signature(:msg_hash, :signature, :eth_address);
+#[should_panic(expected: ('No match for given signature',))]
+fn test_message_id_multisig_verify_with_insufficient_valid_signatures() {
+    let array = array![
+        0x01020304050607080910111213141516,
+        0x01020304050607080910111213141516,
+        0x01020304050607080910000000000000
+    ];
+    let message_body = BytesTrait::new(42, array);
+    let message = Message {
+        version: HYPERLANE_VERSION,
+        nonce: 0,
+        origin: LOCAL_DOMAIN,
+        sender: OWNER(),
+        destination: DESTINATION_DOMAIN,
+        recipient: RECIPIENT_ADDRESS(),
+        body: message_body.clone()
+    };
+    let messageid = setup_messageid_multisig_ism();
+    let (_, validators_address, signatures) = get_message_and_signature();
+    let y_parity = 0x01000000000000000000000000000000; // parity set to false
+    let metadata = array![
+        0x01020304050607080910111213141516,
+        0x16151413121110090807060504030201,
+        0x01020304050607080910111213141516,
+        0x01020304050607080920111213141516,
+        0x00000010000000000000000000000000,
+        *signatures.at(0).r.high,
+        *signatures.at(0).r.low,
+        *signatures.at(0).s.high,
+        *signatures.at(0).s.low,
+        y_parity,
+        *signatures.at(1).r.high,
+        *signatures.at(1).r.low,
+        *signatures.at(1).s.high,
+        *signatures.at(1).s.low,
+        y_parity,
+        *signatures.at(2).r.high,
+        *signatures.at(2).r.low,
+        *signatures.at(2).s.high,
+        *signatures.at(2).s.low,
+        y_parity,
+        *signatures.at(3).r.high + 1,
+        *signatures.at(3).r.low + 1,
+        *signatures.at(3).s.high + 1,
+        *signatures.at(3).s.low + 1,
+        y_parity,
+    ];
+    let ownable = IOwnableDispatcher { contract_address: messageid.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    messageid.set_validators(validators_address.span());
+    messageid.set_threshold(4);
+    let bytes_metadata = BytesTrait::new(496, metadata);
+    assert(messageid.verify(bytes_metadata, message) == true, 'verification failed');
 }
+
+
+#[test]
+#[should_panic(expected: ('Empty metadata',))]
+fn test_message_id_multisig_verify_with_empty_metadata() {
+    let array = array![
+        0x01020304050607080910111213141516,
+        0x01020304050607080910111213141516,
+        0x01020304050607080910000000000000
+    ];
+    let message_body = BytesTrait::new(42, array);
+    let message = Message {
+        version: HYPERLANE_VERSION,
+        nonce: 0,
+        origin: LOCAL_DOMAIN,
+        sender: OWNER(),
+        destination: DESTINATION_DOMAIN,
+        recipient: RECIPIENT_ADDRESS(),
+        body: message_body.clone()
+    };
+    let messageid = setup_messageid_multisig_ism();
+    let (_, validators_address, _) = get_message_and_signature();
+    let metadata = array![];
+    let ownable = IOwnableDispatcher { contract_address: messageid.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    messageid.set_validators(validators_address.span());
+    messageid.set_threshold(4);
+    let bytes_metadata = BytesTrait::new(496, metadata);
+    assert(messageid.verify(bytes_metadata, message) == true, 'verification failed');
+}
+

@@ -7,6 +7,8 @@ pub mod merkle_tree_hook {
         IMailboxClientDispatcher, IMailboxClientDispatcherTrait, Types, IMerkleTreeHook
     };
     use starknet::ContractAddress;
+
+
     #[storage]
     struct Storage {
         mailbox_client: ContractAddress,
@@ -35,6 +37,7 @@ pub mod merkle_tree_hook {
         self.mailbox_client.write(_mailbox_client);
     }
 
+    #[abi(embed_v0)]
     impl IMerkleTreeHookImpl of IMerkleTreeHook<ContractState> {
         fn count(self: @ContractState) -> u32 {
             self.tree.read().count.try_into().unwrap()

@@ -44,5 +44,8 @@ mod utils {
 mod tests {
     pub mod setup;
     pub mod test_mailbox;
-    pub mod test_multisig;
+    pub mod isms {
+        // pub mod test_aggregation;
+        pub mod test_multisig;
+    }
 }

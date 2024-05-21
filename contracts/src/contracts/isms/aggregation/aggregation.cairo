@@ -43,6 +43,7 @@ pub mod aggregation {
         pub const VERIFICATION_FAILED: felt252 = 'Verification failed';
         pub const THRESHOLD_NOT_REACHED: felt252 = 'Threshold not reached';
         pub const MODULE_ADDRESS_CANNOT_BE_NULL: felt252 = 'Module address cannot be null';
+        pub const THRESHOLD_NOT_SET: felt252 = 'Threshold not set';
     }
 
     #[constructor]
@@ -67,6 +68,7 @@ pub mod aggregation {
 
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
             let (isms, mut threshold) = self.modules_and_threshold(_message.clone());
+            assert(threshold != 0, Errors::THRESHOLD_NOT_SET);
             let modules = build_modules_span(self);
             let mut cur_idx: u8 = 0;
             loop {

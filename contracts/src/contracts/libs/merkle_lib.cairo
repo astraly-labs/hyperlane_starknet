@@ -41,7 +41,7 @@ pub mod merkle_lib {
         fn root_with_ctx(self: @Tree, _zeroes: Array<u256>) -> u256 {
             let mut cur_idx = 0;
             let index = *self.count;
-            let mut current = 0; // TO BE VERIFIED
+            let mut current = *_zeroes[0]; // TO BE VERIFIED
             loop {
                 if (cur_idx == TREE_DEPTH) {
                     break ();
@@ -138,3 +138,4 @@ pub mod merkle_lib {
         ]
     }
 }
+

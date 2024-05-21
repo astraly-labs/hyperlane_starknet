@@ -291,6 +291,7 @@ pub trait IAggregation<TContractState> {
 }
 
 
+#[starknet::interface]
 pub trait IMerkleTreeHook<TContractState> {
     fn count(self: @TContractState) -> u32;
 

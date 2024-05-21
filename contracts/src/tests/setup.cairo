@@ -5,12 +5,15 @@ use hyperlane_starknet::interfaces::{
     IMessageRecipientDispatcherTrait, IInterchainSecurityModule,
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IValidatorAnnounceDispatcher, IValidatorAnnounceDispatcherTrait, IMailboxClientDispatcher,
-    IMailboxClientDispatcherTrait
+    IMailboxClientDispatcherTrait, IAggregationDispatcher, IAggregationDispatcherTrait,
+    IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait
 };
+use openzeppelin::account::utils::signature::EthSignature;
 use snforge_std::{
     declare, ContractClassTrait, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn
 };
 use starknet::secp256_trait::Signature;
+
 
 use starknet::{ContractAddress, contract_address_const, EthAddress};
 
@@ -53,13 +56,14 @@ pub fn RECIPIENT_ADDRESS() -> ContractAddress {
     contract_address_const::<'RECIPIENT_ADDRESS'>()
 }
 
-pub fn VALIDATOR_ADDRESS() -> EthAddress {
-    'VALIDATOR_ADDRESS'.try_into().unwrap()
+pub fn VALIDATOR_ADDRESS_1() -> EthAddress {
+    'VALIDATOR_ADDRESS_1'.try_into().unwrap()
 }
 
-pub fn VALIDATOR_PUBLIC_KEY() -> u256 {
-    'VALIDATOR_PUBLIC_KEY'
+pub fn VALIDATOR_ADDRESS_2() -> EthAddress {
+    'VALIDATOR_ADDRESS_2'.try_into().unwrap()
 }
+
 
 pub fn setup() -> (IMailboxDispatcher, EventSpy) {
     let mailbox_class = declare("mailbox").unwrap();
@@ -105,42 +109,51 @@ pub fn setup_validator_announce() -> IValidatorAnnounceDispatcher {
     IValidatorAnnounceDispatcher { contract_address: validator_announce_addr }
 }
 
+pub fn setup_aggregation() -> IAggregationDispatcher {
+    let aggregation_class = declare("aggregation").unwrap();
+    let (aggregation_addr, _) = aggregation_class.deploy(@array![OWNER().into()]).unwrap();
+    IAggregationDispatcher { contract_address: aggregation_addr }
+}
+
+pub fn setup_merkle_tree_hook() -> IMerkleTreeHookDispatcher {
+    let merkle_tree_hook_class = declare("merkle_tree_hook").unwrap();
+    let mailboxclient = setup_mailbox_client();
+    let (merkle_tree_hook_addr, _) = merkle_tree_hook_class
+        .deploy(@array![mailboxclient.contract_address.into()])
+        .unwrap();
+    IMerkleTreeHookDispatcher { contract_address: merkle_tree_hook_addr }
+}
 
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
-pub fn get_message_and_signature(y_parity: bool) -> (u256, Array<EthAddress>, Array<Signature>) {
-    let msg_hash = 0xfbff8940be2153ce000c0e1933bf32e179c60f53c45f56b4ac84b2e90f1f6214;
+pub fn get_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignature>) {
+    let msg_hash = 0xFBFF8940BE2153CE000C0E1933BF32E179C60F53C45F56B4AC84B2E90F1F6214;
     let validators_array: Array<EthAddress> = array![
-        0x2cb1a91F2F23D6eC7FD22d2f7996f55B71EB32dc.try_into().unwrap(),
-        0x0fb1A81BcefDEc06154279219F227938D00B1c12.try_into().unwrap(),
-        0xF650b555CFDEfF61d225058e26326266E69660c2.try_into().unwrap(),
-        0x03aC66d13dc1B5b10fc363fC32f324ca947CDac1.try_into().unwrap(),
-        0x5711B186cdCAFD9E7aa1f78c0A0c30d3C7A2Af77.try_into().unwrap()
+        0x2d691f13afb546993024fde7c7249d6b325d0f6c.try_into().unwrap(),
+        0xd4451a5f80bb852f26c328d776be02aae136e5e6.try_into().unwrap(),
+        0x6065e100fc4c2c27e71081dfb7c455fcc71da0cb.try_into().unwrap(),
+        0xa4a47265a6bc86dd47e727bd1401ef6bcf8762c1.try_into().unwrap(),
+        0x6059baffb40bef2052edd4d1280dd7c6e30a71e3.try_into().unwrap()
     ];
     let signatures = array![
-        Signature {
-            r: 0xb994fec0137776002d05dcf847bbba338285f1210c9ca7829109578ac876519f,
-            s: 0x0a42bb91f22ef042ca82fdcf8c8a5846e0debbce509dc2a0ce28a988dcbe4a16,
-            y_parity
+        EthSignature {
+            r: 0x83db08d4e1590714aef8600f5f1e3c967ab6a3b9f93bb4242de0306510e688ea,
+            s: 0x0af5d1d51ea7e51a291789ff4866a1e36bc4134d956870799380d2d71f5dbf3d,
         },
-        Signature {
+        EthSignature {
             r: 0xf81a5dd3f871ad2d27a3b538e73663d723f8263fb3d289514346d43d000175f5,
             s: 0x083df770623e9ae52a7bb154473961e24664bb003bdfdba6100fb5e540875ce1,
-            y_parity
         },
-        Signature {
+        EthSignature {
             r: 0x76b194f951f94492ca582dab63dc413b9ac1ca9992c22bc2186439e9ab8fdd3c,
             s: 0x62a6a6f402edaa53e9bdc715070a61edb0d98d4e14e182f60bdd4ae932b40b29,
-            y_parity
         },
-        Signature {
+        EthSignature {
             r: 0x35932eefd85897d868aaacd4ba7aee81a2384e42ba062133f6d37fdfebf94ad4,
             s: 0x78cce49db96ee27c3f461800388ac95101476605baa64a194b7dd4d56d2d4a4d,
-            y_parity
         },
-        Signature {
+        EthSignature {
             r: 0x6b38d4353d69396e91c57542254348d16459d448ab887574e9476a6ff76d49a1,
             s: 0x3527627295bde423d7d799afef22affac4f00c70a5b651ad14c8879aeb9b6e03,
-            y_parity
         }
     ];
 

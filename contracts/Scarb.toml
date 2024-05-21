@@ -20,4 +20,10 @@ snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v
 sort-module-level-items = true
 
 [[target.starknet-contract]]
+# Enable Sierra codegen.
+sierra = true
+
+# Enable CASM codegen.
 casm = true
+# Emit Python-powered hints in order to run compiled CASM class with legacy Cairo VM.
+casm-add-pythonic-hints = false

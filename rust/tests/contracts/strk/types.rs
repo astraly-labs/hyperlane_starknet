@@ -1,11 +1,14 @@
 use std::collections::BTreeMap;
 
 use starknet::{
-    accounts::SingleOwnerAccount, core::types::FieldElement, providers::AnyProvider,
+    accounts::SingleOwnerAccount,
+    core::types::FieldElement,
+    providers::{jsonrpc::HttpTransport, JsonRpcClient},
     signers::LocalWallet,
 };
 
-pub type StarknetAccount = SingleOwnerAccount<AnyProvider, LocalWallet>;
+pub type StarknetProvider = JsonRpcClient<HttpTransport>;
+pub type StarknetAccount = SingleOwnerAccount<StarknetProvider, LocalWallet>;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct CodesMap(pub BTreeMap<String, u64>);

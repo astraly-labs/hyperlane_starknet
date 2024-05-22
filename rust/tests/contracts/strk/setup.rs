@@ -1,11 +1,12 @@
-use std::{collections::BTreeMap, path::PathBuf};
+use std::collections::BTreeMap;
 
+use katana_runner::KatanaRunner;
 use starknet::core::types::FieldElement;
 
 use crate::validator::TestValidators;
 
 use super::{
-    declare_all, deploy_core, get_dev_account,
+    declare_all, deploy_core,
     hook::Hook,
     ism::prepare_routing_ism,
     types::{Codes, CoreDeployments},
@@ -35,9 +36,11 @@ impl Env {
 }
 
 pub async fn setup_env(domain: u32, validators: &[TestValidators]) -> eyre::Result<Env> {
-    let owner = get_dev_account(0);
-    let deployer = get_dev_account(1);
-    let tester = get_dev_account(2);
+    let runner = KatanaRunner::new().expect("Fail to set runner");
+
+    let owner = runner.account(0);
+    let deployer = runner.account(1);
+    let tester = runner.account(2);
 
     let default_ism =
         prepare_routing_ism(validators.iter().map(|v| (v.domain, v.clone())).collect());

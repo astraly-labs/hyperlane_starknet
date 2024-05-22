@@ -38,24 +38,8 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
-      - name: Run katana
+      - name: Run integration tests
         run: |
-          katana -b 1000 &
-
-      - name: Run evm -> strk test
-        run: |
-          cd rust && cargo test -- test_mailbox_evm_to_strk
-
-      - name: Kill katana
-        run: |
-          pkill katana
-
-      - name: run katana
-        run: |
-          katana -b 1000 &
-          
-      - name: Run strk -> evm test
-        run: |
-          cd rust && cargo test -- test_mailbox_strk_to_evm
+          cd rust && cargo test
 
         

@@ -14,14 +14,19 @@ use ethers::{
 };
 use starknet::{
     accounts::{Account, ConnectedAccount},
-    core::types::{Event, FieldElement, MaybePendingTransactionReceipt},
-    core::utils::get_selector_from_name,
-    providers::{AnyProvider, Provider},
+    core::{
+        types::{Event, FieldElement, MaybePendingTransactionReceipt},
+        utils::get_selector_from_name,
+    },
+    providers::{jsonrpc::HttpTransport, JsonRpcClient, Provider},
 };
 
 use crate::{
     constants::{DOMAIN_EVM, DOMAIN_STRK},
-    contracts::{eth, strk},
+    contracts::{
+        eth,
+        strk::{self, StarknetProvider},
+    },
     validator::TestValidators,
 };
 
@@ -146,7 +151,7 @@ where
         )
         .send()
         .await?;
-    let strk_provider: &AnyProvider = from.acc_owner.provider();
+    let strk_provider: &StarknetProvider = from.acc_owner.provider();
     let dispatch_receipt = strk_provider
         .get_transaction_receipt(dispatch_res.transaction_hash)
         .await?;
@@ -220,7 +225,7 @@ where
         .send()
         .await?;
 
-    let strk_provider: &AnyProvider = to.acc_owner.provider();
+    let strk_provider: &StarknetProvider = to.acc_owner.provider();
     let process_receipt = strk_provider
         .get_transaction_receipt(process_res.transaction_hash)
         .await?;

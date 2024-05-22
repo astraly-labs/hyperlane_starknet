@@ -9,5 +9,5 @@ mod utils;
 pub use bind::*;
 pub use deploy::*;
 pub use setup::{setup_env, Env};
-pub use types::StarknetAccount;
+pub use types::{StarknetAccount, StarknetProvider};
 pub use utils::*;

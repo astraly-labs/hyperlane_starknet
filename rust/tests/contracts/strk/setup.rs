@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use katana_runner::KatanaRunner;
+use katana_runner::{KatanaRunner, KatanaRunnerConfig};
 use starknet::core::types::FieldElement;
 
 use crate::validator::TestValidators;
@@ -36,7 +36,17 @@ impl Env {
 }
 
 pub async fn setup_env(domain: u32, validators: &[TestValidators]) -> eyre::Result<Env> {
-    let runner = KatanaRunner::new().expect("Fail to set runner");
+    let runner = KatanaRunner::new_with_config(KatanaRunnerConfig {
+        n_accounts: 3,
+        port: Some(5050),
+        ..Default::default()
+    })
+    .expect("Fail to set runner");
+
+    println!(
+        "Runner started, logs can be found at: {:?}",
+        runner.log_file_path()
+    );
 
     let owner = runner.account(0);
     let deployer = runner.account(1);

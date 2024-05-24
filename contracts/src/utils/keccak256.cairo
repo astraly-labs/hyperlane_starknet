@@ -1,4 +1,7 @@
 use core::integer::u128_byte_reverse;
+use core::keccak::{keccak_u256s_be_inputs, keccak_u256s_le_inputs};
+pub const ETH_SIGNED_MESSAGE: felt252 = '\x19Ethereum Signed Message:\n32';
+
 /// Reverse the endianness of an u256
 pub fn reverse_endianness(value: u256) -> u256 {
     let new_low = u128_byte_reverse(value.high);
@@ -6,6 +9,12 @@ pub fn reverse_endianness(value: u256) -> u256 {
     u256 { low: new_low, high: new_high }
 }
 
+
+pub fn to_eth_signature(hash: u256) -> u256 {
+    let input = array![ETH_SIGNED_MESSAGE.into(), hash];
+    let hash = keccak_u256s_be_inputs(input.span());
+    reverse_endianness(hash)
+}
 
 #[cfg(test)]
 mod tests {

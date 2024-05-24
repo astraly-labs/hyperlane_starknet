@@ -64,7 +64,6 @@ pub mod messageid_multisig_ism {
             let digest = digest(_metadata.clone(), _message.clone());
             let (validators, threshold) = self.validators_and_threshold(_message);
             assert(threshold > 0, Errors::NO_MULTISIG_THRESHOLD_FOR_MESSAGE);
-            let mut matched_signatures = 0;
             let mut i = 0;
 
             // for each couple (sig_s, sig_r) extracted from the metadata

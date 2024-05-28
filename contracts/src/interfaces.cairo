@@ -1,8 +1,10 @@
 use alexandria_bytes::Bytes;
 use core::array::ArrayTrait;
+use hyperlane_starknet::contracts::libs::merkle_lib::merkle_lib::Tree;
 use hyperlane_starknet::contracts::libs::message::Message;
 use starknet::ContractAddress;
 use starknet::EthAddress;
+
 #[derive(Serde, Drop)]
 pub enum Types {
     UNUSED,
@@ -262,10 +264,42 @@ pub trait IValidatorAnnounce<TContractState> {
     fn announce(
         ref self: TContractState,
         _validator: EthAddress,
-        _storage_location: felt252,
+        _storage_location: Array<felt252>,
         _signature: Bytes
     ) -> bool;
 
-    fn get_announcement_digest(self: @TContractState, _storage_location: felt252) -> u256;
+    fn get_announcement_digest(self: @TContractState, _storage_location: Array<u256>) -> u256;
 }
 
+#[starknet::interface]
+pub trait IAggregation<TContractState> {
+    fn module_type(self: @TContractState) -> ModuleType;
+
+    fn modules_and_threshold(
+        self: @TContractState, _message: Message
+    ) -> (Span<ContractAddress>, u8);
+
+    fn verify(self: @TContractState, _metadata: Bytes, _message: Message,) -> bool;
+
+    fn get_modules(self: @TContractState) -> Span<ContractAddress>;
+
+    fn get_threshold(self: @TContractState) -> u8;
+
+    fn set_modules(ref self: TContractState, _modules: Span<ContractAddress>);
+
+    fn set_threshold(ref self: TContractState, _threshold: u8);
+}
+
+
+#[starknet::interface]
+pub trait IMerkleTreeHook<TContractState> {
+    fn count(self: @TContractState) -> u32;
+
+    fn root(self: @TContractState) -> u256;
+
+    fn tree(self: @TContractState) -> Tree;
+
+    fn latest_checkpoint(self: @TContractState) -> (u256, u32);
+
+    fn hook_type(self: @TContractState) -> Types;
+}

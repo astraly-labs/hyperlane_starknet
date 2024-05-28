@@ -1,12 +1,11 @@
 use core::result::ResultTrait;
-use hyperlane_starknet::contracts::mocks::message_recipient::message_recipient;
 use hyperlane_starknet::interfaces::{
     IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
     IMessageRecipientDispatcherTrait, IInterchainSecurityModule,
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IValidatorAnnounceDispatcher, IValidatorAnnounceDispatcherTrait, IMailboxClientDispatcher,
-    IMailboxClientDispatcherTrait, IAggregationDispatcher, IAggregationDispatcherTrait,
-    IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait
+    IMailboxClientDispatcherTrait, IAggregationDispatcher, IAggregationDispatcherTrait,IValidatorConfigurationDispatcher,
+    IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait, IAggregation
 };
 use openzeppelin::account::utils::signature::EthSignature;
 use snforge_std::{
@@ -81,13 +80,13 @@ pub fn mock_setup() -> IMessageRecipientDispatcher {
     IMessageRecipientDispatcher { contract_address: message_recipient_addr }
 }
 
-pub fn setup_messageid_multisig_ism() -> IInterchainSecurityModuleDispatcher {
+pub fn setup_messageid_multisig_ism() -> (IInterchainSecurityModuleDispatcher, IValidatorConfigurationDispatcher) {
     let messageid_multisig_class = declare("messageid_multisig_ism").unwrap();
 
     let (messageid_multisig_addr, _) = messageid_multisig_class
         .deploy(@array![OWNER().into()])
         .unwrap();
-    IInterchainSecurityModuleDispatcher { contract_address: messageid_multisig_addr }
+    (IInterchainSecurityModuleDispatcher { contract_address: messageid_multisig_addr }, IValidatorConfigurationDispatcher{ contract_address: messageid_multisig_addr })
 }
 
 pub fn setup_mailbox_client() -> IMailboxClientDispatcher {

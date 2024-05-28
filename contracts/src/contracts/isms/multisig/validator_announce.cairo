@@ -117,7 +117,7 @@ pub mod validator_announce {
     fn convert_to_signature(_signature: Bytes) -> Signature {
         let (_, r) = _signature.read_u256(0);
         let (_, s) = _signature.read_u256(32);
-        let (_, v) = _signature.read_u256(64);
+        let (_, v) = _signature.read_u8(64);
         signature_from_vrs(v.try_into().unwrap(), r, s)
     }
     fn keccak_hash(_input: Span<u256>) -> u256 {

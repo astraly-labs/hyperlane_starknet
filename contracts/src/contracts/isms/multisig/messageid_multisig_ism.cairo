@@ -7,7 +7,7 @@ pub mod messageid_multisig_ism {
     use hyperlane_starknet::contracts::libs::multisig::message_id_ism_metadata::message_id_ism_metadata::MessageIdIsmMetadata;
     use hyperlane_starknet::interfaces::{
         ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait,
+        IInterchainSecurityModuleDispatcherTrait,IValidatorConfiguration
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
@@ -65,7 +65,6 @@ pub mod messageid_multisig_ism {
             let (validators, threshold) = self.validators_and_threshold(_message);
             assert(threshold > 0, Errors::NO_MULTISIG_THRESHOLD_FOR_MESSAGE);
             let mut i = 0;
-
             // for each couple (sig_s, sig_r) extracted from the metadata
             loop {
                 if (i == threshold) {
@@ -90,6 +89,11 @@ pub mod messageid_multisig_ism {
             };
             true
         }
+    }
+
+
+    #[abi(embed_v0)]
+    impl IValidorConfigurationImpl of IValidatorConfiguration<ContractState> {
         fn get_validators(self: @ContractState) -> Span<EthAddress> {
             build_validators_span(self)
         }
@@ -129,7 +133,6 @@ pub mod messageid_multisig_ism {
             (build_validators_span(self), threshold)
         }
     }
-
     fn digest(_metadata: Bytes, _message: Message) -> u256 {
         let origin_merkle_tree_hook = MessageIdIsmMetadata::origin_merkle_tree_hook(
             _metadata.clone()

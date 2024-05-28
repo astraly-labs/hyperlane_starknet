@@ -3,7 +3,7 @@ pub mod merkle_lib {
     use core::keccak::keccak_u256s_be_inputs;
     use hyperlane_starknet::utils::keccak256::reverse_endianness;
     use hyperlane_starknet::utils::store_arrays::StoreU256Array;
-    const TREE_DEPTH: u32 = 32;
+    pub const TREE_DEPTH: u32 = 32;
 
 
     #[derive(Serde, Drop, starknet::Store)]
@@ -17,9 +17,21 @@ pub mod merkle_lib {
     }
 
     #[generate_trait]
-    pub impl IMerkleLibImpl of IMerkleLib {
+    pub impl MerkleLibImpl of MerkleLib {
+        fn new() -> Tree {
+            let mut array = array![];
+            let mut i = 0;
+            loop {
+                if (i == TREE_DEPTH) {
+                    break ();
+                }
+                array.append(0_u256);
+                i += 1;
+            };
+            Tree { branch: array, count: 0_u256 }
+        }
         fn insert(ref self: Tree, mut _node: u256) {
-            let MAX_LEAVES: u32 = pow(2, TREE_DEPTH) - 1;
+            let MAX_LEAVES: u128 = pow(2_u128, TREE_DEPTH.into()) - 1;
             assert(self.count < MAX_LEAVES.into(), Errors::MERKLE_TREE_FULL);
             self.count += 1;
             let mut size = self.count;
@@ -36,6 +48,7 @@ pub mod merkle_lib {
                 size /= 2;
                 cur_idx += 1;
             };
+            println!("function is finished");
         }
 
         fn root_with_ctx(self: @Tree, _zeroes: Array<u256>) -> u256 {
@@ -53,25 +66,26 @@ pub mod merkle_lib {
                 } else {
                     current = keccak_u256s_be_inputs(array![current, *_zeroes.at(cur_idx)].span());
                 }
+                cur_idx += 1;
             };
             current
         }
 
-        fn branch_root(self: @Tree, _item: u256, _index: u256) -> u256 {
+        fn branch_root( _item: u256, _branch: Span<u256> , _index: u256) -> u256 {
             let mut cur_idx = 0;
-            let index = *self.count;
             let mut current = _item;
             loop {
                 if (cur_idx == TREE_DEPTH) {
                     break ();
                 }
-                let ith_bit = get_ith_bit(index, cur_idx);
-                let next = *self.branch.at(cur_idx);
+                let ith_bit = get_ith_bit(_index, cur_idx);
+                let next = *_branch.at(cur_idx);
                 if (ith_bit == 1) {
                     current = keccak_u256s_be_inputs(array![next, current].span());
                 } else {
                     current = keccak_u256s_be_inputs(array![current, next].span());
                 }
+                cur_idx += 1;
             };
             current
         }
@@ -86,16 +100,15 @@ pub mod merkle_lib {
         let mut array = array![];
         let mut cur_idx = 0;
         loop {
-            if (cur_idx == self.branch.len() + 1) {
+            if (cur_idx == self.branch.len()) {
                 break ();
             }
-            if (cur_idx < _index) {
-                array.append(*self.branch.at(cur_idx))
-            } else if (cur_idx == _index) {
+            if (cur_idx == _index) {
                 array.append(_node);
             } else {
-                array.append(*self.branch.at(cur_idx - 1))
+                array.append(*self.branch.at(cur_idx))
             }
+            cur_idx += 1;
         };
         self.branch = array;
     }
@@ -105,7 +118,7 @@ pub mod merkle_lib {
         _index & mask / mask
     }
 
-    fn zero_hashes() -> Array<u256> {
+    pub fn zero_hashes() -> Array<u256> {
         array![
             0x0000000000000000000000000000000000000000000000000000000000000000,
             0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5,
@@ -139,3 +152,74 @@ pub mod merkle_lib {
     }
 }
 
+
+#[cfg(test)]
+mod tests {
+    use alexandria_math::pow;
+    use core::keccak::keccak_u256s_be_inputs;
+    use super::merkle_lib::{MerkleLib, Tree, zero_hashes, TREE_DEPTH};
+
+    #[test]
+    #[ignore]
+    fn test_insert_and_root() {
+        let mut tree = MerkleLib::new();
+
+        // Insert a single leaf
+        let leaf = 0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef_u256;
+        tree.insert(leaf);
+
+        // Compute root with context
+        let zero_hashes = zero_hashes();
+        let root_with_ctx = tree.root_with_ctx(zero_hashes.clone());
+
+        // Compute root
+        let root = tree.root();
+
+        // Expected root value (depends on the inserted leaf and zero hashes)
+        let expected_root = keccak_u256s_be_inputs(array![leaf, *zero_hashes[0]].span());
+
+        assert_eq!(root_with_ctx, expected_root);
+        assert_eq!(root, expected_root);
+    }
+
+    #[test]
+    #[ignore]
+    fn test_insert_multiple_leaves() {
+        let mut tree = MerkleLib::new();
+
+        let leaf1 = 0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef_u256;
+        let leaf2 = 0xfedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210_u256;
+
+        tree.insert(leaf1);
+        tree.insert(leaf2);
+
+        let zero_hashes = zero_hashes();
+        let root = tree.root_with_ctx(zero_hashes.clone());
+
+        let intermediate = keccak_u256s_be_inputs(array![leaf1, leaf2].span());
+        let expected_root = keccak_u256s_be_inputs(array![intermediate, *zero_hashes[1]].span());
+
+        assert(root == expected_root, 'root does not match expected');
+    }
+
+
+    #[test]
+    #[ignore]
+    #[should_panic(expected: ('Merkle tree full',))]
+    fn test_tree_full() {
+        let mut tree = MerkleLib::new();
+        let MAX_LEAVES = pow(2_u128, TREE_DEPTH.into()) - 1;
+        let mut cur_idx = 0;
+        loop {
+            if (cur_idx == MAX_LEAVES) {
+                break ();
+            }
+            tree.insert(0_u256);
+            cur_idx += 1;
+        };
+
+        assert(tree.count == MAX_LEAVES.into(), 'Wrong tree count');
+
+        tree.insert(0_u256);
+    }
+}

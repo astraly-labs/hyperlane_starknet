@@ -7,6 +7,7 @@ mod contracts {
         pub mod merkle_lib;
         pub mod message;
         pub mod multisig {
+            pub mod merkleroot_ism_metadata;
             pub mod message_id_ism_metadata;
         }
     }
@@ -24,6 +25,7 @@ mod contracts {
     }
     pub mod isms {
         pub mod multisig {
+            pub mod merkleroot_multisig_ism;
             pub mod messageid_multisig_ism;
             pub mod validator_announce;
         }
@@ -33,6 +35,9 @@ mod contracts {
         pub mod aggregation {
             pub mod aggregation;
         }
+        pub mod pausable_ism;
+        pub mod noop_ism;
+        pub mod trusted_relayer_ism;
     }
 }
 mod utils {
@@ -45,7 +50,7 @@ mod tests {
     pub mod setup;
     pub mod test_mailbox;
     pub mod isms {
-        // pub mod test_aggregation;
+        pub mod test_aggregation;
         pub mod test_multisig;
     }
 }

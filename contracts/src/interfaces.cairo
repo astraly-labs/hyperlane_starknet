@@ -108,6 +108,10 @@ pub trait IInterchainSecurityModule<TContractState> {
     /// * `_message` - Hyperlane encoded interchain message
     fn verify(self: @TContractState, _metadata: Bytes, _message: Message,) -> bool;
 
+}
+
+#[starknet::interface]
+pub trait IValidatorConfiguration<TContractState> {
     fn validators_and_threshold(
         self: @TContractState, _message: Message
     ) -> (Span<EthAddress>, u32);
@@ -302,4 +306,16 @@ pub trait IMerkleTreeHook<TContractState> {
     fn latest_checkpoint(self: @TContractState) -> (u256, u32);
 
     fn hook_type(self: @TContractState) -> Types;
+}
+
+
+#[starknet::interface]
+pub trait IPausableIsm<TContractState> {
+    fn module_type(self: @TContractState) -> ModuleType; 
+
+    fn verify(self: @TContractState,_metadata: Bytes, _message: Message ) -> bool;
+
+    fn pause(ref self: TContractState); 
+
+    fn unpause(ref self: TContractState);
 }

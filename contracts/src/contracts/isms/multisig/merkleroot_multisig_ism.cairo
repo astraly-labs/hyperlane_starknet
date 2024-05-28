@@ -4,21 +4,55 @@ pub mod merkleroot_multisig_ism {
 
 
     use core::ecdsa::check_ecdsa_signature;
+    use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
+    use hyperlane_starknet::contracts::libs::merkle_lib::merkle_lib::MerkleLib;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
+    use hyperlane_starknet::contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MerkleRootIsmMetadata;
     use hyperlane_starknet::interfaces::{
-        IMultisigIsm, IMultisigIsmDispatcher, IMultisigIsmDispatcherTrait, ModuleType,
-        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait,
+        ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+        IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration, 
     };
-
+    use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::ContractAddress;
+    use starknet::EthAddress;
+    use starknet::eth_signature::is_eth_signature_valid;
+    use starknet::secp256_trait::{Signature, signature_from_vrs};
+
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
     #[storage]
-    struct Storage {}
+    struct Storage {
+        validators: LegacyMap<u32, EthAddress>,
+        threshold: u32,
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
+    }
 
     mod Errors {
         pub const NO_MULTISIG_THRESHOLD_FOR_MESSAGE: felt252 = 'No MultisigISM treshold present';
-        pub const VERIFICATION_FAILED_THRESHOLD_NOT_REACHED: felt252 = 'Verify failed, < threshold';
+        pub const INVALID_MERKLE_INDEX: felt252 = 'Invalid merkle index metadata';
+        pub const NO_MATCH_FOR_SIGNATURE: felt252 = 'No match for given signature';
+        pub const EMPTY_METADATA: felt252 = 'Empty metadata';
+        pub const VALIDATOR_ADDRESS_CANNOT_BE_NULL: felt252 = 'Validator address cannot be 0';
     }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    pub enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
+    }
+
 
     #[abi(embed_v0)]
     impl IMerklerootMultisigIsmImpl of IInterchainSecurityModule<ContractState> {
@@ -26,31 +60,18 @@ pub mod merkleroot_multisig_ism {
             ModuleType::MERKLE_ROOT_MULTISIG(starknet::get_contract_address())
         }
 
-        fn verify(
-            self: @ContractState,
-            _metadata: Bytes,
-            _message: Message,
-            _validator_configuration: ContractAddress
-        ) -> bool {
+        fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
+            assert(_metadata.clone().data().len() > 0, Errors::EMPTY_METADATA);
             let digest = digest(_metadata.clone(), _message.clone());
-            let validator_configuration = IMultisigIsmDispatcher {
-                contract_address: _validator_configuration
-            };
-            let (validators, threshold) = validator_configuration
-                .validators_and_threshold(_message);
+            let (validators, threshold) = self.validators_and_threshold(_message);
             assert(threshold > 0, Errors::NO_MULTISIG_THRESHOLD_FOR_MESSAGE);
-            let validator_count = validators.len();
-            let mut unmatched_signatures = 0;
-            let mut matched_signatures = 0;
             let mut i = 0;
-
             // for each couple (sig_s, sig_r) extracted from the metadata
             loop {
                 if (i == threshold) {
                     break ();
                 }
-                let (signature_r, signature_s) = get_signature_at(_metadata.clone(), i);
-
+                let signature = get_signature_at(_metadata.clone(), i);
                 // we loop on the validators list public key in order to find a match
                 let mut cur_idx = 0;
                 let is_signer_in_list = loop {
@@ -58,37 +79,107 @@ pub mod merkleroot_multisig_ism {
                         break false;
                     }
                     let signer = *validators.at(cur_idx);
-                    if check_ecdsa_signature(
-                        digest, signer.try_into().unwrap(), signature_r, signature_s
-                    ) {
+                    if bool_is_eth_signature_valid(digest, signature, signer) {
                         // we found a match
                         break true;
                     }
                     cur_idx += 1;
                 };
-                if (!is_signer_in_list) {
-                    unmatched_signatures += 1;
-                } else {
-                    matched_signatures += 1;
-                }
-                assert(
-                    unmatched_signatures < validator_count - threshold,
-                    Errors::VERIFICATION_FAILED_THRESHOLD_NOT_REACHED
-                );
+                assert(is_signer_in_list, Errors::NO_MATCH_FOR_SIGNATURE);
                 i += 1;
             };
-            assert(
-                matched_signatures >= threshold, Errors::VERIFICATION_FAILED_THRESHOLD_NOT_REACHED
-            );
             true
+        }
+
+    }
+
+
+    #[abi(embed_v0)]
+    impl IValidatorConfigurationImpl of IValidatorConfiguration<ContractState> {
+        fn get_validators(self: @ContractState) -> Span<EthAddress> {
+            build_validators_span(self)
+        }
+
+        fn get_threshold(self: @ContractState) -> u32 {
+            self.threshold.read()
+        }
+
+        fn set_validators(ref self: ContractState, _validators: Span<EthAddress>) {
+            self.ownable.assert_only_owner();
+            let mut cur_idx = 0;
+
+            loop {
+                if (cur_idx == _validators.len()) {
+                    break ();
+                }
+                let validator = *_validators.at(cur_idx);
+                assert(
+                    validator != 0.try_into().unwrap(), Errors::VALIDATOR_ADDRESS_CANNOT_BE_NULL
+                );
+                self.validators.write(cur_idx.into(), validator);
+                cur_idx += 1;
+            }
+        }
+
+        fn set_threshold(ref self: ContractState, _threshold: u32) {
+            self.ownable.assert_only_owner();
+            self.threshold.write(_threshold);
+        }
+
+        fn validators_and_threshold(
+            self: @ContractState, _message: Message
+        ) -> (Span<EthAddress>, u32) {
+            // USER CONTRACT DEFINITION HERE
+            // USER CAN SPECIFY VALIDATORS SELECTION CONDITIONS
+            let threshold = self.threshold.read();
+            (build_validators_span(self), threshold)
         }
     }
 
-    fn digest(_metadata: Bytes, _message: Message) -> felt252 {
-        return 0;
+    fn digest(_metadata: Bytes, _message: Message) -> u256 {
+        assert(
+            MerkleRootIsmMetadata::message_index(
+                _metadata.clone()
+            ) <= MerkleRootIsmMetadata::signed_index(_metadata.clone()),
+            Errors::INVALID_MERKLE_INDEX
+        );
+        let origin_merkle_tree_hook = MerkleRootIsmMetadata::origin_merkle_tree_hook(_metadata.clone());
+        let signed_index = MerkleRootIsmMetadata::signed_index(_metadata.clone());
+        let signed_message_id = MerkleRootIsmMetadata::signed_message_id(_metadata.clone());
+        let (id, _) = MessageTrait::format_message(_message.clone());
+        let proof = MerkleRootIsmMetadata::proof(_metadata.clone()); 
+        let message_index  = MerkleRootIsmMetadata::message_index(_metadata.clone());
+        let signed_root = MerkleLib::branch_root(id,proof, message_index.into());
+        CheckpointLib::digest(
+            _message.origin, origin_merkle_tree_hook.into(), signed_root.into(), signed_index, signed_message_id
+        )
     }
 
-    fn get_signature_at(_metadata: Bytes, index: u32) -> (felt252, felt252) {
-        (0, 0)
+    fn get_signature_at(_metadata: Bytes, _index: u32) -> Signature {
+        let (v, r, s) = MerkleRootIsmMetadata::signature_at(_metadata, _index);
+        signature_from_vrs(v.into(), r, s)
+    }
+
+    fn bool_is_eth_signature_valid(
+        msg_hash: u256, signature: Signature, signer: EthAddress
+    ) -> bool {
+        match is_eth_signature_valid(msg_hash, signature, signer) {
+            Result::Ok(()) => true,
+            Result::Err(_) => false
+        }
+    }
+
+    fn build_validators_span(self: @ContractState) -> Span<EthAddress> {
+        let mut validators = ArrayTrait::new();
+        let mut cur_idx = 0;
+        loop {
+            let validator = self.validators.read(cur_idx);
+            if (validator == 0.try_into().unwrap()) {
+                break ();
+            }
+            validators.append(validator);
+            cur_idx += 1;
+        };
+        validators.span()
     }
 }

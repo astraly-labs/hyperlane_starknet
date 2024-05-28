@@ -9,7 +9,7 @@ use hyperlane_starknet::interfaces::IMessageRecipientDispatcherTrait;
 use hyperlane_starknet::interfaces::{
     IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, ModuleType,
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-    IInterchainSecurityModule
+    IInterchainSecurityModule,
 };
 use hyperlane_starknet::tests::setup::{
     setup, mock_setup, setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1,

@@ -21,6 +21,7 @@ mod contracts {
         pub mod hook;
         pub mod ism;
         pub mod message_recipient;
+        pub mod mock_validator_announce;
     }
     pub mod isms {
         pub mod multisig {
@@ -43,9 +44,10 @@ mod utils {
 #[cfg(test)]
 mod tests {
     pub mod setup;
-    pub mod test_mailbox;
-    pub mod isms {
-        // pub mod test_aggregation;
-        pub mod test_multisig;
+    // pub mod test_mailbox;
+    pub mod test_validator_announce;
+
+    pub mod isms { // pub mod test_aggregation;
+    // pub mod test_multisig;
     }
 }

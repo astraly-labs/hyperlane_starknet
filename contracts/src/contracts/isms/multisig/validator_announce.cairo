@@ -1,6 +1,7 @@
 #[starknet::contract]
 pub mod validator_announce {
     use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_data_structures::array_ext::ArrayTraitExt;
     use core::keccak::keccak_u256s_be_inputs;
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::{
         HYPERLANE_ANNOUNCEMENT
@@ -33,7 +34,7 @@ pub mod validator_announce {
     #[derive(starknet::Event, Drop)]
     pub struct ValidatorAnnouncement {
         pub validator: EthAddress,
-        pub storage_location: felt252
+        pub storage_location: Array<felt252>
     }
 
     pub mod Errors {
@@ -51,16 +52,22 @@ pub mod validator_announce {
         fn announce(
             ref self: ContractState,
             _validator: EthAddress,
-            _storage_location: felt252,
+            mut _storage_location: Array<felt252>,
             _signature: Bytes
         ) -> bool {
             let felt252_validator: felt252 = _validator.into();
-            let mut input: Array<u256> = array![
-                felt252_validator.into(), _storage_location.into(),
-            ];
+            let mut _input: Array<u256> = array![felt252_validator.into()];
+            let mut u256_storage_location: Array<u256> = array![];
+            loop {
+                match _storage_location.pop_front() {
+                    Option::Some(storage) => u256_storage_location.append(storage.into()),
+                    Option::None(()) => { break (); },
+                }
+            };
+            let input = _input.concat(@u256_storage_location);
             let replay_id = keccak_hash(input.span());
             assert(!self.replay_protection.read(replay_id), Errors::REPLAY_PROTECTION_ERROR);
-            let announcement_digest = self.get_announcement_digest(_storage_location);
+            let announcement_digest = self.get_announcement_digest(u256_storage_location);
             let signature: Signature = convert_to_signature(_signature);
             assert(
                 bool_is_eth_signature_valid(announcement_digest, signature, _validator),
@@ -73,8 +80,7 @@ pub mod validator_announce {
                     self.validators.write(last_validator, _validator);
                 }
             };
-            let mut storage_locations = self.storage_location.read(_validator);
-            storage_locations.append(_storage_location);
+            self.storage_location.write(_validator, _storage_location.clone());
             self
                 .emit(
                     ValidatorAnnouncement {
@@ -103,10 +109,10 @@ pub mod validator_announce {
         fn get_announced_validators(self: @ContractState) -> Span<EthAddress> {
             build_validators_array(self)
         }
-        fn get_announcement_digest(self: @ContractState, _storage_location: felt252) -> u256 {
+        fn get_announcement_digest(self: @ContractState, _storage_location: Array<u256>) -> u256 {
             let domain_hash = domain_hash(self);
             let arguments = keccak_u256s_be_inputs(
-                array![domain_hash.into(), _storage_location.into()].span()
+                array![domain_hash.into()].concat(@_storage_location).span()
             );
             let reverse_args = reverse_endianness(arguments);
             to_eth_signature(reverse_args)

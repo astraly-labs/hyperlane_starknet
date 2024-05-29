@@ -69,8 +69,7 @@ pub mod mock_validator_announce {
             let input = _input.concat(@u256_storage_location);
             let replay_id = keccak_hash(input.span());
             assert(!self.replay_protection.read(replay_id), Errors::REPLAY_PROTECTION_ERROR);
-            let announcement_digest = self
-                .get_announcement_digest(u256_storage_location);
+            let announcement_digest = self.get_announcement_digest(u256_storage_location);
             let signature: Signature = convert_to_signature(_signature);
             assert(
                 bool_is_eth_signature_valid(announcement_digest, signature, _validator),
@@ -113,10 +112,7 @@ pub mod mock_validator_announce {
             build_validators_array(self)
         }
 
-        fn get_announcement_digest(
-            self: @ContractState,
-            _storage_location: Array<u256>,
-        ) -> u256 {
+        fn get_announcement_digest(self: @ContractState, _storage_location: Array<u256>,) -> u256 {
             let mailboxclient_address = self.mailboxclient.read();
             let domain = self.domain.read();
             let domain_hash = domain_hash(self, mailboxclient_address, domain);
@@ -144,7 +140,7 @@ pub mod mock_validator_announce {
     fn domain_hash(self: @ContractState, _mailbox_address: ContractAddress, _domain: u32) -> u256 {
         let felt_address: felt252 = _mailbox_address.into();
         let mut input: Array<u256> = array![
-            _domain.into(),felt_address.into(), HYPERLANE_ANNOUNCEMENT.into()
+            _domain.into(), felt_address.into(), HYPERLANE_ANNOUNCEMENT.into()
         ];
         let hash = keccak_u256s_be_inputs(input.span());
         reverse_endianness(hash)

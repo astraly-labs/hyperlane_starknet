@@ -108,7 +108,9 @@ pub fn setup_validator_announce() -> IValidatorAnnounceDispatcher {
     IValidatorAnnounceDispatcher { contract_address: validator_announce_addr }
 }
 
-pub fn setup_mock_validator_announce(mailbox_address: ContractAddress, domain: u32) -> IMockValidatorAnnounceDispatcher {
+pub fn setup_mock_validator_announce(
+    mailbox_address: ContractAddress, domain: u32
+) -> IMockValidatorAnnounceDispatcher {
     let validator_announce_class = declare("mock_validator_announce").unwrap();
     let (validator_announce_addr, _) = validator_announce_class
         .deploy(@array![mailbox_address.into(), domain.into()])

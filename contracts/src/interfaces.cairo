@@ -286,10 +286,7 @@ pub trait IMockValidatorAnnounce<TContractState> {
         _signature: Bytes
     ) -> bool;
 
-    fn get_announcement_digest(
-        self: @TContractState,
-        _storage_location: Array<u256>,
-    ) -> u256;
+    fn get_announcement_digest(self: @TContractState, _storage_location: Array<u256>,) -> u256;
 }
 
 #[starknet::interface]

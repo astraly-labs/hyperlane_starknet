@@ -120,7 +120,7 @@ pub mod mock_validator_announce {
                 array![domain_hash.into()].concat(@_storage_location).span()
             );
             let reverse_args = reverse_endianness(arguments);
-            to_eth_signature(reverse_args)
+            reverse_args
         }
     }
 

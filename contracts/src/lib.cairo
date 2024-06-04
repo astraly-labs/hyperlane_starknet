@@ -12,7 +12,11 @@ mod contracts {
         }
     }
     pub mod hooks {
+        pub mod libs {
+            pub mod standard_hook_metadata;
+        }
         pub mod merkle_tree_hook;
+        pub mod protocol_fee;
     }
     pub mod client {
         pub mod mailboxclient;

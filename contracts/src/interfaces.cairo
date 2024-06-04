@@ -133,7 +133,6 @@ pub trait ISpecifiesInterchainSecurityModule<TContractState> {
 
 #[starknet::interface]
 pub trait IPostDispatchHook<TContractState> {
-    fn get_hook_type(self: @TContractState) -> Types;
 
     fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
 
@@ -318,4 +317,15 @@ pub trait IPausableIsm<TContractState> {
     fn pause(ref self: TContractState); 
 
     fn unpause(ref self: TContractState);
+}
+
+#[starknet::interface]
+pub trait IProtocolFee<TContractState> {
+    fn hook_type(self: @TContractState) -> Types;
+
+    fn set_protocol_fee(ref self: TContractState, _protocol_fee: u256);
+
+    fn set_beneficiary(ref self: TContractState, _beneficiary: ContractAddress);
+
+    fn collect_protocol_fees(ref self: TContractState);
 }

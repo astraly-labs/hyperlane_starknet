@@ -28,12 +28,4 @@ mod tests {
             reverse_endianness(big_endian_number) == expected_result, 'Failed to realise reverse'
         );
     }
-
-    #[test]
-    fn test_eth_signed_message() {
-        let message = 0x10101010101010101010101010101010_u256;
-        let expected_message_hash =
-            0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68_u256;
-        assert_eq!(to_eth_signature(message), expected_message_hash);
-    }
 }

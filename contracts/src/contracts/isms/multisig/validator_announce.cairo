@@ -2,15 +2,16 @@
 pub mod validator_announce {
     use alexandria_bytes::{Bytes, BytesTrait};
     use alexandria_data_structures::array_ext::ArrayTraitExt;
-    use core::keccak::keccak_u256s_be_inputs;
+    use core::poseidon::poseidon_hash_span;
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::{
         HYPERLANE_ANNOUNCEMENT
     };
     use hyperlane_starknet::interfaces::IValidatorAnnounce;
     use hyperlane_starknet::interfaces::{IMailboxClientDispatcher, IMailboxClientDispatcherTrait};
-    use hyperlane_starknet::utils::keccak256::{reverse_endianness, to_eth_signature};
+    use hyperlane_starknet::utils::keccak256::{
+        reverse_endianness, to_eth_signature, compute_keccak, ByteData
+    };
     use hyperlane_starknet::utils::store_arrays::StoreFelt252Array;
-
     use starknet::ContractAddress;
     use starknet::EthAddress;
     use starknet::eth_signature::is_eth_signature_valid;
@@ -20,7 +21,7 @@ pub mod validator_announce {
     struct Storage {
         mailboxclient: ContractAddress,
         storage_location: LegacyMap::<EthAddress, Array<felt252>>,
-        replay_protection: LegacyMap::<u256, bool>,
+        replay_protection: LegacyMap::<felt252, bool>,
         validators: LegacyMap::<EthAddress, EthAddress>,
     }
 
@@ -64,8 +65,9 @@ pub mod validator_announce {
                     Option::None(()) => { break (); },
                 }
             };
-            let input = _input.concat(@u256_storage_location);
-            let replay_id = keccak_hash(input.span());
+            let replay_id = poseidon_hash_span(
+                array![felt252_validator].concat(@_storage_location).span()
+            );
             assert(!self.replay_protection.read(replay_id), Errors::REPLAY_PROTECTION_ERROR);
             let announcement_digest = self.get_announcement_digest(u256_storage_location);
             let signature: Signature = convert_to_signature(_signature);
@@ -110,13 +112,26 @@ pub mod validator_announce {
             build_validators_array(self)
         }
 
-        fn get_announcement_digest(self: @ContractState, _storage_location: Array<u256>) -> u256 {
+        fn get_announcement_digest(
+            self: @ContractState, mut _storage_location: Array<u256>
+        ) -> u256 {
             let domain_hash = domain_hash(self);
-            let arguments = keccak_u256s_be_inputs(
-                array![domain_hash.into()].concat(@_storage_location).span()
+            let mut byte_data_storage_location = array![];
+            loop {
+                match _storage_location.pop_front() {
+                    Option::Some(storage) => {
+                        byte_data_storage_location
+                            .append(ByteData { value: storage, is_address: false });
+                    },
+                    Option::None(_) => { break (); }
+                }
+            };
+            let hash = compute_keccak(
+                array![ByteData { value: domain_hash.into(), is_address: false }]
+                    .concat(@byte_data_storage_location)
+                    .span()
             );
-            let reverse_args = reverse_endianness(arguments);
-            to_eth_signature(reverse_args)
+            to_eth_signature(hash)
         }
     }
 
@@ -128,23 +143,17 @@ pub mod validator_announce {
         signature_from_vrs(v.try_into().unwrap(), r, s)
     }
 
-    fn keccak_hash(_input: Span<u256>) -> u256 {
-        let hash = keccak_u256s_be_inputs(_input);
-        reverse_endianness(hash)
-    }
-
     fn domain_hash(self: @ContractState) -> u256 {
         let mailboxclient = IMailboxClientDispatcher {
             contract_address: self.mailboxclient.read()
         };
         let mailboxclient_address: felt252 = self.mailboxclient.read().try_into().unwrap();
-        let mut input: Array<u256> = array![
-            mailboxclient.get_local_domain().into(),
-            mailboxclient_address.try_into().unwrap(),
-            HYPERLANE_ANNOUNCEMENT.into()
+        let mut input: Array<ByteData> = array![
+            ByteData { value: mailboxclient.get_local_domain().into(), is_address: false },
+            ByteData { value: mailboxclient_address.try_into().unwrap(), is_address: true },
+            ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), is_address: false }
         ];
-        let hash = keccak_u256s_be_inputs(input.span());
-        reverse_endianness(hash)
+        compute_keccak(input.span())
     }
 
 

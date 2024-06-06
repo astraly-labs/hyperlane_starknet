@@ -1,31 +1,34 @@
 #[starknet::contract]
-pub mod protocol_fee{
+pub mod protocol_fee {
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+    use hyperlane_starknet::contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::{
+        StandardHookMetadata, VARIANT
+    };
     use hyperlane_starknet::contracts::libs::message::Message;
     use hyperlane_starknet::interfaces::{IPostDispatchHook, Types, IProtocolFee};
-    use hyperlane_starknet::contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::{StandardHookMetadata, VARIANT};
-    use starknet::{ContractAddress, contract_address_const, get_caller_address, get_contract_address};
     use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use starknet::{
+        ContractAddress, contract_address_const, get_caller_address, get_contract_address
+    };
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
-    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 
-    #[storage] 
-    struct Storage{
-        max_protocol_fee: u256, 
-        protocol_fee: u256, 
+    #[storage]
+    struct Storage {
+        max_protocol_fee: u256,
+        protocol_fee: u256,
         beneficiary: ContractAddress,
-        fee_token: ContractAddress, 
+        fee_token: ContractAddress,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
-       
     }
 
     mod Errors {
@@ -36,8 +39,6 @@ pub mod protocol_fee{
         pub const INSUFFICIENT_ALLOWANCE: felt252 = 'insufficient allowance';
     }
 
-
-
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
@@ -45,11 +46,17 @@ pub mod protocol_fee{
         OwnableEvent: OwnableComponent::Event,
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
-       
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _max_protocol_fee: u256, _protocol_fee: u256, _beneficiary: ContractAddress, _owner: ContractAddress, _token_address: ContractAddress){
+    fn constructor(
+        ref self: ContractState,
+        _max_protocol_fee: u256,
+        _protocol_fee: u256,
+        _beneficiary: ContractAddress,
+        _owner: ContractAddress,
+        _token_address: ContractAddress
+    ) {
         self.max_protocol_fee.write(_max_protocol_fee);
         self._set_protocol_fee(_protocol_fee);
         self._set_beneficiary(_beneficiary);
@@ -80,30 +87,39 @@ pub mod protocol_fee{
             Types::PROTOCOL_FEE(())
         }
 
+        fn get_protocol_fee(self: @ContractState) -> u256 {
+            self.protocol_fee.read()
+        }
+
         fn set_protocol_fee(ref self: ContractState, _protocol_fee: u256) {
             self.ownable.assert_only_owner();
             self._set_protocol_fee(_protocol_fee);
         }
 
-        fn set_beneficiary(ref self: ContractState, _beneficiary: ContractAddress){
+        fn get_beneficiary(self: @ContractState) -> ContractAddress {
+            self.beneficiary.read()
+        }
+
+        fn set_beneficiary(ref self: ContractState, _beneficiary: ContractAddress) {
             self.ownable.assert_only_owner();
             self._set_beneficiary(_beneficiary);
         }
 
-        fn collect_protocol_fees(ref self: ContractState){
-            let token_dispatcher = IERC20Dispatcher{contract_address:  self.fee_token.read()};
-             let contract_address = get_contract_address(); 
-             let balance = token_dispatcher.balance_of(contract_address);
+
+        fn collect_protocol_fees(ref self: ContractState) {
+            let token_dispatcher = IERC20Dispatcher { contract_address: self.fee_token.read() };
+            let contract_address = get_contract_address();
+            let balance = token_dispatcher.balance_of(contract_address);
+            assert(balance != 0, Errors::INSUFFICIENT_BALANCE);
             token_dispatcher.transfer(self.beneficiary.read(), balance);
         }
     }
 
 
-
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn _post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message){
-            let token_dispatcher = IERC20Dispatcher{contract_address:  self.fee_token.read()};
+        fn _post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) {
+            let token_dispatcher = IERC20Dispatcher { contract_address: self.fee_token.read() };
             let caller_address = get_caller_address();
             let contract_address = get_contract_address();
             let user_balance = token_dispatcher.balance_of(caller_address);
@@ -114,14 +130,13 @@ pub mod protocol_fee{
                 Errors::INSUFFICIENT_ALLOWANCE
             );
             token_dispatcher.transfer_from(caller_address, contract_address, protocol_fee);
-
         }
 
-        fn _quote_dispatch(ref self: ContractState,_metadata: Bytes, _message: Message) -> u256 {
+        fn _quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
             self.protocol_fee.read()
         }
 
-        fn _set_protocol_fee(ref self: ContractState, _protocol_fee: u256){
+        fn _set_protocol_fee(ref self: ContractState, _protocol_fee: u256) {
             assert(_protocol_fee <= self.max_protocol_fee.read(), Errors::EXCEEDS_MAX_PROTOCOL_FEE);
             self.protocol_fee.write(_protocol_fee);
         }
@@ -130,5 +145,4 @@ pub mod protocol_fee{
             self.beneficiary.write(_beneficiary);
         }
     }
-
 }

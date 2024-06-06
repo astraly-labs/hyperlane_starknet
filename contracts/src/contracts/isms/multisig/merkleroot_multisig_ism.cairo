@@ -10,7 +10,7 @@ pub mod merkleroot_multisig_ism {
     use hyperlane_starknet::contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MerkleRootIsmMetadata;
     use hyperlane_starknet::interfaces::{
         ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration, 
+        IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration,
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
@@ -90,7 +90,6 @@ pub mod merkleroot_multisig_ism {
             };
             true
         }
-
     }
 
 
@@ -143,15 +142,21 @@ pub mod merkleroot_multisig_ism {
             ) <= MerkleRootIsmMetadata::signed_index(_metadata.clone()),
             Errors::INVALID_MERKLE_INDEX
         );
-        let origin_merkle_tree_hook = MerkleRootIsmMetadata::origin_merkle_tree_hook(_metadata.clone());
+        let origin_merkle_tree_hook = MerkleRootIsmMetadata::origin_merkle_tree_hook(
+            _metadata.clone()
+        );
         let signed_index = MerkleRootIsmMetadata::signed_index(_metadata.clone());
         let signed_message_id = MerkleRootIsmMetadata::signed_message_id(_metadata.clone());
         let (id, _) = MessageTrait::format_message(_message.clone());
-        let proof = MerkleRootIsmMetadata::proof(_metadata.clone()); 
-        let message_index  = MerkleRootIsmMetadata::message_index(_metadata.clone());
-        let signed_root = MerkleLib::branch_root(id,proof, message_index.into());
+        let proof = MerkleRootIsmMetadata::proof(_metadata.clone());
+        let message_index = MerkleRootIsmMetadata::message_index(_metadata.clone());
+        let signed_root = MerkleLib::branch_root(id, proof, message_index.into());
         CheckpointLib::digest(
-            _message.origin, origin_merkle_tree_hook.into(), signed_root.into(), signed_index, signed_message_id
+            _message.origin,
+            origin_merkle_tree_hook.into(),
+            signed_root.into(),
+            signed_index,
+            signed_message_id
         )
     }
 

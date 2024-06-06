@@ -71,7 +71,7 @@ pub mod merkle_lib {
             current
         }
 
-        fn branch_root( _item: u256, _branch: Span<u256> , _index: u256) -> u256 {
+        fn branch_root(_item: u256, _branch: Span<u256>, _index: u256) -> u256 {
             let mut cur_idx = 0;
             let mut current = _item;
             loop {

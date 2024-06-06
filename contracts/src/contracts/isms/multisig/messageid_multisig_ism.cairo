@@ -7,7 +7,7 @@ pub mod messageid_multisig_ism {
     use hyperlane_starknet::contracts::libs::multisig::message_id_ism_metadata::message_id_ism_metadata::MessageIdIsmMetadata;
     use hyperlane_starknet::interfaces::{
         ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait,IValidatorConfiguration
+        IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};

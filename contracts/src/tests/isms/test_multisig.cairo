@@ -9,7 +9,8 @@ use hyperlane_starknet::interfaces::IMessageRecipientDispatcherTrait;
 use hyperlane_starknet::interfaces::{
     IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, ModuleType,
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-    IInterchainSecurityModule, IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait,
+    IInterchainSecurityModule, IValidatorConfigurationDispatcher,
+    IValidatorConfigurationDispatcherTrait,
 };
 use hyperlane_starknet::tests::setup::{
     setup, mock_setup, setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1,
@@ -27,7 +28,7 @@ use starknet::secp256_trait::signature_from_vrs;
 #[test]
 fn test_set_validators() {
     let new_validators = array![VALIDATOR_ADDRESS_1(), VALIDATOR_ADDRESS_2()].span();
-    let (_,validators) = setup_messageid_multisig_ism();
+    let (_, validators) = setup_messageid_multisig_ism();
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     validators.set_validators(new_validators);
@@ -39,7 +40,7 @@ fn test_set_validators() {
 #[test]
 fn test_set_threshold() {
     let new_threshold = 3;
-    let (_,validators) = setup_messageid_multisig_ism();
+    let (_, validators) = setup_messageid_multisig_ism();
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     validators.set_threshold(new_threshold);
@@ -51,7 +52,7 @@ fn test_set_threshold() {
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_validators_fails_if_caller_not_owner() {
     let new_validators = array![VALIDATOR_ADDRESS_1()].span();
-    let (_,validators) = setup_messageid_multisig_ism();
+    let (_, validators) = setup_messageid_multisig_ism();
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER());
     validators.set_validators(new_validators);
@@ -62,7 +63,7 @@ fn test_set_validators_fails_if_caller_not_owner() {
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_validators_fails_if_null_validator() {
     let new_validators = array![VALIDATOR_ADDRESS_1(), 0.try_into().unwrap()].span();
-    let (_,validators) = setup_messageid_multisig_ism();
+    let (_, validators) = setup_messageid_multisig_ism();
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER());
     validators.set_validators(new_validators);
@@ -72,7 +73,7 @@ fn test_set_validators_fails_if_null_validator() {
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_threshold_fails_if_caller_not_owner() {
     let new_threshold = 3;
-    let (_,validators) = setup_messageid_multisig_ism();
+    let (_, validators) = setup_messageid_multisig_ism();
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER());
     validators.set_threshold(new_threshold);
@@ -166,7 +167,7 @@ fn test_message_id_ism_metadata() {
 
 #[test]
 fn test_message_id_multisig_module_type() {
-    let (messageid,_) = setup_messageid_multisig_ism();
+    let (messageid, _) = setup_messageid_multisig_ism();
     assert(
         messageid.module_type() == ModuleType::MESSAGE_ID_MULTISIG(messageid.contract_address),
         'Wrong module type'
@@ -305,7 +306,7 @@ fn test_message_id_multisig_verify_with_empty_metadata() {
         recipient: RECIPIENT_ADDRESS(),
         body: message_body.clone()
     };
-    let (messageid,messageid_validator_config) = setup_messageid_multisig_ism();
+    let (messageid, messageid_validator_config) = setup_messageid_multisig_ism();
     let (_, validators_address, _) = get_message_and_signature();
     let metadata = array![];
     let ownable = IOwnableDispatcher { contract_address: messageid.contract_address };

@@ -12,7 +12,6 @@ pub mod hook {
 
     #[abi(embed_v0)]
     impl IPostDispatchHookImpl of IPostDispatchHook<ContractState> {
-
         fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
             true
         }

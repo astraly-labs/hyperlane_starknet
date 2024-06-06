@@ -4,10 +4,14 @@ use hyperlane_starknet::interfaces::{
     IMessageRecipientDispatcherTrait, IInterchainSecurityModule,
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IValidatorAnnounceDispatcher, IValidatorAnnounceDispatcherTrait, IMailboxClientDispatcher,
-    IMailboxClientDispatcherTrait, IAggregationDispatcher, IAggregationDispatcherTrait,IValidatorConfigurationDispatcher,
-    IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait, IAggregation
+    IMailboxClientDispatcherTrait, IAggregationDispatcher, IAggregationDispatcherTrait,
+    IValidatorConfigurationDispatcher, IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait,
+    IAggregation, IPostDispatchHookDispatcher, IProtocolFeeDispatcher,
+    IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait,
 };
+
 use openzeppelin::account::utils::signature::EthSignature;
+use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
     declare, ContractClassTrait, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn
 };
@@ -18,6 +22,10 @@ use starknet::{ContractAddress, contract_address_const, EthAddress};
 
 pub const LOCAL_DOMAIN: u32 = 534352;
 pub const DESTINATION_DOMAIN: u32 = 9841001;
+pub const MAX_PROTOCOL_FEE: u256 = 1000000000;
+pub const PROTOCOL_FEE: u256 = 1000000;
+pub const INITIAL_SUPPLY: u256 = 10000000000;
+
 
 pub fn OWNER() -> ContractAddress {
     contract_address_const::<'OWNER'>()
@@ -63,6 +71,10 @@ pub fn VALIDATOR_ADDRESS_2() -> EthAddress {
     'VALIDATOR_ADDRESS_2'.try_into().unwrap()
 }
 
+pub fn BENEFICIARY() -> ContractAddress {
+    'BENEFICIARY'.try_into().unwrap()
+}
+
 
 pub fn setup() -> (IMailboxDispatcher, EventSpy) {
     let mailbox_class = declare("mailbox").unwrap();
@@ -80,13 +92,18 @@ pub fn mock_setup() -> IMessageRecipientDispatcher {
     IMessageRecipientDispatcher { contract_address: message_recipient_addr }
 }
 
-pub fn setup_messageid_multisig_ism() -> (IInterchainSecurityModuleDispatcher, IValidatorConfigurationDispatcher) {
+pub fn setup_messageid_multisig_ism() -> (
+    IInterchainSecurityModuleDispatcher, IValidatorConfigurationDispatcher
+) {
     let messageid_multisig_class = declare("messageid_multisig_ism").unwrap();
 
     let (messageid_multisig_addr, _) = messageid_multisig_class
         .deploy(@array![OWNER().into()])
         .unwrap();
-    (IInterchainSecurityModuleDispatcher { contract_address: messageid_multisig_addr }, IValidatorConfigurationDispatcher{ contract_address: messageid_multisig_addr })
+    (
+        IInterchainSecurityModuleDispatcher { contract_address: messageid_multisig_addr },
+        IValidatorConfigurationDispatcher { contract_address: messageid_multisig_addr }
+    )
 }
 
 pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
@@ -157,4 +174,33 @@ pub fn get_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignatu
     ];
 
     (msg_hash, validators_array, signatures)
+}
+
+
+pub fn setup_protocol_fee() -> (
+    IERC20Dispatcher, IProtocolFeeDispatcher, IPostDispatchHookDispatcher
+) {
+    let fee_token_class = declare("mock_fee_token").unwrap();
+    let (fee_token_addr, _) = fee_token_class
+        .deploy(@array![INITIAL_SUPPLY.low.into(), INITIAL_SUPPLY.high.into(), OWNER().into()])
+        .unwrap();
+    let protocol_fee_class = declare("protocol_fee").unwrap();
+    let (protocol_fee_addr, _) = protocol_fee_class
+        .deploy(
+            @array![
+                MAX_PROTOCOL_FEE.low.into(),
+                MAX_PROTOCOL_FEE.high.into(),
+                PROTOCOL_FEE.low.into(),
+                PROTOCOL_FEE.high.into(),
+                BENEFICIARY().into(),
+                OWNER().into(),
+                fee_token_addr.into()
+            ]
+        )
+        .unwrap();
+    (
+        IERC20Dispatcher { contract_address: fee_token_addr },
+        IProtocolFeeDispatcher { contract_address: protocol_fee_addr },
+        IPostDispatchHookDispatcher { contract_address: protocol_fee_addr }
+    )
 }

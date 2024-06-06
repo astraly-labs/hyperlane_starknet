@@ -2,8 +2,8 @@
 pub mod noop_ism {
     use alexandria_bytes::Bytes;
     use hyperlane_starknet::contracts::libs::message::Message;
-    use hyperlane_starknet::interfaces::{ModuleType,
-        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+    use hyperlane_starknet::interfaces::{
+        ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait
     };
     #[storage]
@@ -15,9 +15,8 @@ pub mod noop_ism {
             ModuleType::NULL(())
         }
 
-        fn verify(self: @ContractState,_metadata: Bytes, _message: Message) -> bool {
+        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
             true
         }
-
     }
 }

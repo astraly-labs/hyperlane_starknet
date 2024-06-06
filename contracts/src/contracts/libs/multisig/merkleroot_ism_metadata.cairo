@@ -23,7 +23,7 @@ pub mod merkleroot_ism_metadata {
     pub const MESSAGE_INDEX_OFFSET: u32 = 32;
     pub const MESSAGE_ID_OFFSET: u32 = 36;
     pub const MERKLE_PROOF_OFFSET: u32 = 68;
-    pub const MERKLE_PROOF_ITERATION : u32 = 32;
+    pub const MERKLE_PROOF_ITERATION: u32 = 32;
     pub const MERKLE_PROOF_SIZE: u32 = 32;
     pub const MERKLE_PROOF_LENGTH: u32 = MERKLE_PROOF_SIZE * MERKLE_PROOF_ITERATION;
     pub const SIGNED_INDEX_OFFSET: u32 = 1092;
@@ -46,17 +46,18 @@ pub mod merkleroot_ism_metadata {
             let (_, felt) = _metadata.read_u256(MESSAGE_ID_OFFSET);
             felt
         }
-        fn proof(_metadata: Bytes) ->  Span<u256> {
+        fn proof(_metadata: Bytes) -> Span<u256> {
             let mut bytes_arr = array![];
             let mut cur_idx = 0;
             loop {
-                if (cur_idx == MERKLE_PROOF_ITERATION){
-                    break();
+                if (cur_idx == MERKLE_PROOF_ITERATION) {
+                    break ();
                 }
-                let (_,res) = _metadata.read_u256(MERKLE_PROOF_OFFSET + cur_idx *MERKLE_PROOF_SIZE);
+                let (_, res) = _metadata
+                    .read_u256(MERKLE_PROOF_OFFSET + cur_idx * MERKLE_PROOF_SIZE);
                 bytes_arr.append(res);
-                cur_idx +=1;
-            }; 
+                cur_idx += 1;
+            };
             bytes_arr.span()
         }
 

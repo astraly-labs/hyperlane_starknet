@@ -5,7 +5,7 @@ use hyperlane_starknet::contracts::libs::message::Message;
 use starknet::ContractAddress;
 use starknet::EthAddress;
 
-#[derive(Serde, Drop)]
+#[derive(Serde, Drop, Debug, PartialEq)]
 pub enum Types {
     UNUSED,
     ROUTING,
@@ -21,7 +21,7 @@ pub enum Types {
 }
 
 
-#[derive(Serde, Drop, PartialEq)]
+#[derive(Serde, Drop, PartialEq, Debug)]
 pub enum ModuleType {
     UNUSED: ContractAddress,
     ROUTING: ContractAddress,
@@ -107,7 +107,6 @@ pub trait IInterchainSecurityModule<TContractState> {
     /// the module (e.g. validator signatures)
     /// * `_message` - Hyperlane encoded interchain message
     fn verify(self: @TContractState, _metadata: Bytes, _message: Message,) -> bool;
-
 }
 
 #[starknet::interface]
@@ -133,7 +132,6 @@ pub trait ISpecifiesInterchainSecurityModule<TContractState> {
 
 #[starknet::interface]
 pub trait IPostDispatchHook<TContractState> {
-
     fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
 
     fn post_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message);
@@ -310,11 +308,11 @@ pub trait IMerkleTreeHook<TContractState> {
 
 #[starknet::interface]
 pub trait IPausableIsm<TContractState> {
-    fn module_type(self: @TContractState) -> ModuleType; 
+    fn module_type(self: @TContractState) -> ModuleType;
 
-    fn verify(self: @TContractState,_metadata: Bytes, _message: Message ) -> bool;
+    fn verify(self: @TContractState, _metadata: Bytes, _message: Message) -> bool;
 
-    fn pause(ref self: TContractState); 
+    fn pause(ref self: TContractState);
 
     fn unpause(ref self: TContractState);
 }
@@ -323,7 +321,11 @@ pub trait IPausableIsm<TContractState> {
 pub trait IProtocolFee<TContractState> {
     fn hook_type(self: @TContractState) -> Types;
 
+    fn get_protocol_fee(self: @TContractState) -> u256;
+
     fn set_protocol_fee(ref self: TContractState, _protocol_fee: u256);
+
+    fn get_beneficiary(self: @TContractState) -> ContractAddress;
 
     fn set_beneficiary(ref self: TContractState, _beneficiary: ContractAddress);
 

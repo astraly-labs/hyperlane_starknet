@@ -2,8 +2,9 @@ use alexandria_bytes::{Bytes, BytesTrait};
 use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 use hyperlane_starknet::interfaces::{
     ModuleType, IAggregation, IAggregationDispatcher, IAggregationDispatcherTrait,
-    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,IValidatorConfigurationDispatcher,IValidatorConfigurationDispatcherTrait, IValidatorConfiguration,
-    IInterchainSecurityModule
+    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
+    IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait,
+    IValidatorConfiguration, IInterchainSecurityModule
 };
 use hyperlane_starknet::tests::setup::{
     setup_aggregation, OWNER, setup_messageid_multisig_ism, get_message_and_signature, LOCAL_DOMAIN,

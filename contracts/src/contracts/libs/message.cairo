@@ -1,7 +1,6 @@
 use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
-use core::keccak::keccak_u256s_be_inputs;
 use core::poseidon::poseidon_hash_span;
-use hyperlane_starknet::utils::keccak256::reverse_endianness;
+use hyperlane_starknet::utils::keccak256::{reverse_endianness, compute_keccak, ByteData};
 use starknet::{ContractAddress, contract_address_const};
 
 pub const HYPERLANE_VERSION: u8 = 3;
@@ -51,22 +50,23 @@ pub impl MessageImpl of MessageTrait {
         let sender: felt252 = _message.sender.into();
         let recipient: felt252 = _message.recipient.into();
 
-        let mut input: Array<u256> = array![
-            _message.version.into(),
-            _message.origin.into(),
-            sender.into(),
-            _message.destination.into(),
-            recipient.into(),
-            _message.body.size().into()
+        let mut input: Array<ByteData> = array![
+            ByteData { value: _message.version.into(), is_address: false },
+            ByteData { value: _message.origin.into(), is_address: false },
+            ByteData { value: sender.into(), is_address: true },
+            ByteData { value: _message.destination.into(), is_address: false },
+            ByteData { value: recipient.into(), is_address: true },
+            ByteData { value: _message.body.size().into(), is_address: false },
         ];
         let mut message_data = _message.clone().body.data();
         loop {
             match message_data.pop_front() {
-                Option::Some(data) => { input.append(data.into()); },
+                Option::Some(data) => {
+                    input.append(ByteData { value: data.into(), is_address: false });
+                },
                 Option::None(_) => { break (); }
             };
         };
-        let hash = keccak_u256s_be_inputs(input.span());
-        (reverse_endianness(hash), _message)
+        (compute_keccak(input.span()), _message)
     }
 }

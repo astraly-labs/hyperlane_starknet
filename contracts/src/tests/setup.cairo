@@ -6,7 +6,7 @@ use hyperlane_starknet::interfaces::{
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IValidatorAnnounceDispatcher, IValidatorAnnounceDispatcherTrait, IMailboxClientDispatcher,
     IMailboxClientDispatcherTrait, IAggregationDispatcher, IAggregationDispatcherTrait,
-    IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait
+    IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait, IMockValidatorAnnounceDispatcher
 };
 use openzeppelin::account::utils::signature::EthSignature;
 use snforge_std::{
@@ -99,7 +99,6 @@ pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
     IMailboxClientDispatcher { contract_address: mailboxclient_addr }
 }
 
-
 pub fn setup_validator_announce() -> IValidatorAnnounceDispatcher {
     let validator_announce_class = declare("validator_announce").unwrap();
     let mailboxclient = setup_mailbox_client();
@@ -107,6 +106,16 @@ pub fn setup_validator_announce() -> IValidatorAnnounceDispatcher {
         .deploy(@array![mailboxclient.contract_address.into()])
         .unwrap();
     IValidatorAnnounceDispatcher { contract_address: validator_announce_addr }
+}
+
+pub fn setup_mock_validator_announce(
+    mailbox_address: ContractAddress, domain: u32
+) -> IMockValidatorAnnounceDispatcher {
+    let validator_announce_class = declare("mock_validator_announce").unwrap();
+    let (validator_announce_addr, _) = validator_announce_class
+        .deploy(@array![mailbox_address.into(), domain.into()])
+        .unwrap();
+    IMockValidatorAnnounceDispatcher { contract_address: validator_announce_addr }
 }
 
 pub fn setup_aggregation() -> IAggregationDispatcher {

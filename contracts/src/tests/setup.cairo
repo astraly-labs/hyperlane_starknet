@@ -7,7 +7,7 @@ use hyperlane_starknet::interfaces::{
     IMailboxClientDispatcherTrait, IAggregationDispatcher, IAggregationDispatcherTrait,
     IValidatorConfigurationDispatcher, IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait,
     IAggregation, IPostDispatchHookDispatcher, IProtocolFeeDispatcher,
-    IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait,IMockValidatorAnnounceDispatcher
+    IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait, IMockValidatorAnnounceDispatcher
 };
 
 use openzeppelin::account::utils::signature::EthSignature;

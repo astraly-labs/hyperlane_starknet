@@ -131,10 +131,12 @@ pub mod mock_validator_announce {
                     Option::None(_) => { break (); }
                 }
             };
-            let hash = compute_keccak(
-                array![ByteData { value: domain_hash, is_address: false }]
-                    .concat(@byte_data_storage_location)
-                    .span()
+            let hash = reverse_endianness(
+                compute_keccak(
+                    array![ByteData { value: domain_hash, is_address: false }]
+                        .concat(@byte_data_storage_location)
+                        .span()
+                )
             );
             to_eth_signature(hash)
         }
@@ -156,7 +158,7 @@ pub mod mock_validator_announce {
             ByteData { value: felt_address.into(), is_address: true },
             ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), is_address: false }
         ];
-        compute_keccak(input.span())
+        reverse_endianness(compute_keccak(input.span()))
     }
 
 

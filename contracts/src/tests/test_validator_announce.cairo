@@ -9,7 +9,6 @@ use starknet::{ContractAddress, contract_address_const, EthAddress};
 pub const TEST_STARKNET_DOMAIN: u32 = 23448594;
 
 #[test]
-#[ignore]
 fn test_digest_computation() {
     let mailbox_address = contract_address_const::<
         0x007a9a2e1663480b3845df0d714e8caa49f9241e13a826a678da3f366e546f2a
@@ -24,15 +23,11 @@ fn test_digest_computation() {
     ];
 
     let mut u256_storage_location: Array<u256> = array![];
-    let mut u128_storage_location: Array<u128> = array![];
 
     loop {
         match _storage_location.pop_front() {
             Option::Some(storage) => {
-                let u256_storage: u256 = storage.into();
                 u256_storage_location.append(storage.into());
-                u128_storage_location.append(u256_storage.high);
-                u128_storage_location.append(u256_storage.low);
             },
             Option::None(()) => { break (); },
         }

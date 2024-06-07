@@ -106,6 +106,21 @@ pub fn setup_messageid_multisig_ism() -> (
     )
 }
 
+
+pub fn setup_merkleroot_multisig_ism() -> (
+    IInterchainSecurityModuleDispatcher, IValidatorConfigurationDispatcher
+) {
+    let merkleroot_multisig_class = declare("merkleroot_multisig_ism").unwrap();
+
+    let (merkleroot_multisig_addr, _) = merkleroot_multisig_class
+        .deploy(@array![OWNER().into()])
+        .unwrap();
+    (
+        IInterchainSecurityModuleDispatcher { contract_address: merkleroot_multisig_addr },
+        IValidatorConfigurationDispatcher { contract_address: merkleroot_multisig_addr }
+    )
+}
+
 pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
     let (mailbox, _) = setup();
     let mailboxclient_class = declare("mailboxclient").unwrap();
@@ -147,6 +162,22 @@ pub fn setup_merkle_tree_hook() -> IMerkleTreeHookDispatcher {
         .deploy(@array![mailboxclient.contract_address.into()])
         .unwrap();
     IMerkleTreeHookDispatcher { contract_address: merkle_tree_hook_addr }
+}
+
+pub fn setup_mock_hook() -> IPostDispatchHookDispatcher {
+    let mock_hook = declare("hook").unwrap();
+    let (mock_hook_addr, _) = mock_hook
+        .deploy(@array![])
+        .unwrap();
+    IPostDispatchHookDispatcher { contract_address: mock_hook_addr}
+}
+
+pub fn setup_mock_ism() -> IInterchainSecurityModuleDispatcher{
+    let mock_ism = declare("ism").unwrap();
+    let (mock_ism_addr, _) = mock_ism
+        .deploy(@array![])
+        .unwrap();
+    IInterchainSecurityModuleDispatcher { contract_address: mock_ism_addr}
 }
 
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo

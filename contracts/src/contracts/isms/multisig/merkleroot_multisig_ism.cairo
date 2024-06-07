@@ -52,7 +52,11 @@ pub mod merkleroot_multisig_ism {
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
     }
-
+    
+    #[constructor]
+    fn constructor(ref self: ContractState, _owner: ContractAddress) {
+        self.ownable.initializer(_owner);
+    }
 
     #[abi(embed_v0)]
     impl IMerklerootMultisigIsmImpl of IInterchainSecurityModule<ContractState> {
@@ -61,7 +65,7 @@ pub mod merkleroot_multisig_ism {
         }
 
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
-            assert(_metadata.clone().data().len() > 0, Errors::EMPTY_METADATA);
+            assert(_metadata.clone().size() > 0, Errors::EMPTY_METADATA);
             let digest = digest(_metadata.clone(), _message.clone());
             let (validators, threshold) = self.validators_and_threshold(_message);
             assert(threshold > 0, Errors::NO_MULTISIG_THRESHOLD_FOR_MESSAGE);

@@ -260,7 +260,7 @@ pub mod mailbox {
                         sender: caller,
                         destination_domain: _destination_domain,
                         recipient_address: _recipient_address,
-                        message: message
+                        message: message.clone()
                     }
                 );
             self.emit(DispatchId { id: id });
@@ -269,15 +269,15 @@ pub mod mailbox {
             // HOOKS
             //
 
-            // let required_hook_address = self.required_hook.read();
-            // let required_hook = IPostDispatchHookDispatcher {
-            //     contract_address: required_hook_address
-            // };
-            // if (hook != contract_address_const::<0>() ){
-            //     let hook = IPostDispatchHookDispatcher { contract_address: hook };
-            //     hook.post_dispatch(hook_metadata.clone(), message);
-            // }
-            // required_hook.post_dispatch(hook_metadata, message);
+            let required_hook_address = self.required_hook.read();
+            let required_hook = IPostDispatchHookDispatcher {
+                contract_address: required_hook_address
+            };
+            if (hook != contract_address_const::<0>() ){
+                let hook = IPostDispatchHookDispatcher { contract_address: hook };
+                hook.post_dispatch(hook_metadata.clone(), message.clone());
+            }
+            required_hook.post_dispatch(hook_metadata, message.clone());
 
             id
         }
@@ -319,8 +319,8 @@ pub mod mailbox {
             // ISM
             // 
 
-            // let recipient_ism = self.recipient_ism(_message.recipient);
-            // let ism = IInterchainSecurityModuleDispatcher { contract_address: recipient_ism };
+            let recipient_ism = self.recipient_ism(_message.recipient);
+            let ism = IInterchainSecurityModuleDispatcher { contract_address: recipient_ism };
 
             //
             //
@@ -341,7 +341,7 @@ pub mod mailbox {
             // ISM
             // 
 
-            // assert(ism.verify(_metadata, _message.clone()), Errors::ISM_VERIFICATION_FAILED);
+            assert(ism.verify(_metadata, _message.clone()), Errors::ISM_VERIFICATION_FAILED);
 
             //
             //

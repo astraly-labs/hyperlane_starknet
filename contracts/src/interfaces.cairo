@@ -273,6 +273,24 @@ pub trait IValidatorAnnounce<TContractState> {
 }
 
 #[starknet::interface]
+pub trait IMockValidatorAnnounce<TContractState> {
+    fn get_announced_validators(self: @TContractState) -> Span<EthAddress>;
+
+    fn get_announced_storage_locations(
+        self: @TContractState, _validators: Span<EthAddress>
+    ) -> Span<Span<felt252>>;
+
+    fn announce(
+        ref self: TContractState,
+        _validator: EthAddress,
+        _storage_location: Array<felt252>,
+        _signature: Bytes
+    ) -> bool;
+
+    fn get_announcement_digest(self: @TContractState, _storage_location: Array<u256>,) -> u256;
+}
+
+#[starknet::interface]
 pub trait IAggregation<TContractState> {
     fn module_type(self: @TContractState) -> ModuleType;
 

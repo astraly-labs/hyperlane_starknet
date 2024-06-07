@@ -1,17 +1,18 @@
 #[starknet::contract]
-pub mod validator_announce {
+pub mod mock_validator_announce {
     use alexandria_bytes::{Bytes, BytesTrait};
     use alexandria_data_structures::array_ext::ArrayTraitExt;
     use core::poseidon::poseidon_hash_span;
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::{
         HYPERLANE_ANNOUNCEMENT
     };
-    use hyperlane_starknet::interfaces::IValidatorAnnounce;
+    use hyperlane_starknet::interfaces::IMockValidatorAnnounce;
     use hyperlane_starknet::interfaces::{IMailboxClientDispatcher, IMailboxClientDispatcherTrait};
     use hyperlane_starknet::utils::keccak256::{
         reverse_endianness, to_eth_signature, compute_keccak, ByteData
     };
     use hyperlane_starknet::utils::store_arrays::StoreFelt252Array;
+
     use starknet::ContractAddress;
     use starknet::EthAddress;
     use starknet::eth_signature::is_eth_signature_valid;
@@ -20,6 +21,7 @@ pub mod validator_announce {
     #[storage]
     struct Storage {
         mailboxclient: ContractAddress,
+        domain: u32,
         storage_location: LegacyMap::<EthAddress, Array<felt252>>,
         replay_protection: LegacyMap::<felt252, bool>,
         validators: LegacyMap::<EthAddress, EthAddress>,
@@ -44,12 +46,13 @@ pub mod validator_announce {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _mailbox_client: ContractAddress) {
+    fn constructor(ref self: ContractState, _mailbox_client: ContractAddress, _domain: u32) {
         self.mailboxclient.write(_mailbox_client);
+        self.domain.write(_domain);
     }
 
     #[abi(embed_v0)]
-    impl IValidatorAnnonceImpl of IValidatorAnnounce<ContractState> {
+    impl IValidatorAnnonceImpl of IMockValidatorAnnounce<ContractState> {
         fn announce(
             ref self: ContractState,
             _validator: EthAddress,
@@ -115,7 +118,9 @@ pub mod validator_announce {
         fn get_announcement_digest(
             self: @ContractState, mut _storage_location: Array<u256>
         ) -> u256 {
-            let domain_hash = domain_hash(self);
+            let mailboxclient_address = self.mailboxclient.read();
+            let domain = self.domain.read();
+            let domain_hash = domain_hash(self, mailboxclient_address, domain);
             let mut byte_data_storage_location = array![];
             loop {
                 match _storage_location.pop_front() {
@@ -127,7 +132,7 @@ pub mod validator_announce {
                 }
             };
             let hash = compute_keccak(
-                array![ByteData { value: domain_hash.into(), is_address: false }]
+                array![ByteData { value: domain_hash, is_address: false }]
                     .concat(@byte_data_storage_location)
                     .span()
             );
@@ -143,14 +148,12 @@ pub mod validator_announce {
         signature_from_vrs(v.try_into().unwrap(), r, s)
     }
 
-    fn domain_hash(self: @ContractState) -> u256 {
-        let mailboxclient = IMailboxClientDispatcher {
-            contract_address: self.mailboxclient.read()
-        };
-        let mailboxclient_address: felt252 = self.mailboxclient.read().try_into().unwrap();
+
+    fn domain_hash(self: @ContractState, _mailbox_address: ContractAddress, _domain: u32) -> u256 {
+        let felt_address: felt252 = _mailbox_address.into();
         let mut input: Array<ByteData> = array![
-            ByteData { value: mailboxclient.get_local_domain().into(), is_address: false },
-            ByteData { value: mailboxclient_address.try_into().unwrap(), is_address: true },
+            ByteData { value: _domain.into(), is_address: false },
+            ByteData { value: felt_address.into(), is_address: true },
             ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), is_address: false }
         ];
         compute_keccak(input.span())

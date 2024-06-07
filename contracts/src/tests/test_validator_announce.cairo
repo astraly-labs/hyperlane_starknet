@@ -16,6 +16,7 @@ fn test_digest_computation() {
 
     let va = setup_mock_validator_announce(mailbox_address, TEST_STARKNET_DOMAIN);
 
+    // file:///var/folders/kr/z3l_6qyn3znb6gbnddtvgsn40000gn/T/.tmpdY51LU/checkpoint
     let mut _storage_location: Array<felt252> = array![
         180946006308525359965345158532346553211983108462325076142963585023296502126,
         90954189295124463684969781689350429239725285131197301894846683156275291225,
@@ -32,6 +33,7 @@ fn test_digest_computation() {
     };
     let digest = va.get_announcement_digest(u256_storage_location);
 
+    // digest printed in an e2e local test of the hyperlane validator
     assert(
         digest == 68490098148397702232337918459455233145663417151157276422147736490102791983827,
         'Wrong digest'

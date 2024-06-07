@@ -126,10 +126,12 @@ pub mod validator_announce {
                     Option::None(_) => { break (); }
                 }
             };
-            let hash = compute_keccak(
-                array![ByteData { value: domain_hash.into(), is_address: false }]
-                    .concat(@byte_data_storage_location)
-                    .span()
+            let hash = reverse_endianness(
+                compute_keccak(
+                    array![ByteData { value: domain_hash.into(), is_address: false }]
+                        .concat(@byte_data_storage_location)
+                        .span()
+                )
             );
             to_eth_signature(hash)
         }
@@ -153,7 +155,7 @@ pub mod validator_announce {
             ByteData { value: mailboxclient_address.try_into().unwrap(), is_address: true },
             ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), is_address: false }
         ];
-        compute_keccak(input.span())
+        reverse_endianness(compute_keccak(input.span()))
     }
 
 

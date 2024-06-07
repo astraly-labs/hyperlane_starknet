@@ -35,8 +35,8 @@ pub mod protocol_fee {
         pub const INVALID_METADATA_VARIANT: felt252 = 'Invalid metadata variant';
         pub const INVALID_BENEFICARY: felt252 = 'Invalid beneficiary';
         pub const EXCEEDS_MAX_PROTOCOL_FEE: felt252 = 'Exceeds max protocol fee';
-        pub const INSUFFICIENT_BALANCE: felt252 = 'insufficient balance';
-        pub const INSUFFICIENT_ALLOWANCE: felt252 = 'insufficient allowance';
+        pub const INSUFFICIENT_BALANCE: felt252 = 'Insufficient balance';
+        pub const INSUFFICIENT_ALLOWANCE: felt252 = 'Insufficient allowance';
     }
 
     #[event]
@@ -64,7 +64,7 @@ pub mod protocol_fee {
         self.fee_token.write(_token_address);
     }
 
-    #[embeddable_as(AbstractPostDispatchHook)]
+    #[abi(embed_v0)]
     impl IPostDispatchHookImpl of IPostDispatchHook<ContractState> {
         fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
             _metadata.size() == 0 || StandardHookMetadata::variant(_metadata) == VARIANT.into()

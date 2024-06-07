@@ -151,13 +151,13 @@ pub fn setup_merkle_tree_hook() -> IMerkleTreeHookDispatcher {
 
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
 pub fn get_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignature>) {
-    let msg_hash = 0xFBFF8940BE2153CE000C0E1933BF32E179C60F53C45F56B4AC84B2E90F1F6214;
+    let msg_hash = 0x9CD302A2B0A421F67E16B27E95D3DDC032F37E9CAA26CBACC4328C4721EE0C3C;
     let validators_array: Array<EthAddress> = array![
-        0x2d691f13afb546993024fde7c7249d6b325d0f6c.try_into().unwrap(),
-        0xd4451a5f80bb852f26c328d776be02aae136e5e6.try_into().unwrap(),
-        0x6065e100fc4c2c27e71081dfb7c455fcc71da0cb.try_into().unwrap(),
-        0xa4a47265a6bc86dd47e727bd1401ef6bcf8762c1.try_into().unwrap(),
-        0x6059baffb40bef2052edd4d1280dd7c6e30a71e3.try_into().unwrap()
+        0xcaa7fa8cc5e2128357f8e14da3b17d7d665b378f.try_into().unwrap(),
+        0x57d2839efbf1015316edca790daf35180ccc8534.try_into().unwrap(),
+        0x9b3aef338a163d078163b462a539b300f3a4d584.try_into().unwrap(),
+        0xb3283e97b1cbbfc7b2726193fcb6b78f05674f97.try_into().unwrap(),
+        0xa1d5d3ec9e926a0e6cc0486d5f7b9a9e9883d3ee.try_into().unwrap()
     ];
     let signatures = array![
         EthSignature {

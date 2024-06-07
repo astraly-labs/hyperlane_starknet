@@ -222,7 +222,7 @@ fn test_message_id_multisig_verify_with_4_valid_signatures() {
         *signatures.at(3).s.low,
         y_parity,
     ];
-    let ownable = IOwnableDispatcher { contract_address: messageid.contract_address };
+    let ownable = IOwnableDispatcher { contract_address: messageid_validator_configuration.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     messageid_validator_configuration.set_validators(validators_address.span());
     messageid_validator_configuration.set_threshold(4);
@@ -308,12 +308,11 @@ fn test_message_id_multisig_verify_with_empty_metadata() {
     };
     let (messageid, messageid_validator_config) = setup_messageid_multisig_ism();
     let (_, validators_address, _) = get_message_and_signature();
-    let metadata = array![];
     let ownable = IOwnableDispatcher { contract_address: messageid.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     messageid_validator_config.set_validators(validators_address.span());
     messageid_validator_config.set_threshold(4);
-    let bytes_metadata = BytesTrait::new(496, metadata);
+    let bytes_metadata = BytesTrait::new_empty();
     assert(messageid.verify(bytes_metadata, message) == true, 'verification failed');
 }
 

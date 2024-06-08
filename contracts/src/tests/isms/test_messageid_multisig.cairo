@@ -15,7 +15,7 @@ use hyperlane_starknet::interfaces::{
 use hyperlane_starknet::tests::setup::{
     setup, mock_setup, setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1,
     VALIDATOR_ADDRESS_2, setup_validator_announce, get_message_and_signature, LOCAL_DOMAIN,
-    DESTINATION_DOMAIN, RECIPIENT_ADDRESS,build_messageid_metadata
+    DESTINATION_DOMAIN, RECIPIENT_ADDRESS, build_messageid_metadata
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
@@ -82,41 +82,30 @@ fn test_set_threshold_fails_if_caller_not_owner() {
 
 #[test]
 fn test_message_id_ism_metadata() {
-    let origin_merkle_tree : u256= 'origin_merkle_tree_hook'.try_into().unwrap();
+    let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let root: u256 = 'root'.try_into().unwrap();
     let y_parity = 0x01;
     let index = 1;
     let (_, _, signatures) = get_message_and_signature();
-    let metadata = build_messageid_metadata(origin_merkle_tree,root, index);
+    let metadata = build_messageid_metadata(origin_merkle_tree, root, index);
     assert(
-        MessageIdIsmMetadata::origin_merkle_tree_hook(
-            metadata.clone()
-        ) == origin_merkle_tree,
+        MessageIdIsmMetadata::origin_merkle_tree_hook(metadata.clone()) == origin_merkle_tree,
         'wrong merkle tree hook'
     );
-    assert(
-        MessageIdIsmMetadata::root(
-            metadata.clone()
-        ) == root ,
-        'wrong root'
-    );
+    assert(MessageIdIsmMetadata::root(metadata.clone()) == root, 'wrong root');
     assert(MessageIdIsmMetadata::index(metadata.clone()) == index, 'wrong index');
     let mut cur_idx = 0;
     loop {
-        if(cur_idx == signatures.len()){
-            break();
+        if (cur_idx == signatures.len()) {
+            break ();
         }
         assert(
             MessageIdIsmMetadata::signature_at(
-                metadata.clone(), cur_idx 
-            ) == (
-                y_parity,
-                *signatures.at(cur_idx).r,
-                *signatures.at(cur_idx).s
-            ),
+                metadata.clone(), cur_idx
+            ) == (y_parity, *signatures.at(cur_idx).r, *signatures.at(cur_idx).s),
             'wrong signature '
         );
-        cur_idx +=1;
+        cur_idx += 1;
     }
 }
 
@@ -150,10 +139,10 @@ fn test_message_id_multisig_verify_with_4_valid_signatures() {
     };
     let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism();
     let (_, validators_address, _) = get_message_and_signature();
-    let origin_merkle_tree : u256= 'origin_merkle_tree_hook'.try_into().unwrap();
+    let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;
-    let metadata = build_messageid_metadata(origin_merkle_tree,root, index);
+    let metadata = build_messageid_metadata(origin_merkle_tree, root, index);
     let ownable = IOwnableDispatcher {
         contract_address: messageid_validator_configuration.contract_address
     };
@@ -184,12 +173,12 @@ fn test_message_id_multisig_verify_with_insufficient_valid_signatures() {
     };
     let (messageid, messageid_validator_config) = setup_messageid_multisig_ism();
     let (_, validators_address, _) = get_message_and_signature();
-    let origin_merkle_tree : u256= 'origin_merkle_tree_hook'.try_into().unwrap();
+    let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;
-    let mut metadata = build_messageid_metadata(origin_merkle_tree,root, index);
+    let mut metadata = build_messageid_metadata(origin_merkle_tree, root, index);
     // introduce an error for the signature
-    metadata.update_at(80,0);
+    metadata.update_at(80, 0);
     let ownable = IOwnableDispatcher { contract_address: messageid.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     messageid_validator_config.set_validators(validators_address.span());

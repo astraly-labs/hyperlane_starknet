@@ -1,6 +1,7 @@
-use core::result::ResultTrait;
-use alexandria_data_structures::array_ext::ArrayTraitExt;
 use alexandria_bytes::{Bytes, BytesTrait};
+use alexandria_data_structures::array_ext::ArrayTraitExt;
+use core::result::ResultTrait;
+use hyperlane_starknet::contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MERKLE_PROOF_ITERATION;
 use hyperlane_starknet::interfaces::{
     IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
     IMessageRecipientDispatcherTrait, IInterchainSecurityModule,
@@ -9,9 +10,9 @@ use hyperlane_starknet::interfaces::{
     IMailboxClientDispatcherTrait, IAggregationDispatcher, IAggregationDispatcherTrait,
     IValidatorConfigurationDispatcher, IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait,
     IAggregation, IPostDispatchHookDispatcher, IProtocolFeeDispatcher,
-    IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait, IMockValidatorAnnounceDispatcher, ISpecifiesInterchainSecurityModuleDispatcher, ISpecifiesInterchainSecurityModuleDispatcherTrait,
+    IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait, IMockValidatorAnnounceDispatcher,
+    ISpecifiesInterchainSecurityModuleDispatcher, ISpecifiesInterchainSecurityModuleDispatcherTrait,
 };
-use hyperlane_starknet::contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MERKLE_PROOF_ITERATION;
 use openzeppelin::account::utils::signature::EthSignature;
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
@@ -78,41 +79,41 @@ pub fn BENEFICIARY() -> ContractAddress {
 }
 
 pub fn TEST_PROOF() -> Span<u256> {
- array![
-    0x09020304050607080910111213141516,
-    0x01020304050607080920111213141516,
-    0x01020304050607080910000000000000,
-    0x02010304050607080910111213141516,
-    0x03000000000000000000000000000000,
-    0x09020304050607080910111213141516,
-    0x01020304050607080920111213141516,
-    0x01020304050607080910000000000000,
-    0x02010304050607080910111213141516,
-    0x03000000000000000000000000000000,
-    0x09020304050607080910111213141516,
-    0x01020304050607080920111213141516,
-    0x01020304050607080910000000000000,
-    0x02010304050607080910111213141516,
-    0x03000000000000000000000000000000,
-    0x09020304050607080910111213141516,
-    0x01020304050607080920111213141516,
-    0x01020304050607080910000000000000,
-    0x02010304050607080910111213141516,
-    0x03000000000000000000000000000000,
-    0x09020304050607080910111213141516,
-    0x01020304050607080920111213141516,
-    0x01020304050607080910000000000000,
-    0x02010304050607080910111213141516,
-    0x03000000000000000000000000000000,
-    0x09020304050607080910111213141516,
-    0x01020304050607080920111213141516,
-    0x01020304050607080910000000000000,
-    0x02010304050607080910111213141516,
-    0x03000000000000000000000000000000,
-    0x09020304050607080910111213141516,
-    0x01020304050607080920111213141516,
-].span()
-
+    array![
+        0x09020304050607080910111213141516,
+        0x01020304050607080920111213141516,
+        0x01020304050607080910000000000000,
+        0x02010304050607080910111213141516,
+        0x03000000000000000000000000000000,
+        0x09020304050607080910111213141516,
+        0x01020304050607080920111213141516,
+        0x01020304050607080910000000000000,
+        0x02010304050607080910111213141516,
+        0x03000000000000000000000000000000,
+        0x09020304050607080910111213141516,
+        0x01020304050607080920111213141516,
+        0x01020304050607080910000000000000,
+        0x02010304050607080910111213141516,
+        0x03000000000000000000000000000000,
+        0x09020304050607080910111213141516,
+        0x01020304050607080920111213141516,
+        0x01020304050607080910000000000000,
+        0x02010304050607080910111213141516,
+        0x03000000000000000000000000000000,
+        0x09020304050607080910111213141516,
+        0x01020304050607080920111213141516,
+        0x01020304050607080910000000000000,
+        0x02010304050607080910111213141516,
+        0x03000000000000000000000000000000,
+        0x09020304050607080910111213141516,
+        0x01020304050607080920111213141516,
+        0x01020304050607080910000000000000,
+        0x02010304050607080910111213141516,
+        0x03000000000000000000000000000000,
+        0x09020304050607080910111213141516,
+        0x01020304050607080920111213141516,
+    ]
+        .span()
 }
 pub fn setup() -> (IMailboxDispatcher, EventSpy) {
     let mailbox_class = declare("mailbox").unwrap();
@@ -123,12 +124,22 @@ pub fn setup() -> (IMailboxDispatcher, EventSpy) {
     (IMailboxDispatcher { contract_address: mailbox_addr }, spy)
 }
 
-pub fn mock_setup() -> (IMessageRecipientDispatcher, ISpecifiesInterchainSecurityModuleDispatcher,IInterchainSecurityModuleDispatcher) {
+pub fn mock_setup() -> (
+    IMessageRecipientDispatcher,
+    ISpecifiesInterchainSecurityModuleDispatcher,
+    IInterchainSecurityModuleDispatcher
+) {
     let mock_ism = declare("ism").unwrap();
     let (mock_ism_addr, _) = mock_ism.deploy(@array![]).unwrap();
     let message_recipient_class = declare("message_recipient").unwrap();
-    let (message_recipient_addr, _) = message_recipient_class.deploy(@array![mock_ism_addr.into()]).unwrap();
-    (IMessageRecipientDispatcher { contract_address: message_recipient_addr }, ISpecifiesInterchainSecurityModuleDispatcher{contract_address:message_recipient_addr},IInterchainSecurityModuleDispatcher { contract_address: mock_ism_addr })
+    let (message_recipient_addr, _) = message_recipient_class
+        .deploy(@array![mock_ism_addr.into()])
+        .unwrap();
+    (
+        IMessageRecipientDispatcher { contract_address: message_recipient_addr },
+        ISpecifiesInterchainSecurityModuleDispatcher { contract_address: message_recipient_addr },
+        IInterchainSecurityModuleDispatcher { contract_address: mock_ism_addr }
+    )
 }
 
 pub fn setup_messageid_multisig_ism() -> (
@@ -212,7 +223,7 @@ pub fn setup_mock_hook() -> IPostDispatchHookDispatcher {
 
 
 pub fn build_messageid_metadata(origin_merkle_tree_hook: u256, root: u256, index: u32) -> Bytes {
-    let y_parity= 0x01; 
+    let y_parity = 0x01;
     let (_, _, signatures) = get_message_and_signature();
     let mut metadata = BytesTrait::new_empty();
     metadata.append_u256(origin_merkle_tree_hook);
@@ -268,10 +279,11 @@ pub fn get_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignatu
 }
 
 
-
-pub fn build_merkle_metadata(origin_merkle_tree_hook: u256,message_index: u32,signed_index: u32, signed_message_id: u256) -> Bytes{
+pub fn build_merkle_metadata(
+    origin_merkle_tree_hook: u256, message_index: u32, signed_index: u32, signed_message_id: u256
+) -> Bytes {
     let proof = TEST_PROOF();
-    let y_parity = 0x01; 
+    let y_parity = 0x01;
     let (_, _, signatures) = get_merkle_message_and_signature();
     let mut metadata = BytesTrait::new_empty();
     metadata.append_u256(origin_merkle_tree_hook);

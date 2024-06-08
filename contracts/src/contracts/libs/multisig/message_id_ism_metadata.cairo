@@ -12,7 +12,7 @@ pub mod message_id_ism_metadata {
     pub const ROOT_OFFSET: u32 = 32;
     pub const INDEX_OFFSET: u32 = 64;
     pub const SIGNATURE_OFFSET: u32 = 68;
-    pub const SIGNATURE_LENGTH : u32= 65;
+    pub const SIGNATURE_LENGTH: u32 = 65;
     impl MessagIdIsmMetadataImpl of MessageIdIsmMetadata {
         fn origin_merkle_tree_hook(_metadata: Bytes) -> u256 {
             let (_, felt) = _metadata.read_u256(ORIGIN_MERKLE_TREE_HOOK_OFFSET);

@@ -17,7 +17,7 @@ use hyperlane_starknet::interfaces::{
 use hyperlane_starknet::tests::setup::{
     setup, mock_setup, setup_merkleroot_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1,
     VALIDATOR_ADDRESS_2, setup_validator_announce, get_merkle_message_and_signature, LOCAL_DOMAIN,
-    DESTINATION_DOMAIN, RECIPIENT_ADDRESS,TEST_PROOF,build_merkle_metadata
+    DESTINATION_DOMAIN, RECIPIENT_ADDRESS, TEST_PROOF, build_merkle_metadata
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
@@ -89,45 +89,40 @@ fn test_merkleroot_ism_metadata() {
     let message_index: u32 = 1;
     let signed_index: u32 = 2;
     let signed_message_id: u256 = 'signed_message_id'.try_into().unwrap();
-    let metadata = build_merkle_metadata(origin_merkle_tree_hook,message_index,signed_index,signed_message_id);
+    let metadata = build_merkle_metadata(
+        origin_merkle_tree_hook, message_index, signed_index, signed_message_id
+    );
     let proof = TEST_PROOF();
     let (_, _, signatures) = get_merkle_message_and_signature();
     assert(
-        MerkleRootIsmMetadata::origin_merkle_tree_hook(
-            metadata.clone()
-        ) == origin_merkle_tree_hook,
+        MerkleRootIsmMetadata::origin_merkle_tree_hook(metadata.clone()) == origin_merkle_tree_hook,
         'wrong merkle tree hook'
     );
     assert(
-        MerkleRootIsmMetadata::message_index(
-            metadata.clone()
-        ) == message_index,
+        MerkleRootIsmMetadata::message_index(metadata.clone()) == message_index,
         'wrong message_index'
     );
-    assert(MerkleRootIsmMetadata::signed_index(metadata.clone()) == signed_index, 'wrong signed index');
-    assert(MerkleRootIsmMetadata::signed_message_id(metadata.clone()) == signed_message_id, 'wrong signed_message_id');
     assert(
-        MerkleRootIsmMetadata::proof(
-            metadata.clone()) == proof,
-        'wrong proof'
+        MerkleRootIsmMetadata::signed_index(metadata.clone()) == signed_index, 'wrong signed index'
     );
+    assert(
+        MerkleRootIsmMetadata::signed_message_id(metadata.clone()) == signed_message_id,
+        'wrong signed_message_id'
+    );
+    assert(MerkleRootIsmMetadata::proof(metadata.clone()) == proof, 'wrong proof');
     let y_parity = 0x01;
-    let mut cur_idx =0;
+    let mut cur_idx = 0;
     loop {
-        if(cur_idx == signatures.len()){
-            break();
+        if (cur_idx == signatures.len()) {
+            break ();
         }
         assert(
             MerkleRootIsmMetadata::signature_at(
-                metadata.clone(), cur_idx 
-            ) == (
-                y_parity,
-                *signatures.at(cur_idx).r,
-                *signatures.at(cur_idx).s
-            ),
+                metadata.clone(), cur_idx
+            ) == (y_parity, *signatures.at(cur_idx).r, *signatures.at(cur_idx).s),
             'wrong signature '
         );
-        cur_idx +=1;
+        cur_idx += 1;
     }
 }
 
@@ -166,7 +161,9 @@ fn test_merkle_root_multisig_verify_with_4_valid_signatures() {
     let message_index: u32 = 1;
     let signed_index: u32 = 2;
     let signed_message_id: u256 = 'signed_message_id'.try_into().unwrap();
-    let metadata = build_merkle_metadata(origin_merkle_tree_hook,message_index,signed_index,signed_message_id);
+    let metadata = build_merkle_metadata(
+        origin_merkle_tree_hook, message_index, signed_index, signed_message_id
+    );
     let ownable = IOwnableDispatcher {
         contract_address: merkleroot_validator_configuration.contract_address
     };
@@ -201,8 +198,10 @@ fn test_merkle_root_multisig_verify_with_insufficient_valid_signatures() {
     let message_index: u32 = 1;
     let signed_index: u32 = 2;
     let signed_message_id: u256 = 'signed_message_id'.try_into().unwrap();
-    let mut metadata = build_merkle_metadata(origin_merkle_tree_hook,message_index,signed_index,signed_message_id);
-    metadata.update_at(1100,0);
+    let mut metadata = build_merkle_metadata(
+        origin_merkle_tree_hook, message_index, signed_index, signed_message_id
+    );
+    metadata.update_at(1100, 0);
     let ownable = IOwnableDispatcher { contract_address: merkleroot_ism.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     merkleroot_validator_config.set_validators(validators_address.span());

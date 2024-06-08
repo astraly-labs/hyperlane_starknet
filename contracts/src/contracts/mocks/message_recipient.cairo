@@ -19,7 +19,7 @@ pub mod message_recipient {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _ism:ContractAddress) {
+    fn constructor(ref self: ContractState, _ism: ContractAddress) {
         self.ism.write(_ism);
     }
 
@@ -44,7 +44,6 @@ pub mod message_recipient {
         fn get_message(self: @ContractState) -> Bytes {
             self.message.read()
         }
-
     }
 
     #[abi(embed_v0)]

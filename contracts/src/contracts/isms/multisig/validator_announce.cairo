@@ -62,11 +62,11 @@ pub mod validator_announce {
             let mut cur_idx = 0;
             let span_storage_location = _storage_location.span();
             loop {
-                if (cur_idx == span_storage_location.len()){
-                    break(); 
+                if (cur_idx == span_storage_location.len()) {
+                    break ();
                 }
                 u256_storage_location.append((*span_storage_location.at(cur_idx)).into());
-                cur_idx +=1;
+                cur_idx += 1;
             };
             let replay_id = poseidon_hash_span(
                 array![felt252_validator].concat(@_storage_location).span()
@@ -86,8 +86,8 @@ pub mod validator_announce {
                 }
             };
 
-            self.storage_location.write(_validator ,_storage_location);
-            self.replay_protection.write(replay_id,true);
+            self.storage_location.write(_validator, _storage_location);
+            self.replay_protection.write(replay_id, true);
             self
                 .emit(
                     ValidatorAnnouncement {

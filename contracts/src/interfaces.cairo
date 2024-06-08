@@ -21,7 +21,7 @@ pub enum Types {
 }
 
 
-#[derive(Serde, Drop, PartialEq, Debug)]
+#[derive(Serde, Drop, PartialEq, Debug, starknet::Store)]
 pub enum ModuleType {
     UNUSED: ContractAddress,
     ROUTING: ContractAddress,
@@ -126,7 +126,7 @@ pub trait IValidatorConfiguration<TContractState> {
 
 #[starknet::interface]
 pub trait ISpecifiesInterchainSecurityModule<TContractState> {
-    fn interchain_security_module(self: @TContractState) -> ModuleType;
+    fn interchain_security_module(self: @TContractState) -> ContractAddress;
 }
 
 

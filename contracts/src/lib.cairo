@@ -55,10 +55,11 @@ mod utils {
 mod tests {
     pub mod setup;
     pub mod test_mailbox;
+    pub mod test_validator_announce;
     pub mod isms {
         pub mod test_aggregation;
         pub mod test_messageid_multisig;
-        // pub mod test_merkleroot_multisig;
+        pub mod test_merkleroot_multisig;
     }
     pub mod hooks {
         pub mod test_protocol_fee;

@@ -52,7 +52,7 @@ pub mod merkleroot_multisig_ism {
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
     }
-    
+
     #[constructor]
     fn constructor(ref self: ContractState, _owner: ContractAddress) {
         self.ownable.initializer(_owner);

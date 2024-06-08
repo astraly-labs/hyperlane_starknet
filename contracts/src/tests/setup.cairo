@@ -1,4 +1,6 @@
 use core::result::ResultTrait;
+use alexandria_data_structures::array_ext::ArrayTraitExt;
+use alexandria_bytes::{Bytes, BytesTrait};
 use hyperlane_starknet::interfaces::{
     IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
     IMessageRecipientDispatcherTrait, IInterchainSecurityModule,
@@ -7,9 +9,9 @@ use hyperlane_starknet::interfaces::{
     IMailboxClientDispatcherTrait, IAggregationDispatcher, IAggregationDispatcherTrait,
     IValidatorConfigurationDispatcher, IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait,
     IAggregation, IPostDispatchHookDispatcher, IProtocolFeeDispatcher,
-    IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait, IMockValidatorAnnounceDispatcher
+    IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait, IMockValidatorAnnounceDispatcher, ISpecifiesInterchainSecurityModuleDispatcher, ISpecifiesInterchainSecurityModuleDispatcherTrait,
 };
-
+use hyperlane_starknet::contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MERKLE_PROOF_ITERATION;
 use openzeppelin::account::utils::signature::EthSignature;
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
@@ -75,7 +77,43 @@ pub fn BENEFICIARY() -> ContractAddress {
     'BENEFICIARY'.try_into().unwrap()
 }
 
+pub fn TEST_PROOF() -> Span<u256> {
+ array![
+    0x09020304050607080910111213141516,
+    0x01020304050607080920111213141516,
+    0x01020304050607080910000000000000,
+    0x02010304050607080910111213141516,
+    0x03000000000000000000000000000000,
+    0x09020304050607080910111213141516,
+    0x01020304050607080920111213141516,
+    0x01020304050607080910000000000000,
+    0x02010304050607080910111213141516,
+    0x03000000000000000000000000000000,
+    0x09020304050607080910111213141516,
+    0x01020304050607080920111213141516,
+    0x01020304050607080910000000000000,
+    0x02010304050607080910111213141516,
+    0x03000000000000000000000000000000,
+    0x09020304050607080910111213141516,
+    0x01020304050607080920111213141516,
+    0x01020304050607080910000000000000,
+    0x02010304050607080910111213141516,
+    0x03000000000000000000000000000000,
+    0x09020304050607080910111213141516,
+    0x01020304050607080920111213141516,
+    0x01020304050607080910000000000000,
+    0x02010304050607080910111213141516,
+    0x03000000000000000000000000000000,
+    0x09020304050607080910111213141516,
+    0x01020304050607080920111213141516,
+    0x01020304050607080910000000000000,
+    0x02010304050607080910111213141516,
+    0x03000000000000000000000000000000,
+    0x09020304050607080910111213141516,
+    0x01020304050607080920111213141516,
+].span()
 
+}
 pub fn setup() -> (IMailboxDispatcher, EventSpy) {
     let mailbox_class = declare("mailbox").unwrap();
     let (mailbox_addr, _) = mailbox_class
@@ -85,11 +123,12 @@ pub fn setup() -> (IMailboxDispatcher, EventSpy) {
     (IMailboxDispatcher { contract_address: mailbox_addr }, spy)
 }
 
-pub fn mock_setup() -> IMessageRecipientDispatcher {
+pub fn mock_setup() -> (IMessageRecipientDispatcher, ISpecifiesInterchainSecurityModuleDispatcher,IInterchainSecurityModuleDispatcher) {
+    let mock_ism = declare("ism").unwrap();
+    let (mock_ism_addr, _) = mock_ism.deploy(@array![]).unwrap();
     let message_recipient_class = declare("message_recipient").unwrap();
-
-    let (message_recipient_addr, _) = message_recipient_class.deploy(@array![]).unwrap();
-    IMessageRecipientDispatcher { contract_address: message_recipient_addr }
+    let (message_recipient_addr, _) = message_recipient_class.deploy(@array![mock_ism_addr.into()]).unwrap();
+    (IMessageRecipientDispatcher { contract_address: message_recipient_addr }, ISpecifiesInterchainSecurityModuleDispatcher{contract_address:message_recipient_addr},IInterchainSecurityModuleDispatcher { contract_address: mock_ism_addr })
 }
 
 pub fn setup_messageid_multisig_ism() -> (
@@ -130,13 +169,14 @@ pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
     IMailboxClientDispatcher { contract_address: mailboxclient_addr }
 }
 
-pub fn setup_validator_announce() -> IValidatorAnnounceDispatcher {
+pub fn setup_validator_announce() -> (IValidatorAnnounceDispatcher, EventSpy) {
     let validator_announce_class = declare("validator_announce").unwrap();
     let mailboxclient = setup_mailbox_client();
     let (validator_announce_addr, _) = validator_announce_class
         .deploy(@array![mailboxclient.contract_address.into()])
         .unwrap();
-    IValidatorAnnounceDispatcher { contract_address: validator_announce_addr }
+    let mut spy = spy_events(SpyOn::One(validator_announce_addr));
+    (IValidatorAnnounceDispatcher { contract_address: validator_announce_addr }, spy)
 }
 
 pub fn setup_mock_validator_announce(
@@ -166,29 +206,107 @@ pub fn setup_merkle_tree_hook() -> IMerkleTreeHookDispatcher {
 
 pub fn setup_mock_hook() -> IPostDispatchHookDispatcher {
     let mock_hook = declare("hook").unwrap();
-    let (mock_hook_addr, _) = mock_hook
-        .deploy(@array![])
-        .unwrap();
-    IPostDispatchHookDispatcher { contract_address: mock_hook_addr}
+    let (mock_hook_addr, _) = mock_hook.deploy(@array![]).unwrap();
+    IPostDispatchHookDispatcher { contract_address: mock_hook_addr }
 }
 
-pub fn setup_mock_ism() -> IInterchainSecurityModuleDispatcher{
-    let mock_ism = declare("ism").unwrap();
-    let (mock_ism_addr, _) = mock_ism
-        .deploy(@array![])
-        .unwrap();
-    IInterchainSecurityModuleDispatcher { contract_address: mock_ism_addr}
+
+pub fn build_messageid_metadata(origin_merkle_tree_hook: u256, root: u256, index: u32) -> Bytes {
+    let y_parity= 0x01; 
+    let (_, _, signatures) = get_message_and_signature();
+    let mut metadata = BytesTrait::new_empty();
+    metadata.append_u256(origin_merkle_tree_hook);
+    metadata.append_u256(root);
+    metadata.append_u32(index);
+    let mut cur_idx = 0;
+    loop {
+        if (cur_idx == signatures.len()) {
+            break ();
+        }
+        metadata.append_u256(*signatures.at(cur_idx).r);
+        metadata.append_u256(*signatures.at(cur_idx).s);
+        metadata.append_u8(y_parity);
+        cur_idx += 1;
+    };
+    metadata
 }
 
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
 pub fn get_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignature>) {
-    let msg_hash = 0x9CD302A2B0A421F67E16B27E95D3DDC032F37E9CAA26CBACC4328C4721EE0C3C;
+    let msg_hash = 0x0E9FC5806AADB4AEFCD9B0E648BF6F1A6766655028D3BAE724848D636CAB6227;
     let validators_array: Array<EthAddress> = array![
-        0xcaa7fa8cc5e2128357f8e14da3b17d7d665b378f.try_into().unwrap(),
-        0x57d2839efbf1015316edca790daf35180ccc8534.try_into().unwrap(),
-        0x9b3aef338a163d078163b462a539b300f3a4d584.try_into().unwrap(),
-        0xb3283e97b1cbbfc7b2726193fcb6b78f05674f97.try_into().unwrap(),
-        0xa1d5d3ec9e926a0e6cc0486d5f7b9a9e9883d3ee.try_into().unwrap()
+        0x353965757431769fe5b0917729382a5f805c54c9.try_into().unwrap(),
+        0x86829f508b690d195528f5716b1e63b0b24af76e.try_into().unwrap(),
+        0x0beccd1415e67d5e23754f300a1dd987ac15fcd8.try_into().unwrap(),
+        0x5315b1b103bbed57759b1a488432ee53efd171cc.try_into().unwrap(),
+        0xa0e1dda9c29d9c6de79ba08b69b553f14c7fd636.try_into().unwrap()
+    ];
+    let signatures = array![
+        EthSignature {
+            r: 0x83db08d4e1590714aef8600f5f1e3c967ab6a3b9f93bb4242de0306510e688ea,
+            s: 0x0af5d1d51ea7e51a291789ff4866a1e36bc4134d956870799380d2d71f5dbf3d,
+        },
+        EthSignature {
+            r: 0xf81a5dd3f871ad2d27a3b538e73663d723f8263fb3d289514346d43d000175f5,
+            s: 0x083df770623e9ae52a7bb154473961e24664bb003bdfdba6100fb5e540875ce1,
+        },
+        EthSignature {
+            r: 0x76b194f951f94492ca582dab63dc413b9ac1ca9992c22bc2186439e9ab8fdd3c,
+            s: 0x62a6a6f402edaa53e9bdc715070a61edb0d98d4e14e182f60bdd4ae932b40b29,
+        },
+        EthSignature {
+            r: 0x35932eefd85897d868aaacd4ba7aee81a2384e42ba062133f6d37fdfebf94ad4,
+            s: 0x78cce49db96ee27c3f461800388ac95101476605baa64a194b7dd4d56d2d4a4d,
+        },
+        EthSignature {
+            r: 0x6b38d4353d69396e91c57542254348d16459d448ab887574e9476a6ff76d49a1,
+            s: 0x3527627295bde423d7d799afef22affac4f00c70a5b651ad14c8879aeb9b6e03,
+        }
+    ];
+
+    (msg_hash, validators_array, signatures)
+}
+
+
+
+pub fn build_merkle_metadata(origin_merkle_tree_hook: u256,message_index: u32,signed_index: u32, signed_message_id: u256) -> Bytes{
+    let proof = TEST_PROOF();
+    let y_parity = 0x01; 
+    let (_, _, signatures) = get_merkle_message_and_signature();
+    let mut metadata = BytesTrait::new_empty();
+    metadata.append_u256(origin_merkle_tree_hook);
+    metadata.append_u32(message_index);
+    metadata.append_u256(signed_message_id);
+    let mut cur_idx = 0;
+    loop {
+        if (cur_idx == MERKLE_PROOF_ITERATION) {
+            break ();
+        }
+        metadata.append_u256(*proof.at(cur_idx));
+        cur_idx += 1;
+    };
+    metadata.append_u32(signed_index);
+    cur_idx = 0;
+    loop {
+        if (cur_idx == signatures.len()) {
+            break ();
+        }
+        metadata.append_u256(*signatures.at(cur_idx).r);
+        metadata.append_u256(*signatures.at(cur_idx).s);
+        metadata.append_u8(y_parity);
+        cur_idx += 1;
+    };
+    metadata
+}
+// Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
+pub fn get_merkle_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignature>) {
+    let msg_hash = 0x12559998EF2C94F165897E590A87555EBADC9B4BF0F5619915D6B2689FC93B1A;
+    let validators_array: Array<EthAddress> = array![
+        0x7b39119db72ddca59b867c121709165ad3171cd9.try_into().unwrap(),
+        0x16de75863012ae499a9c4cdfbfe737d5d1e51c4e.try_into().unwrap(),
+        0xaec01cf572930e7b384b08e53ac679d9507cbb9e.try_into().unwrap(),
+        0xcc30a059aae2d821def4137fc687409266f220fe.try_into().unwrap(),
+        0x602fb03a6c18496155793f56da0ec76227785fd7.try_into().unwrap()
     ];
     let signatures = array![
         EthSignature {

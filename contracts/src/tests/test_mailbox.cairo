@@ -5,7 +5,8 @@ use hyperlane_starknet::interfaces::IMessageRecipientDispatcherTrait;
 use hyperlane_starknet::interfaces::{IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait};
 use hyperlane_starknet::tests::setup::{
     setup, mock_setup, OWNER, LOCAL_DOMAIN, NEW_OWNER, DEFAULT_ISM, DEFAULT_HOOK, REQUIRED_HOOK,
-    NEW_DEFAULT_ISM, NEW_DEFAULT_HOOK, NEW_REQUIRED_HOOK, DESTINATION_DOMAIN, RECIPIENT_ADDRESS,setup_mock_hook,setup_mock_ism
+    NEW_DEFAULT_ISM, NEW_DEFAULT_HOOK, NEW_REQUIRED_HOOK, DESTINATION_DOMAIN, RECIPIENT_ADDRESS,
+    setup_mock_hook
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
@@ -54,10 +55,15 @@ fn test_initializer() {
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     let mock_hook = setup_mock_hook();
-    let mock_ism = setup_mock_ism();
-    mailbox.initializer(mock_ism.contract_address,mock_hook.contract_address, mock_hook.contract_address);
+    let (_, _, mock_ism) = mock_setup();
+    mailbox
+        .initializer(
+            mock_ism.contract_address, mock_hook.contract_address, mock_hook.contract_address
+        );
     assert(mailbox.get_default_hook() == mock_hook.contract_address, 'Failed to set default hook');
-    assert(mailbox.get_required_hook() == mock_hook.contract_address, 'Failed to set required hook');
+    assert(
+        mailbox.get_required_hook() == mock_hook.contract_address, 'Failed to set required hook'
+    );
     assert(mailbox.get_default_ism() == mock_ism.contract_address, 'Failed to set default ism');
 }
 
@@ -82,7 +88,9 @@ fn test_set_required_hook() {
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     let mock_hook = setup_mock_hook();
     mailbox.set_required_hook(mock_hook.contract_address);
-    assert(mailbox.get_required_hook() == mock_hook.contract_address, 'Failed to set required hook');
+    assert(
+        mailbox.get_required_hook() == mock_hook.contract_address, 'Failed to set required hook'
+    );
     let expected_event = mailbox::Event::RequiredHookSet(
         mailbox::RequiredHookSet { hook: mock_hook.contract_address }
     );
@@ -94,11 +102,11 @@ fn test_set_default_ism() {
     let (mailbox, mut spy) = setup();
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    let mock_ism = setup_mock_ism();
+    let (mock_recipient, _, mock_ism) = mock_setup();
     mailbox.set_default_ism(mock_ism.contract_address);
     assert(mailbox.get_default_ism() == mock_ism.contract_address, 'Failed to set default ism');
     let expected_event = mailbox::Event::DefaultIsmSet(
-        mailbox::DefaultIsmSet { module: mock_ism.contract_address}
+        mailbox::DefaultIsmSet { module: mock_ism.contract_address }
     );
     spy.assert_emitted(@array![(mailbox.contract_address, expected_event)]);
 }
@@ -135,8 +143,11 @@ fn test_dispatch() {
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     let mock_hook = setup_mock_hook();
-    let mock_ism = setup_mock_ism();
-    mailbox.initializer(mock_ism.contract_address,mock_hook.contract_address, mock_hook.contract_address);
+    let (mock_recipient, _, mock_ism) = mock_setup();
+    mailbox
+        .initializer(
+            mock_ism.contract_address, mock_hook.contract_address, mock_hook.contract_address
+        );
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -181,15 +192,16 @@ fn test_dispatch() {
 
 
 #[test]
-#[ignore]
 fn test_process() {
     let (mailbox, mut spy) = setup();
-    let mock_recipient = mock_setup();
+    let (mock_recipient, _, mock_ism) = mock_setup();
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     let mock_hook = setup_mock_hook();
-    let mock_ism = setup_mock_ism();
-    mailbox.initializer(mock_ism.contract_address,mock_hook.contract_address, mock_hook.contract_address);
+    mailbox
+        .initializer(
+            mock_ism.contract_address, mock_hook.contract_address, mock_hook.contract_address
+        );
     mailbox.set_local_domain(DESTINATION_DOMAIN);
     let array = array![
         0x01020304050607080910111213141516,
@@ -212,7 +224,7 @@ fn test_process() {
     mailbox.process(metadata.clone(), message);
     let expected_event = mailbox::Event::Process(
         mailbox::Process {
-            origin: LOCAL_DOMAIN, sender: OWNER(), recipient: mock_ism.contract_address,
+            origin: LOCAL_DOMAIN, sender: OWNER(), recipient: mock_recipient.contract_address,
         }
     );
     let expected_event_id = mailbox::Event::ProcessId(mailbox::ProcessId { id: message_id });
@@ -238,12 +250,14 @@ fn test_process() {
 #[should_panic(expected: ('Wrong hyperlane version',))]
 fn test_process_fails_if_version_mismatch() {
     let (mailbox, _) = setup();
-    let mock_recipient = mock_setup();
+    let (mock_recipient, _, mock_ism) = mock_setup();
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     let mock_hook = setup_mock_hook();
-    let mock_ism = setup_mock_ism();
-    mailbox.initializer(mock_ism.contract_address,mock_hook.contract_address, mock_hook.contract_address);
+    mailbox
+        .initializer(
+            mock_ism.contract_address, mock_hook.contract_address, mock_hook.contract_address
+        );
     mailbox.set_local_domain(DESTINATION_DOMAIN);
     let array = array![
         0x01020304050607080910111213141516,
@@ -269,12 +283,14 @@ fn test_process_fails_if_version_mismatch() {
 #[should_panic(expected: ('Unexpected destination',))]
 fn test_process_fails_if_destination_domain_does_not_match_local_domain() {
     let (mailbox, _) = setup();
-    let mock_recipient = mock_setup();
+    let (mock_recipient, _, mock_ism) = mock_setup();
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     let mock_hook = setup_mock_hook();
-    let mock_ism = setup_mock_ism();
-    mailbox.initializer(mock_ism.contract_address,mock_hook.contract_address, mock_hook.contract_address);
+    mailbox
+        .initializer(
+            mock_ism.contract_address, mock_hook.contract_address, mock_hook.contract_address
+        );
     mailbox.set_local_domain(DESTINATION_DOMAIN);
     let array = array![
         0x01020304050607080910111213141516,
@@ -302,12 +318,14 @@ fn test_process_fails_if_destination_domain_does_not_match_local_domain() {
 #[should_panic(expected: ('Mailbox: already delivered',))]
 fn test_process_fails_if_already_delivered() {
     let (mailbox, _) = setup();
-    let mock_recipient = mock_setup();
+    let (mock_recipient, _, mock_ism) = mock_setup();
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     let mock_hook = setup_mock_hook();
-    let mock_ism = setup_mock_ism();
-    mailbox.initializer(mock_ism.contract_address,mock_hook.contract_address, mock_hook.contract_address);
+    mailbox
+        .initializer(
+            mock_ism.contract_address, mock_hook.contract_address, mock_hook.contract_address
+        );
     mailbox.set_local_domain(DESTINATION_DOMAIN);
     let array = array![
         0x01020304050607080910111213141516,

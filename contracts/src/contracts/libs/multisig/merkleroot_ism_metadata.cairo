@@ -63,7 +63,7 @@ pub mod merkleroot_ism_metadata {
 
         fn signature_at(_metadata: Bytes, _index: u32) -> (u8, u256, u256) {
             // the first signer index is 0
-            let (index_r, r) = _metadata.read_u256(SIGNATURES_OFFSET + 80 * _index);
+            let (index_r, r) = _metadata.read_u256(SIGNATURES_OFFSET + SIGNATURE_LENGTH * _index);
             let (index_s, s) = _metadata.read_u256(index_r);
             let (_, v) = _metadata.read_u8(index_s);
             (v, r, s)

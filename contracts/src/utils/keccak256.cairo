@@ -3,8 +3,7 @@ use core::keccak::cairo_keccak;
 use core::keccak::{keccak_u256s_be_inputs, keccak_u256s_le_inputs};
 use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::{HYPERLANE_ANNOUNCEMENT};
 pub const ETH_SIGNED_MESSAGE: felt252 = '\x19Ethereum Signed Message:\n32';
-
-
+use alexandria_math::{BitShift, keccak256};
 type Words64 = Span<u64>;
 const EMPTY_KECCAK: u256 = 0x70A4855D04D8FA7B3B2782CA53B600E5C003C7DCB27D7E923C23F7860146D2C5;
 pub const ONE_SHIFT_64: u128 = 0x10000000000000000;
@@ -31,6 +30,15 @@ pub fn to_eth_signature(hash: u256) -> u256 {
     let hash = compute_keccak(input.span());
     reverse_endianness(hash)
 }
+
+
+
+
+
+
+
+
+
 
 
 pub fn u64_byte_reverse(value: u64) -> u64 {
@@ -175,7 +183,6 @@ pub fn u64_span_from_word(mut bytes_arr: Span<ByteData>) -> Span<u64> {
     };
     u64_arr.span()
 }
-
 pub fn one_shift_left_bytes_u256(n_bytes: u8) -> u256 {
     match n_bytes {
         0 => 0x1,
@@ -224,11 +231,16 @@ fn reverse_u64_word(bytes: Span<u64>) -> Span<u64> {
             break ();
         }
         if (cur_idx == bytes.len() - 1) {
-            reverse_u64
+            if (n_bytes == 0 ){
+                reverse_u64
+                .append(0_u64);
+            } else {
+                reverse_u64
                 .append(
                     u64_byte_reverse(*bytes.at(cur_idx))
                         / one_shift_left_bytes_u256(8 - n_bytes).try_into().unwrap()
                 );
+            }
         } else {
             reverse_u64.append(u64_byte_reverse(*bytes.at(cur_idx)));
         }
@@ -240,10 +252,8 @@ fn reverse_u64_word(bytes: Span<u64>) -> Span<u64> {
 
 pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
     let words64 = u64_span_from_word(bytes);
-
     let last_word = *words64.at(words64.len() - 1);
     let reverse_words64 = reverse_u64_word(words64);
-
     let (n_bytes, _) = bytes_size(ByteData { value: last_word.into(), is_address: false });
     keccak_cairo_words64(reverse_words64, n_bytes.into())
 }

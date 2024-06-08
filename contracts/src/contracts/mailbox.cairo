@@ -273,7 +273,7 @@ pub mod mailbox {
             let required_hook = IPostDispatchHookDispatcher {
                 contract_address: required_hook_address
             };
-            if (hook != contract_address_const::<0>() ){
+            if (hook != contract_address_const::<0>()) {
                 let hook = IPostDispatchHookDispatcher { contract_address: hook };
                 hook.post_dispatch(hook_metadata.clone(), message.clone());
             }

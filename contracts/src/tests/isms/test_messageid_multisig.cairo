@@ -15,7 +15,7 @@ use hyperlane_starknet::interfaces::{
 use hyperlane_starknet::tests::setup::{
     setup, mock_setup, setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1,
     VALIDATOR_ADDRESS_2, setup_validator_announce, get_message_and_signature, LOCAL_DOMAIN,
-    DESTINATION_DOMAIN, RECIPIENT_ADDRESS
+    DESTINATION_DOMAIN, RECIPIENT_ADDRESS,build_messageid_metadata
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
@@ -82,86 +82,42 @@ fn test_set_threshold_fails_if_caller_not_owner() {
 
 #[test]
 fn test_message_id_ism_metadata() {
-    let origin_merkle_tree_hook = array![
-        // origin_merkle_tree_hook
-        0x02030405060708091011121314151623, 0x16151413121110090807060504030201
-    ];
-    let root = array![0x01000304050607080910111213141516, 0x01020304050607080920111213141516,];
-    let index = array![0x00000013000000000000000000000000];
-    let index_u32 = 0x13;
-    let signature_1 = array![
-        0x09020304050607080910111213141516,
-        0x01020304050607080920111213141516,
-        0x01020304050607080910000000000000,
-        0x02010304050607080910111213141516,
-        0x03000000000000000000000000000000
-    ];
-    let signature_2 = array![
-        0x01020304050607080910111213141516,
-        0x01020304050607080910111213141516,
-        0x01020304050607080910111213141516,
-        0x01020304050607080910000000000000,
-        0x02000000000000000000000000000000
-    ];
-    let signature_3 = array![
-        0x01020304050607080910111213141516,
-        0x13092450000011115450564500700000,
-        0x01020304050607080910000000000000,
-        0x01020304050607080910111213141516,
-        0x02000000000000000000000000000000
-    ];
-    let signature_1_v = 0x3;
-    let signature_2_v = 0x2;
-    let signature_3_v = 0x2;
-    let mut metadata = origin_merkle_tree_hook.concat(@root);
-    metadata = metadata.concat(@index);
-    metadata = metadata.concat(@signature_1);
-    metadata = metadata.concat(@signature_2);
-    metadata = metadata.concat(@signature_3);
-    let bytes_metadata = BytesTrait::new(496, metadata);
+    let origin_merkle_tree : u256= 'origin_merkle_tree_hook'.try_into().unwrap();
+    let root: u256 = 'root'.try_into().unwrap();
+    let y_parity = 0x01;
+    let index = 1;
+    let (_, _, signatures) = get_message_and_signature();
+    let metadata = build_messageid_metadata(origin_merkle_tree,root, index);
     assert(
         MessageIdIsmMetadata::origin_merkle_tree_hook(
-            bytes_metadata.clone()
-        ) == u256 { low: *origin_merkle_tree_hook.at(1), high: *origin_merkle_tree_hook.at(0) },
+            metadata.clone()
+        ) == origin_merkle_tree,
         'wrong merkle tree hook'
     );
     assert(
         MessageIdIsmMetadata::root(
-            bytes_metadata.clone()
-        ) == u256 { low: *root.at(1), high: *root.at(0) },
+            metadata.clone()
+        ) == root ,
         'wrong root'
     );
-    assert(MessageIdIsmMetadata::index(bytes_metadata.clone()) == index_u32, 'wrong index');
-    assert(
-        MessageIdIsmMetadata::signature_at(
-            bytes_metadata.clone(), 0
-        ) == (
-            signature_1_v,
-            u256 { low: *signature_1.at(1), high: *signature_1.at(0) },
-            u256 { low: *signature_1.at(3), high: *signature_1.at(2) }
-        ),
-        'wrong signature 1'
-    );
-    assert(
-        MessageIdIsmMetadata::signature_at(
-            bytes_metadata.clone(), 1
-        ) == (
-            signature_2_v,
-            u256 { low: *signature_2.at(1), high: *signature_2.at(0) },
-            u256 { low: *signature_2.at(3), high: *signature_2.at(2) }
-        ),
-        'wrong signature 2'
-    );
-    assert(
-        MessageIdIsmMetadata::signature_at(
-            bytes_metadata.clone(), 2
-        ) == (
-            signature_3_v,
-            u256 { low: *signature_3.at(1), high: *signature_3.at(0) },
-            u256 { low: *signature_3.at(3), high: *signature_3.at(2) }
-        ),
-        'wrong signature 3'
-    );
+    assert(MessageIdIsmMetadata::index(metadata.clone()) == index, 'wrong index');
+    let mut cur_idx = 0;
+    loop {
+        if(cur_idx == signatures.len()){
+            break();
+        }
+        assert(
+            MessageIdIsmMetadata::signature_at(
+                metadata.clone(), cur_idx 
+            ) == (
+                y_parity,
+                *signatures.at(cur_idx).r,
+                *signatures.at(cur_idx).s
+            ),
+            'wrong signature '
+        );
+        cur_idx +=1;
+    }
 }
 
 
@@ -193,41 +149,18 @@ fn test_message_id_multisig_verify_with_4_valid_signatures() {
         body: message_body.clone()
     };
     let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism();
-    let (_, validators_address, signatures) = get_message_and_signature();
-    let y_parity = 0x01000000000000000000000000000000; // parity set to false
-    let metadata = array![
-        0x01020304050607080910111213141516,
-        0x16151413121110090807060504030201,
-        0x01020304050607080910111213141516,
-        0x01020304050607080920111213141516,
-        0x00000010000000000000000000000000,
-        *signatures.at(0).r.high,
-        *signatures.at(0).r.low,
-        *signatures.at(0).s.high,
-        *signatures.at(0).s.low,
-        y_parity,
-        *signatures.at(1).r.high,
-        *signatures.at(1).r.low,
-        *signatures.at(1).s.high,
-        *signatures.at(1).s.low,
-        y_parity,
-        *signatures.at(2).r.high,
-        *signatures.at(2).r.low,
-        *signatures.at(2).s.high,
-        *signatures.at(2).s.low,
-        y_parity,
-        *signatures.at(3).r.high,
-        *signatures.at(3).r.low,
-        *signatures.at(3).s.high,
-        *signatures.at(3).s.low,
-        y_parity,
-    ];
-    let ownable = IOwnableDispatcher { contract_address: messageid_validator_configuration.contract_address };
+    let (_, validators_address, _) = get_message_and_signature();
+    let origin_merkle_tree : u256= 'origin_merkle_tree_hook'.try_into().unwrap();
+    let root: u256 = 'root'.try_into().unwrap();
+    let index = 1;
+    let metadata = build_messageid_metadata(origin_merkle_tree,root, index);
+    let ownable = IOwnableDispatcher {
+        contract_address: messageid_validator_configuration.contract_address
+    };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     messageid_validator_configuration.set_validators(validators_address.span());
     messageid_validator_configuration.set_threshold(4);
-    let bytes_metadata = BytesTrait::new(496, metadata);
-    assert(messageid.verify(bytes_metadata, message) == true, 'verification failed');
+    assert(messageid.verify(metadata, message) == true, 'verification failed');
 }
 
 
@@ -250,41 +183,18 @@ fn test_message_id_multisig_verify_with_insufficient_valid_signatures() {
         body: message_body.clone()
     };
     let (messageid, messageid_validator_config) = setup_messageid_multisig_ism();
-    let (_, validators_address, signatures) = get_message_and_signature();
-    let y_parity = 0x01000000000000000000000000000000; // parity set to false
-    let metadata = array![
-        0x01020304050607080910111213141516,
-        0x16151413121110090807060504030201,
-        0x01020304050607080910111213141516,
-        0x01020304050607080920111213141516,
-        0x00000010000000000000000000000000,
-        *signatures.at(0).r.high,
-        *signatures.at(0).r.low,
-        *signatures.at(0).s.high,
-        *signatures.at(0).s.low,
-        y_parity,
-        *signatures.at(1).r.high,
-        *signatures.at(1).r.low,
-        *signatures.at(1).s.high,
-        *signatures.at(1).s.low,
-        y_parity,
-        *signatures.at(2).r.high,
-        *signatures.at(2).r.low,
-        *signatures.at(2).s.high,
-        *signatures.at(2).s.low,
-        y_parity,
-        *signatures.at(3).r.high + 1,
-        *signatures.at(3).r.low + 1,
-        *signatures.at(3).s.high + 1,
-        *signatures.at(3).s.low + 1,
-        y_parity,
-    ];
+    let (_, validators_address, _) = get_message_and_signature();
+    let origin_merkle_tree : u256= 'origin_merkle_tree_hook'.try_into().unwrap();
+    let root: u256 = 'root'.try_into().unwrap();
+    let index = 1;
+    let mut metadata = build_messageid_metadata(origin_merkle_tree,root, index);
+    // introduce an error for the signature
+    metadata.update_at(80,0);
     let ownable = IOwnableDispatcher { contract_address: messageid.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     messageid_validator_config.set_validators(validators_address.span());
     messageid_validator_config.set_threshold(4);
-    let bytes_metadata = BytesTrait::new(496, metadata);
-    assert(messageid.verify(bytes_metadata, message) == true, 'verification failed');
+    assert(messageid.verify(metadata, message) == true, 'verification failed');
 }
 
 

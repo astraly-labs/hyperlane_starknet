@@ -122,8 +122,18 @@ pub mod mailbox {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _local_domain: u32, owner: ContractAddress) {
+    fn constructor(
+        ref self: ContractState,
+        _local_domain: u32,
+        owner: ContractAddress,
+        _default_ism: ContractAddress,
+        _default_hook: ContractAddress,
+        _required_hook: ContractAddress
+    ) {
         self.local_domain.write(_local_domain);
+        self.default_ism.write(_default_ism);
+        self.default_hook.write(_default_hook);
+        self.required_hook.write(_required_hook);
         self.ownable.initializer(owner);
     }
 
@@ -138,18 +148,6 @@ pub mod mailbox {
 
     #[abi(embed_v0)]
     impl IMailboxImpl of IMailbox<ContractState> {
-        fn initializer(
-            ref self: ContractState,
-            _default_ism: ContractAddress,
-            _default_hook: ContractAddress,
-            _required_hook: ContractAddress
-        ) {
-            self.set_default_ism(_default_ism);
-            self.set_default_hook(_default_hook);
-            self.set_required_hook(_required_hook);
-        }
-
-
         fn get_local_domain(self: @ContractState) -> u32 {
             self.local_domain.read()
         }

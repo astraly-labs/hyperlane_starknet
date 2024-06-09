@@ -55,7 +55,7 @@ fn keccak_cairo_words64(words: Words64, last_word_bytes: usize) -> u256 {
     };
 
     let mut last = *words.at(n - 1);
-    if last_word_bytes == 8 {
+    if (last_word_bytes == 8 || last_word_bytes == 0) {
         keccak_input.append(last);
         cairo_keccak(ref keccak_input, 0, 0)
     } else {
@@ -253,7 +253,7 @@ pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
 mod tests {
     use super::{
         reverse_endianness, ByteData, HYPERLANE_ANNOUNCEMENT, compute_keccak, TEST_STARKNET_DOMAIN,
-        bytes_size, u64_span_from_word, reverse_u64_word
+        bytes_size, u64_span_from_word, reverse_u64_word, cairo_keccak, keccak_cairo_words64
     };
     #[test]
     fn test_reverse_endianness() {
@@ -263,7 +263,6 @@ mod tests {
             reverse_endianness(big_endian_number) == expected_result, 'Failed to realise reverse'
         );
     }
-
 
     #[test]
     fn test_compute_keccak() {

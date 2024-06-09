@@ -36,13 +36,6 @@ pub enum ModuleType {
 
 #[starknet::interface]
 pub trait IMailbox<TContractState> {
-    fn initializer(
-        ref self: TContractState,
-        _default_ism: ContractAddress,
-        _default_hook: ContractAddress,
-        _required_hook: ContractAddress
-    );
-
     fn get_local_domain(self: @TContractState) -> u32;
 
     fn delivered(self: @TContractState, _message_id: u256) -> bool;

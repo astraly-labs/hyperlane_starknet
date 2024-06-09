@@ -115,33 +115,45 @@ pub fn TEST_PROOF() -> Span<u256> {
     ]
         .span()
 }
-pub fn setup() -> (IMailboxDispatcher, EventSpy) {
+pub fn setup() -> (
+    IMailboxDispatcher, EventSpy, IPostDispatchHookDispatcher, IInterchainSecurityModuleDispatcher
+) {
     let mailbox_class = declare("mailbox").unwrap();
+    let mock_hook = setup_mock_hook();
+    let mock_ism = setup_mock_ism();
     let (mailbox_addr, _) = mailbox_class
-        .deploy(@array![LOCAL_DOMAIN.into(), OWNER().into()])
+        .deploy(
+            @array![
+                LOCAL_DOMAIN.into(),
+                OWNER().into(),
+                mock_ism.contract_address.into(),
+                mock_hook.contract_address.into(),
+                mock_hook.contract_address.into()
+            ]
+        )
         .unwrap();
     let mut spy = spy_events(SpyOn::One(mailbox_addr));
-    (IMailboxDispatcher { contract_address: mailbox_addr }, spy)
+    (IMailboxDispatcher { contract_address: mailbox_addr }, spy, mock_hook, mock_ism)
 }
 
-pub fn mock_setup() -> (
-    IMessageRecipientDispatcher,
-    ISpecifiesInterchainSecurityModuleDispatcher,
-    IInterchainSecurityModuleDispatcher
-) {
-    let mock_ism = declare("ism").unwrap();
-    let (mock_ism_addr, _) = mock_ism.deploy(@array![]).unwrap();
+pub fn mock_setup(
+    mock_ism_address: ContractAddress
+) -> (IMessageRecipientDispatcher, ISpecifiesInterchainSecurityModuleDispatcher,) {
     let message_recipient_class = declare("message_recipient").unwrap();
     let (message_recipient_addr, _) = message_recipient_class
-        .deploy(@array![mock_ism_addr.into()])
+        .deploy(@array![mock_ism_address.into()])
         .unwrap();
     (
         IMessageRecipientDispatcher { contract_address: message_recipient_addr },
         ISpecifiesInterchainSecurityModuleDispatcher { contract_address: message_recipient_addr },
-        IInterchainSecurityModuleDispatcher { contract_address: mock_ism_addr }
     )
 }
 
+pub fn setup_mock_ism() -> IInterchainSecurityModuleDispatcher {
+    let mock_ism = declare("ism").unwrap();
+    let (mock_ism_addr, _) = mock_ism.deploy(@array![]).unwrap();
+    IInterchainSecurityModuleDispatcher { contract_address: mock_ism_addr }
+}
 pub fn setup_messageid_multisig_ism() -> (
     IInterchainSecurityModuleDispatcher, IValidatorConfigurationDispatcher
 ) {
@@ -172,7 +184,7 @@ pub fn setup_merkleroot_multisig_ism() -> (
 }
 
 pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
-    let (mailbox, _) = setup();
+    let (mailbox, _, _, _) = setup();
     let mailboxclient_class = declare("mailboxclient").unwrap();
     let (mailboxclient_addr, _) = mailboxclient_class
         .deploy(@array![mailbox.contract_address.into(), OWNER().into()])

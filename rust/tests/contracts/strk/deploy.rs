@@ -48,7 +48,8 @@ pub async fn deploy_core(
 
     // deploy test message receiver
     println!("\n==> Deploying test message receiver");
-    let (msg_receiver, _) = deploy_contract(codes.test_mock_msg_receiver, vec![], deployer).await;
+    let (msg_receiver, _) =
+        deploy_contract(codes.test_mock_msg_receiver, vec![default_ism], deployer).await;
     println!("Deployed Contract Address {:x?}", msg_receiver);
 
     Ok(CoreDeployments {

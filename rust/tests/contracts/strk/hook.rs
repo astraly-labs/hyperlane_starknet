@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use starknet::core::types::FieldElement;
 
-use super::{types::Codes, StarknetAccount};
+use super::{deploy_contract, types::Codes, StarknetAccount};
 use eyre::Result;
 
 #[allow(dead_code)]
@@ -52,11 +52,9 @@ impl Hook {
         gas: FieldElement,
         deployer: &StarknetAccount,
     ) -> eyre::Result<FieldElement> {
-        // deploy mock hook
+        let res = deploy_contract(codes.test_mock_hook, vec![], deployer).await;
 
-        // invoke set gas amount
-
-        Ok(FieldElement::ZERO)
+        Ok(res.0)
     }
 
     async fn deploy_merkle(

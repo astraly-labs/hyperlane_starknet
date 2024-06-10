@@ -39,6 +39,7 @@ mod contracts {
             pub mod validator_announce;
         }
         pub mod routing {
+            pub mod default_fallback_routing_ism;
             pub mod domain_routing_ism;
         }
         pub mod aggregation {

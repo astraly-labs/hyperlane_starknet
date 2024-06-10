@@ -65,6 +65,10 @@ pub mod domain_routing_ism {
                 if (cur_idx == _domains.len()) {
                     break ();
                 }
+                assert(
+                    *_modules.at(cur_idx) != contract_address_const::<0>(),
+                    Errors::MODULE_CANNOT_BE_ZERO
+                );
                 _set(ref self, *_domains.at(cur_idx), *_modules.at(cur_idx));
                 cur_idx += 1;
             }
@@ -87,6 +91,7 @@ pub mod domain_routing_ism {
             loop {
                 let next_domain = self.domains.read(current_domain);
                 if next_domain == 0 {
+                    domains.append(current_domain);
                     break ();
                 }
                 domains.append(current_domain);

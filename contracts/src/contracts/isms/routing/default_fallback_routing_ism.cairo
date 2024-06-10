@@ -46,7 +46,6 @@ pub mod default_fallback_routing_ism {
 
     mod Errors {
         pub const LENGTH_MISMATCH: felt252 = 'Length mismatch';
-        pub const ORIGIN_NOT_FOUND: felt252 = 'Origin not found';
         pub const MODULE_CANNOT_BE_ZERO: felt252 = 'Module cannot be zero';
         pub const DOMAIN_NOT_FOUND: felt252 = 'Domain not found';
     }
@@ -71,6 +70,11 @@ pub mod default_fallback_routing_ism {
                 if (cur_idx == _domains.len()) {
                     break ();
                 }
+                assert(
+                    *_modules.at(cur_idx) != contract_address_const::<0>(),
+                    Errors::MODULE_CANNOT_BE_ZERO
+                );
+                let test: felt252 = (*_modules.at(cur_idx)).try_into().unwrap();
                 _set(ref self, *_domains.at(cur_idx), *_modules.at(cur_idx));
                 cur_idx += 1;
             }
@@ -93,6 +97,7 @@ pub mod default_fallback_routing_ism {
             loop {
                 let next_domain = self.domains.read(current_domain);
                 if next_domain == 0 {
+                    domains.append(current_domain);
                     break ();
                 }
                 domains.append(current_domain);
@@ -103,7 +108,7 @@ pub mod default_fallback_routing_ism {
 
         fn module(self: @ContractState, _origin: u32) -> ContractAddress {
             let module = self.modules.read(_origin);
-            if (module == contract_address_const::<0>()) {
+            if (module != contract_address_const::<0>()) {
                 module
             } else {
                 let mailbox_client_dispatcher = IMailboxClientDispatcher {

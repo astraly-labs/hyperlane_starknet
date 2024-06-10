@@ -11,7 +11,9 @@ use hyperlane_starknet::interfaces::{
     IValidatorConfigurationDispatcher, IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait,
     IAggregation, IPostDispatchHookDispatcher, IProtocolFeeDispatcher,
     IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait, IMockValidatorAnnounceDispatcher,
-    ISpecifiesInterchainSecurityModuleDispatcher, ISpecifiesInterchainSecurityModuleDispatcherTrait,IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, IDomainRoutingIsmDispatcher, IDomainRoutingIsmDispatcherTrait
+    ISpecifiesInterchainSecurityModuleDispatcher, ISpecifiesInterchainSecurityModuleDispatcherTrait,
+    IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, IDomainRoutingIsmDispatcher,
+    IDomainRoutingIsmDispatcherTrait
 };
 use openzeppelin::account::utils::signature::EthSignature;
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
@@ -193,17 +195,31 @@ pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
     IMailboxClientDispatcher { contract_address: mailboxclient_addr }
 }
 
-pub fn setup_default_fallback_routing_ism() -> (IInterchainSecurityModuleDispatcher, IRoutingIsmDispatcher, IDomainRoutingIsmDispatcher) {
+pub fn setup_default_fallback_routing_ism() -> (
+    IInterchainSecurityModuleDispatcher, IRoutingIsmDispatcher, IDomainRoutingIsmDispatcher
+) {
     let mailbox_client = setup_mailbox_client();
     let default_fallback_routing_ism = declare("default_fallback_routing_ism").unwrap();
-    let (default_fallback_routing_ism_addr, _) = default_fallback_routing_ism.deploy(@array![OWNER().into(),mailbox_client.contract_address.into()]).unwrap();
-    (IInterchainSecurityModuleDispatcher{contract_address: default_fallback_routing_ism_addr }, IRoutingIsmDispatcher{contract_address: default_fallback_routing_ism_addr }, IDomainRoutingIsmDispatcher{contract_address: default_fallback_routing_ism_addr })
+    let (default_fallback_routing_ism_addr, _) = default_fallback_routing_ism
+        .deploy(@array![OWNER().into(), mailbox_client.contract_address.into()])
+        .unwrap();
+    (
+        IInterchainSecurityModuleDispatcher { contract_address: default_fallback_routing_ism_addr },
+        IRoutingIsmDispatcher { contract_address: default_fallback_routing_ism_addr },
+        IDomainRoutingIsmDispatcher { contract_address: default_fallback_routing_ism_addr }
+    )
 }
 
-pub fn setup_domain_routing_ism() -> (IInterchainSecurityModuleDispatcher, IRoutingIsmDispatcher, IDomainRoutingIsmDispatcher) {
+pub fn setup_domain_routing_ism() -> (
+    IInterchainSecurityModuleDispatcher, IRoutingIsmDispatcher, IDomainRoutingIsmDispatcher
+) {
     let domain_routing_ism = declare("domain_routing_ism").unwrap();
     let (domain_routing_ism_addr, _) = domain_routing_ism.deploy(@array![OWNER().into()]).unwrap();
-    (IInterchainSecurityModuleDispatcher{contract_address: domain_routing_ism_addr }, IRoutingIsmDispatcher{contract_address: domain_routing_ism_addr }, IDomainRoutingIsmDispatcher{contract_address: domain_routing_ism_addr })
+    (
+        IInterchainSecurityModuleDispatcher { contract_address: domain_routing_ism_addr },
+        IRoutingIsmDispatcher { contract_address: domain_routing_ism_addr },
+        IDomainRoutingIsmDispatcher { contract_address: domain_routing_ism_addr }
+    )
 }
 
 pub fn setup_validator_announce() -> (IValidatorAnnounceDispatcher, EventSpy) {

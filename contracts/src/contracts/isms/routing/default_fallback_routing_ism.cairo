@@ -114,7 +114,7 @@ pub mod default_fallback_routing_ism {
                 let mailbox_client_dispatcher = IMailboxClientDispatcher {
                     contract_address: self.mailbox_client.read()
                 };
-                let mailbox_address = mailbox_client_dispatcher.get_mailbox();
+                let mailbox_address = mailbox_client_dispatcher.mailbox();
                 IMailboxDispatcher { contract_address: mailbox_address }.get_default_ism()
             }
         }

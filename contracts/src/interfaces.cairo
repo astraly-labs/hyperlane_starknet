@@ -167,7 +167,7 @@ pub trait IMailboxClient<TContractState> {
 
     fn _is_delivered(self: @TContractState, _id: u256) -> bool;
 
-    fn get_mailbox(self: @TContractState) -> ContractAddress;
+    fn mailbox(self: @TContractState) -> ContractAddress;
 
     fn _dispatch(
         self: @TContractState,

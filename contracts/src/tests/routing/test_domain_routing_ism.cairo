@@ -103,7 +103,7 @@ fn test_remove_domain() {
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
     fallback_routing_ism.remove(12345);
-    _domains.pop_front();
+    _domains.pop_front().unwrap();
     assert(_domains.span() == fallback_routing_ism.domains(), 'wrong domain del');
 }
 

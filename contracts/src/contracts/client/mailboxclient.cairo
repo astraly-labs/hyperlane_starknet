@@ -103,7 +103,7 @@ mod mailboxclient {
             mailbox.delivered(_id)
         }
 
-        fn get_mailbox(self: @ContractState) -> ContractAddress {
+        fn mailbox(self: @ContractState) -> ContractAddress {
             self.mailbox.read()
         }
 

@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use starknet::core::types::FieldElement;
 
 use super::{types::Codes, StarknetAccount};
+use eyre::Result;
 
 #[allow(dead_code)]
 pub enum Hook {
@@ -102,14 +103,20 @@ impl Hook {
     pub async fn deploy(
         self,
         codes: &Codes,
-        mailbox: FieldElement,
+        mailbox: Option<FieldElement>,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<FieldElement> {
+    ) -> Result<FieldElement> {
         match self {
             Hook::Mock { gas } => Self::deploy_mock(codes, gas, deployer).await,
             Hook::Igp(igp) => todo!("not implemented"),
-            Hook::Merkle {} => Self::deploy_merkle(codes, mailbox, owner, deployer).await,
+            Hook::Merkle {} => {
+                if let Some(mailbox) = mailbox {
+                    Self::deploy_merkle(codes, mailbox, owner, deployer).await
+                } else {
+                    Err(eyre::eyre!("Mailbox is required for deploying Merkle hook"))
+                }
+            }
             Hook::Pausable {} => Self::deploy_pausable(codes, owner, deployer).await,
             Hook::Routing { routes } => todo!("not implemented"),
             Hook::RoutingCustom {

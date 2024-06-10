@@ -2,7 +2,8 @@ use std::collections::BTreeMap;
 
 use starknet::core::types::FieldElement;
 
-use super::{types::Codes, StarknetAccount};
+use super::{deploy_contract, types::Codes, StarknetAccount};
+use eyre::Result;
 
 #[allow(dead_code)]
 pub enum Hook {
@@ -51,11 +52,9 @@ impl Hook {
         gas: FieldElement,
         deployer: &StarknetAccount,
     ) -> eyre::Result<FieldElement> {
-        // deploy mock hook
+        let res = deploy_contract(codes.test_mock_hook, vec![], deployer).await;
 
-        // invoke set gas amount
-
-        Ok(FieldElement::ZERO)
+        Ok(res.0)
     }
 
     async fn deploy_merkle(
@@ -102,14 +101,20 @@ impl Hook {
     pub async fn deploy(
         self,
         codes: &Codes,
-        mailbox: FieldElement,
+        mailbox: Option<FieldElement>,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<FieldElement> {
+    ) -> Result<FieldElement> {
         match self {
             Hook::Mock { gas } => Self::deploy_mock(codes, gas, deployer).await,
             Hook::Igp(igp) => todo!("not implemented"),
-            Hook::Merkle {} => Self::deploy_merkle(codes, mailbox, owner, deployer).await,
+            Hook::Merkle {} => {
+                if let Some(mailbox) = mailbox {
+                    Self::deploy_merkle(codes, mailbox, owner, deployer).await
+                } else {
+                    Err(eyre::eyre!("Mailbox is required for deploying Merkle hook"))
+                }
+            }
             Hook::Pausable {} => Self::deploy_pausable(codes, owner, deployer).await,
             Hook::Routing { routes } => todo!("not implemented"),
             Hook::RoutingCustom {

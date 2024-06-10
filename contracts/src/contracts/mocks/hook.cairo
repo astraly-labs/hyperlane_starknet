@@ -12,10 +12,6 @@ pub mod hook {
 
     #[abi(embed_v0)]
     impl IPostDispatchHookImpl of IPostDispatchHook<ContractState> {
-        fn get_hook_type(self: @ContractState) -> Types {
-            Types::UNUSED(())
-        }
-
         fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
             true
         }

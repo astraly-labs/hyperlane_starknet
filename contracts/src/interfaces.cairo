@@ -5,7 +5,7 @@ use hyperlane_starknet::contracts::libs::message::Message;
 use starknet::ContractAddress;
 use starknet::EthAddress;
 
-#[derive(Serde, Drop)]
+#[derive(Serde, Drop, Debug, PartialEq)]
 pub enum Types {
     UNUSED,
     ROUTING,
@@ -21,7 +21,7 @@ pub enum Types {
 }
 
 
-#[derive(Serde, Drop, PartialEq)]
+#[derive(Serde, Drop, PartialEq, Debug, starknet::Store)]
 pub enum ModuleType {
     UNUSED: ContractAddress,
     ROUTING: ContractAddress,
@@ -36,13 +36,6 @@ pub enum ModuleType {
 
 #[starknet::interface]
 pub trait IMailbox<TContractState> {
-    fn initializer(
-        ref self: TContractState,
-        _default_ism: ContractAddress,
-        _default_hook: ContractAddress,
-        _required_hook: ContractAddress
-    );
-
     fn get_local_domain(self: @TContractState) -> u32;
 
     fn delivered(self: @TContractState, _message_id: u256) -> bool;
@@ -107,7 +100,10 @@ pub trait IInterchainSecurityModule<TContractState> {
     /// the module (e.g. validator signatures)
     /// * `_message` - Hyperlane encoded interchain message
     fn verify(self: @TContractState, _metadata: Bytes, _message: Message,) -> bool;
+}
 
+#[starknet::interface]
+pub trait IValidatorConfiguration<TContractState> {
     fn validators_and_threshold(
         self: @TContractState, _message: Message
     ) -> (Span<EthAddress>, u32);
@@ -123,14 +119,12 @@ pub trait IInterchainSecurityModule<TContractState> {
 
 #[starknet::interface]
 pub trait ISpecifiesInterchainSecurityModule<TContractState> {
-    fn interchain_security_module(self: @TContractState) -> ModuleType;
+    fn interchain_security_module(self: @TContractState) -> ContractAddress;
 }
 
 
 #[starknet::interface]
 pub trait IPostDispatchHook<TContractState> {
-    fn get_hook_type(self: @TContractState) -> Types;
-
     fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
 
     fn post_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message);
@@ -320,4 +314,31 @@ pub trait IMerkleTreeHook<TContractState> {
     fn latest_checkpoint(self: @TContractState) -> (u256, u32);
 
     fn hook_type(self: @TContractState) -> Types;
+}
+
+
+#[starknet::interface]
+pub trait IPausableIsm<TContractState> {
+    fn module_type(self: @TContractState) -> ModuleType;
+
+    fn verify(self: @TContractState, _metadata: Bytes, _message: Message) -> bool;
+
+    fn pause(ref self: TContractState);
+
+    fn unpause(ref self: TContractState);
+}
+
+#[starknet::interface]
+pub trait IProtocolFee<TContractState> {
+    fn hook_type(self: @TContractState) -> Types;
+
+    fn get_protocol_fee(self: @TContractState) -> u256;
+
+    fn set_protocol_fee(ref self: TContractState, _protocol_fee: u256);
+
+    fn get_beneficiary(self: @TContractState) -> ContractAddress;
+
+    fn set_beneficiary(ref self: TContractState, _beneficiary: ContractAddress);
+
+    fn collect_protocol_fees(ref self: TContractState);
 }

@@ -2,7 +2,10 @@
 pub mod message_recipient {
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
     use hyperlane_starknet::interfaces::{
-        IMessageRecipient, IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait
+        IMessageRecipient, IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait,
+        ModuleType, ISpecifiesInterchainSecurityModule,
+        ISpecifiesInterchainSecurityModuleDispatcher,
+        ISpecifiesInterchainSecurityModuleDispatcherTrait
     };
     use starknet::ContractAddress;
 
@@ -11,7 +14,13 @@ pub mod message_recipient {
     struct Storage {
         origin: u32,
         sender: ContractAddress,
-        message: Bytes
+        message: Bytes,
+        ism: ContractAddress
+    }
+
+    #[constructor]
+    fn constructor(ref self: ContractState, _ism: ContractAddress) {
+        self.ism.write(_ism);
     }
 
     #[abi(embed_v0)]
@@ -34,6 +43,15 @@ pub mod message_recipient {
 
         fn get_message(self: @ContractState) -> Bytes {
             self.message.read()
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl ISpecifiesInterchainSecurityModuleImpl of ISpecifiesInterchainSecurityModule<
+        ContractState
+    > {
+        fn interchain_security_module(self: @ContractState) -> ContractAddress {
+            self.ism.read()
         }
     }
 }

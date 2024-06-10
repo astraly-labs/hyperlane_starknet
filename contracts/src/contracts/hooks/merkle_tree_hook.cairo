@@ -1,7 +1,7 @@
 #[starknet::contract]
 pub mod merkle_tree_hook {
     use alexandria_bytes::Bytes;
-    use hyperlane_starknet::contracts::libs::merkle_lib::merkle_lib::{Tree, IMerkleLib};
+    use hyperlane_starknet::contracts::libs::merkle_lib::merkle_lib::{Tree, MerkleLib};
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::interfaces::{
         IMailboxClientDispatcher, IMailboxClientDispatcherTrait, Types, IMerkleTreeHook
@@ -68,7 +68,7 @@ pub mod merkle_tree_hook {
         assert(mailbox_client._is_latest_dispatched(id), Errors::MESSAGE_NOT_DISPATCHING);
         let index = self.count();
         let mut tree = self.tree.read();
-        IMerkleLib::insert(ref tree, id);
+        MerkleLib::insert(ref tree, id);
         self.emit(InsertedIntoTree { id, index });
     }
 

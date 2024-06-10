@@ -35,7 +35,7 @@ pub mod validator_announce {
     #[derive(starknet::Event, Drop)]
     pub struct ValidatorAnnouncement {
         pub validator: EthAddress,
-        pub storage_location: Array<felt252>
+        pub storage_location: Span<felt252>
     }
 
     pub mod Errors {
@@ -53,17 +53,20 @@ pub mod validator_announce {
         fn announce(
             ref self: ContractState,
             _validator: EthAddress,
-            mut _storage_location: Array<felt252>,
+            _storage_location: Array<felt252>,
             _signature: Bytes
         ) -> bool {
             let felt252_validator: felt252 = _validator.into();
             let mut _input: Array<u256> = array![felt252_validator.into()];
             let mut u256_storage_location: Array<u256> = array![];
+            let mut cur_idx = 0;
+            let span_storage_location = _storage_location.span();
             loop {
-                match _storage_location.pop_front() {
-                    Option::Some(storage) => u256_storage_location.append(storage.into()),
-                    Option::None(()) => { break (); },
+                if (cur_idx == span_storage_location.len()) {
+                    break ();
                 }
+                u256_storage_location.append((*span_storage_location.at(cur_idx)).into());
+                cur_idx += 1;
             };
             let replay_id = poseidon_hash_span(
                 array![felt252_validator].concat(@_storage_location).span()
@@ -82,11 +85,13 @@ pub mod validator_announce {
                     self.validators.write(last_validator, _validator);
                 }
             };
-            self.storage_location.write(_validator, _storage_location.clone());
+
+            self.storage_location.write(_validator, _storage_location);
+            self.replay_protection.write(replay_id, true);
             self
                 .emit(
                     ValidatorAnnouncement {
-                        validator: _validator, storage_location: _storage_location
+                        validator: _validator, storage_location: span_storage_location
                     }
                 );
             true

@@ -11,7 +11,8 @@ pub mod message_id_ism_metadata {
     pub const ORIGIN_MERKLE_TREE_HOOK_OFFSET: u32 = 0;
     pub const ROOT_OFFSET: u32 = 32;
     pub const INDEX_OFFSET: u32 = 64;
-    pub const SIGNATURE_OFFSET: u32 = 80;
+    pub const SIGNATURE_OFFSET: u32 = 68;
+    pub const SIGNATURE_LENGTH: u32 = 65;
     impl MessagIdIsmMetadataImpl of MessageIdIsmMetadata {
         fn origin_merkle_tree_hook(_metadata: Bytes) -> u256 {
             let (_, felt) = _metadata.read_u256(ORIGIN_MERKLE_TREE_HOOK_OFFSET);
@@ -29,8 +30,8 @@ pub mod message_id_ism_metadata {
         }
 
         fn signature_at(_metadata: Bytes, _index: u32) -> (u8, u256, u256) {
-            // the first signer index is 0
-            let (index_r, r) = _metadata.read_u256(SIGNATURE_OFFSET + 80 * _index);
+            // signature length set to 80 because u128 padding from the v param
+            let (index_r, r) = _metadata.read_u256(SIGNATURE_OFFSET + SIGNATURE_LENGTH * _index);
             let (index_s, s) = _metadata.read_u256(index_r);
             let (_, v) = _metadata.read_u8(index_s);
             (v, r, s)

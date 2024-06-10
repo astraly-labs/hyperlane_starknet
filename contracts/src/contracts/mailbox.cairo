@@ -122,8 +122,18 @@ pub mod mailbox {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _local_domain: u32, owner: ContractAddress) {
+    fn constructor(
+        ref self: ContractState,
+        _local_domain: u32,
+        owner: ContractAddress,
+        _default_ism: ContractAddress,
+        _default_hook: ContractAddress,
+        _required_hook: ContractAddress
+    ) {
         self.local_domain.write(_local_domain);
+        self.default_ism.write(_default_ism);
+        self.default_hook.write(_default_hook);
+        self.required_hook.write(_required_hook);
         self.ownable.initializer(owner);
     }
 
@@ -138,18 +148,6 @@ pub mod mailbox {
 
     #[abi(embed_v0)]
     impl IMailboxImpl of IMailbox<ContractState> {
-        fn initializer(
-            ref self: ContractState,
-            _default_ism: ContractAddress,
-            _default_hook: ContractAddress,
-            _required_hook: ContractAddress
-        ) {
-            self.set_default_ism(_default_ism);
-            self.set_default_hook(_default_hook);
-            self.set_required_hook(_required_hook);
-        }
-
-
         fn get_local_domain(self: @ContractState) -> u32 {
             self.local_domain.read()
         }
@@ -260,7 +258,7 @@ pub mod mailbox {
                         sender: caller,
                         destination_domain: _destination_domain,
                         recipient_address: _recipient_address,
-                        message: message
+                        message: message.clone()
                     }
                 );
             self.emit(DispatchId { id: id });
@@ -269,15 +267,15 @@ pub mod mailbox {
             // HOOKS
             //
 
-            // let required_hook_address = self.required_hook.read();
-            // let required_hook = IPostDispatchHookDispatcher {
-            //     contract_address: required_hook_address
-            // };
-            // if (hook != contract_address_const::<0>() ){
-            //     let hook = IPostDispatchHookDispatcher { contract_address: hook };
-            //     hook.post_dispatch(hook_metadata.clone(), message);
-            // }
-            // required_hook.post_dispatch(hook_metadata, message);
+            let required_hook_address = self.required_hook.read();
+            let required_hook = IPostDispatchHookDispatcher {
+                contract_address: required_hook_address
+            };
+            if (hook != contract_address_const::<0>()) {
+                let hook = IPostDispatchHookDispatcher { contract_address: hook };
+                hook.post_dispatch(hook_metadata.clone(), message.clone());
+            }
+            required_hook.post_dispatch(hook_metadata, message.clone());
 
             id
         }
@@ -315,16 +313,8 @@ pub mod mailbox {
             let block_number = get_block_number();
             assert(!self.delivered(id), Errors::ALREADY_DELIVERED);
 
-            // 
-            // ISM
-            // 
-
-            // let recipient_ism = self.recipient_ism(_message.recipient);
-            // let ism = IInterchainSecurityModuleDispatcher { contract_address: recipient_ism };
-
-            //
-            //
-            //
+            let recipient_ism = self.recipient_ism(_message.recipient);
+            let ism = IInterchainSecurityModuleDispatcher { contract_address: recipient_ism };
 
             self.deliveries.write(id, Delivery { processor: caller, block_number: block_number });
             self
@@ -337,15 +327,8 @@ pub mod mailbox {
                 );
             self.emit(ProcessId { id: id });
 
-            // 
-            // ISM
-            // 
+            assert(ism.verify(_metadata, _message.clone()), Errors::ISM_VERIFICATION_FAILED);
 
-            // assert(ism.verify(_metadata, _message.clone()), Errors::ISM_VERIFICATION_FAILED);
-
-            //
-            //
-            //
             let message_recipient = IMessageRecipientDispatcher {
                 contract_address: _message.recipient
             };

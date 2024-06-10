@@ -237,6 +237,7 @@ pub async fn declare_all(deployer: &StarknetAccount) -> eyre::Result<Codes> {
     let test_mock_ism = declare_contract(deployer, "ism").await?;
     let ism_routing = declare_contract(deployer, "domain_routing_ism").await?;
     let test_mock_msg_receiver = declare_contract(deployer, "message_recipient").await?;
+    let test_mock_hook = declare_contract(deployer, "hook").await?;
 
     Ok(Codes {
         mailbox,
@@ -252,7 +253,7 @@ pub async fn declare_all(deployer: &StarknetAccount) -> eyre::Result<Codes> {
         ism_aggregate: FieldElement::ZERO,
         ism_multisig,
         ism_routing,
-        test_mock_hook: FieldElement::ZERO,
+        test_mock_hook,
         test_mock_ism,
         test_mock_msg_receiver,
         warp_strk20: FieldElement::ZERO,

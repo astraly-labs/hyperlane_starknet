@@ -313,16 +313,8 @@ pub mod mailbox {
             let block_number = get_block_number();
             assert(!self.delivered(id), Errors::ALREADY_DELIVERED);
 
-            // 
-            // ISM
-            // 
-
             let recipient_ism = self.recipient_ism(_message.recipient);
             let ism = IInterchainSecurityModuleDispatcher { contract_address: recipient_ism };
-
-            //
-            //
-            //
 
             self.deliveries.write(id, Delivery { processor: caller, block_number: block_number });
             self
@@ -335,15 +327,8 @@ pub mod mailbox {
                 );
             self.emit(ProcessId { id: id });
 
-            // 
-            // ISM
-            // 
-
             assert(ism.verify(_metadata, _message.clone()), Errors::ISM_VERIFICATION_FAILED);
 
-            //
-            //
-            //
             let message_recipient = IMessageRecipientDispatcher {
                 contract_address: _message.recipient
             };

@@ -7,7 +7,7 @@ use crate::validator::TestValidators;
 use super::{
     declare_all, deploy_core, get_dev_account,
     hook::Hook,
-    ism::prepare_routing_ism,
+    ism::{prepare_routing_ism, Ism},
     types::{Codes, CoreDeployments},
     StarknetAccount,
 };
@@ -39,8 +39,9 @@ pub async fn setup_env(domain: u32, validators: &[TestValidators]) -> eyre::Resu
     let deployer = get_dev_account(1);
     let tester = get_dev_account(2);
 
-    let default_ism =
-        prepare_routing_ism(validators.iter().map(|v| (v.domain, v.clone())).collect());
+    // let default_ism =
+    //     prepare_routing_ism(validators.iter().map(|v| (v.domain, v.clone())).collect());
+    let default_ism = Ism::Mock;
 
     let default_hook = Hook::mock(FieldElement::from(DEFAULT_GAS));
 

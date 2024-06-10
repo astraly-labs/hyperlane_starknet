@@ -169,7 +169,7 @@ pub mod default_fallback_routing_ism {
     fn _remove(ref self: ContractState, _domain: u32) {
         let domain_index = match find_domain_index(@self, _domain) {
             Option::Some(index) => index,
-            Option::None(()) => {
+            Option::None => {
                 panic_with_felt252(Errors::DOMAIN_NOT_FOUND);
                 0
             }

@@ -1,8 +1,12 @@
 #[starknet::contract]
 pub mod domain_routing_ism {
+    use alexandria_bytes::Bytes;
     use core::panic_with_felt252;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
-    use hyperlane_starknet::interfaces::IDomainRoutingIsm;
+    use hyperlane_starknet::interfaces::{
+        IDomainRoutingIsm, IRoutingIsm, IInterchainSecurityModule, ModuleType,
+        IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait
+    };
 
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
@@ -96,9 +100,27 @@ pub mod domain_routing_ism {
             assert(module != contract_address_const::<0>(), Errors::ORIGIN_NOT_FOUND);
             module
         }
+    }
 
+    #[abi(embed_v0)]
+    impl IRoutingIsmImpl of IRoutingIsm<ContractState> {
         fn route(self: @ContractState, _message: Message) -> ContractAddress {
             self.modules.read(_message.origin)
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl IInterchainSecurityModuleImpl of IInterchainSecurityModule<ContractState> {
+        fn module_type(self: @ContractState) -> ModuleType {
+            ModuleType::ROUTING(starknet::get_contract_address())
+        }
+
+        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
+            let ism_address = self.route(_message.clone());
+            let ism_dispatcher = IInterchainSecurityModuleDispatcher {
+                contract_address: ism_address
+            };
+            ism_dispatcher.verify(_metadata, _message)
         }
     }
 

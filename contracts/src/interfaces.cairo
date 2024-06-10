@@ -242,8 +242,6 @@ pub trait IDomainRoutingIsm<TContractState> {
     fn domains(self: @TContractState) -> Span<u32>;
 
     fn module(self: @TContractState, _origin: u32) -> ContractAddress;
-
-    fn route(self: @TContractState, _message: Message) -> ContractAddress;
 }
 
 
@@ -341,4 +339,10 @@ pub trait IProtocolFee<TContractState> {
     fn set_beneficiary(ref self: TContractState, _beneficiary: ContractAddress);
 
     fn collect_protocol_fees(ref self: TContractState);
+}
+
+
+#[starknet::interface]
+pub trait IRoutingIsm<TContractState> {
+    fn route(self: @TContractState, _message: Message) -> ContractAddress;
 }

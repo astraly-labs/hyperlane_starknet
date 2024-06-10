@@ -66,6 +66,11 @@ pub mod protocol_fee {
 
     #[abi(embed_v0)]
     impl IPostDispatchHookImpl of IPostDispatchHook<ContractState> {
+
+        fn hook_type(self: @ContractState) -> Types {
+            Types::PROTOCOL_FEE(())
+        }
+        
         fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
             _metadata.size() == 0 || StandardHookMetadata::variant(_metadata) == VARIANT.into()
         }
@@ -83,9 +88,6 @@ pub mod protocol_fee {
 
     #[abi(embed_v0)]
     pub impl IProtocolFeeImpl of IProtocolFee<ContractState> {
-        fn hook_type(self: @ContractState) -> Types {
-            Types::PROTOCOL_FEE(())
-        }
 
         fn get_protocol_fee(self: @ContractState) -> u256 {
             self.protocol_fee.read()

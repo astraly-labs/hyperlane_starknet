@@ -125,6 +125,8 @@ pub trait ISpecifiesInterchainSecurityModule<TContractState> {
 
 #[starknet::interface]
 pub trait IPostDispatchHook<TContractState> {
+    fn hook_type(self: @TContractState) -> Types;
+
     fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
 
     fn post_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message);
@@ -312,8 +314,6 @@ pub trait IMerkleTreeHook<TContractState> {
     fn tree(self: @TContractState) -> Tree;
 
     fn latest_checkpoint(self: @TContractState) -> (u256, u32);
-
-    fn hook_type(self: @TContractState) -> Types;
 }
 
 
@@ -330,7 +330,6 @@ pub trait IPausableIsm<TContractState> {
 
 #[starknet::interface]
 pub trait IProtocolFee<TContractState> {
-    fn hook_type(self: @TContractState) -> Types;
 
     fn get_protocol_fee(self: @TContractState) -> u256;
 

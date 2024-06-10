@@ -1,11 +1,13 @@
 #[starknet::contract]
-pub mod domain_routing_ism {
+pub mod default_fallback_routing_ism {
     use alexandria_bytes::Bytes;
     use core::panic_with_felt252;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::interfaces::{
         IDomainRoutingIsm, IRoutingIsm, IInterchainSecurityModule, ModuleType,
-        IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait
+        IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
+        IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IMailboxDispatcher,
+        IMailboxDispatcherTrait
     };
 
     use openzeppelin::access::ownable::OwnableComponent;
@@ -26,6 +28,7 @@ pub mod domain_routing_ism {
     struct Storage {
         modules: LegacyMap<Domain, ContractAddress>,
         domains: LegacyMap<Domain, Domain>,
+        mailbox_client: ContractAddress,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -43,14 +46,16 @@ pub mod domain_routing_ism {
 
     mod Errors {
         pub const LENGTH_MISMATCH: felt252 = 'Length mismatch';
-        pub const ORIGIN_NOT_FOUND: felt252 = 'Origin not found';
         pub const MODULE_CANNOT_BE_ZERO: felt252 = 'Module cannot be zero';
         pub const DOMAIN_NOT_FOUND: felt252 = 'Domain not found';
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _owner: ContractAddress) {
+    fn constructor(
+        ref self: ContractState, _owner: ContractAddress, _mailbox_client: ContractAddress
+    ) {
         self.ownable.initializer(_owner);
+        self.mailbox_client.write(_mailbox_client);
     }
 
     #[abi(embed_v0)]
@@ -69,6 +74,7 @@ pub mod domain_routing_ism {
                     *_modules.at(cur_idx) != contract_address_const::<0>(),
                     Errors::MODULE_CANNOT_BE_ZERO
                 );
+                let test: felt252 = (*_modules.at(cur_idx)).try_into().unwrap();
                 _set(ref self, *_domains.at(cur_idx), *_modules.at(cur_idx));
                 cur_idx += 1;
             }
@@ -102,8 +108,15 @@ pub mod domain_routing_ism {
 
         fn module(self: @ContractState, _origin: u32) -> ContractAddress {
             let module = self.modules.read(_origin);
-            assert(module != contract_address_const::<0>(), Errors::ORIGIN_NOT_FOUND);
-            module
+            if (module != contract_address_const::<0>()) {
+                module
+            } else {
+                let mailbox_client_dispatcher = IMailboxClientDispatcher {
+                    contract_address: self.mailbox_client.read()
+                };
+                let mailbox_address = mailbox_client_dispatcher.mailbox();
+                IMailboxDispatcher { contract_address: mailbox_address }.get_default_ism()
+            }
         }
     }
 
@@ -156,7 +169,7 @@ pub mod domain_routing_ism {
     fn _remove(ref self: ContractState, _domain: u32) {
         let domain_index = match find_domain_index(@self, _domain) {
             Option::Some(index) => index,
-            Option::None(()) => {
+            Option::None => {
                 panic_with_felt252(Errors::DOMAIN_NOT_FOUND);
                 0
             }
@@ -168,7 +181,7 @@ pub mod domain_routing_ism {
     fn _set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
         match find_domain_index(@self, _domain) {
             Option::Some(_) => {},
-            Option::None(()) => {
+            Option::None => {
                 let latest_domain = find_last_domain(@self);
                 self.domains.write(latest_domain, _domain);
             }

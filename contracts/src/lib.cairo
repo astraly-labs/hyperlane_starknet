@@ -39,6 +39,7 @@ mod contracts {
             pub mod validator_announce;
         }
         pub mod routing {
+            pub mod default_fallback_routing_ism;
             pub mod domain_routing_ism;
         }
         pub mod aggregation {
@@ -63,5 +64,9 @@ mod tests {
     }
     pub mod hooks {
         pub mod test_protocol_fee;
+    }
+    pub mod routing {
+        pub mod test_default_fallback_routing_ism;
+        pub mod test_domain_routing_ism;
     }
 }

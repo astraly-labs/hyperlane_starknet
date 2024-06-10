@@ -103,6 +103,10 @@ mod mailboxclient {
             mailbox.delivered(_id)
         }
 
+        fn mailbox(self: @ContractState) -> ContractAddress {
+            self.mailbox.read()
+        }
+
         fn _dispatch(
             self: @ContractState,
             _destination_domain: u32,

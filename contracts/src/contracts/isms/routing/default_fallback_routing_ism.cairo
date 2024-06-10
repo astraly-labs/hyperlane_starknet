@@ -181,7 +181,7 @@ pub mod default_fallback_routing_ism {
     fn _set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
         match find_domain_index(@self, _domain) {
             Option::Some(_) => {},
-            Option::None(()) => {
+            Option::None => {
                 let latest_domain = find_last_domain(@self);
                 self.domains.write(latest_domain, _domain);
             }

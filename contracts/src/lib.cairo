@@ -63,6 +63,7 @@ mod tests {
         pub mod test_messageid_multisig;
     }
     pub mod hooks {
+        pub mod test_merkle_tree_hook;
         pub mod test_protocol_fee;
     }
     pub mod routing {

@@ -27,7 +27,7 @@ pub impl MessageImpl of MessageTrait {
     /// * An empty message structure
     fn default() -> Message {
         Message {
-            version: 3_u8,
+            version: HYPERLANE_VERSION,
             nonce: 0_u32,
             origin: 0_u32,
             sender: contract_address_const::<0>(),

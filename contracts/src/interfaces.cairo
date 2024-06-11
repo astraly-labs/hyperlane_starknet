@@ -330,7 +330,6 @@ pub trait IPausableIsm<TContractState> {
 
 #[starknet::interface]
 pub trait IProtocolFee<TContractState> {
-
     fn get_protocol_fee(self: @TContractState) -> u256;
 
     fn set_protocol_fee(ref self: TContractState, _protocol_fee: u256);

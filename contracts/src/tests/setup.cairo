@@ -80,6 +80,14 @@ pub fn BENEFICIARY() -> ContractAddress {
     'BENEFICIARY'.try_into().unwrap()
 }
 
+pub fn MAILBOX() -> ContractAddress {
+    'MAILBOX'.try_into().unwrap()
+}
+
+pub fn MAILBOX_CLIENT() -> ContractAddress {
+    'MAILBOX_CLIENT'.try_into().unwrap()
+}
+
 pub fn TEST_PROOF() -> Span<u256> {
     array![
         0x09020304050607080910111213141516,
@@ -123,19 +131,20 @@ pub fn setup() -> (
     let mailbox_class = declare("mailbox").unwrap();
     let mock_hook = setup_mock_hook();
     let mock_ism = setup_mock_ism();
-    let (mailbox_addr, _) = mailbox_class
-        .deploy(
+    mailbox_class
+        .deploy_at(
             @array![
                 LOCAL_DOMAIN.into(),
                 OWNER().into(),
                 mock_ism.contract_address.into(),
                 mock_hook.contract_address.into(),
                 mock_hook.contract_address.into()
-            ]
+            ],
+            MAILBOX()
         )
         .unwrap();
-    let mut spy = spy_events(SpyOn::One(mailbox_addr));
-    (IMailboxDispatcher { contract_address: mailbox_addr }, spy, mock_hook, mock_ism)
+    let mut spy = spy_events(SpyOn::One(MAILBOX()));
+    (IMailboxDispatcher { contract_address: MAILBOX() }, spy, mock_hook, mock_ism)
 }
 
 pub fn mock_setup(
@@ -190,7 +199,7 @@ pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
     let (mailbox, _, _, _) = setup();
     let mailboxclient_class = declare("mailboxclient").unwrap();
     let (mailboxclient_addr, _) = mailboxclient_class
-        .deploy(@array![mailbox.contract_address.into(), OWNER().into()])
+        .deploy_at(@array![mailbox.contract_address.into(), OWNER().into()], MAILBOX_CLIENT())
         .unwrap();
     IMailboxClientDispatcher { contract_address: mailboxclient_addr }
 }
@@ -248,13 +257,23 @@ pub fn setup_aggregation() -> IAggregationDispatcher {
     IAggregationDispatcher { contract_address: aggregation_addr }
 }
 
-pub fn setup_merkle_tree_hook() -> IMerkleTreeHookDispatcher {
+pub fn setup_merkle_tree_hook() -> (
+    IMerkleTreeHookDispatcher, IPostDispatchHookDispatcher, EventSpy
+) {
     let merkle_tree_hook_class = declare("merkle_tree_hook").unwrap();
     let mailboxclient = setup_mailbox_client();
-    let (merkle_tree_hook_addr, _) = merkle_tree_hook_class
-        .deploy(@array![mailboxclient.contract_address.into()])
-        .unwrap();
-    IMerkleTreeHookDispatcher { contract_address: merkle_tree_hook_addr }
+    let res = merkle_tree_hook_class.deploy(@array![mailboxclient.contract_address.into()]);
+    if (res.is_err()) {
+        panic(res.unwrap_err());
+    }
+    let (merkle_tree_hook_addr, _) = res.unwrap();
+    let mut spy = spy_events(SpyOn::One(merkle_tree_hook_addr));
+
+    (
+        IMerkleTreeHookDispatcher { contract_address: merkle_tree_hook_addr },
+        IPostDispatchHookDispatcher { contract_address: merkle_tree_hook_addr },
+        spy
+    )
 }
 
 pub fn setup_mock_hook() -> IPostDispatchHookDispatcher {

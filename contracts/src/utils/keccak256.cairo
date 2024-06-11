@@ -239,8 +239,24 @@ fn reverse_u64_word(bytes: Span<u64>) -> Span<u64> {
     reverse_u64.span()
 }
 
+fn is_empty(bytes: Span<ByteData>) -> bool {
+    let mut cur_idx = 0;
+    loop {
+        if (cur_idx == bytes.len()) {
+            break true;
+        }
+        if (*bytes.at(cur_idx).value != 0) {
+            break false;
+        }
+        cur_idx += 1;
+    }
+}
+
 
 pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
+    if (is_empty(bytes)) {
+        return EMPTY_KECCAK;
+    }
     let words64 = u64_span_from_word(bytes);
     let last_word = *words64.at(words64.len() - 1);
     let reverse_words64 = reverse_u64_word(words64);

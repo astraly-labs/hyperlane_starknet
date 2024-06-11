@@ -15,7 +15,7 @@ use starknet::{get_caller_address};
 
 #[test]
 fn test_hook_type() {
-    let (_, protocol_fee, _) = setup_protocol_fee();
+    let (_, _, protocol_fee) = setup_protocol_fee();
     assert_eq!(protocol_fee.hook_type(), Types::PROTOCOL_FEE(()));
 }
 

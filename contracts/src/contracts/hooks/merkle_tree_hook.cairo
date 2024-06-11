@@ -126,7 +126,6 @@ pub mod merkle_tree_hook {
                 count /= 2;
                 cur_idx += 1;
             };
-            println!("function is finished");
         }
         fn _root_with_ctx(self: @ContractState, _zeroes: Array<u256>) -> u256 {
             let mut cur_idx = 0;

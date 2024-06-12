@@ -199,8 +199,7 @@ pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
     let (mailbox, _, _, _) = setup();
     let mailboxclient_class = declare("mailboxclient").unwrap();
     let res = mailboxclient_class
-        .deploy_at(@array![mailbox.contract_address.into(), OWNER().into()], MAILBOX_CLIENT())
-       ;
+        .deploy_at(@array![mailbox.contract_address.into(), OWNER().into()], MAILBOX_CLIENT());
     if (res.is_err()) {
         panic(res.unwrap_err());
     }
@@ -266,7 +265,8 @@ pub fn setup_merkle_tree_hook() -> (
 ) {
     let (mailbox, _, _, _) = setup();
     let merkle_tree_hook_class = declare("merkle_tree_hook").unwrap();
-    let res = merkle_tree_hook_class.deploy(@array![mailbox.contract_address.into(), OWNER().into()]);
+    let res = merkle_tree_hook_class
+        .deploy(@array![mailbox.contract_address.into(), OWNER().into()]);
     if (res.is_err()) {
         panic(res.unwrap_err());
     }

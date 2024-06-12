@@ -1,8 +1,10 @@
 #[starknet::contract]
 mod mailboxclient {
+    use hyperlane_starknet::contracts::client::mailboxclient_component::{
+        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
+    };
     use openzeppelin::access::ownable::ownable::OwnableComponent::InternalTrait;
-use hyperlane_starknet::contracts::client::mailboxclient_component::{MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl};
-    use openzeppelin::access::ownable::{OwnableComponent, };
+    use openzeppelin::access::ownable::{OwnableComponent,};
     use starknet::ContractAddress;
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -16,7 +18,7 @@ use hyperlane_starknet::contracts::client::mailboxclient_component::{Mailboxclie
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress, ) {
+    fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress,) {
         self.mailboxclient.initialize(_mailbox);
         self.ownable.initializer(_owner);
     }
@@ -32,7 +34,6 @@ use hyperlane_starknet::contracts::client::mailboxclient_component::{Mailboxclie
     }
 
     #[abi(embed_v0)]
-    impl MailboxclientImpl = MailboxclientComponent::MailboxClientImpl<ContractState>;
-    
-
+    impl MailboxclientImpl =
+        MailboxclientComponent::MailboxClientImpl<ContractState>;
 }

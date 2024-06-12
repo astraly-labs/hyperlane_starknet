@@ -2,6 +2,9 @@
 pub mod merkle_tree_hook {
     use alexandria_bytes::{Bytes, BytesTrait};
     use alexandria_math::pow;
+    use hyperlane_starknet::contracts::client::mailboxclient_component::{
+        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
+    };
     use hyperlane_starknet::contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::{
         StandardHookMetadata, VARIANT
     };
@@ -12,10 +15,9 @@ pub mod merkle_tree_hook {
         IPostDispatchHook, IMailboxClient, IMailboxDispatcher, IMailboxDispatcherTrait,
     };
     use hyperlane_starknet::utils::keccak256::{reverse_endianness, compute_keccak, ByteData};
-    use starknet::ContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
-    use hyperlane_starknet::contracts::client::mailboxclient_component::{MailboxclientComponent,MailboxclientComponent::MailboxClientInternalImpl};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use starknet::ContractAddress;
     type Index = usize;
     pub const TREE_DEPTH: u32 = 32;
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -31,7 +33,7 @@ pub mod merkle_tree_hook {
     #[storage]
     struct Storage {
         tree: LegacyMap<Index, u256>,
-        count: u32, 
+        count: u32,
         #[substorage(v0)]
         mailboxclient: MailboxclientComponent::Storage,
         #[substorage(v0)]
@@ -50,16 +52,15 @@ pub mod merkle_tree_hook {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        InsertedIntoTree: InsertedIntoTree, 
+        InsertedIntoTree: InsertedIntoTree,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
         #[flat]
         MailboxclientEvent: MailboxclientComponent::Event,
-
     }
-    
+
 
     #[derive(starknet::Event, Drop)]
     pub struct InsertedIntoTree {
@@ -68,13 +69,12 @@ pub mod merkle_tree_hook {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress, ) {
+    fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress,) {
         self.mailboxclient.initialize(_mailbox);
         self.ownable.initializer(_owner);
     }
 
 
-    
     #[abi(embed_v0)]
     impl IMerkleTreeHookImpl of IMerkleTreeHook<ContractState> {
         fn count(self: @ContractState) -> u32 {

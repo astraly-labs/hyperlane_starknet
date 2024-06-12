@@ -2,6 +2,9 @@
 pub mod merkle_tree_hook {
     use alexandria_bytes::{Bytes, BytesTrait};
     use alexandria_math::pow;
+    use hyperlane_starknet::contracts::client::mailboxclient_component::{
+        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
+    };
     use hyperlane_starknet::contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::{
         StandardHookMetadata, VARIANT
     };
@@ -9,20 +12,34 @@ pub mod merkle_tree_hook {
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::interfaces::{
         IMailboxClientDispatcher, IMailboxClientDispatcherTrait, Types, IMerkleTreeHook,
-        IPostDispatchHook
+        IPostDispatchHook, IMailboxClient, IMailboxDispatcher, IMailboxDispatcherTrait,
     };
     use hyperlane_starknet::utils::keccak256::{reverse_endianness, compute_keccak, ByteData};
+    use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::ContractAddress;
-
     type Index = usize;
     pub const TREE_DEPTH: u32 = 32;
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+    component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
+
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
 
     #[storage]
     struct Storage {
-        mailbox_client: ContractAddress,
         tree: LegacyMap<Index, u256>,
-        count: u32
+        count: u32,
+        #[substorage(v0)]
+        mailboxclient: MailboxclientComponent::Storage,
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
     }
 
 
@@ -35,8 +52,15 @@ pub mod merkle_tree_hook {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        InsertedIntoTree: InsertedIntoTree
+        InsertedIntoTree: InsertedIntoTree,
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
+        #[flat]
+        MailboxclientEvent: MailboxclientComponent::Event,
     }
+
 
     #[derive(starknet::Event, Drop)]
     pub struct InsertedIntoTree {
@@ -45,9 +69,11 @@ pub mod merkle_tree_hook {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _mailbox_client: ContractAddress) {
-        self.mailbox_client.write(_mailbox_client);
+    fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress,) {
+        self.mailboxclient.initialize(_mailbox);
+        self.ownable.initializer(_owner);
     }
+
 
     #[abi(embed_v0)]
     impl IMerkleTreeHookImpl of IMerkleTreeHook<ContractState> {
@@ -92,10 +118,7 @@ pub mod merkle_tree_hook {
     impl InternalImpl of InternalTrait {
         fn _post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) {
             let (id, _) = MessageTrait::format_message(_message);
-            let mailbox_client = IMailboxClientDispatcher {
-                contract_address: self.mailbox_client.read()
-            };
-            assert(mailbox_client._is_latest_dispatched(id), Errors::MESSAGE_NOT_DISPATCHING);
+            assert(self.mailboxclient._is_latest_dispatched(id), Errors::MESSAGE_NOT_DISPATCHING);
             let index = self.count();
             self._insert(id);
             self.emit(InsertedIntoTree { id, index });

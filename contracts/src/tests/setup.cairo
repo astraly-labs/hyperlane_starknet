@@ -198,9 +198,12 @@ pub fn setup_merkleroot_multisig_ism() -> (
 pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
     let (mailbox, _, _, _) = setup();
     let mailboxclient_class = declare("mailboxclient").unwrap();
-    let (mailboxclient_addr, _) = mailboxclient_class
-        .deploy_at(@array![mailbox.contract_address.into(), OWNER().into()], MAILBOX_CLIENT())
-        .unwrap();
+    let res = mailboxclient_class
+        .deploy_at(@array![mailbox.contract_address.into(), OWNER().into()], MAILBOX_CLIENT());
+    if (res.is_err()) {
+        panic(res.unwrap_err());
+    }
+    let (mailboxclient_addr, _) = res.unwrap();
     IMailboxClientDispatcher { contract_address: mailboxclient_addr }
 }
 
@@ -260,9 +263,10 @@ pub fn setup_aggregation() -> IAggregationDispatcher {
 pub fn setup_merkle_tree_hook() -> (
     IMerkleTreeHookDispatcher, IPostDispatchHookDispatcher, EventSpy
 ) {
+    let (mailbox, _, _, _) = setup();
     let merkle_tree_hook_class = declare("merkle_tree_hook").unwrap();
-    let mailboxclient = setup_mailbox_client();
-    let res = merkle_tree_hook_class.deploy(@array![mailboxclient.contract_address.into()]);
+    let res = merkle_tree_hook_class
+        .deploy(@array![mailbox.contract_address.into(), OWNER().into()]);
     if (res.is_err()) {
         panic(res.unwrap_err());
     }

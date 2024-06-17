@@ -9,8 +9,11 @@ use hyperlane_starknet::interfaces::{
     IMerkleTreeHookDispatcherTrait
 };
 use hyperlane_starknet::tests::setup::{
-    setup_merkle_tree_hook, setup, MAILBOX, RECIPIENT_ADDRESS, OWNER, LOCAL_DOMAIN
+    setup_merkle_tree_hook, setup, MAILBOX, RECIPIENT_ADDRESS, OWNER, LOCAL_DOMAIN, VALID_OWNER,
+    VALID_RECIPIENT, DESTINATION_DOMAIN
 };
+use hyperlane_starknet::utils::keccak256::{compute_keccak, ByteData, HASH_SIZE};
+use merkle_tree_hook::{InternalTrait, treeContractMemberStateTrait, countContractMemberStateTrait};
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::cheatcodes::events::EventAssertions;
 use snforge_std::{start_prank, CheatTarget, stop_prank};
@@ -35,19 +38,23 @@ fn test_supports_metadata() {
     assert_eq!(merkle_tree_hook.supports_metadata(metadata), false);
 }
 
-
 #[test]
 fn test_post_dispatch() {
     let (merkle_tree, post_dispatch_hook, mut spy) = setup_merkle_tree_hook();
     let mailbox = IMailboxDispatcher { contract_address: MAILBOX() };
     let ownable = IOwnableDispatcher { contract_address: MAILBOX() };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    let destination: u32 = 'de'.try_into().unwrap();
+    start_prank(CheatTarget::One(ownable.contract_address), VALID_OWNER());
     let id = mailbox
         .dispatch(
-            destination, RECIPIENT_ADDRESS(), BytesTrait::new_empty(), Option::None, Option::None
+            DESTINATION_DOMAIN,
+            VALID_RECIPIENT(),
+            BytesTrait::new_empty(),
+            Option::None,
+            Option::None
         );
-    let nonce = mailbox.nonce();
+    assert(mailbox.get_latest_dispatched_id() == id, 'Dispatch failed');
+    let nonce = 0;
+    let local_domain = mailbox.get_local_domain();
     let count = merkle_tree.count();
     let mut metadata = BytesTrait::new_empty();
     let variant = 1;
@@ -55,10 +62,10 @@ fn test_post_dispatch() {
     let message = Message {
         version: HYPERLANE_VERSION,
         nonce: nonce,
-        origin: LOCAL_DOMAIN,
-        sender: OWNER(),
-        destination: destination,
-        recipient: RECIPIENT_ADDRESS(),
+        origin: local_domain,
+        sender: VALID_OWNER(),
+        destination: DESTINATION_DOMAIN,
+        recipient: VALID_RECIPIENT(),
         body: BytesTrait::new_empty(),
     };
     post_dispatch_hook.post_dispatch(metadata, message);
@@ -80,9 +87,9 @@ fn test_post_dispatch_fails_if_message_not_dispatching() {
         version: HYPERLANE_VERSION,
         nonce: 0_u32,
         origin: 0_u32,
-        sender: contract_address_const::<0x123>(),
+        sender: VALID_OWNER(),
         destination: 0_u32,
-        recipient: contract_address_const::<0x1222>(),
+        recipient: VALID_RECIPIENT(),
         body: BytesTrait::new_empty(),
     };
     post_dispatch_hook.post_dispatch(metadata, message);
@@ -97,7 +104,6 @@ fn test_post_dispatch_fails_if_invalid_variant() {
     let message = MessageTrait::default();
     post_dispatch_hook.post_dispatch(metadata, message);
 }
-
 
 #[test]
 fn test_quote_dispatch() {
@@ -126,3 +132,39 @@ fn test_count() {
     let count = merkle_tree.count();
     assert_eq!(count, 0);
 }
+
+// // TEST INTERNAL
+
+#[test]
+fn test_insert() {
+    let mut state = merkle_tree_hook::contract_state_for_testing();
+    assert_eq!(state.count.read(), 0);
+
+    let node_1: u256 = 'node_1'.try_into().unwrap();
+    state._insert(ByteData { value: node_1, size: 6 });
+    assert_eq!(state.count.read(), 1);
+    assert_eq!(state.tree.read(0), ByteData { value: node_1, size: 6 });
+
+    let node_2: u256 = 'node_2'.try_into().unwrap();
+    let expected_hash = 0x61a4bcca63b5e8a46da3abe2080f75c16c18467d5838f00b375d9ba4c7c313dd;
+    state._insert(ByteData { value: node_2, size: 6 });
+    assert_eq!(state.count.read(), 2);
+    assert_eq!(state.tree.read(0), ByteData { value: node_1, size: 6 });
+    assert_eq!(state.tree.read(1), ByteData { value: expected_hash, size: HASH_SIZE });
+
+    let node_3: u256 = 'node_3'.try_into().unwrap();
+    state._insert(ByteData { value: node_3, size: 6 });
+    assert_eq!(state.count.read(), 3);
+    assert_eq!(state.tree.read(0), ByteData { value: node_3, size: 6 });
+    assert_eq!(state.tree.read(1), ByteData { value: expected_hash, size: HASH_SIZE });
+
+    let node_4: u256 = 'node_4'.try_into().unwrap();
+    let expected_hash_2 = 0x478b18b26b7d2fd037a6a26f00b4fac6f0039349b52ba7cf9f342117c2da1083;
+    state._insert(ByteData { value: node_4, size: 6 });
+
+    assert_eq!(state.count.read(), 4);
+    assert_eq!(state.tree.read(0), ByteData { value: node_3, size: 6 });
+    assert_eq!(state.tree.read(1), ByteData { value: expected_hash, size: HASH_SIZE });
+    assert_eq!(state.tree.read(2), ByteData { value: expected_hash_2, size: HASH_SIZE });
+}
+

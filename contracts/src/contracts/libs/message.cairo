@@ -1,6 +1,8 @@
 use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
 use core::poseidon::poseidon_hash_span;
-use hyperlane_starknet::utils::keccak256::{reverse_endianness, compute_keccak, ByteData};
+use hyperlane_starknet::utils::keccak256::{
+    reverse_endianness, compute_keccak, ByteData, u256_bytes_size, u64_bytes_size, ADDRESS_SIZE
+};
 use starknet::{ContractAddress, contract_address_const};
 
 pub const HYPERLANE_VERSION: u8 = 3;
@@ -51,22 +53,43 @@ pub impl MessageImpl of MessageTrait {
         let recipient: felt252 = _message.recipient.into();
 
         let mut input: Array<ByteData> = array![
-            ByteData { value: _message.version.into(), is_address: false },
-            ByteData { value: _message.origin.into(), is_address: false },
-            ByteData { value: sender.into(), is_address: true },
-            ByteData { value: _message.destination.into(), is_address: false },
-            ByteData { value: recipient.into(), is_address: true },
-            ByteData { value: _message.body.size().into(), is_address: false },
+            ByteData {
+                value: _message.version.into(), size: u64_bytes_size(_message.version.into()).into()
+            },
+            ByteData {
+                value: _message.nonce.into(), size: u64_bytes_size(_message.nonce.into()).into()
+            },
+            ByteData {
+                value: _message.origin.into(), size: u64_bytes_size(_message.origin.into()).into()
+            },
+            ByteData { value: sender.into(), size: ADDRESS_SIZE },
+            ByteData {
+                value: _message.destination.into(),
+                size: u64_bytes_size(_message.destination.into()).into()
+            },
+            ByteData { value: recipient.into(), size: ADDRESS_SIZE },
+            ByteData {
+                value: _message.body.size().into(),
+                size: u64_bytes_size(_message.body.size().into()).into()
+            },
         ];
+
         let mut message_data = _message.clone().body.data();
         loop {
             match message_data.pop_front() {
                 Option::Some(data) => {
-                    input.append(ByteData { value: data.into(), is_address: false });
+                    input
+                        .append(
+                            ByteData {
+                                value: data.into(), size: u256_bytes_size(data.into()).into()
+                            }
+                        );
                 },
                 Option::None(_) => { break (); }
             };
         };
+        let mut cur_idx = 0;
+        let cloned = @input;
         (compute_keccak(input.span()), _message)
     }
 }

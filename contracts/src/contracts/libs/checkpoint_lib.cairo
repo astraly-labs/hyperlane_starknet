@@ -1,7 +1,9 @@
 pub mod checkpoint_lib {
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
     use hyperlane_starknet::contracts::libs::message::Message;
-    use hyperlane_starknet::utils::keccak256::{reverse_endianness, compute_keccak, ByteData};
+    use hyperlane_starknet::utils::keccak256::{
+        reverse_endianness, compute_keccak, ByteData, u64_bytes_size, u256_bytes_size, HASH_SIZE
+    };
 
 
     pub trait CheckpointLib {
@@ -27,19 +29,28 @@ pub mod checkpoint_lib {
         ) -> u256 {
             let domain_hash = CheckpointLib::domain_hash(_origin, _origin_merkle_tree_hook);
             let mut input: Array<ByteData> = array![
-                ByteData { value: domain_hash.into(), is_address: false },
-                ByteData { value: _checkpoint_root.into(), is_address: false },
-                ByteData { value: _checkpoint_index.into(), is_address: false },
-                ByteData { value: _message_id.into(), is_address: false },
+                ByteData { value: domain_hash.into(), size: HASH_SIZE },
+                ByteData {
+                    value: _checkpoint_root.into(),
+                    size: u256_bytes_size(_checkpoint_root.into()).into()
+                },
+                ByteData {
+                    value: _checkpoint_index.into(),
+                    size: u64_bytes_size(_checkpoint_index.into()).into()
+                },
+                ByteData { value: _message_id.into(), size: HASH_SIZE },
             ];
             compute_keccak(input.span())
         }
 
         fn domain_hash(_origin: u32, _origin_merkle_tree_hook: u256) -> u256 {
             let mut input: Array<ByteData> = array![
-                ByteData { value: _origin.into(), is_address: false },
-                ByteData { value: _origin_merkle_tree_hook.into(), is_address: false },
-                ByteData { value: HYPERLANE.into(), is_address: false }
+                ByteData { value: _origin.into(), size: u64_bytes_size(_origin.into()).into() },
+                ByteData {
+                    value: _origin_merkle_tree_hook.into(),
+                    size: u256_bytes_size(_origin_merkle_tree_hook).into()
+                },
+                ByteData { value: HYPERLANE.into(), size: 9 }
             ];
             compute_keccak(input.span())
         }

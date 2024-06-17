@@ -346,3 +346,15 @@ pub trait IProtocolFee<TContractState> {
 pub trait IRoutingIsm<TContractState> {
     fn route(self: @TContractState, _message: Message) -> ContractAddress;
 }
+
+#[derive(Drop, Serde)]
+pub struct DomainRoutingHookConfig {
+    pub destination: u32,
+    pub hook: ContractAddress
+}
+
+#[starknet::interface]
+pub trait IDomainRoutingHook<TContractState> {
+    fn setHook(ref self: TContractState, _destination: u32, _hook: ContractAddress);
+    fn setHooks(ref self: TContractState, configs: Array<DomainRoutingHookConfig>);
+}

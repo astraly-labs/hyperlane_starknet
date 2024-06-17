@@ -12,6 +12,7 @@ mod contracts {
         }
     }
     pub mod hooks {
+        pub mod domain_routing_hook;
         pub mod merkle_tree_hook;
         pub mod protocol_fee;
         pub mod libs {

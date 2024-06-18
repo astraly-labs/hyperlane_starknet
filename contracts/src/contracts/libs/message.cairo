@@ -88,8 +88,6 @@ pub impl MessageImpl of MessageTrait {
                 Option::None(_) => { break (); }
             };
         };
-        let mut cur_idx = 0;
-        let cloned = @input;
         (compute_keccak(input.span()), _message)
     }
 }

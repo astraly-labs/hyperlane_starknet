@@ -184,7 +184,6 @@ pub mod validator_announce {
             ByteData {
                 value: mailbox_address.try_into().unwrap(),
                 size: u256_word_size(mailbox_address.try_into().unwrap()).into()
-
             },
             ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 }
         ];

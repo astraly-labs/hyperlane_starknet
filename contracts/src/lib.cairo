@@ -4,7 +4,6 @@ mod contracts {
     pub mod libs {
         pub mod aggregation_ism_metadata;
         pub mod checkpoint_lib;
-        pub mod merkle_lib;
         pub mod message;
         pub mod multisig {
             pub mod merkleroot_ism_metadata;

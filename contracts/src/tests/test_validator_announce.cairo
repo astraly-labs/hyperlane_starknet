@@ -16,7 +16,7 @@ pub const TEST_STARKNET_DOMAIN: u32 = 23448593;
 #[test]
 fn test_announce() {
     let (validator_announce, mut spy) = setup_validator_announce();
-    let validator_address: EthAddress = 0x6f4c33301bba9fb23d5189885463b9029dbfeb1e
+    let validator_address: EthAddress = 0x04171a0a7283cd5cdbf73dff367eb5a7f0e01d55
         .try_into()
         .unwrap();
     let mut _storage_location: Array<felt252> = array![
@@ -64,7 +64,7 @@ fn test_announce_fails_if_wrong_signer() {
 #[should_panic(expected: ('Announce already occured',))]
 fn test_announce_fails_if_replay() {
     let (validator_announce, _) = setup_validator_announce();
-    let validator_address: EthAddress = 0x6f4c33301bba9fb23d5189885463b9029dbfeb1e
+    let validator_address: EthAddress = 0x04171a0a7283cd5cdbf73dff367eb5a7f0e01d55
         .try_into()
         .unwrap();
     let mut storage_location: Array<felt252> = array![

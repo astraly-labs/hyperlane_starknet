@@ -1,6 +1,6 @@
 use alexandria_bytes::Bytes;
 use core::array::ArrayTrait;
-use hyperlane_starknet::contracts::libs::merkle_lib::merkle_lib::Tree;
+use hyperlane_starknet::contracts::hooks::merkle_tree_hook::merkle_tree_hook::Tree;
 use hyperlane_starknet::contracts::libs::message::Message;
 use starknet::ContractAddress;
 use starknet::EthAddress;
@@ -346,3 +346,4 @@ pub trait IProtocolFee<TContractState> {
 pub trait IRoutingIsm<TContractState> {
     fn route(self: @TContractState, _message: Message) -> ContractAddress;
 }
+

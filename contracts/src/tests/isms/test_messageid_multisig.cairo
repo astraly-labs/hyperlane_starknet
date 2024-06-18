@@ -15,7 +15,7 @@ use hyperlane_starknet::interfaces::{
 use hyperlane_starknet::tests::setup::{
     setup, mock_setup, setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1,
     VALIDATOR_ADDRESS_2, setup_validator_announce, get_message_and_signature, LOCAL_DOMAIN,
-    DESTINATION_DOMAIN, RECIPIENT_ADDRESS, build_messageid_metadata
+    DESTINATION_DOMAIN, RECIPIENT_ADDRESS, build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
@@ -132,9 +132,9 @@ fn test_message_id_multisig_verify_with_4_valid_signatures() {
         version: HYPERLANE_VERSION,
         nonce: 0,
         origin: LOCAL_DOMAIN,
-        sender: OWNER(),
+        sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
-        recipient: RECIPIENT_ADDRESS(),
+        recipient: VALID_RECIPIENT(),
         body: message_body.clone()
     };
     let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism();
@@ -166,9 +166,9 @@ fn test_message_id_multisig_verify_with_insufficient_valid_signatures() {
         version: HYPERLANE_VERSION,
         nonce: 0,
         origin: LOCAL_DOMAIN,
-        sender: OWNER(),
+        sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
-        recipient: RECIPIENT_ADDRESS(),
+        recipient: VALID_RECIPIENT(),
         body: message_body.clone()
     };
     let (messageid, messageid_validator_config) = setup_messageid_multisig_ism();
@@ -200,9 +200,9 @@ fn test_message_id_multisig_verify_with_empty_metadata() {
         version: HYPERLANE_VERSION,
         nonce: 0,
         origin: LOCAL_DOMAIN,
-        sender: OWNER(),
+        sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
-        recipient: RECIPIENT_ADDRESS(),
+        recipient: VALID_RECIPIENT(),
         body: message_body.clone()
     };
     let (messageid, messageid_validator_config) = setup_messageid_multisig_ism();

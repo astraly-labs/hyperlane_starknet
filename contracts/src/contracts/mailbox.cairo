@@ -442,6 +442,7 @@ pub mod mailbox {
         let nonce = self.nonce.read();
         let local_domain = self.local_domain.read();
         let caller = get_caller_address();
+
         MessageTrait::format_message(
             Message {
                 version: HYPERLANE_VERSION,

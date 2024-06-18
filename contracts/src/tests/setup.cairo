@@ -40,6 +40,14 @@ pub fn NEW_OWNER() -> ContractAddress {
     contract_address_const::<'NEW_OWNER'>()
 }
 
+pub fn VALID_OWNER() -> ContractAddress {
+    contract_address_const::<0x1a4bcca63b5e8a46da3abe2080f75c16c18467d5838f00b375d9ba4c7c313dd>()
+}
+
+pub fn VALID_RECIPIENT() -> ContractAddress {
+    contract_address_const::<0x1d35915d0abec0a28990198bb32aa570e681e7eb41a001c0094c7c36a712671>()
+}
+
 pub fn DEFAULT_ISM() -> ContractAddress {
     contract_address_const::<'DEFAULT_ISM'>()
 }
@@ -309,13 +317,13 @@ pub fn build_messageid_metadata(origin_merkle_tree_hook: u256, root: u256, index
 
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
 pub fn get_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignature>) {
-    let msg_hash = 0x0E9FC5806AADB4AEFCD9B0E648BF6F1A6766655028D3BAE724848D636CAB6227;
+    let msg_hash = 0xD12359855E2143AC1FA8145D294BB63926C9536014F68BB99896845C54949E8C;
     let validators_array: Array<EthAddress> = array![
-        0x353965757431769fe5b0917729382a5f805c54c9.try_into().unwrap(),
-        0x86829f508b690d195528f5716b1e63b0b24af76e.try_into().unwrap(),
-        0x0beccd1415e67d5e23754f300a1dd987ac15fcd8.try_into().unwrap(),
-        0x5315b1b103bbed57759b1a488432ee53efd171cc.try_into().unwrap(),
-        0xa0e1dda9c29d9c6de79ba08b69b553f14c7fd636.try_into().unwrap()
+        0xaafc175eedf5126e9c46c69f6d1412f83879703a.try_into().unwrap(),
+        0x8b12e6fe8dc2701618ccaa9f0f2f543f225c1c41.try_into().unwrap(),
+        0xa058aea5289617da6b0658067c5b8d6324e728fc.try_into().unwrap(),
+        0xf398501b08cf2c388d228337b0de6b880b259f8b.try_into().unwrap(),
+        0xa18be291c7db8d30bc6796f52a9a71f75652c309.try_into().unwrap()
     ];
     let signatures = array![
         EthSignature {
@@ -377,13 +385,13 @@ pub fn build_merkle_metadata(
 }
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
 pub fn get_merkle_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignature>) {
-    let msg_hash = 0x12559998EF2C94F165897E590A87555EBADC9B4BF0F5619915D6B2689FC93B1A;
+    let msg_hash = 0x313C6A1725B61343B5B6A7882D194FAD12DCED93308CF5531AFAD1E78493396F;
     let validators_array: Array<EthAddress> = array![
-        0x7b39119db72ddca59b867c121709165ad3171cd9.try_into().unwrap(),
-        0x16de75863012ae499a9c4cdfbfe737d5d1e51c4e.try_into().unwrap(),
-        0xaec01cf572930e7b384b08e53ac679d9507cbb9e.try_into().unwrap(),
-        0xcc30a059aae2d821def4137fc687409266f220fe.try_into().unwrap(),
-        0x602fb03a6c18496155793f56da0ec76227785fd7.try_into().unwrap()
+        0x91bd769ffc38bed78b931c3d972ba06697916985.try_into().unwrap(),
+        0x06071f400ed67eb4a895adcc32e0c5b8ae88ae44.try_into().unwrap(),
+        0x18d48ab0f718ffe4c8019e00c92f737c22efbe0c.try_into().unwrap(),
+        0xe800d496ac3ba56b2ff975bce3602b9f6ab90895.try_into().unwrap(),
+        0x57d8e0df524faa4a31602a78299b6ae023e45fed.try_into().unwrap()
     ];
     let signatures = array![
         EthSignature {

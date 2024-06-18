@@ -9,7 +9,8 @@ use hyperlane_starknet::interfaces::{
 };
 use hyperlane_starknet::tests::setup::{
     OWNER, setup_domain_routing_ism, build_messageid_metadata, LOCAL_DOMAIN, DESTINATION_DOMAIN,
-    RECIPIENT_ADDRESS, setup_messageid_multisig_ism, get_message_and_signature, setup_mailbox_client
+    RECIPIENT_ADDRESS, setup_messageid_multisig_ism, get_message_and_signature,
+    setup_mailbox_client, VALID_OWNER, VALID_RECIPIENT
 };
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget, stop_prank, ContractClassTrait, declare};
@@ -262,9 +263,9 @@ fn test_verify() {
         version: HYPERLANE_VERSION,
         nonce: 0,
         origin: LOCAL_DOMAIN,
-        sender: OWNER(),
+        sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
-        recipient: RECIPIENT_ADDRESS(),
+        recipient: VALID_RECIPIENT(),
         body: message_body.clone()
     };
     let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism();

@@ -4,14 +4,15 @@ pub mod merkleroot_multisig_ism {
 
 
     use core::ecdsa::check_ecdsa_signature;
+    use hyperlane_starknet::contracts::hooks::merkle_tree_hook::merkle_tree_hook::InternalImpl;
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
-    use hyperlane_starknet::contracts::libs::merkle_lib::merkle_lib::MerkleLib;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MerkleRootIsmMetadata;
     use hyperlane_starknet::interfaces::{
         ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration,
     };
+    use hyperlane_starknet::utils::keccak256::{ByteData, HASH_SIZE};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::ContractAddress;
@@ -154,7 +155,18 @@ pub mod merkleroot_multisig_ism {
         let (id, _) = MessageTrait::format_message(_message.clone());
         let proof = MerkleRootIsmMetadata::proof(_metadata.clone());
         let message_index = MerkleRootIsmMetadata::message_index(_metadata.clone());
-        let signed_root = MerkleLib::branch_root(id, proof, message_index.into());
+        let mut cur_idx = 0;
+        let mut formatted_proof = array![];
+        loop {
+            if (cur_idx == proof.len()) {
+                break ();
+            }
+            formatted_proof.append(ByteData { value: *proof.at(cur_idx), size: HASH_SIZE });
+            cur_idx += 1;
+        };
+        let signed_root = InternalImpl::_branch_root(
+            ByteData { value: id, size: HASH_SIZE }, formatted_proof.span(), message_index.into()
+        );
         CheckpointLib::digest(
             _message.origin,
             origin_merkle_tree_hook.into(),

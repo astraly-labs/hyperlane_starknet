@@ -29,6 +29,10 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
         String::from("openzeppelin::upgrades::upgradeable::UpgradeableComponent::Event"),
         String::from("UpgradeableCptEvent"),
     );
+    aliases.insert(
+        String::from("hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent::Event"),
+        String::from("MailboxclientEvent"),
+    );
 
     let abigen = cainome::rs::Abigen::new(name, abi_file).with_types_aliases(aliases);
 

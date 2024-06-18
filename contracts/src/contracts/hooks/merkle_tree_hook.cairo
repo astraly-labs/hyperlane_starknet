@@ -3,7 +3,8 @@ pub mod merkle_tree_hook {
     use alexandria_bytes::{Bytes, BytesTrait};
     use alexandria_math::pow;
     use hyperlane_starknet::contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
+        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
+        MailboxclientComponent::MailboxClientImpl
     };
     use hyperlane_starknet::contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::{
         StandardHookMetadata, VARIANT
@@ -18,7 +19,7 @@ pub mod merkle_tree_hook {
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use starknet::ContractAddress;
+    use starknet::{ContractAddress, ClassHash};
 
     #[derive(Serde, Drop)]
     pub struct Tree {
@@ -82,6 +83,18 @@ pub mod merkle_tree_hook {
         self.ownable.initializer(_owner);
     }
 
+    #[abi(embed_v0)]
+    impl Upgradeable of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
+        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            self.ownable.assert_only_owner();
+            self.upgradeable._upgrade(new_class_hash);
+        }
+    }
 
     #[abi(embed_v0)]
     impl IMerkleTreeHookImpl of IMerkleTreeHook<ContractState> {

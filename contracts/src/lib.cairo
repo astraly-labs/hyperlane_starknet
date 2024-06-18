@@ -20,7 +20,6 @@ mod contracts {
     pub mod client {
         pub mod mailboxclient;
         pub mod mailboxclient_component;
-        pub mod router;
     }
     pub mod mocks {
         pub mod fee_token;

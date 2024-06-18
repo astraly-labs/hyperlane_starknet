@@ -3,6 +3,10 @@ pub mod validator_announce {
     use alexandria_bytes::{Bytes, BytesTrait};
     use alexandria_data_structures::array_ext::ArrayTraitExt;
     use core::poseidon::poseidon_hash_span;
+    use hyperlane_starknet::contracts::client::mailboxclient_component::{
+        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
+        MailboxclientComponent::MailboxClientImpl
+    };
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::{
         HYPERLANE_ANNOUNCEMENT
     };
@@ -13,14 +17,25 @@ pub mod validator_announce {
         u64_word_size, HASH_SIZE
     };
     use hyperlane_starknet::utils::store_arrays::StoreFelt252Array;
+    use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::ContractAddress;
     use starknet::EthAddress;
     use starknet::eth_signature::is_eth_signature_valid;
     use starknet::secp256_trait::{Signature, signature_from_vrs};
 
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+    component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
+
     #[storage]
     struct Storage {
-        mailboxclient: ContractAddress,
+        #[substorage(v0)]
+        mailboxclient: MailboxclientComponent::Storage,
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
         storage_location: LegacyMap::<EthAddress, Array<felt252>>,
         replay_protection: LegacyMap::<felt252, bool>,
         validators: LegacyMap::<EthAddress, EthAddress>,
@@ -30,7 +45,13 @@ pub mod validator_announce {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        ValidatorAnnouncement: ValidatorAnnouncement
+        ValidatorAnnouncement: ValidatorAnnouncement,
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
+        #[flat]
+        MailboxclientEvent: MailboxclientComponent::Event,
     }
 
     #[derive(starknet::Event, Drop)]
@@ -45,8 +66,8 @@ pub mod validator_announce {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _mailbox_client: ContractAddress) {
-        self.mailboxclient.write(_mailbox_client);
+    fn constructor(ref self: ContractState, _mailbox: ContractAddress) {
+        self.mailboxclient.initialize(_mailbox);
     }
 
     #[abi(embed_v0)]
@@ -154,18 +175,15 @@ pub mod validator_announce {
     }
 
     fn domain_hash(self: @ContractState) -> u256 {
-        let mailboxclient = IMailboxClientDispatcher {
-            contract_address: self.mailboxclient.read()
-        };
-        let mailboxclient_address: felt252 = self.mailboxclient.read().try_into().unwrap();
+        let mailbox_address: felt252 = self.mailboxclient.mailbox().try_into().unwrap();
         let mut input: Array<ByteData> = array![
             ByteData {
-                value: mailboxclient.get_local_domain().into(),
-                size: u64_word_size(mailboxclient.get_local_domain().into()).into()
+                value: self.mailboxclient.get_local_domain().into(),
+                size: u64_word_size(self.mailboxclient.get_local_domain().into()).into()
             },
             ByteData {
-                value: mailboxclient_address.try_into().unwrap(),
-                size: u256_word_size(mailboxclient_address.try_into().unwrap()).into()
+                value: mailbox_address.try_into().unwrap(),
+                size: u256_word_size(mailbox_address.try_into().unwrap()).into()
             },
             ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 }
         ];

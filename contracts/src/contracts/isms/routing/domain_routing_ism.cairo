@@ -11,7 +11,7 @@ pub mod domain_routing_ism {
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
 
-    use starknet::{ContractAddress, contract_address_const};
+    use starknet::{ContractAddress, contract_address_const, ClassHash};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -51,6 +51,19 @@ pub mod domain_routing_ism {
     #[constructor]
     fn constructor(ref self: ContractState, _owner: ContractAddress) {
         self.ownable.initializer(_owner);
+    }
+
+    #[abi(embed_v0)]
+    impl Upgradeable of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
+        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            self.ownable.assert_only_owner();
+            self.upgradeable._upgrade(new_class_hash);
+        }
     }
 
     #[abi(embed_v0)]

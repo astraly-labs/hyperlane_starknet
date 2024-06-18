@@ -386,8 +386,13 @@ fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
 /// 
 /// The corresponding keccak hash for the input arguments
 pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
+    if (bytes.is_empty()) {
+        return keccak_cairo_words64(array![].span(), 0);
+    }
+    if (*bytes.at(0).value == 0) {
+        return keccak_cairo_words64(array![].span(), 0);
+    }
     let concatenate_input = concatenate_input(bytes);
-
     let size = concatenate_input.len();
 
     let u64_span = build_u64_array(@concatenate_input);
@@ -403,13 +408,16 @@ pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
             @concatenate_input, size_last_word.try_into().unwrap()
         );
         let u128_last_word: u128 = (*u64_span.at(u64_span.len() - 1)).into();
-        let size_2 = u256_word_size(two_last_word.into());
-        let size_1 = u256_word_size(u128_last_word.into());
-        padding = if (size_1 + 8 != size_2) {
-            size_2 - (size_1 + 8)
-        } else {
-            0
-        };
+        let size_concat_words = u256_word_size(two_last_word.into());
+        let size_arr_word = u256_word_size(u128_last_word.into());
+        padding =
+            if (size_concat_words == 0 && size_arr_word == 0) {
+                0
+            } else if (size_arr_word + 8 != size_concat_words) {
+                size_concat_words - (size_arr_word + 8)
+            } else {
+                0
+            };
     }
     let reverse_words64 = reverse_u64_word(u64_span, padding);
     let n_bytes = u64_word_size(*reverse_words64.at(reverse_words64.len() - 1));

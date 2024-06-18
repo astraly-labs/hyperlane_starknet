@@ -9,8 +9,8 @@ pub mod validator_announce {
     use hyperlane_starknet::interfaces::IValidatorAnnounce;
     use hyperlane_starknet::interfaces::{IMailboxClientDispatcher, IMailboxClientDispatcherTrait};
     use hyperlane_starknet::utils::keccak256::{
-        reverse_endianness, to_eth_signature, compute_keccak, ByteData, u256_bytes_size,
-        u64_bytes_size, HASH_SIZE
+        reverse_endianness, to_eth_signature, compute_keccak, ByteData, u256_word_size,
+        u64_word_size, HASH_SIZE
     };
     use hyperlane_starknet::utils::store_arrays::StoreFelt252Array;
     use starknet::ContractAddress;
@@ -128,7 +128,7 @@ pub mod validator_announce {
                     Option::Some(storage) => {
                         byte_data_storage_location
                             .append(
-                                ByteData { value: storage, size: u256_bytes_size(storage).into() }
+                                ByteData { value: storage, size: u256_word_size(storage).into() }
                             );
                     },
                     Option::None(_) => { break (); }
@@ -161,11 +161,11 @@ pub mod validator_announce {
         let mut input: Array<ByteData> = array![
             ByteData {
                 value: mailboxclient.get_local_domain().into(),
-                size: u64_bytes_size(mailboxclient.get_local_domain().into()).into()
+                size: u64_word_size(mailboxclient.get_local_domain().into()).into()
             },
             ByteData {
                 value: mailboxclient_address.try_into().unwrap(),
-                size: u256_bytes_size(mailboxclient_address.try_into().unwrap()).into()
+                size: u256_word_size(mailboxclient_address.try_into().unwrap()).into()
             },
             ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 }
         ];

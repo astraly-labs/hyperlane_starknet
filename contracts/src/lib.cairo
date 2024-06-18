@@ -48,7 +48,6 @@ mod contracts {
     }
 }
 mod utils {
-    pub mod experimentation;
     pub mod keccak256;
     pub mod store_arrays;
 }

@@ -385,13 +385,13 @@ pub fn build_merkle_metadata(
 }
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
 pub fn get_merkle_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignature>) {
-    let msg_hash = 0xCC92BA311716B0373C6704F21278F6EF56FFBF02193406FB42A1CE7D42B19C08;
+    let msg_hash = 0x313C6A1725B61343B5B6A7882D194FAD12DCED93308CF5531AFAD1E78493396F;
     let validators_array: Array<EthAddress> = array![
-        0xcef5422f4d9646662233c257b8715da32d2f7ef7.try_into().unwrap(),
-        0x11f1aac756a6216377dc1440c83c01b5e11a75cd.try_into().unwrap(),
-        0x3e37e25038d6c4f43fcd9f39ccdb1c519d7ed68d.try_into().unwrap(),
-        0x12b51cd9ce9bba045d95fa9200436869deace550.try_into().unwrap(),
-        0xf7cccf7ddf6d11f805345219e0481482aaccccd6.try_into().unwrap()
+        0x91bd769ffc38bed78b931c3d972ba06697916985.try_into().unwrap(),
+        0x06071f400ed67eb4a895adcc32e0c5b8ae88ae44.try_into().unwrap(),
+        0x18d48ab0f718ffe4c8019e00c92f737c22efbe0c.try_into().unwrap(),
+        0xe800d496ac3ba56b2ff975bce3602b9f6ab90895.try_into().unwrap(),
+        0x57d8e0df524faa4a31602a78299b6ae023e45fed.try_into().unwrap()
     ];
     let signatures = array![
         EthSignature {

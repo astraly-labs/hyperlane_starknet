@@ -112,7 +112,7 @@ fn test_quote_dispatch() {
     let variant = 1;
     metadata.append_u16(variant);
     let message = MessageTrait::default();
-    post_dispatch_hook.quote_dispatch(metadata, message);
+    assert_eq!(post_dispatch_hook.quote_dispatch(metadata, message), 0);
 }
 
 #[test]
@@ -166,5 +166,15 @@ fn test_insert() {
     assert_eq!(state.tree.read(0), ByteData { value: node_3, size: 6 });
     assert_eq!(state.tree.read(1), ByteData { value: expected_hash, size: HASH_SIZE });
     assert_eq!(state.tree.read(2), ByteData { value: expected_hash_2, size: HASH_SIZE });
+    assert(
+        state
+            ._build_tree() == array![
+                ByteData { value: node_3, size: 6 },
+                ByteData { value: expected_hash, size: HASH_SIZE },
+                ByteData { value: expected_hash_2, size: HASH_SIZE }
+            ],
+        'build tree failed'
+    );
+    assert(state._root() != 0, 'root computation failed');
 }
 

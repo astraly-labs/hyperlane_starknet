@@ -2,7 +2,7 @@ pub mod checkpoint_lib {
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
     use hyperlane_starknet::contracts::libs::message::Message;
     use hyperlane_starknet::utils::keccak256::{
-        reverse_endianness, compute_keccak, ByteData, u64_bytes_size, u256_bytes_size, HASH_SIZE
+        reverse_endianness, compute_keccak, ByteData, u64_word_size, u256_word_size, HASH_SIZE
     };
 
 
@@ -32,11 +32,11 @@ pub mod checkpoint_lib {
                 ByteData { value: domain_hash.into(), size: HASH_SIZE },
                 ByteData {
                     value: _checkpoint_root.into(),
-                    size: u256_bytes_size(_checkpoint_root.into()).into()
+                    size: u256_word_size(_checkpoint_root.into()).into()
                 },
                 ByteData {
                     value: _checkpoint_index.into(),
-                    size: u64_bytes_size(_checkpoint_index.into()).into()
+                    size: u64_word_size(_checkpoint_index.into()).into()
                 },
                 ByteData { value: _message_id.into(), size: HASH_SIZE },
             ];
@@ -45,10 +45,10 @@ pub mod checkpoint_lib {
 
         fn domain_hash(_origin: u32, _origin_merkle_tree_hook: u256) -> u256 {
             let mut input: Array<ByteData> = array![
-                ByteData { value: _origin.into(), size: u64_bytes_size(_origin.into()).into() },
+                ByteData { value: _origin.into(), size: u64_word_size(_origin.into()).into() },
                 ByteData {
                     value: _origin_merkle_tree_hook.into(),
-                    size: u256_bytes_size(_origin_merkle_tree_hook).into()
+                    size: u256_word_size(_origin_merkle_tree_hook).into()
                 },
                 ByteData { value: HYPERLANE.into(), size: 9 }
             ];

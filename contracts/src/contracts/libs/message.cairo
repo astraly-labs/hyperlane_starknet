@@ -1,7 +1,7 @@
 use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
 use core::poseidon::poseidon_hash_span;
 use hyperlane_starknet::utils::keccak256::{
-    reverse_endianness, compute_keccak, ByteData, u256_bytes_size, u64_bytes_size, ADDRESS_SIZE
+    reverse_endianness, compute_keccak, ByteData, u256_word_size, u64_word_size, ADDRESS_SIZE
 };
 use starknet::{ContractAddress, contract_address_const};
 
@@ -54,23 +54,23 @@ pub impl MessageImpl of MessageTrait {
 
         let mut input: Array<ByteData> = array![
             ByteData {
-                value: _message.version.into(), size: u64_bytes_size(_message.version.into()).into()
+                value: _message.version.into(), size: u64_word_size(_message.version.into()).into()
             },
             ByteData {
-                value: _message.nonce.into(), size: u64_bytes_size(_message.nonce.into()).into()
+                value: _message.nonce.into(), size: u64_word_size(_message.nonce.into()).into()
             },
             ByteData {
-                value: _message.origin.into(), size: u64_bytes_size(_message.origin.into()).into()
+                value: _message.origin.into(), size: u64_word_size(_message.origin.into()).into()
             },
             ByteData { value: sender.into(), size: ADDRESS_SIZE },
             ByteData {
                 value: _message.destination.into(),
-                size: u64_bytes_size(_message.destination.into()).into()
+                size: u64_word_size(_message.destination.into()).into()
             },
             ByteData { value: recipient.into(), size: ADDRESS_SIZE },
             ByteData {
                 value: _message.body.size().into(),
-                size: u64_bytes_size(_message.body.size().into()).into()
+                size: u64_word_size(_message.body.size().into()).into()
             },
         ];
 
@@ -81,7 +81,7 @@ pub impl MessageImpl of MessageTrait {
                     input
                         .append(
                             ByteData {
-                                value: data.into(), size: u256_bytes_size(data.into()).into()
+                                value: data.into(), size: u256_word_size(data.into()).into()
                             }
                         );
                 },

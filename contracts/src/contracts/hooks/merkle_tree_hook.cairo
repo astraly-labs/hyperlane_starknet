@@ -228,7 +228,7 @@ pub mod merkle_tree_hook {
             let mut cur_idx = 0;
             let mut tree = array![];
             loop {
-                if (cur_idx == self.count.read()) {
+                if (cur_idx == self.count.read() - 1) {
                     break ();
                 }
                 tree.append(self.tree.read(cur_idx));
@@ -282,6 +282,6 @@ pub mod merkle_tree_hook {
 
     fn _get_ith_bit(_index: u256, i: u32) -> u256 {
         let mask = pow(2.into(), i.into());
-        _index & mask / mask
+        (_index / mask) % 2
     }
 }

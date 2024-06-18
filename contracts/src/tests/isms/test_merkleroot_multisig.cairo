@@ -21,7 +21,7 @@ use hyperlane_starknet::tests::setup::{
     VALID_RECIPIENT
 };
 use hyperlane_starknet::utils::keccak256::{
-    reverse_endianness, to_eth_signature, compute_keccak, ByteData, u256_bytes_size, u64_bytes_size
+    reverse_endianness, to_eth_signature, compute_keccak, ByteData, u256_word_size, u64_word_size
 };
 
 use openzeppelin::access::ownable::OwnableComponent;

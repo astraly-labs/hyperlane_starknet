@@ -133,10 +133,11 @@ fn test_count() {
     assert_eq!(count, 0);
 }
 
-// // TEST INTERNAL
+
+// Test internal functions 
 
 #[test]
-fn test_insert() {
+fn test_insert_node_into_merkle_tree_hook() {
     let mut state = merkle_tree_hook::contract_state_for_testing();
     assert_eq!(state.count.read(), 0);
 

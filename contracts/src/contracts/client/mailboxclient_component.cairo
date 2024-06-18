@@ -38,7 +38,7 @@ pub mod MailboxclientComponent {
         }
 
         fn get_local_domain(self: @ComponentState<TContractState>) -> u32 {
-            self.local_domain.read()
+            self.mailbox.read().get_local_domain()
         }
 
         fn get_hook(self: @ComponentState<TContractState>) -> ContractAddress {

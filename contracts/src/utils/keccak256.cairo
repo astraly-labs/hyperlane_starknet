@@ -1,25 +1,41 @@
-use alexandria_math::{BitShift, keccak256};
 use core::byte_array::{ByteArray, ByteArrayTrait};
 use core::integer::u128_byte_reverse;
 use core::keccak::cairo_keccak;
-use core::keccak::{keccak_u256s_be_inputs, keccak_u256s_le_inputs};
 use core::to_byte_array::{FormatAsByteArray, AppendFormattedToByteArray};
 use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::{HYPERLANE_ANNOUNCEMENT};
 pub const ETH_SIGNED_MESSAGE: felt252 = '\x19Ethereum Signed Message:\n32';
+
+
+// TYPE DEFINITION
 type Words64 = Span<u64>;
+
+// CONSTANTS DEFINITION
 const EMPTY_KECCAK: u256 = 0x70A4855D04D8FA7B3B2782CA53B600E5C003C7DCB27D7E923C23F7860146D2C5;
 pub const ONE_SHIFT_64: u128 = 0x10000000000000000;
-pub const TEST_STARKNET_DOMAIN: u32 = 23448594;
 pub const FELT252_MASK: u256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 pub const ADDRESS_SIZE: usize = 32;
 pub const HASH_SIZE: usize = 32;
 
+
+/// 
+/// Structure specifying for each element, the value of this element as u256 and the size (in bytes) of this element 
+/// 
 #[derive(Copy, Drop, Serde, starknet::Store, Debug, PartialEq)]
 pub struct ByteData {
     pub value: u256,
     pub size: usize
 }
+
+
 /// Reverse the endianness of an u256
+/// 
+/// # Arguments
+/// 
+/// * `value` - Value to reverse
+/// 
+/// # Returns 
+/// 
+/// the reverse equivalent 
 pub fn reverse_endianness(value: u256) -> u256 {
     let new_low = u128_byte_reverse(value.high);
     let new_high = u128_byte_reverse(value.low);
@@ -27,11 +43,18 @@ pub fn reverse_endianness(value: u256) -> u256 {
 }
 
 
+/// Determine the Ethereum compatible signature for a given hash
+/// dev : Since call this function for hash only, the ETH_SIGNED_MESSAGE size will always be 32
+/// 
+///  # Arguments
+/// 
+///  * `hash` - Hash to sign
+/// 
+/// # Returns the corresponding hash as big endian
 pub fn to_eth_signature(hash: u256) -> u256 {
     let input = array![
         ByteData {
-            value: ETH_SIGNED_MESSAGE.into(),
-            size: u256_bytes_size(ETH_SIGNED_MESSAGE.into()).into()
+            value: ETH_SIGNED_MESSAGE.into(), size: u256_word_size(ETH_SIGNED_MESSAGE.into()).into()
         },
         ByteData { value: hash, size: HASH_SIZE }
     ];
@@ -40,12 +63,33 @@ pub fn to_eth_signature(hash: u256) -> u256 {
 }
 
 
+/// Reverse an u64 word (little_endian <-> big endian)
+/// For example 0x12345678 will return 0x78563412
+/// For this function, we used an existing function of the cairo lib `u128_byte_reverse`
+/// 
+/// # Argument 
+/// 
+///  * - `value` - value to reverse 
+/// 
+/// # Returns 
+/// 
+/// The equivalent little endian (or big endian)
 pub fn u64_byte_reverse(value: u64) -> u64 {
     let reversed = u128_byte_reverse(value.into()) / ONE_SHIFT_64.try_into().expect('not zero');
     reversed.try_into().unwrap()
 }
 
 
+/// Computes the keccak hash of an given input of Words64(Span<u64>)
+/// dev: harcoded result if the array is empty
+/// dev: using keccak hash function (`cairo_keccak`) from the cairo core lib
+///  
+/// # Arguments
+/// 
+/// * `words` - A Words64 element containing the information to be hash, as u64 span.
+/// * `last_word_bytes` - the size(in bytes) of the last word in the words span. 
+/// 
+/// # Returns the corresponding hash
 fn keccak_cairo_words64(words: Words64, last_word_bytes: usize) -> u256 {
     if words.is_empty() {
         return EMPTY_KECCAK;
@@ -71,50 +115,81 @@ fn keccak_cairo_words64(words: Words64, last_word_bytes: usize) -> u256 {
     }
 }
 
-pub fn u64_bytes_size(bytes: u64) -> u8 {
-    let mut n_bytes = 0;
-    while n_bytes < 8 {
-        if bytes < one_shift_left_bytes_u64(n_bytes) {
+
+/// Determine the size of a u64 element, by successive division 
+///
+/// # Arguments
+/// 
+/// * `word` - u64 word to consider
+/// 
+/// # Returns
+/// 
+/// The size (in bytes) for the given word
+pub fn u64_word_size(word: u64) -> u8 {
+    let mut word_len = 0;
+    while word_len < 8 {
+        if word < one_shift_left_bytes_u64(word_len) {
             break;
         }
-        n_bytes += 1;
+        word_len += 1;
     };
-    n_bytes
+    word_len
 }
 
 
-pub fn u256_bytes_size(bytes: u256) -> u8 {
-    let mut n_bytes = 0;
-    while n_bytes < 32 {
-        if bytes < one_shift_left_bytes_u256(n_bytes) {
+/// Determine the size of a u256 element, by successive division 
+///
+/// # Arguments
+/// 
+/// * `word` - u256 word to consider
+/// 
+/// # Returns
+/// 
+/// The size (in bytes) for the given word
+pub fn u256_word_size(word: u256) -> u8 {
+    let mut word_len = 0;
+    while word_len < 32 {
+        if word < one_shift_left_bytes_u256(word_len) {
             break;
         }
-        n_bytes += 1;
+        word_len += 1;
     };
-    n_bytes
+    word_len
 }
-fn build_u64_array(byte: @ByteArray) -> Span<u64> {
+
+/// Build an u64 span out of a concatenated string (ByteArray)
+/// dev: ByteArray is in fact a array of Bytes31 (u8) 
+/// 
+/// # Argument
+/// 
+/// * `bytes` - A string containing the concatenation of all the arguments to hash
+/// 
+/// # Returns 
+/// 
+/// A span of u64 associated to the input
+fn build_u64_array(bytes: @ByteArray) -> Span<u64> {
     let mut u64_array = array![];
     let mut cur_idx = 0;
-    let byte_len = byte.len();
+    let bytes_len = bytes.len();
     loop {
-        if cur_idx == (byte_len + 7) / 8 {
+        // Break the loop if we've processed all the bytes
+        if cur_idx * 8 >= bytes_len {
             break;
         }
         let mut u64_word: u64 = 0;
         let mut offset: u8 = 0;
-        let remaining_bytes = byte_len - cur_idx * 8;
+        let remaining_bytes = bytes_len - cur_idx * 8;
         loop {
-            if offset == 8 || cur_idx * 8 + offset.into() >= byte_len {
+            if offset == 8 || cur_idx * 8 + offset.into() >= bytes_len {
                 break;
             }
-            let u8_byte: u8 = byte[cur_idx * 8 + offset.into()];
+            let u8_bytes: u8 = bytes[cur_idx * 8 + offset.into()];
             let shift: u8 = if (remaining_bytes < 8) {
                 remaining_bytes.try_into().unwrap()
             } else {
                 8
             };
-            u64_word += u8_byte.into() * one_shift_left_bytes_u64(shift - 1 - offset);
+            u64_word += u8_bytes.into() * one_shift_left_bytes_u64(shift - 1 - offset);
             offset += 1;
         };
         u64_array.append(u64_word);
@@ -122,6 +197,18 @@ fn build_u64_array(byte: @ByteArray) -> Span<u64> {
     };
     u64_array.span()
 }
+
+
+/// Shift helper for u64
+/// dev : panics if u64 overflow
+/// 
+/// # Arguments
+/// 
+/// * `n_bytes` - The number of bytes shift 
+/// 
+/// # Returns 
+/// 
+/// u64 representing the shifting number associated to the given number
 pub fn one_shift_left_bytes_u64(n_bytes: u8) -> u64 {
     match n_bytes {
         0 => 0x1,
@@ -135,9 +222,20 @@ pub fn one_shift_left_bytes_u64(n_bytes: u8) -> u64 {
         _ => core::panic_with_felt252('n_bytes too big'),
     }
 }
-fn get_two_last_words(word: @ByteArray, start_index: usize, last_word_len: u8) -> u128 {
+
+/// Retrieve the two last words (u64) for a given string (ByteArray)
+/// 
+/// # Arguments
+/// * `word` - a snapshot of the string to consider 
+/// * `last_word_len` - the length of the last word
+/// 
+/// # Returns 
+/// 
+/// The last two words as u128. 
+fn get_two_last_words(word: @ByteArray, last_word_len: u8) -> u128 {
     let mut u128_res: u128 = 0;
     let stop_index: usize = word.len();
+    let start_index = stop_index - last_word_len.into() - 8;
     let mid_index = start_index + 8;
     let mut i = start_index;
     while i < mid_index
@@ -157,6 +255,17 @@ fn get_two_last_words(word: @ByteArray, start_index: usize, last_word_len: u8) -
     u128_res
 }
 
+
+/// Shift helper for u256
+/// dev : panics if u256 overflow
+/// 
+/// # Arguments
+/// 
+/// * `n_bytes` - The number of bytes shift 
+/// 
+/// # Returns 
+/// 
+/// u256 representing the shifting number associated to the given number
 pub fn one_shift_left_bytes_u256(n_bytes: u8) -> u256 {
     match n_bytes {
         0 => 0x1,
@@ -194,35 +303,57 @@ pub fn one_shift_left_bytes_u256(n_bytes: u8) -> u256 {
         _ => core::panic_with_felt252('n_bytes too big'),
     }
 }
-fn reverse_u64_word(bytes: Span<u64>, padding: u8) -> Span<u64> {
+
+
+/// Reverse an u64 word. If a padding is provided, shift the result with the padding. 
+/// 
+/// # Arguments
+/// 
+/// * `words` - Span of u64, which is the concatenation of the arguments put into u64s
+/// * `padding` - Padding, to avoid information loss (see https://github.com/astraly-labs/hyperlane_starknet/pull/39)
+/// 
+/// # Returns 
+/// 
+/// A span of u64 corresponding to the reverse endianness of the input. 
+fn reverse_u64_word(words: Span<u64>, padding: u8) -> Span<u64> {
     let mut cur_idx = 0;
     let mut reverse_u64 = array![];
-    let last_word = *bytes.at(bytes.len() - 1);
-    let n_bytes = u64_bytes_size(last_word);
+    let last_word = *words.at(words.len() - 1);
+    let number_words = u64_word_size(last_word);
     loop {
-        if (cur_idx == bytes.len()) {
+        if (cur_idx == words.len()) {
             break ();
         }
-        if (cur_idx == bytes.len() - 1) {
-            if (n_bytes == 0) {
+        if (cur_idx == words.len() - 1) {
+            if (number_words == 0) {
                 reverse_u64.append(0_u64);
             } else {
                 reverse_u64
                     .append(
-                        (u64_byte_reverse(*bytes.at(cur_idx))
-                            / one_shift_left_bytes_u64(8 - n_bytes))
+                        (u64_byte_reverse(*words.at(cur_idx))
+                            / one_shift_left_bytes_u64(8 - number_words))
                             * one_shift_left_bytes_u64(padding)
                     );
             }
         } else {
-            reverse_u64.append(u64_byte_reverse(*bytes.at(cur_idx)));
+            reverse_u64.append(u64_byte_reverse(*words.at(cur_idx)));
         }
         cur_idx += 1;
     };
     reverse_u64.span()
 }
+
+/// Given a span of ByteData, returns a concatenated string (ByteArray) of the input
+/// 
+/// # Arguments
+/// 
+/// * `bytes` - a span of ByteData containing the information that need to be hash
+/// 
+/// # Returns 
+/// 
+/// ByteArray representing the concatenation of the input (bytes31). 
 fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
-    let mut ba1: ByteArray = Default::default();
+    let mut output_string: ByteArray = Default::default();
     let mut cur_idx = 0;
 
     loop {
@@ -231,18 +362,29 @@ fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
         }
         let byte = *bytes.at(cur_idx);
         if (byte.size == 32) {
+            // in order to store a 32-bytes entry in a ByteArray, we need to first append the upper 1-byte part , then the lower 31-bytes part
             let up_byte = (byte.value / FELT252_MASK).try_into().unwrap();
-            ba1.append_word(up_byte, 1);
+            output_string.append_word(up_byte, 1);
             let down_byte = (byte.value & FELT252_MASK).try_into().unwrap();
-            ba1.append_word(down_byte, 31);
+            output_string.append_word(down_byte, 31);
         } else {
-            ba1.append_word(byte.value.try_into().unwrap(), byte.size);
+            output_string.append_word(byte.value.try_into().unwrap(), byte.size);
         }
         cur_idx += 1;
     };
-    ba1
+    output_string
 }
 
+
+/// The general function that computes the keccak hash for an input span of ByteData
+/// 
+/// # Arguments
+/// 
+/// * `bytes` - a span of ByteData containing the information for the hash computation
+/// 
+/// # Returns
+/// 
+/// The corresponding keccak hash for the input arguments
 pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
     let concatenate_input = concatenate_input(bytes);
 
@@ -250,6 +392,7 @@ pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
 
     let u64_span = build_u64_array(@concatenate_input);
     let mut padding = 0;
+    // if there two words at lest, we need to make sure that the u64 span separation does not remove information on the last word
     if size > 8 {
         let size_last_word = if (size % 8 != 0) {
             size % 8
@@ -257,11 +400,11 @@ pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
             8
         };
         let two_last_word = get_two_last_words(
-            @concatenate_input, size - size_last_word - 8, size_last_word.try_into().unwrap()
+            @concatenate_input, size_last_word.try_into().unwrap()
         );
         let u128_last_word: u128 = (*u64_span.at(u64_span.len() - 1)).into();
-        let size_2 = u256_bytes_size(two_last_word.into());
-        let size_1 = u256_bytes_size(u128_last_word.into());
+        let size_2 = u256_word_size(two_last_word.into());
+        let size_1 = u256_word_size(u128_last_word.into());
         padding = if (size_1 + 8 != size_2) {
             size_2 - (size_1 + 8)
         } else {
@@ -269,7 +412,7 @@ pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
         };
     }
     let reverse_words64 = reverse_u64_word(u64_span, padding);
-    let n_bytes = u64_bytes_size(*reverse_words64.at(reverse_words64.len() - 1));
+    let n_bytes = u64_word_size(*reverse_words64.at(reverse_words64.len() - 1));
     keccak_cairo_words64(reverse_words64, n_bytes.into())
 }
 
@@ -279,10 +422,11 @@ mod tests {
     use alexandria_bytes::{Bytes, BytesTrait};
     use starknet::contract_address_const;
     use super::{
-        reverse_endianness, ByteData, HYPERLANE_ANNOUNCEMENT, compute_keccak, TEST_STARKNET_DOMAIN,
-        u64_bytes_size, reverse_u64_word, cairo_keccak, keccak_cairo_words64, build_u64_array,
-        get_two_last_words, ADDRESS_SIZE
+        reverse_endianness, ByteData, HYPERLANE_ANNOUNCEMENT, compute_keccak, u64_word_size,
+        reverse_u64_word, cairo_keccak, keccak_cairo_words64, build_u64_array, get_two_last_words,
+        ADDRESS_SIZE
     };
+    const TEST_STARKNET_DOMAIN: u32 = 23448594;
 
 
     #[test]
@@ -291,11 +435,11 @@ mod tests {
         input.append_word(0x49, 1);
         input.append_word(0xd35915d0abec0a28990198bb32aa570e681e7eb41a001c0094c7c36a712671, 31);
         let expected_result = 0x0e681e7eb41a001c0094c7c36a712671;
-        assert_eq!(get_two_last_words(@input, 16, 8), expected_result);
+        assert_eq!(get_two_last_words(@input, 8), expected_result);
         let mut input = Default::default();
         input.append_word('HYPERLANE_ANNOUNCEMENT', 22);
         let expected_result = 'E_ANNOUNCEMENT';
-        assert_eq!(get_two_last_words(@input, 8, 6), expected_result);
+        assert_eq!(get_two_last_words(@input, 6), expected_result);
     }
     #[test]
     fn test_reverse_endianness() {
@@ -373,19 +517,19 @@ mod tests {
     }
 
     #[test]
-    fn test_u64_bytes_size() {
+    fn test_u64_word_size() {
         let test = 0x12345;
-        assert_eq!(u64_bytes_size(test), 3);
+        assert_eq!(u64_word_size(test), 3);
         let test = 0x1234567890;
-        assert_eq!(u64_bytes_size(test), 5);
+        assert_eq!(u64_word_size(test), 5);
         let test = 0xfffffffffffffff;
-        assert_eq!(u64_bytes_size(test), 8);
+        assert_eq!(u64_word_size(test), 8);
         let test = 0xfff;
-        assert_eq!(u64_bytes_size(test), 2);
+        assert_eq!(u64_word_size(test), 2);
         let test = 0x123456;
-        assert_eq!(u64_bytes_size(test), 3);
+        assert_eq!(u64_word_size(test), 3);
         let test = 0x1;
-        assert_eq!(u64_bytes_size(test), 1);
+        assert_eq!(u64_word_size(test), 1);
     }
 
 

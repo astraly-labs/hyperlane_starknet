@@ -76,16 +76,16 @@ pub mod domain_routing_hook {
 
     #[abi(embed_v0)]
     impl IDomainRoutingHookImpl of IDomainRoutingHook<ContractState> {
-        fn setHook(ref self: ContractState, _destination: u32, _hook: ContractAddress) {
+        fn set_hook(ref self: ContractState, _destination: u32, _hook: ContractAddress) {
             self.ownable.assert_only_owner();
             self.hooks.write(_destination, IPostDispatchHookDispatcher { contract_address: _hook });
         }
-        fn setHooks(ref self: ContractState, configs: Array<DomainRoutingHookConfig>) {
+        fn set_hooks(ref self: ContractState, configs: Array<DomainRoutingHookConfig>) {
             self.ownable.assert_only_owner();
             let mut configs_span = configs.span();
             loop {
                 match configs_span.pop_front() {
-                    Option::Some(config) => { self.setHook(*config.destination, *config.hook) },
+                    Option::Some(config) => { self.set_hook(*config.destination, *config.hook) },
                     Option::None(_) => { break; },
                 };
             };
@@ -95,7 +95,7 @@ pub mod domain_routing_hook {
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn _get_configured_hook(
-            ref self: ContractState, _message: Message
+            self: @ContractState, _message: Message
         ) -> IPostDispatchHookDispatcher {
             let dispatcher_instance = self.hooks.read(_message.destination);
             assert(

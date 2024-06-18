@@ -355,6 +355,6 @@ pub struct DomainRoutingHookConfig {
 
 #[starknet::interface]
 pub trait IDomainRoutingHook<TContractState> {
-    fn setHook(ref self: TContractState, _destination: u32, _hook: ContractAddress);
-    fn setHooks(ref self: TContractState, configs: Array<DomainRoutingHookConfig>);
+    fn set_hook(ref self: TContractState, _destination: u32, _hook: ContractAddress);
+    fn set_hooks(ref self: TContractState, configs: Array<DomainRoutingHookConfig>);
 }

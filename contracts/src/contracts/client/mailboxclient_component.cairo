@@ -38,7 +38,7 @@ pub mod MailboxclientComponent {
         }
 
         fn get_local_domain(self: @ComponentState<TContractState>) -> u32 {
-            self.mailbox.read().get_local_domain()
+            self.local_domain.read()
         }
 
         fn get_hook(self: @ComponentState<TContractState>) -> ContractAddress {
@@ -114,7 +114,9 @@ pub mod MailboxclientComponent {
         impl Owner: OwnableComponent::HasComponent<TContractState>
     > of InternalTrait<TContractState> {
         fn initialize(ref self: ComponentState<TContractState>, _mailbox: ContractAddress) {
-            self.mailbox.write(IMailboxDispatcher { contract_address: _mailbox });
+            let mailbox = IMailboxDispatcher { contract_address: _mailbox };
+            self.mailbox.write(mailbox);
+            self.local_domain.write(mailbox.get_local_domain());
         }
     }
 }

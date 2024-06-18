@@ -10,7 +10,7 @@ use hyperlane_starknet::interfaces::{
 use hyperlane_starknet::tests::setup::{
     OWNER, setup_default_fallback_routing_ism, build_messageid_metadata, LOCAL_DOMAIN, VALID_OWNER,
     VALID_RECIPIENT, DESTINATION_DOMAIN, RECIPIENT_ADDRESS, setup_messageid_multisig_ism,
-    get_message_and_signature, setup_mailbox_client
+    get_message_and_signature, setup_mailbox_client, setup
 };
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget, stop_prank, ContractClassTrait, declare};
@@ -42,19 +42,16 @@ fn test_initialize() {
 
 #[test]
 fn get_default_module() {
-    let mailbox_client = setup_mailbox_client();
+    let (mailbox, _, _, _) = setup();
     let default_fallback_routing_ism = declare("default_fallback_routing_ism").unwrap();
     let (default_fallback_routing_ism_addr, _) = default_fallback_routing_ism
-        .deploy(@array![OWNER().into(), mailbox_client.contract_address.into()])
+        .deploy(@array![OWNER().into(), mailbox.contract_address.into()])
         .unwrap();
     let test_address = contract_address_const::<0x1331341>();
     let dispatcher = IDomainRoutingIsmDispatcher {
         contract_address: default_fallback_routing_ism_addr
     };
-    let mailboxclient_dispatcher = IMailboxClientDispatcher {
-        contract_address: mailbox_client.contract_address
-    };
-    let mailbox = IMailboxDispatcher { contract_address: mailboxclient_dispatcher.mailbox() };
+    let mailbox = IMailboxDispatcher { contract_address: mailbox.contract_address };
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     mailbox.set_default_ism(test_address);

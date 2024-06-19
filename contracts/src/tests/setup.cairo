@@ -13,7 +13,7 @@ use hyperlane_starknet::interfaces::{
     IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait, IMockValidatorAnnounceDispatcher,
     ISpecifiesInterchainSecurityModuleDispatcher, ISpecifiesInterchainSecurityModuleDispatcherTrait,
     IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, IDomainRoutingIsmDispatcher,
-    IDomainRoutingIsmDispatcherTrait
+    IDomainRoutingIsmDispatcherTrait, IPausableIsmDispatcher, IPausableIsmDispatcherTrait
 };
 use openzeppelin::account::utils::signature::EthSignature;
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
@@ -294,6 +294,30 @@ pub fn setup_mock_hook() -> IPostDispatchHookDispatcher {
     IPostDispatchHookDispatcher { contract_address: mock_hook_addr }
 }
 
+pub fn setup_noop_ism() -> IInterchainSecurityModuleDispatcher {
+    let noop_ism = declare("noop_ism").unwrap();
+    let (noop_ism_addr, _) = noop_ism.deploy(@array![]).unwrap();
+    IInterchainSecurityModuleDispatcher { contract_address: noop_ism_addr }
+}
+
+
+pub fn setup_pausable_ism() -> (IInterchainSecurityModuleDispatcher, IPausableIsmDispatcher) {
+    let pausable_ism = declare("pausable_ism").unwrap();
+    let (pausable_ism_addr, _) = pausable_ism.deploy(@array![OWNER().into()]).unwrap();
+    (
+        IInterchainSecurityModuleDispatcher { contract_address: pausable_ism_addr },
+        IPausableIsmDispatcher { contract_address: pausable_ism_addr }
+    )
+}
+
+pub fn setup_trusted_relayer_ism() -> IInterchainSecurityModuleDispatcher {
+    let (mailbox, _, _, _) = setup();
+    let trusted_relayer_ism = declare("trusted_relayer_ism").unwrap();
+    let (trusted_relayer_ism_addr, _) = trusted_relayer_ism
+        .deploy(@array![mailbox.contract_address.into(), OWNER().into()])
+        .unwrap();
+    IInterchainSecurityModuleDispatcher { contract_address: trusted_relayer_ism_addr }
+}
 
 pub fn build_messageid_metadata(origin_merkle_tree_hook: u256, root: u256, index: u32) -> Bytes {
     let y_parity = 0x01;
@@ -317,13 +341,13 @@ pub fn build_messageid_metadata(origin_merkle_tree_hook: u256, root: u256, index
 
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
 pub fn get_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignature>) {
-    let msg_hash = 0xD12359855E2143AC1FA8145D294BB63926C9536014F68BB99896845C54949E8C;
+    let msg_hash = 0xFDE2D5B5D42F48CA195ED90A8F4E826C786B7DCDCFA19F5A26048C93DD3044D2;
     let validators_array: Array<EthAddress> = array![
-        0xaafc175eedf5126e9c46c69f6d1412f83879703a.try_into().unwrap(),
-        0x8b12e6fe8dc2701618ccaa9f0f2f543f225c1c41.try_into().unwrap(),
-        0xa058aea5289617da6b0658067c5b8d6324e728fc.try_into().unwrap(),
-        0xf398501b08cf2c388d228337b0de6b880b259f8b.try_into().unwrap(),
-        0xa18be291c7db8d30bc6796f52a9a71f75652c309.try_into().unwrap()
+        0xdb5278a58bf0651ed0bb6201563d2d2fed583849.try_into().unwrap(),
+        0x0952f3030332b6a06dec9cd4b18528f7e20bcf7a.try_into().unwrap(),
+        0x8bbaa43abd2ecfbd8c8affd5198b745071d5fd51.try_into().unwrap(),
+        0xaa9d9ab3a9380a05aa6a671d0de15f29772fd476.try_into().unwrap(),
+        0x8f27d34c9a110acf55d12005f4af4318b4073881.try_into().unwrap()
     ];
     let signatures = array![
         EthSignature {
@@ -383,15 +407,17 @@ pub fn build_merkle_metadata(
     };
     metadata
 }
+
+
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
 pub fn get_merkle_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignature>) {
-    let msg_hash = 0x313C6A1725B61343B5B6A7882D194FAD12DCED93308CF5531AFAD1E78493396F;
+    let msg_hash = 0xF741712B0DAF736A4AFCD98A32AB902E6269E50AA54789702738C2358C0260D6;
     let validators_array: Array<EthAddress> = array![
-        0x91bd769ffc38bed78b931c3d972ba06697916985.try_into().unwrap(),
-        0x06071f400ed67eb4a895adcc32e0c5b8ae88ae44.try_into().unwrap(),
-        0x18d48ab0f718ffe4c8019e00c92f737c22efbe0c.try_into().unwrap(),
-        0xe800d496ac3ba56b2ff975bce3602b9f6ab90895.try_into().unwrap(),
-        0x57d8e0df524faa4a31602a78299b6ae023e45fed.try_into().unwrap()
+        0x607f328cf57d921b08d0be5da6a094f6031773d9.try_into().unwrap(),
+        0x308fca3c679010f692fb30837aa7ffb744039ea1.try_into().unwrap(),
+        0x48f7ee4a727188621600948c5c1995b28899d3b5.try_into().unwrap(),
+        0x66d7205a8336b14e69c3d288c9931cb8995f280f.try_into().unwrap(),
+        0xa78ad18b57339ec6ac280b232c86217730734a9f.try_into().unwrap()
     ];
     let signatures = array![
         EthSignature {

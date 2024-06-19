@@ -87,6 +87,6 @@ pub impl MessageImpl of MessageTrait {
                 Option::None(_) => { break (); }
             };
         };
-        (compute_keccak(input.span()), _message)
+        (reverse_endianness(compute_keccak(input.span())), _message)
     }
 }

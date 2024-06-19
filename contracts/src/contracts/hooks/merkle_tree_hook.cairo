@@ -21,13 +21,6 @@ pub mod merkle_tree_hook {
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::{ContractAddress, ClassHash};
 
-    #[derive(Serde, Drop)]
-    pub struct Tree {
-        pub branch: Array<ByteData>,
-        pub count: u256
-    }
-    type Index = usize;
-    pub const TREE_DEPTH: u32 = 32;
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
@@ -37,6 +30,14 @@ pub mod merkle_tree_hook {
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
+    #[derive(Serde, Drop)]
+    pub struct Tree {
+        pub branch: Array<ByteData>,
+        pub count: u256
+    }
+
+    type Index = usize;
+    pub const TREE_DEPTH: u32 = 32;
 
     #[storage]
     struct Storage {
@@ -78,6 +79,12 @@ pub mod merkle_tree_hook {
         pub index: u32
     }
 
+    /// Contract constructor
+    /// 
+    /// # Arguments
+    ///
+    /// * `_mailbox` - The mailbox to be associated to the mailbox client
+    /// * `_owner` - The owner of the contract
     #[constructor]
     fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress,) {
         self.mailboxclient.initialize(_mailbox);
@@ -88,6 +95,7 @@ pub mod merkle_tree_hook {
     impl Upgradeable of IUpgradeable<ContractState> {
         /// Upgrades the contract to a new implementation.
         /// Callable only by the owner
+        /// 
         /// # Arguments
         ///
         /// * `new_class_hash` - The class hash of the new implementation.
@@ -121,15 +129,42 @@ pub mod merkle_tree_hook {
         fn hook_type(self: @ContractState) -> Types {
             Types::MERKLE_TREE(())
         }
+        /// Returns whether the hook supports metadata
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - metadata
+        /// 
+        /// # Returns
+        /// 
+        /// boolean - whether the hook supports metadata
         fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
             _metadata.size() == 0 || StandardHookMetadata::variant(_metadata) == VARIANT.into()
         }
 
+        /// Post action after a message is dispatched via the Mailbox
+        /// Dev: reverts if invalid metadata variant
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - the metadata required for the hook
+        /// * - `_message` - the message passed from the Mailbox.dispatch() call
         fn post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) {
             assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
             self._post_dispatch(_metadata, _message);
         }
 
+        ///  Computes the payment required by the postDispatch call
+        /// Dev: reverts if invalid metadata variant
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - The metadata required for the hook
+        /// * - `_message` - the message passed from the Mailbox.dispatch() call
+        /// 
+        /// # Returns 
+        /// 
+        /// u256 - Quoted payment for the postDispatch call
         fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
             assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
             self._quote_dispatch(_metadata, _message)
@@ -147,6 +182,12 @@ pub mod merkle_tree_hook {
             self.emit(InsertedIntoTree { id, index });
         }
 
+        /// Inserts `_node` into merkle tree
+        /// Dev: Reverts if tree is full
+        /// 
+        /// # Arguments
+        /// 
+        ///* - `_node`-  Element to insert into tree (see ByteData structure)
         fn _insert(ref self: ContractState, mut _node: ByteData) {
             let MAX_LEAVES: u128 = pow(2_u128, TREE_DEPTH.into()) - 1;
             assert(self.count.read().into() < MAX_LEAVES, Errors::MERKLE_TREE_FULL);
@@ -172,6 +213,16 @@ pub mod merkle_tree_hook {
                 cur_idx += 1;
             };
         }
+
+        /// Calculates and returns`_tree`'s current root given array of zero hashes
+        /// 
+        /// # Arguments
+        /// 
+        ///* - `_zeroes`- Array of zero hashes
+        /// 
+        /// # Returns
+        /// 
+        /// u256 - Calculated root of `_tree`
         fn _root_with_ctx(self: @ContractState, _zeroes: Array<u256>) -> u256 {
             let mut cur_idx = 0;
             let index = self.count.read();
@@ -213,6 +264,18 @@ pub mod merkle_tree_hook {
             };
             current.value
         }
+
+        /// Calculates and returns the merkle root for the given leaf, `_item`, a merkle branch, and the index of `_item` in the tree.
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_item`- Merkle leaf
+        /// * - `_branch`- Merkle proof
+        /// * - `_index`- Index of `_item` in tree
+        /// 
+        /// # Returns
+        /// 
+        /// u256 - Calculated merkle root
         fn _branch_root(_item: ByteData, _branch: Span<ByteData>, _index: u256) -> u256 {
             assert(_branch.len() >= TREE_DEPTH, Errors::TREE_DEPTH_NOT_REACHED);
             let mut cur_idx = 0;
@@ -242,10 +305,17 @@ pub mod merkle_tree_hook {
             };
             current.value
         }
+
+        /// Calculates and returns`_tree`'s current root
+        /// 
+        /// # Returns
+        /// 
+        /// u256 - tree current root
         fn _root(self: @ContractState) -> u256 {
             self._root_with_ctx(self._zero_hashes())
         }
 
+        // build array tree from legacy map storage
         fn _build_tree(self: @ContractState) -> Array<ByteData> {
             let mut cur_idx = 0;
             let mut tree = array![];
@@ -263,7 +333,7 @@ pub mod merkle_tree_hook {
             0_u256
         }
 
-
+        // keccak256 zero hashes
         fn _zero_hashes(self: @ContractState) -> Array<u256> {
             array![
                 0x0000000000000000000000000000000000000000000000000000000000000000,
@@ -302,6 +372,16 @@ pub mod merkle_tree_hook {
         }
     }
 
+    /// Retrieve the i-th bit of a given index
+    /// 
+    /// # Arguments 
+    /// 
+    /// * - `_index`- index to retrieve the i-th bit from 
+    /// * - `i`- the position of the bit to retrieve
+    /// 
+    /// # Returns 
+    /// 
+    /// u256 - the i-th bit 
     fn _get_ith_bit(_index: u256, i: u32) -> u256 {
         let mask = pow(2.into(), i.into());
         (_index / mask) % 2

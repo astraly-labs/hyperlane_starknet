@@ -2,7 +2,9 @@ use core::byte_array::{ByteArray, ByteArrayTrait};
 use core::integer::u128_byte_reverse;
 use core::keccak::cairo_keccak;
 use core::to_byte_array::{FormatAsByteArray, AppendFormattedToByteArray};
-use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::{HYPERLANE_ANNOUNCEMENT};
+use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
+use starknet::{EthAddress, eth_signature::is_eth_signature_valid, secp256_trait::Signature};
+
 pub const ETH_SIGNED_MESSAGE: felt252 = '\x19Ethereum Signed Message:\n32';
 
 
@@ -27,7 +29,7 @@ pub struct ByteData {
 }
 
 
-/// Reverse the endianness of an u256
+/// Reverses the endianness of an u256
 /// 
 /// # Arguments
 /// 
@@ -43,7 +45,7 @@ pub fn reverse_endianness(value: u256) -> u256 {
 }
 
 
-/// Determine the Ethereum compatible signature for a given hash
+/// Determines the Ethereum compatible signature for a given hash
 /// dev : Since call this function for hash only, the ETH_SIGNED_MESSAGE size will always be 32
 /// 
 ///  # Arguments
@@ -62,8 +64,27 @@ pub fn to_eth_signature(hash: u256) -> u256 {
     reverse_endianness(hash)
 }
 
+/// Determines the correctness of an ethereum signature given a digest, signer and signature 
+/// 
+/// # Arguments 
+/// 
+/// * - `_msg_hash` - to digest used to sign the message
+/// * - `_signature` - the signature to check
+/// * - `_signer` - the signer ethereum address
+/// 
+/// # Returns 
+/// 
+/// boolean - True if valid
+pub fn bool_is_eth_signature_valid(
+    msg_hash: u256, signature: Signature, signer: EthAddress
+) -> bool {
+    match is_eth_signature_valid(msg_hash, signature, signer) {
+        Result::Ok(()) => true,
+        Result::Err(_) => false
+    }
+}
 
-/// Reverse an u64 word (little_endian <-> big endian)
+/// Reverses an u64 word (little_endian <-> big endian)
 /// For example 0x12345678 will return 0x78563412
 /// For this function, we used an existing function of the cairo lib `u128_byte_reverse`
 /// 
@@ -116,7 +137,7 @@ fn keccak_cairo_words64(words: Words64, last_word_bytes: usize) -> u256 {
 }
 
 
-/// Determine the size of a u64 element, by successive division 
+/// Determines the size of a u64 element, by successive division 
 ///
 /// # Arguments
 /// 
@@ -137,7 +158,7 @@ pub fn u64_word_size(word: u64) -> u8 {
 }
 
 
-/// Determine the size of a u256 element, by successive division 
+/// Determines the size of a u256 element, by successive division 
 ///
 /// # Arguments
 /// 
@@ -157,7 +178,7 @@ pub fn u256_word_size(word: u256) -> u8 {
     word_len
 }
 
-/// Build an u64 span out of a concatenated string (ByteArray)
+/// Builds an u64 span out of a concatenated string (ByteArray)
 /// dev: ByteArray is in fact a array of Bytes31 (u8) 
 /// 
 /// # Argument
@@ -199,7 +220,7 @@ fn build_u64_array(bytes: @ByteArray) -> Span<u64> {
 }
 
 
-/// Shift helper for u64
+/// Shifts helper for u64
 /// dev : panics if u64 overflow
 /// 
 /// # Arguments
@@ -223,7 +244,7 @@ pub fn one_shift_left_bytes_u64(n_bytes: u8) -> u64 {
     }
 }
 
-/// Retrieve the two last words (u64) for a given string (ByteArray)
+/// Retrieves the two last words (u64) for a given string (ByteArray)
 /// 
 /// # Arguments
 /// * `word` - a snapshot of the string to consider 
@@ -256,7 +277,7 @@ fn get_two_last_words(word: @ByteArray, last_word_len: u8) -> u128 {
 }
 
 
-/// Shift helper for u256
+/// Shifts helper for u256
 /// dev : panics if u256 overflow
 /// 
 /// # Arguments
@@ -305,7 +326,7 @@ pub fn one_shift_left_bytes_u256(n_bytes: u8) -> u256 {
 }
 
 
-/// Reverse an u64 word. If a padding is provided, shift the result with the padding. 
+/// Reverses an u64 word. If a padding is provided, shift the result with the padding. 
 /// 
 /// # Arguments
 /// 
@@ -343,7 +364,7 @@ fn reverse_u64_word(words: Span<u64>, padding: u8) -> Span<u64> {
     reverse_u64.span()
 }
 
-/// Given a span of ByteData, returns a concatenated string (ByteArray) of the input
+/// Givens a span of ByteData, returns a concatenated string (ByteArray) of the input
 /// 
 /// # Arguments
 /// 

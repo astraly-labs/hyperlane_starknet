@@ -4,9 +4,8 @@ use hyperlane_starknet::contracts::mailbox::mailbox;
 use hyperlane_starknet::interfaces::IMessageRecipientDispatcherTrait;
 use hyperlane_starknet::interfaces::{IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait};
 use hyperlane_starknet::tests::setup::{
-    setup, mock_setup, OWNER, LOCAL_DOMAIN, NEW_OWNER, DEFAULT_ISM, DEFAULT_HOOK, REQUIRED_HOOK,
-    NEW_DEFAULT_ISM, NEW_DEFAULT_HOOK, NEW_REQUIRED_HOOK, DESTINATION_DOMAIN, RECIPIENT_ADDRESS,
-    setup_mock_hook, setup_mock_ism
+    setup, mock_setup, OWNER, LOCAL_DOMAIN, NEW_OWNER, DEFAULT_ISM, NEW_DEFAULT_ISM,
+    NEW_DEFAULT_HOOK, NEW_REQUIRED_HOOK, DESTINATION_DOMAIN, RECIPIENT_ADDRESS,
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};

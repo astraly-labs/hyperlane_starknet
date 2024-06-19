@@ -59,6 +59,18 @@ pub mod aggregation {
             ModuleType::AGGREGATION(starknet::get_contract_address())
         }
 
+
+        /// Returns the set of ISMs responsible for verifying _message and the number of ISMs that must verify
+        /// Dev: Can change based on the content of _message
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_message` - the message to consider
+        /// 
+        /// # Returns 
+        /// 
+        /// Span<ContractAddress> - The array of ISM addresses
+        /// threshold - The number of ISMs needed to verify
         fn modules_and_threshold(
             self: @ContractState, _message: Message
         ) -> (Span<ContractAddress>, u8) {
@@ -67,6 +79,19 @@ pub mod aggregation {
             (self.build_modules_span(), threshold)
         }
 
+
+        /// Requires that m-of-n ISMs verify the provided interchain message.
+        /// Dev: Can change based on the content of _message
+        /// Dev: Reverts if threshold is not set
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata (see aggregation_ism_metadata.cairo)
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// boolean - wheter the verification succeed or not.
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
             let (isms, mut threshold) = self.modules_and_threshold(_message.clone());
 
@@ -105,6 +130,14 @@ pub mod aggregation {
             self.threshold.read()
         }
 
+        /// Sets the ISM modules responsible for the verification
+        /// Dev: reverts if module address is null
+        /// Dev: Callable only by the owner
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_modules` - a span of module contract addresses
+        /// 
         fn set_modules(ref self: ContractState, _modules: Span<ContractAddress>) {
             self.ownable.assert_only_owner();
             assert(!self.are_modules_stored(_modules), Errors::MODULES_ALREADY_STORED);
@@ -124,6 +157,12 @@ pub mod aggregation {
             }
         }
 
+        /// Sets the threshold for validation
+        /// Dev: callable only by the owner
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_threshold` - The number of validator signatures needed
         fn set_threshold(ref self: ContractState, _threshold: u8) {
             self.ownable.assert_only_owner();
             self.threshold.write(_threshold);
@@ -131,6 +170,11 @@ pub mod aggregation {
     }
     #[generate_trait]
     impl InternalImpl of InternalTrait {
+        /// Helper:  finds the last module stored in the legacy map
+        /// 
+        /// # Returns
+        /// 
+        /// ContractAddress -the address of the last module stored. 
         fn find_last_module(self: @ContractState) -> ContractAddress {
             let mut current_module = self.modules.read(contract_address_const::<0>());
             loop {
@@ -141,6 +185,11 @@ pub mod aggregation {
                 current_module = next_module;
             }
         }
+        /// Helper:  finds the index associated to a module in the legacy map
+        /// 
+        /// # Returns
+        /// 
+        /// Option<ContractAddress> - the contract if found, else None
         fn find_module_index(
             self: @ContractState, _module: ContractAddress
         ) -> Option<ContractAddress> {
@@ -156,6 +205,11 @@ pub mod aggregation {
             }
         }
 
+        /// Helper:  determines if a span of modules are already stored in the Storage Mapping
+        /// 
+        /// # Returns
+        /// 
+        /// boolean - True if at least one module is stored
         fn are_modules_stored(self: @ContractState, _modules: Span<ContractAddress>) -> bool {
             let mut cur_idx = 0;
             let mut result = false;
@@ -171,6 +225,11 @@ pub mod aggregation {
             result
         }
 
+        /// Helper:  Build a module span out of a storage map
+        /// 
+        /// # Returns
+        /// 
+        /// Span<ContractAddress> - a span of module addresses
         fn build_modules_span(self: @ContractState) -> Span<ContractAddress> {
             let mut cur_address = contract_address_const::<0>();
             let mut modules = array![];

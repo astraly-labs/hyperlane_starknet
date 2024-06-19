@@ -1,9 +1,6 @@
 #[starknet::contract]
 pub mod merkleroot_multisig_ism {
-    use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
-
-
-    use core::ecdsa::check_ecdsa_signature;
+    use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::hooks::merkle_tree_hook::merkle_tree_hook::InternalImpl;
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
@@ -12,11 +9,10 @@ pub mod merkleroot_multisig_ism {
         ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration,
     };
-    use hyperlane_starknet::utils::keccak256::{ByteData, HASH_SIZE};
+    use hyperlane_starknet::utils::keccak256::{ByteData, HASH_SIZE, bool_is_eth_signature_valid};
     use openzeppelin::access::ownable::OwnableComponent;
     use starknet::ContractAddress;
     use starknet::EthAddress;
-    use starknet::eth_signature::is_eth_signature_valid;
     use starknet::secp256_trait::{Signature, signature_from_vrs};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -59,6 +55,18 @@ pub mod merkleroot_multisig_ism {
             ModuleType::MERKLE_ROOT_MULTISIG(starknet::get_contract_address())
         }
 
+        /// Requires that m-of-n ISMs verify the provided interchain message.
+        /// Dev: Can change based on the content of _message
+        /// Dev: Reverts if threshold is not set or no match for signature
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata (see merkleroot_ism_metadata.cairo)
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// boolean - wheter the verification succeed or not.
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
             assert(_metadata.clone().size() > 0, Errors::EMPTY_METADATA);
             let digest = self.digest(_metadata.clone(), _message.clone());
@@ -78,7 +86,7 @@ pub mod merkleroot_multisig_ism {
                         break false;
                     }
                     let signer = *validators.at(cur_idx);
-                    if self.bool_is_eth_signature_valid(digest, signature, signer) {
+                    if bool_is_eth_signature_valid(digest, signature, signer) {
                         // we found a match
                         break true;
                     }
@@ -102,6 +110,12 @@ pub mod merkleroot_multisig_ism {
             self.threshold.read()
         }
 
+        /// Sets a span of validators responsible to verify the message
+        /// Dev: callable only by the admin
+        /// 
+        /// # Arguments 
+        ///
+        /// * - `_validators` - a span of validators to set
         fn set_validators(ref self: ContractState, _validators: Span<EthAddress>) {
             self.ownable.assert_only_owner();
             let mut cur_idx = 0;
@@ -119,11 +133,28 @@ pub mod merkleroot_multisig_ism {
             }
         }
 
+        /// Sets the threshold, the number of validator signatures needed to verify a message 
+        /// Dev: callable only by the admin
+        /// 
+        /// # Arguments 
+        ///
+        /// * - `_threshold` - the number of validator signature needed
         fn set_threshold(ref self: ContractState, _threshold: u32) {
             self.ownable.assert_only_owner();
             self.threshold.write(_threshold);
         }
 
+        /// Returns the set of validators responsible for verifying _message and the number of signatures required
+        /// Dev: Can change based on the content of _message
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// Span<EthAddress> - a span of ethereum validator addresses
+        /// u32  - The number of validator signatures needed
         fn validators_and_threshold(
             self: @ContractState, _message: Message
         ) -> (Span<EthAddress>, u32) {
@@ -137,6 +168,16 @@ pub mod merkleroot_multisig_ism {
 
     #[generate_trait]
     pub impl MerkleInternalImpl of InternalTrait {
+        /// Returns the digest to be used for signature verification.
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata (see merkleroot_ism_metadata.cairo)
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// u256 - The digest to be signed by validators
         fn digest(self: @ContractState, _metadata: Bytes, _message: Message) -> u256 {
             assert(
                 MerkleRootIsmMetadata::message_index(
@@ -175,19 +216,22 @@ pub mod merkleroot_multisig_ism {
             )
         }
 
+        /// Returns the signature at a given index from the metadata.
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata (see merkleroot_ism_metadata.cairo)
+        /// * - `_index` - The index of the signature to return
+        /// 
+        /// # Returns 
+        /// 
+        /// Signature  - A formatted signature (see Signature structure)
         fn get_signature_at(self: @ContractState, _metadata: Bytes, _index: u32) -> Signature {
             let (v, r, s) = MerkleRootIsmMetadata::signature_at(_metadata, _index);
             signature_from_vrs(v.into(), r, s)
         }
 
-        fn bool_is_eth_signature_valid(
-            self: @ContractState, msg_hash: u256, signature: Signature, signer: EthAddress
-        ) -> bool {
-            match is_eth_signature_valid(msg_hash, signature, signer) {
-                Result::Ok(()) => true,
-                Result::Err(_) => false
-            }
-        }
+        /// Helper: buils an span of Ethereum validators addresses from the Storage Map
         fn build_validators_span(self: @ContractState) -> Span<EthAddress> {
             let mut validators = ArrayTrait::new();
             let mut cur_idx = 0;

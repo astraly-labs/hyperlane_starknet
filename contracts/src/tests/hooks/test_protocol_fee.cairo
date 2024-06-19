@@ -1,4 +1,4 @@
-use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+use alexandria_bytes::{Bytes, BytesTrait};
 use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
 use hyperlane_starknet::interfaces::{
     Types, IProtocolFeeDispatcher, IProtocolFeeDispatcherTrait, IPostDispatchHookDispatcher,
@@ -8,9 +8,8 @@ use hyperlane_starknet::tests::setup::{
     setup_protocol_fee, OWNER, MAX_PROTOCOL_FEE, BENEFICIARY, PROTOCOL_FEE, INITIAL_SUPPLY
 };
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{start_prank, CheatTarget, stop_prank};
-use starknet::{get_caller_address};
 
 
 #[test]

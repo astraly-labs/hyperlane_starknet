@@ -47,6 +47,7 @@ mod mailboxclient {
     impl Upgradeable of IUpgradeable<ContractState> {
         /// Upgrades the contract to a new implementation.
         /// Callable only by the owner
+        /// 
         /// # Arguments
         ///
         /// * `new_class_hash` - The class hash of the new implementation.

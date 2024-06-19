@@ -1,6 +1,4 @@
 use alexandria_bytes::{Bytes, BytesTrait};
-use core::option::OptionTrait;
-use core::traits::TryInto;
 use hyperlane_starknet::contracts::hooks::merkle_tree_hook::merkle_tree_hook;
 use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 use hyperlane_starknet::interfaces::{
@@ -9,15 +7,14 @@ use hyperlane_starknet::interfaces::{
     IMerkleTreeHookDispatcherTrait
 };
 use hyperlane_starknet::tests::setup::{
-    setup_merkle_tree_hook, setup, MAILBOX, RECIPIENT_ADDRESS, OWNER, LOCAL_DOMAIN, VALID_OWNER,
-    VALID_RECIPIENT, DESTINATION_DOMAIN
+    setup_merkle_tree_hook, setup, MAILBOX, LOCAL_DOMAIN, VALID_OWNER, VALID_RECIPIENT,
+    DESTINATION_DOMAIN
 };
-use hyperlane_starknet::utils::keccak256::{compute_keccak, ByteData, HASH_SIZE};
+use hyperlane_starknet::utils::keccak256::{ByteData, HASH_SIZE};
 use merkle_tree_hook::{InternalTrait, treeContractMemberStateTrait, countContractMemberStateTrait};
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::cheatcodes::events::EventAssertions;
-use snforge_std::{start_prank, CheatTarget, stop_prank};
-use starknet::contract_address_const;
+use snforge_std::{start_prank, CheatTarget};
 
 #[test]
 fn test_merkle_tree_hook_type() {

@@ -28,6 +28,7 @@ pub mod default_fallback_routing_ism {
 
     type Domain = u32;
     type Index = u32;
+
     #[storage]
     struct Storage {
         modules: LegacyMap<Domain, ContractAddress>,
@@ -78,6 +79,14 @@ pub mod default_fallback_routing_ism {
 
     #[abi(embed_v0)]
     impl IDomainRoutingIsmImpl of IDomainRoutingIsm<ContractState> {
+        /// Initializes the contract with domains and ISMs
+        /// Dev: Callable only by the owner
+        /// Dev: Panics if domains and ISMs spans length mismatch or if module address is null
+        /// 
+        /// # Arguments
+        ///
+        /// * `_domains` - A span of origin domains
+        /// * `_modules` - A span of module addresses associated to the domains
         fn initialize(
             ref self: ContractState, _domains: Span<u32>, _modules: Span<ContractAddress>
         ) {
@@ -97,17 +106,33 @@ pub mod default_fallback_routing_ism {
             }
         }
 
+        /// Sets the ISM to be used for the specified origin domain
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
+        /// * - `_module` -The ISM to use to verify messages
         fn set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
             self.ownable.assert_only_owner();
             assert(_module != contract_address_const::<0>(), Errors::MODULE_CANNOT_BE_ZERO);
             self._set(_domain, _module);
         }
 
+        /// Removes the specified origin domain
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
         fn remove(ref self: ContractState, _domain: u32) {
             self.ownable.assert_only_owner();
             self._remove(_domain);
         }
 
+        /// Builds a span of domains
+        /// 
+        /// # Returns
+        /// 
+        /// Span<u32> - a span of the stored domains
         fn domains(self: @ContractState) -> Span<u32> {
             let mut current_domain = self.domains.read(0);
             let mut domains = array![];
@@ -123,6 +148,15 @@ pub mod default_fallback_routing_ism {
             domains.span()
         }
 
+        /// Retrieve the module associated to a given origin
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_origin` - The origin domain
+        /// 
+        /// # Returns
+        /// 
+        /// ContractAddress - the module contract address
         fn module(self: @ContractState, _origin: u32) -> ContractAddress {
             let module = self.modules.read(_origin);
             if (module != contract_address_const::<0>()) {
@@ -136,6 +170,16 @@ pub mod default_fallback_routing_ism {
 
     #[abi(embed_v0)]
     impl IRoutingIsmImpl of IRoutingIsm<ContractState> {
+        ///  Returns the ISM responsible for verifying _message
+        /// Dev: Can change based on the content of _message
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// ContractAddress - The ISM address to use to verify _message
         fn route(self: @ContractState, _message: Message) -> ContractAddress {
             self.modules.read(_message.origin)
         }
@@ -147,6 +191,19 @@ pub mod default_fallback_routing_ism {
             ModuleType::ROUTING(starknet::get_contract_address())
         }
 
+
+        /// Requires that m-of-n ISMs verify the provided interchain message.
+        /// Dev: Can change based on the content of _message
+        /// Dev: Reverts if threshold is not set
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata 
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// boolean - wheter the verification succeed or not.
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
             let ism_address = self.route(_message.clone());
             let ism_dispatcher = IInterchainSecurityModuleDispatcher {
@@ -158,6 +215,12 @@ pub mod default_fallback_routing_ism {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
+        /// Removes the specified origin domain
+        /// Dev: Callable only by the admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
         fn _remove(ref self: ContractState, _domain: u32) {
             let domain_index = match self.find_domain_index(_domain) {
                 Option::Some(index) => index,
@@ -170,6 +233,12 @@ pub mod default_fallback_routing_ism {
             self.domains.write(domain_index, next_domain);
         }
 
+        /// Sets the ISM to be used for the specified origin domain
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
+        /// * - `_module` -The ISM to use to verify messages
         fn _set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
             match self.find_domain_index(_domain) {
                 Option::Some(_) => {},
@@ -180,6 +249,12 @@ pub mod default_fallback_routing_ism {
             }
             self.modules.write(_domain, _module);
         }
+
+        /// Helper: finds the last domain in the storage Legacy Map
+        /// 
+        /// # Returns 
+        /// 
+        /// u32 - the last domain stored
         fn find_last_domain(self: @ContractState) -> u32 {
             let mut current_domain = self.domains.read(0);
             loop {
@@ -191,6 +266,15 @@ pub mod default_fallback_routing_ism {
             }
         }
 
+        /// Retrieves the index for a given domain
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
+        /// 
+        /// # Returns
+        /// 
+        /// Option<u32> - the index if found, else None
         fn find_domain_index(self: @ContractState, _domain: u32) -> Option<u32> {
             let mut current_domain = 0;
             loop {

@@ -1,5 +1,4 @@
 use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
-use core::poseidon::poseidon_hash_span;
 use hyperlane_starknet::utils::keccak256::{
     reverse_endianness, compute_keccak, ByteData, u256_word_size, u64_word_size, ADDRESS_SIZE
 };
@@ -39,7 +38,7 @@ pub impl MessageImpl of MessageTrait {
         }
     }
 
-    /// Format an input message, using reverse keccak big endian
+    /// Format an input message, using 
     /// 
     /// # Arguments
     /// 
@@ -88,6 +87,6 @@ pub impl MessageImpl of MessageTrait {
                 Option::None(_) => { break (); }
             };
         };
-        (compute_keccak(input.span()), _message)
+        (reverse_endianness(compute_keccak(input.span())), _message)
     }
 }

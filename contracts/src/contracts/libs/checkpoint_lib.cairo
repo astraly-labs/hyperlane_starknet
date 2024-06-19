@@ -2,7 +2,8 @@ pub mod checkpoint_lib {
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
     use hyperlane_starknet::contracts::libs::message::Message;
     use hyperlane_starknet::utils::keccak256::{
-        reverse_endianness, compute_keccak, ByteData, u64_word_size, u256_word_size, HASH_SIZE
+        reverse_endianness, compute_keccak, ByteData, u64_word_size, u256_word_size, HASH_SIZE,
+        to_eth_signature
     };
 
 
@@ -53,7 +54,7 @@ pub mod checkpoint_lib {
                 },
                 ByteData { value: _message_id.into(), size: HASH_SIZE },
             ];
-            compute_keccak(input.span())
+            to_eth_signature(reverse_endianness(compute_keccak(input.span())))
         }
 
         /// Returns the domain hash that validators are expected to use when signing checkpoints.
@@ -75,7 +76,7 @@ pub mod checkpoint_lib {
                 },
                 ByteData { value: HYPERLANE.into(), size: 9 }
             ];
-            compute_keccak(input.span())
+            reverse_endianness(compute_keccak(input.span()))
         }
     }
 }

@@ -267,9 +267,7 @@ pub mod mailbox {
                 );
             self.emit(DispatchId { id: id });
 
-            //
             // HOOKS
-            //
 
             let required_hook_address = self.required_hook.read();
             let required_hook = IPostDispatchHookDispatcher {

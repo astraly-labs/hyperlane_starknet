@@ -6,7 +6,7 @@ pub mod MailboxclientComponent {
     };
     use openzeppelin::access::ownable::{OwnableComponent, OwnableComponent::InternalImpl};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use starknet::ContractAddress;
+    use starknet::{ContractAddress, contract_address_const};
 
     #[storage]
     struct Storage {
@@ -14,6 +14,10 @@ pub mod MailboxclientComponent {
         local_domain: u32,
         hook: ContractAddress,
         interchain_security_module: ContractAddress,
+    }
+
+    pub mod Errors {
+        pub const ADDRESS_CANNOT_BE_ZERO: felt252 = 'Address cannot be zero';
     }
 
 
@@ -32,6 +36,7 @@ pub mod MailboxclientComponent {
         fn set_hook(ref self: ComponentState<TContractState>, _hook: ContractAddress) {
             let ownable_comp = get_dep_component!(@self, Owner);
             ownable_comp.assert_only_owner();
+            assert(_hook != contract_address_const::<0>(), Errors::ADDRESS_CANNOT_BE_ZERO);
             self.hook.write(_hook);
         }
 
@@ -46,6 +51,7 @@ pub mod MailboxclientComponent {
         ) {
             let ownable_comp = get_dep_component!(@self, Owner);
             ownable_comp.assert_only_owner();
+            assert(_module != contract_address_const::<0>(), Errors::ADDRESS_CANNOT_BE_ZERO);
             self.interchain_security_module.write(_module);
         }
 

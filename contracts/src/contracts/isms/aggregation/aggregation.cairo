@@ -1,6 +1,6 @@
 #[starknet::contract]
 pub mod aggregation {
-    use alexandria_bytes::Bytes;
+    use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::libs::aggregation_ism_metadata::aggregation_ism_metadata::AggregationIsmMetadata;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::interfaces::{
@@ -44,6 +44,7 @@ pub mod aggregation {
         pub const THRESHOLD_NOT_REACHED: felt252 = 'Threshold not reached';
         pub const MODULE_ADDRESS_CANNOT_BE_NULL: felt252 = 'Module address cannot be null';
         pub const THRESHOLD_NOT_SET: felt252 = 'Threshold not set';
+        pub const MODULES_ALREADY_STORED: felt252 = 'Modules already stored';
     }
 
     #[constructor]
@@ -75,7 +76,7 @@ pub mod aggregation {
         ) -> (Span<ContractAddress>, u8) {
             // THE USER CAN DEFINE HERE CONDITIONS FOR THE MODULE AND THRESHOLD SELECTION
             let threshold = self.threshold.read();
-            (build_modules_span(self), threshold)
+            (self.build_modules_span(), threshold)
         }
 
 
@@ -93,10 +94,14 @@ pub mod aggregation {
         /// boolean - wheter the verification succeed or not.
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
             let (isms, mut threshold) = self.modules_and_threshold(_message.clone());
+
             assert(threshold != 0, Errors::THRESHOLD_NOT_SET);
-            let modules = build_modules_span(self);
+            let modules = self.build_modules_span();
             let mut cur_idx: u8 = 0;
             loop {
+                if (threshold == 0) {
+                    break ();
+                }
                 if (cur_idx.into() == isms.len()) {
                     break ();
                 }
@@ -107,6 +112,7 @@ pub mod aggregation {
                 let ism = IInterchainSecurityModuleDispatcher {
                     contract_address: *modules.at(cur_idx.into())
                 };
+
                 let metadata = AggregationIsmMetadata::metadata_at(_metadata.clone(), cur_idx);
                 assert(ism.verify(metadata, _message.clone()), Errors::VERIFICATION_FAILED);
                 threshold -= 1;
@@ -117,7 +123,7 @@ pub mod aggregation {
         }
 
         fn get_modules(self: @ContractState) -> Span<ContractAddress> {
-            build_modules_span(self)
+            self.build_modules_span()
         }
 
         fn get_threshold(self: @ContractState) -> u8 {
@@ -134,7 +140,8 @@ pub mod aggregation {
         /// 
         fn set_modules(ref self: ContractState, _modules: Span<ContractAddress>) {
             self.ownable.assert_only_owner();
-            let mut last_module = find_last_module(@self);
+            assert(!self.are_modules_stored(_modules), Errors::MODULES_ALREADY_STORED);
+            let mut last_module = self.find_last_module();
             let mut cur_idx = 0;
             loop {
                 if (cur_idx == _modules.len()) {
@@ -161,39 +168,70 @@ pub mod aggregation {
             self.threshold.write(_threshold);
         }
     }
-
-    /// Helper:  find the last module stored in the legacy map
-    /// 
-    /// # Returns
-    /// 
-    /// ContractAddress -the address of the last module stored. 
-    fn find_last_module(self: @ContractState) -> ContractAddress {
-        let mut current_module = self.modules.read(contract_address_const::<0>());
-        loop {
-            let next_module = self.modules.read(current_module);
-            if next_module == contract_address_const::<0>() {
-                break current_module;
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        /// Helper:  find the last module stored in the legacy map
+        /// 
+        /// # Returns
+        /// 
+        /// ContractAddress -the address of the last module stored. 
+        fn find_last_module(self: @ContractState) -> ContractAddress {
+            let mut current_module = self.modules.read(contract_address_const::<0>());
+            loop {
+                let next_module = self.modules.read(current_module);
+                if next_module == contract_address_const::<0>() {
+                    break current_module;
+                }
+                current_module = next_module;
             }
-            current_module = next_module;
         }
-    }
-
-    /// Helper:  Build a module span out of a stored legacy Map
-    /// 
-    /// # Returns
-    /// 
-    /// Span<ContractAddress> -a span of module addresses
-    fn build_modules_span(self: @ContractState) -> Span<ContractAddress> {
-        let mut cur_address = contract_address_const::<0>();
-        let mut modules = array![];
-        loop {
-            let next_address = self.modules.read(cur_address);
-            if (next_address == contract_address_const::<0>()) {
-                break ();
+        fn find_module_index(
+            self: @ContractState, _module: ContractAddress
+        ) -> Option<ContractAddress> {
+            let mut current_module: ContractAddress = 0.try_into().unwrap();
+            loop {
+                let next_module = self.modules.read(current_module);
+                if next_module == _module {
+                    break Option::Some(current_module);
+                } else if next_module == 0.try_into().unwrap() {
+                    break Option::None(());
+                }
+                current_module = next_module;
             }
-            modules.append(cur_address);
-            cur_address = next_address
-        };
-        modules.span()
+        }
+
+        fn are_modules_stored(self: @ContractState, _modules: Span<ContractAddress>) -> bool {
+            let mut cur_idx = 0;
+            let mut result = false;
+            while cur_idx < _modules.len()
+                && result == false {
+                    let module = *_modules.at(cur_idx);
+                    match self.find_module_index(module) {
+                        Option::Some => result = true,
+                        Option::None => {}
+                    };
+                    cur_idx += 1;
+                };
+            result
+        }
+
+        /// Helper:  Build a module span out of a stored legacy Map
+        /// 
+        /// # Returns
+        /// 
+        /// Span<ContractAddress> -a span of module addresses
+        fn build_modules_span(self: @ContractState) -> Span<ContractAddress> {
+            let mut cur_address = contract_address_const::<0>();
+            let mut modules = array![];
+            loop {
+                let next_address = self.modules.read(cur_address);
+                if (next_address == contract_address_const::<0>()) {
+                    break ();
+                }
+                modules.append(next_address);
+                cur_address = next_address
+            };
+            modules.span()
+        }
     }
 }

@@ -107,15 +107,15 @@ pub mod validator_announce {
             );
             assert(!self.replay_protection.read(replay_id), Errors::REPLAY_PROTECTION_ERROR);
             let announcement_digest = self.get_announcement_digest(u256_storage_location);
-            let signature: Signature = convert_to_signature(_signature);
+            let signature: Signature = self.convert_to_signature(_signature);
             assert(
-                bool_is_eth_signature_valid(announcement_digest, signature, _validator),
+                self.bool_is_eth_signature_valid(announcement_digest, signature, _validator),
                 Errors::WRONG_SIGNER
             );
-            match find_validators_index(@self, _validator) {
-                Option::Some(_) => {},
-                Option::None(()) => {
-                    let last_validator = find_last_validator(@self);
+            match self.find_validators_index(_validator) {
+                Option::Some => {},
+                Option::None => {
+                    let last_validator = self.find_last_validator();
                     self.validators.write(last_validator, _validator);
                 }
             };
@@ -151,7 +151,7 @@ pub mod validator_announce {
                         let validator_metadata = self.storage_location.read(*validator);
                         metadata.append(validator_metadata.span())
                     },
-                    Option::None(()) => { break (); }
+                    Option::None => { break (); }
                 }
             };
             metadata.span()
@@ -159,7 +159,7 @@ pub mod validator_announce {
 
         /// Returns a list of validators that have made announcements
         fn get_announced_validators(self: @ContractState) -> Span<EthAddress> {
-            build_validators_array(self)
+            self.build_validators_array()
         }
 
 
@@ -175,7 +175,7 @@ pub mod validator_announce {
         fn get_announcement_digest(
             self: @ContractState, mut _storage_location: Array<u256>
         ) -> u256 {
-            let domain_hash = domain_hash(self);
+            let domain_hash = self.domain_hash();
             let mut byte_data_storage_location = array![];
             loop {
                 match _storage_location.pop_front() {
@@ -185,7 +185,7 @@ pub mod validator_announce {
                                 ByteData { value: storage, size: u256_word_size(storage).into() }
                             );
                     },
-                    Option::None(_) => { break (); }
+                    Option::None => { break (); }
                 }
             };
             let hash = reverse_endianness(
@@ -199,92 +199,81 @@ pub mod validator_announce {
         }
     }
 
-
-    /// Converts a Byte signature into a Signature structure
-    fn convert_to_signature(_signature: Bytes) -> Signature {
-        let (_, r) = _signature.read_u256(0);
-        let (_, s) = _signature.read_u256(32);
-        let (_, v) = _signature.read_u8(64);
-        signature_from_vrs(v.try_into().unwrap(), r, s)
-    }
-
-    /// Returns the domain separator used in validator announcements.
-    fn domain_hash(self: @ContractState) -> u256 {
-        let mailbox_address: felt252 = self.mailboxclient.mailbox().try_into().unwrap();
-        let mut input: Array<ByteData> = array![
-            ByteData {
-                value: self.mailboxclient.get_local_domain().into(),
-                size: u64_word_size(self.mailboxclient.get_local_domain().into()).into()
-            },
-            ByteData {
-                value: mailbox_address.try_into().unwrap(),
-                size: u256_word_size(mailbox_address.try_into().unwrap()).into()
-            },
-            ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 }
-        ];
-        reverse_endianness(compute_keccak(input.span()))
-    }
-
-
-    ///  Returns for a given digest, signature and signer if the ethereum signature is valid
-    /// 
-    /// # Arguments
-    /// 
-    /// * - `msg_hash` - the digest
-    /// * - `signature` - The signature to verify
-    /// * - `signer` - The eth signer 
-    /// 
-    /// # Returns 
-    /// 
-    /// boolean - whether the signature is valid or not 
-    fn bool_is_eth_signature_valid(
-        msg_hash: u256, signature: Signature, signer: EthAddress
-    ) -> bool {
-        match is_eth_signature_valid(msg_hash, signature, signer) {
-            Result::Ok(()) => true,
-            Result::Err(_) => false
+    #[generate_trait]
+    pub impl ValidatorAnnounceInternalImpl of InternalTrait {
+        fn convert_to_signature(self: @ContractState, _signature: Bytes) -> Signature {
+            let (_, r) = _signature.read_u256(0);
+            let (_, s) = _signature.read_u256(32);
+            let (_, v) = _signature.read_u8(64);
+            signature_from_vrs(v.try_into().unwrap(), r, s)
         }
-    }
 
-    /// Helper: find the index in the storage legacy map associated to a validator Ethereum address
-    fn find_validators_index(self: @ContractState, _validator: EthAddress) -> Option<EthAddress> {
-        let mut current_validator: EthAddress = 0.try_into().unwrap();
-        loop {
-            let next_validator = self.validators.read(current_validator);
-            if next_validator == _validator {
-                break Option::Some(current_validator);
-            } else if next_validator == 0.try_into().unwrap() {
-                break Option::None(());
-            }
-            current_validator = next_validator;
+        fn domain_hash(self: @ContractState) -> u256 {
+            let mailbox_address: felt252 = self.mailboxclient.mailbox().try_into().unwrap();
+            let mut input: Array<ByteData> = array![
+                ByteData {
+                    value: self.mailboxclient.get_local_domain().into(),
+                    size: u64_word_size(self.mailboxclient.get_local_domain().into()).into()
+                },
+                ByteData {
+                    value: mailbox_address.try_into().unwrap(),
+                    size: u256_word_size(mailbox_address.try_into().unwrap()).into()
+                },
+                ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 }
+            ];
+            reverse_endianness(compute_keccak(input.span()))
         }
-    }
 
-    /// Helper: finds the past validator stored in the legacy map
-    fn find_last_validator(self: @ContractState) -> EthAddress {
-        let mut current_validator = self.validators.read(0.try_into().unwrap());
-        loop {
-            let next_validator = self.validators.read(current_validator);
-            if next_validator == 0.try_into().unwrap() {
-                break current_validator;
+
+        fn bool_is_eth_signature_valid(
+            self: @ContractState, msg_hash: u256, signature: Signature, signer: EthAddress
+        ) -> bool {
+            match is_eth_signature_valid(msg_hash, signature, signer) {
+                Result::Ok(()) => true,
+                Result::Err(_) => false
             }
-            current_validator = next_validator;
         }
-    }
 
-    /// Helper: builds the validators array from the stored legacy map 
-    fn build_validators_array(self: @ContractState) -> Span<EthAddress> {
-        let mut index = 0.try_into().unwrap();
-        let mut validators = array![];
-        loop {
-            let validator = self.validators.read(index);
-            if (validator == 0.try_into().unwrap()) {
-                break ();
+
+        fn find_validators_index(
+            self: @ContractState, _validator: EthAddress
+        ) -> Option<EthAddress> {
+            let mut current_validator: EthAddress = 0.try_into().unwrap();
+            loop {
+                let next_validator = self.validators.read(current_validator);
+                if next_validator == _validator {
+                    break Option::Some(current_validator);
+                } else if next_validator == 0.try_into().unwrap() {
+                    break Option::None;
+                }
+                current_validator = next_validator;
             }
-            validators.append(validator);
-            index = validator;
-        };
+        }
 
-        validators.span()
+        fn find_last_validator(self: @ContractState) -> EthAddress {
+            let mut current_validator = self.validators.read(0.try_into().unwrap());
+            loop {
+                let next_validator = self.validators.read(current_validator);
+                if next_validator == 0.try_into().unwrap() {
+                    break current_validator;
+                }
+                current_validator = next_validator;
+            }
+        }
+
+        fn build_validators_array(self: @ContractState) -> Span<EthAddress> {
+            let mut index = 0.try_into().unwrap();
+            let mut validators = array![];
+            loop {
+                let validator = self.validators.read(index);
+                if (validator == 0.try_into().unwrap()) {
+                    break ();
+                }
+                validators.append(validator);
+                index = validator;
+            };
+
+            validators.span()
+        }
     }
 }

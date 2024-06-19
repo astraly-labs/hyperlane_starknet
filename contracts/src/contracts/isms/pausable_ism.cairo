@@ -7,7 +7,7 @@ pub trait IPausableIsm<TContractState> {
 
 
 #[starknet::contract]
-pub mod pausable {
+pub mod pausable_ism {
     use alexandria_bytes::Bytes;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::interfaces::{

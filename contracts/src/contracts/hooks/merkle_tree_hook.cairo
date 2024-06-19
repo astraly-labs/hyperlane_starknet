@@ -57,6 +57,7 @@ pub mod merkle_tree_hook {
         pub const INVALID_METADATA_VARIANT: felt252 = 'Invalid metadata variant';
         pub const MERKLE_TREE_FULL: felt252 = 'Merkle tree full';
         pub const CANNOT_EXCEED_TREE_DEPTH: felt252 = 'Cannot exceed tree depth';
+        pub const TREE_DEPTH_NOT_REACHED: felt252 = 'Tree depth not reached';
     }
 
     #[event]
@@ -119,7 +120,7 @@ pub mod merkle_tree_hook {
         }
 
         fn latest_checkpoint(self: @ContractState) -> (u256, u32) {
-            (self._root(), self.count())
+            (self._root(), self.count() - 1)
         }
     }
 
@@ -174,6 +175,7 @@ pub mod merkle_tree_hook {
     pub impl InternalImpl of InternalTrait {
         fn _post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) {
             let (id, _) = MessageTrait::format_message(_message);
+            // ensure messages which were not dispatched are not inserted into the tree
             assert(self.mailboxclient._is_latest_dispatched(id), Errors::MESSAGE_NOT_DISPATCHING);
             let index = self.count();
             self._insert(ByteData { value: id, size: HASH_SIZE });
@@ -224,13 +226,19 @@ pub mod merkle_tree_hook {
         fn _root_with_ctx(self: @ContractState, _zeroes: Array<u256>) -> u256 {
             let mut cur_idx = 0;
             let index = self.count.read();
+
+            // Not present in the solidity implementation
             let mut current = ByteData { value: *_zeroes[0], size: HASH_SIZE };
             loop {
                 if (cur_idx == TREE_DEPTH) {
                     break ();
                 }
                 let ith_bit = _get_ith_bit(index.into(), cur_idx);
-                let next = self.tree.read(cur_idx);
+                let next = self
+                    .tree
+                    .read(
+                        cur_idx
+                    ); // Will return 0 if no values is stored, in accordance with solidity impl
                 if (ith_bit == 1) {
                     current =
                         ByteData {
@@ -269,6 +277,7 @@ pub mod merkle_tree_hook {
         /// 
         /// u256 - Calculated merkle root
         fn _branch_root(_item: ByteData, _branch: Span<ByteData>, _index: u256) -> u256 {
+            assert(_branch.len() >= TREE_DEPTH, Errors::TREE_DEPTH_NOT_REACHED);
             let mut cur_idx = 0;
             let mut current = _item;
             loop {

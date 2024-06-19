@@ -92,7 +92,7 @@ pub mod default_fallback_routing_ism {
                     *_modules.at(cur_idx) != contract_address_const::<0>(),
                     Errors::MODULE_CANNOT_BE_ZERO
                 );
-                _set(ref self, *_domains.at(cur_idx), *_modules.at(cur_idx));
+                self._set(*_domains.at(cur_idx), *_modules.at(cur_idx));
                 cur_idx += 1;
             }
         }
@@ -106,7 +106,7 @@ pub mod default_fallback_routing_ism {
         fn set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
             self.ownable.assert_only_owner();
             assert(_module != contract_address_const::<0>(), Errors::MODULE_CANNOT_BE_ZERO);
-            _set(ref self, _domain, _module);
+            self._set(_domain, _module);
         }
 
         /// Removes the specified origin domain
@@ -116,7 +116,7 @@ pub mod default_fallback_routing_ism {
         /// * - `_domain` - The origin domain
         fn remove(ref self: ContractState, _domain: u32) {
             self.ownable.assert_only_owner();
-            _remove(ref self, _domain);
+            self._remove(_domain);
         }
 
         /// Builds a span of domains
@@ -205,63 +205,52 @@ pub mod default_fallback_routing_ism {
         }
     }
 
-    // Helper: finds the last domain stored in the legacy map
-    fn find_last_domain(self: @ContractState) -> u32 {
-        let mut current_domain = self.domains.read(0);
-        loop {
-            let next_domain = self.domains.read(current_domain);
-            if next_domain == 0 {
-                break current_domain;
-            }
-            current_domain = next_domain;
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        fn _remove(ref self: ContractState, _domain: u32) {
+            let domain_index = match self.find_domain_index(_domain) {
+                Option::Some(index) => index,
+                Option::None => {
+                    panic_with_felt252(Errors::DOMAIN_NOT_FOUND);
+                    0
+                }
+            };
+            let next_domain = self.domains.read(_domain);
+            self.domains.write(domain_index, next_domain);
         }
-    }
 
-    // Helper: finds the domain index associated to a domain in the legacy map
-    fn find_domain_index(self: @ContractState, _domain: u32) -> Option<u32> {
-        let mut current_domain = 0;
-        loop {
-            let next_domain = self.domains.read(current_domain);
-            if next_domain == _domain {
-                break Option::Some(current_domain);
-            } else if next_domain == 0 {
-                break Option::None(());
+        fn _set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
+            match self.find_domain_index(_domain) {
+                Option::Some(_) => {},
+                Option::None => {
+                    let latest_domain = self.find_last_domain();
+                    self.domains.write(latest_domain, _domain);
+                }
             }
-            current_domain = next_domain;
+            self.modules.write(_domain, _module);
         }
-    }
-
-    /// Removes the specified origin domain
-    /// 
-    /// # Arguments
-    /// 
-    /// * - `_domain` - The origin domain
-    fn _remove(ref self: ContractState, _domain: u32) {
-        let domain_index = match find_domain_index(@self, _domain) {
-            Option::Some(index) => index,
-            Option::None => {
-                panic_with_felt252(Errors::DOMAIN_NOT_FOUND);
-                0
-            }
-        };
-        let next_domain = self.domains.read(_domain);
-        self.domains.write(domain_index, next_domain);
-    }
-
-    /// Sets the ISM to be used for the specified origin domain
-    /// 
-    /// # Arguments
-    /// 
-    /// * - `_domain` - The origin domain
-    /// * - `_module` -The ISM to use to verify messages
-    fn _set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
-        match find_domain_index(@self, _domain) {
-            Option::Some(_) => {},
-            Option::None => {
-                let latest_domain = find_last_domain(@self);
-                self.domains.write(latest_domain, _domain);
+        fn find_last_domain(self: @ContractState) -> u32 {
+            let mut current_domain = self.domains.read(0);
+            loop {
+                let next_domain = self.domains.read(current_domain);
+                if next_domain == 0 {
+                    break current_domain;
+                }
+                current_domain = next_domain;
             }
         }
-        self.modules.write(_domain, _module);
+
+        fn find_domain_index(self: @ContractState, _domain: u32) -> Option<u32> {
+            let mut current_domain = 0;
+            loop {
+                let next_domain = self.domains.read(current_domain);
+                if next_domain == _domain {
+                    break Option::Some(current_domain);
+                } else if next_domain == 0 {
+                    break Option::None(());
+                }
+                current_domain = next_domain;
+            }
+        }
     }
 }

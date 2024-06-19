@@ -72,7 +72,7 @@ pub mod messageid_multisig_ism {
         /// boolean - wheter the verification succeed or not.
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
             assert(_metadata.clone().size() > 0, Errors::EMPTY_METADATA);
-            let digest = digest(_metadata.clone(), _message.clone());
+            let digest = self.digest(_metadata.clone(), _message.clone());
             let (validators, threshold) = self.validators_and_threshold(_message);
             assert(threshold > 0, Errors::NO_MULTISIG_THRESHOLD_FOR_MESSAGE);
             let mut i = 0;
@@ -81,7 +81,7 @@ pub mod messageid_multisig_ism {
                 if (i == threshold) {
                     break ();
                 }
-                let signature = get_signature_at(_metadata.clone(), i);
+                let signature = self.get_signature_at(_metadata.clone(), i);
                 // we loop on the validators list public key in order to find a match
                 let mut cur_idx = 0;
                 let is_signer_in_list = loop {
@@ -89,7 +89,7 @@ pub mod messageid_multisig_ism {
                         break false;
                     }
                     let signer = *validators.at(cur_idx);
-                    if bool_is_eth_signature_valid(digest, signature, signer) {
+                    if self.bool_is_eth_signature_valid(digest, signature, signer) {
                         // we found a match
                         break true;
                     }
@@ -106,7 +106,7 @@ pub mod messageid_multisig_ism {
     #[abi(embed_v0)]
     impl IValidorConfigurationImpl of IValidatorConfiguration<ContractState> {
         fn get_validators(self: @ContractState) -> Span<EthAddress> {
-            build_validators_span(self)
+            self.build_validators_span()
         }
 
         fn get_threshold(self: @ContractState) -> u32 {
@@ -147,46 +147,49 @@ pub mod messageid_multisig_ism {
             // USER CONTRACT DEFINITION HERE
             // USER CAN SPECIFY VALIDATORS SELECTION CONDITIONS
             let threshold = self.threshold.read();
-            (build_validators_span(self), threshold)
-        }
-    }
-    fn digest(_metadata: Bytes, _message: Message) -> u256 {
-        let origin_merkle_tree_hook = MessageIdIsmMetadata::origin_merkle_tree_hook(
-            _metadata.clone()
-        );
-        let root = MessageIdIsmMetadata::root(_metadata.clone());
-        let index = MessageIdIsmMetadata::index(_metadata.clone());
-        let (format_message, _) = MessageTrait::format_message(_message.clone());
-        CheckpointLib::digest(
-            _message.origin, origin_merkle_tree_hook.into(), root.into(), index, format_message
-        )
-    }
-
-    fn get_signature_at(_metadata: Bytes, _index: u32) -> Signature {
-        let (v, r, s) = MessageIdIsmMetadata::signature_at(_metadata, _index);
-        signature_from_vrs(v.into(), r, s)
-    }
-
-    fn bool_is_eth_signature_valid(
-        msg_hash: u256, signature: Signature, signer: EthAddress
-    ) -> bool {
-        match is_eth_signature_valid(msg_hash, signature, signer) {
-            Result::Ok(()) => true,
-            Result::Err(_) => false
+            (self.build_validators_span(), threshold)
         }
     }
 
-    fn build_validators_span(self: @ContractState) -> Span<EthAddress> {
-        let mut validators = ArrayTrait::new();
-        let mut cur_idx = 0;
-        loop {
-            let validator = self.validators.read(cur_idx);
-            if (validator == 0.try_into().unwrap()) {
-                break ();
+    #[generate_trait]
+    pub impl MessageIdInternalImpl of InternalTrait {
+        fn digest(self: @ContractState, _metadata: Bytes, _message: Message) -> u256 {
+            let origin_merkle_tree_hook = MessageIdIsmMetadata::origin_merkle_tree_hook(
+                _metadata.clone()
+            );
+            let root = MessageIdIsmMetadata::root(_metadata.clone());
+            let index = MessageIdIsmMetadata::index(_metadata.clone());
+            let (format_message, _) = MessageTrait::format_message(_message.clone());
+            CheckpointLib::digest(
+                _message.origin, origin_merkle_tree_hook.into(), root.into(), index, format_message
+            )
+        }
+
+        fn get_signature_at(self: @ContractState, _metadata: Bytes, _index: u32) -> Signature {
+            let (v, r, s) = MessageIdIsmMetadata::signature_at(_metadata, _index);
+            signature_from_vrs(v.into(), r, s)
+        }
+
+        fn bool_is_eth_signature_valid(
+            self: @ContractState, msg_hash: u256, signature: Signature, signer: EthAddress
+        ) -> bool {
+            match is_eth_signature_valid(msg_hash, signature, signer) {
+                Result::Ok(()) => true,
+                Result::Err(_) => false
             }
-            validators.append(validator);
-            cur_idx += 1;
-        };
-        validators.span()
+        }
+        fn build_validators_span(self: @ContractState) -> Span<EthAddress> {
+            let mut validators = ArrayTrait::new();
+            let mut cur_idx = 0;
+            loop {
+                let validator = self.validators.read(cur_idx);
+                if (validator == 0.try_into().unwrap()) {
+                    break ();
+                }
+                validators.append(validator);
+                cur_idx += 1;
+            };
+            validators.span()
+        }
     }
 }

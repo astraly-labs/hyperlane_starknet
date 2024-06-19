@@ -177,5 +177,9 @@ fn test_insert_node_into_merkle_tree_hook() {
         'build tree failed'
     );
     assert(state._root() != 0, 'root computation failed');
+    let (root, count) = state.latest_checkpoint();
+    assert_eq!(root, state._root()); 
+    assert_eq!(count, 3); 
+
 }
 

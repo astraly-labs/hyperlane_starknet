@@ -88,7 +88,7 @@ fn test_collect_protocol_fee() {
 #[test]
 #[should_panic(expected: ('Insufficient balance',))]
 fn test_collect_protocol_fee_fails_if_insufficient_balance() {
-    let (fee_token, protocol_fee, _) = setup_protocol_fee();
+    let (_, protocol_fee, _) = setup_protocol_fee();
     protocol_fee.collect_protocol_fees();
 }
 
@@ -159,10 +159,10 @@ fn test_quote_dispatch() {
 #[test]
 #[should_panic(expected: ('Invalid metadata variant',))]
 fn test_quote_dispatch_fails_if_invalid_variant() {
-    let (fee_token, _, post_dispatch_hook) = setup_protocol_fee();
+    let (_, _, post_dispatch_hook) = setup_protocol_fee();
     let mut metadata = BytesTrait::new_empty();
     let variant = 2;
     metadata.append_u16(variant);
     let message = MessageTrait::default();
-    let res = post_dispatch_hook.quote_dispatch(metadata, message);
+    post_dispatch_hook.quote_dispatch(metadata, message);
 }

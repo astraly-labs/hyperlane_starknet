@@ -125,7 +125,7 @@ fn test_quote_dispatch_fails_if_invalid_variant() {
 
 #[test]
 fn test_count() {
-    let (merkle_tree, post_dispatch_hook, mut spy) = setup_merkle_tree_hook();
+    let (merkle_tree, _, _) = setup_merkle_tree_hook();
     let count = merkle_tree.count();
     assert_eq!(count, 0);
 }

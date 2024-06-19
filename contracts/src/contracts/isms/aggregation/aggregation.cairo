@@ -58,6 +58,18 @@ pub mod aggregation {
             ModuleType::AGGREGATION(starknet::get_contract_address())
         }
 
+
+        /// Returns the set of ISMs responsible for verifying _message and the number of ISMs that must verify
+        /// Dev: Can change based on the content of _message
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_message` - the message to consider
+        /// 
+        /// # Returns 
+        /// 
+        /// Span<ContractAddress> - The array of ISM addresses
+        /// threshold - The number of ISMs needed to verify
         fn modules_and_threshold(
             self: @ContractState, _message: Message
         ) -> (Span<ContractAddress>, u8) {
@@ -66,6 +78,19 @@ pub mod aggregation {
             (build_modules_span(self), threshold)
         }
 
+
+        /// Requires that m-of-n ISMs verify the provided interchain message.
+        /// Dev: Can change based on the content of _message
+        /// Dev: Reverts if threshold is not set
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata (see aggregation_ism_metadata.cairo)
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// boolean - wheter the verification succeed or not.
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
             let (isms, mut threshold) = self.modules_and_threshold(_message.clone());
             assert(threshold != 0, Errors::THRESHOLD_NOT_SET);
@@ -99,6 +124,14 @@ pub mod aggregation {
             self.threshold.read()
         }
 
+        /// Set the ISM modules responsible for the verification
+        /// Dev: reverts if module address is null
+        /// Dev: Callable only by the owner
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_modules` - a span of module contract addresses
+        /// 
         fn set_modules(ref self: ContractState, _modules: Span<ContractAddress>) {
             self.ownable.assert_only_owner();
             let mut last_module = find_last_module(@self);
@@ -117,12 +150,23 @@ pub mod aggregation {
             }
         }
 
+        /// Set the threshold for validation
+        /// Dev: callable only by the owner
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_threshold` - The number of validator signatures needed
         fn set_threshold(ref self: ContractState, _threshold: u8) {
             self.ownable.assert_only_owner();
             self.threshold.write(_threshold);
         }
     }
 
+    /// Helper:  find the last module stored in the legacy map
+    /// 
+    /// # Returns
+    /// 
+    /// ContractAddress -the address of the last module stored. 
     fn find_last_module(self: @ContractState) -> ContractAddress {
         let mut current_module = self.modules.read(contract_address_const::<0>());
         loop {
@@ -134,6 +178,11 @@ pub mod aggregation {
         }
     }
 
+    /// Helper:  Build a module span out of a stored legacy Map
+    /// 
+    /// # Returns
+    /// 
+    /// Span<ContractAddress> -a span of module addresses
     fn build_modules_span(self: @ContractState) -> Span<ContractAddress> {
         let mut cur_address = contract_address_const::<0>();
         let mut modules = array![];

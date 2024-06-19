@@ -1,6 +1,6 @@
 #[starknet::contract]
 pub mod protocol_fee {
-    use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+    use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::{
         StandardHookMetadata, VARIANT
     };
@@ -42,6 +42,15 @@ pub mod protocol_fee {
         OwnableEvent: OwnableComponent::Event,
     }
 
+    /// Constructor of the contract
+    /// 
+    /// # Arguments
+    ///
+    /// * `_max_protocol_fee` - The maximum protocol fee that can be set.
+    /// * `_protocol_fee` - The current protocol fee.s
+    /// * `_beneficiary` -The beneficiary of protocol fees.
+    /// * `_owner` - The owner of the contract
+    /// * `_token_address` - The token used as fee
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -63,16 +72,42 @@ pub mod protocol_fee {
         fn hook_type(self: @ContractState) -> Types {
             Types::PROTOCOL_FEE(())
         }
-
+        /// Returns whether the hook supports metadata
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - metadata
+        /// 
+        /// # Returns
+        /// 
+        /// boolean - whether the hook supports metadata
         fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
             _metadata.size() == 0 || StandardHookMetadata::variant(_metadata) == VARIANT.into()
         }
 
+        /// Post action after a message is dispatched via the Mailbox
+        /// Dev: revert if invalid metadata variant
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - the metadata required for the hook
+        /// * - `_message` - the message passed from the Mailbox.dispatch() call
         fn post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) {
             assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
             self._post_dispatch(_metadata, _message);
         }
 
+        ///  Compute the payment required by the postDispatch call
+        /// Dev: revert if invalid metadata variant
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - The metadata required for the hook
+        /// * - `_message` - the message passed from the Mailbox.dispatch() call
+        /// 
+        /// # Returns 
+        /// 
+        /// u256 - Quoted payment for the postDispatch call
         fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
             assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
             self._quote_dispatch(_metadata, _message)
@@ -85,6 +120,11 @@ pub mod protocol_fee {
             self.protocol_fee.read()
         }
 
+        /// Sets the protocol fee.
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_protocol_fee` - The new protocol fee.
         fn set_protocol_fee(ref self: ContractState, _protocol_fee: u256) {
             self.ownable.assert_only_owner();
             self._set_protocol_fee(_protocol_fee);
@@ -94,12 +134,18 @@ pub mod protocol_fee {
             self.beneficiary.read()
         }
 
+        ///  Sets the beneficiary of protocol fees.
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_beneficiary` - The new beneficiary.
         fn set_beneficiary(ref self: ContractState, _beneficiary: ContractAddress) {
             self.ownable.assert_only_owner();
             self._set_beneficiary(_beneficiary);
         }
 
-
+        /// Collects protocol fees from the contract.
+        /// Fees are sent to the beneficary address
         fn collect_protocol_fees(ref self: ContractState) {
             let token_dispatcher = IERC20Dispatcher { contract_address: self.fee_token.read() };
             let contract_address = get_contract_address();
@@ -112,6 +158,13 @@ pub mod protocol_fee {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
+        /// Post action after a message is dispatched via the Mailbox
+        /// Dev: revert if insufficient balance or allowance
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - the metadata required for the hook
+        /// * - `_message` - the message passed from the Mailbox.dispatch() call
         fn _post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) {
             let token_dispatcher = IERC20Dispatcher { contract_address: self.fee_token.read() };
             let caller_address = get_caller_address();
@@ -126,14 +179,37 @@ pub mod protocol_fee {
             token_dispatcher.transfer_from(caller_address, contract_address, protocol_fee);
         }
 
+        ///  Returns the static protocol fee 
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - The metadata required for the hook
+        /// * - `_message` - the message passed from the Mailbox.dispatch() call
+        /// 
+        /// # Returns 
+        /// 
+        /// u256 - Quoted payment for the postDispatch call
         fn _quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
             self.protocol_fee.read()
         }
 
+        ///  Sets the protocol fee.
+        /// Dev: reverts if protocol exceeds max protocol fee
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_protocol_fee` - The new protocol fee.
         fn _set_protocol_fee(ref self: ContractState, _protocol_fee: u256) {
             assert(_protocol_fee <= self.max_protocol_fee.read(), Errors::EXCEEDS_MAX_PROTOCOL_FEE);
             self.protocol_fee.write(_protocol_fee);
         }
+
+        /// Sets the beneficiary of protocol fees.
+        /// Dev: reverts if beneficiary is null address
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_beneficiary` - The new beneficiary.
         fn _set_beneficiary(ref self: ContractState, _beneficiary: ContractAddress) {
             assert(_beneficiary != contract_address_const::<0>(), Errors::INVALID_BENEFICARY);
             self.beneficiary.write(_beneficiary);

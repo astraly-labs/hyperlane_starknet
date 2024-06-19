@@ -72,6 +72,18 @@ pub mod validator_announce {
 
     #[abi(embed_v0)]
     impl IValidatorAnnonceImpl of IValidatorAnnounce<ContractState> {
+        /// Announces a validator signature storage location
+        /// Dev: reverts if announce already occured or if wrong signer
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_validator` - The validator to consider
+        /// * - `_storage_location` - Information encoding the location of signed
+        /// * - `_signature` -The signed validator announcement
+        /// 
+        /// # Returns 
+        /// 
+        /// boolean -  True upon success
         fn announce(
             ref self: ContractState,
             _validator: EthAddress,
@@ -119,6 +131,16 @@ pub mod validator_announce {
             true
         }
 
+
+        /// Returns a list of all announced storage locations
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_validators` - The list of validators to get registrations for
+        /// 
+        /// # Returns 
+        /// 
+        /// Span<Span<felt252>> -  A list of registered storage metadata
         fn get_announced_storage_locations(
             self: @ContractState, mut _validators: Span<EthAddress>
         ) -> Span<Span<felt252>> {
@@ -135,10 +157,21 @@ pub mod validator_announce {
             metadata.span()
         }
 
+        /// Returns a list of validators that have made announcements
         fn get_announced_validators(self: @ContractState) -> Span<EthAddress> {
             build_validators_array(self)
         }
 
+
+        /// Returns the digest validators are expected to sign when signing announcements.
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_storage_location` -Storage location as array of u256
+        /// 
+        /// # Returns 
+        /// 
+        /// u256 -  The digest of the announcement.
         fn get_announcement_digest(
             self: @ContractState, mut _storage_location: Array<u256>
         ) -> u256 {
@@ -167,6 +200,7 @@ pub mod validator_announce {
     }
 
 
+    /// Converts a Byte signature into a Signature structure
     fn convert_to_signature(_signature: Bytes) -> Signature {
         let (_, r) = _signature.read_u256(0);
         let (_, s) = _signature.read_u256(32);
@@ -174,6 +208,7 @@ pub mod validator_announce {
         signature_from_vrs(v.try_into().unwrap(), r, s)
     }
 
+    /// Returns the domain separator used in validator announcements.
     fn domain_hash(self: @ContractState) -> u256 {
         let mailbox_address: felt252 = self.mailboxclient.mailbox().try_into().unwrap();
         let mut input: Array<ByteData> = array![
@@ -191,6 +226,17 @@ pub mod validator_announce {
     }
 
 
+    ///  Returns for a given digest, signature and signer if the ethereum signature is valid
+    /// 
+    /// # Arguments
+    /// 
+    /// * - `msg_hash` - the digest
+    /// * - `signature` - The signature to verify
+    /// * - `signer` - The eth signer 
+    /// 
+    /// # Returns 
+    /// 
+    /// boolean - whether the signature is valid or not 
     fn bool_is_eth_signature_valid(
         msg_hash: u256, signature: Signature, signer: EthAddress
     ) -> bool {
@@ -200,6 +246,7 @@ pub mod validator_announce {
         }
     }
 
+    /// Helper: find the index in the storage legacy map associated to a validator Ethereum address
     fn find_validators_index(self: @ContractState, _validator: EthAddress) -> Option<EthAddress> {
         let mut current_validator: EthAddress = 0.try_into().unwrap();
         loop {
@@ -213,6 +260,7 @@ pub mod validator_announce {
         }
     }
 
+    /// Helper: finds the past validator stored in the legacy map
     fn find_last_validator(self: @ContractState) -> EthAddress {
         let mut current_validator = self.validators.read(0.try_into().unwrap());
         loop {
@@ -224,6 +272,7 @@ pub mod validator_announce {
         }
     }
 
+    /// Helper: builds the validators array from the stored legacy map 
     fn build_validators_array(self: @ContractState) -> Span<EthAddress> {
         let mut index = 0.try_into().unwrap();
         let mut validators = array![];

@@ -87,17 +87,34 @@ pub mod domain_routing_ism {
             }
         }
 
+        /// Sets the ISM to be used for the specified origin domain
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
+        /// * - `_module` -The ISM to use to verify messages
         fn set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
             self.ownable.assert_only_owner();
             assert(_module != contract_address_const::<0>(), Errors::MODULE_CANNOT_BE_ZERO);
             _set(ref self, _domain, _module);
         }
 
+
+        /// Removes the specified origin domain
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
         fn remove(ref self: ContractState, _domain: u32) {
             self.ownable.assert_only_owner();
             _remove(ref self, _domain);
         }
 
+        /// Builds a span of domains
+        /// 
+        /// # Returns
+        /// 
+        /// Span<u32> - a span of the stored domains
         fn domains(self: @ContractState) -> Span<u32> {
             let mut current_domain = self.domains.read(0);
             let mut domains = array![];
@@ -113,6 +130,15 @@ pub mod domain_routing_ism {
             domains.span()
         }
 
+        /// Retrieve the module associated to a given origin
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_origin` - The origin domain
+        /// 
+        /// # Returns
+        /// 
+        /// ContractAddress - the module contract address
         fn module(self: @ContractState, _origin: u32) -> ContractAddress {
             let module = self.modules.read(_origin);
             assert(module != contract_address_const::<0>(), Errors::ORIGIN_NOT_FOUND);
@@ -133,6 +159,18 @@ pub mod domain_routing_ism {
             ModuleType::ROUTING(starknet::get_contract_address())
         }
 
+        /// Requires that m-of-n ISMs verify the provided interchain message.
+        /// Dev: Can change based on the content of _message
+        /// Dev: Reverts if threshold is not set
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata (see aggregation_ism_metadata.cairo)
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// boolean - wheter the verification succeed or not.
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
             let ism_address = self.route(_message.clone());
             let ism_dispatcher = IInterchainSecurityModuleDispatcher {
@@ -166,6 +204,11 @@ pub mod domain_routing_ism {
         }
     }
 
+    /// Removes the specified origin domain
+    /// 
+    /// # Arguments
+    /// 
+    /// * - `_domain` - The origin domain
     fn _remove(ref self: ContractState, _domain: u32) {
         let domain_index = match find_domain_index(@self, _domain) {
             Option::Some(index) => index,
@@ -178,6 +221,12 @@ pub mod domain_routing_ism {
         self.domains.write(domain_index, next_domain);
     }
 
+    /// Sets the ISM to be used for the specified origin domain
+    /// 
+    /// # Arguments
+    /// 
+    /// * - `_domain` - The origin domain
+    /// * - `_module` -The ISM to use to verify messages
     fn _set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
         match find_domain_index(@self, _domain) {
             Option::Some(_) => {},

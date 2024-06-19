@@ -1,7 +1,6 @@
 #[starknet::contract]
 pub mod messageid_multisig_ism {
-    use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
-    use core::ecdsa::check_ecdsa_signature;
+    use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::contracts::libs::multisig::message_id_ism_metadata::message_id_ism_metadata::MessageIdIsmMetadata;
@@ -59,6 +58,18 @@ pub mod messageid_multisig_ism {
             ModuleType::MESSAGE_ID_MULTISIG(starknet::get_contract_address())
         }
 
+        /// Requires that m-of-n ISMs verify the provided interchain message.
+        /// Dev: Can change based on the content of _message
+        /// Dev: Reverts if threshold is not set or no match for signature
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata (see aggregation_ism_metadata.cairo)
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// boolean - wheter the verification succeed or not.
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
             assert(_metadata.clone().size() > 0, Errors::EMPTY_METADATA);
             let digest = digest(_metadata.clone(), _message.clone());
@@ -102,6 +113,12 @@ pub mod messageid_multisig_ism {
             self.threshold.read()
         }
 
+        /// Sets a span of validators responsible to verify the message
+        /// Dev: callable only by the admin
+        /// 
+        /// # Arguments 
+        ///
+        /// * - `_validators` - a span of validators to set
         fn set_validators(ref self: ContractState, _validators: Span<EthAddress>) {
             self.ownable.assert_only_owner();
             let mut cur_idx = 0;

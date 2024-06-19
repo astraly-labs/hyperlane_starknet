@@ -15,6 +15,7 @@ pub mod domain_routing_ism {
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
@@ -22,6 +23,7 @@ pub mod domain_routing_ism {
 
     type Domain = u32;
     type Index = u32;
+
     #[storage]
     struct Storage {
         modules: LegacyMap<Domain, ContractAddress>,
@@ -56,7 +58,7 @@ pub mod domain_routing_ism {
     #[abi(embed_v0)]
     impl Upgradeable of IUpgradeable<ContractState> {
         /// Upgrades the contract to a new implementation.
-        /// Callable only by the owner
+        /// Dev: allable only by the owner
         /// # Arguments
         ///
         /// * `new_class_hash` - The class hash of the new implementation.
@@ -68,6 +70,14 @@ pub mod domain_routing_ism {
 
     #[abi(embed_v0)]
     impl IDomainRoutingIsmImpl of IDomainRoutingIsm<ContractState> {
+        /// Initializes the contract with domains and ISMs
+        /// Dev: Callable only by the owner
+        /// Dev: Panics if domains and ISMs spans length mismatch or if module address is null
+        /// 
+        /// # Arguments
+        ///
+        /// * `_domains` - A span of origin domains
+        /// * `_modules` - A span of module addresses associated to the domains
         fn initialize(
             ref self: ContractState, _domains: Span<u32>, _modules: Span<ContractAddress>
         ) {
@@ -88,11 +98,13 @@ pub mod domain_routing_ism {
         }
 
         /// Sets the ISM to be used for the specified origin domain
+        /// Dev: Callable only by the admin
+        /// Dev: Panics if module address is null or domain not found
         /// 
         /// # Arguments
         /// 
         /// * - `_domain` - The origin domain
-        /// * - `_module` -The ISM to use to verify messages
+        /// * - `_module` -The ISM address to use to verify messages
         fn set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
             self.ownable.assert_only_owner();
             assert(_module != contract_address_const::<0>(), Errors::MODULE_CANNOT_BE_ZERO);
@@ -101,6 +113,7 @@ pub mod domain_routing_ism {
 
 
         /// Removes the specified origin domain
+        /// Dev: Callable only by the admin
         /// 
         /// # Arguments
         /// 
@@ -114,7 +127,7 @@ pub mod domain_routing_ism {
         /// 
         /// # Returns
         /// 
-        /// Span<u32> - a span of the stored domains
+        /// Span<u32> - a span of stored domains
         fn domains(self: @ContractState) -> Span<u32> {
             let mut current_domain = self.domains.read(0);
             let mut domains = array![];
@@ -130,7 +143,7 @@ pub mod domain_routing_ism {
             domains.span()
         }
 
-        /// Retrieve the module associated to a given origin
+        /// Retrieves the module associated to a given origin
         /// 
         /// # Arguments
         /// 
@@ -138,7 +151,7 @@ pub mod domain_routing_ism {
         /// 
         /// # Returns
         /// 
-        /// ContractAddress - the module contract address
+        /// ContractAddress - the ISM contract address
         fn module(self: @ContractState, _origin: u32) -> ContractAddress {
             let module = self.modules.read(_origin);
             assert(module != contract_address_const::<0>(), Errors::ORIGIN_NOT_FOUND);
@@ -148,6 +161,16 @@ pub mod domain_routing_ism {
 
     #[abi(embed_v0)]
     impl IRoutingIsmImpl of IRoutingIsm<ContractState> {
+        /// Returns the ISM responsible for verifying _message
+        /// Dev: Can change based on the content of _message
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_message` -  Formatted Hyperlane message (see Message.cairo)
+        /// 
+        /// # Returns
+        /// 
+        /// ContractAddress - the ISM contract address
         fn route(self: @ContractState, _message: Message) -> ContractAddress {
             self.modules.read(_message.origin)
         }
@@ -182,6 +205,12 @@ pub mod domain_routing_ism {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
+        /// Removes the specified origin domain
+        /// Dev: Callable only by the admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
         fn _remove(ref self: ContractState, _domain: u32) {
             let domain_index = match self.find_domain_index(_domain) {
                 Option::Some(index) => index,
@@ -194,6 +223,12 @@ pub mod domain_routing_ism {
             self.domains.write(domain_index, next_domain);
         }
 
+        /// Sets the ISM to be used for the specified origin domain
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
+        /// * - `_module` -The ISM to use to verify messages
         fn _set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
             match self.find_domain_index(_domain) {
                 Option::Some(_) => {},
@@ -204,6 +239,12 @@ pub mod domain_routing_ism {
             }
             self.modules.write(_domain, _module);
         }
+
+        /// Helper: finds the last domain in the storage Legacy Map
+        /// 
+        /// # Returns 
+        /// 
+        /// u32 - the last domain stored
         fn find_last_domain(self: @ContractState) -> u32 {
             let mut current_domain = self.domains.read(0);
             loop {
@@ -215,6 +256,15 @@ pub mod domain_routing_ism {
             }
         }
 
+        /// Retrieve the index for a given domain
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
+        /// 
+        /// # Returns
+        /// 
+        /// Option<u32> - the index if found, else None
         fn find_domain_index(self: @ContractState, _domain: u32) -> Option<u32> {
             let mut current_domain = 0;
             loop {

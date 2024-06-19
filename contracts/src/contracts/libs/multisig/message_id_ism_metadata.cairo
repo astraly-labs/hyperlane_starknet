@@ -10,11 +10,11 @@ pub mod message_id_ism_metadata {
     }
 
 
-/// * Format of metadata:
-/// * [   0:  32] Origin merkle tree address
-/// * [  32:  64] Signed checkpoint root
-/// * [  64:  68] Signed checkpoint index
-/// * [  68:????] Validator signatures (length := threshold * 65)
+    /// * Format of metadata:
+    /// * [   0:  32] Origin merkle tree address
+    /// * [  32:  64] Signed checkpoint root
+    /// * [  64:  68] Signed checkpoint index
+    /// * [  68:????] Validator signatures (length := threshold * 65)
 
     pub const ORIGIN_MERKLE_TREE_HOOK_OFFSET: u32 = 0;
     pub const ROOT_OFFSET: u32 = 32;

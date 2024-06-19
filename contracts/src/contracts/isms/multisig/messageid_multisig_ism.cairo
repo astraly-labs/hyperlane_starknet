@@ -12,7 +12,7 @@ pub mod messageid_multisig_ism {
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::ContractAddress;
     use starknet::EthAddress;
-    use starknet::eth_signature::is_eth_signature_valid;
+    use hyperlane_starknet::utils::keccak256::bool_is_eth_signature_valid;
     use starknet::secp256_trait::{Signature, signature_from_vrs};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -89,7 +89,7 @@ pub mod messageid_multisig_ism {
                         break false;
                     }
                     let signer = *validators.at(cur_idx);
-                    if self.bool_is_eth_signature_valid(digest, signature, signer) {
+                    if bool_is_eth_signature_valid(digest, signature, signer) {
                         // we found a match
                         break true;
                     }
@@ -136,6 +136,12 @@ pub mod messageid_multisig_ism {
             }
         }
 
+        /// Set the threshold for validation
+        /// Dev: callable only by the owner
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_threshold` - The number of validator signatures needed
         fn set_threshold(ref self: ContractState, _threshold: u32) {
             self.ownable.assert_only_owner();
             self.threshold.write(_threshold);
@@ -170,14 +176,7 @@ pub mod messageid_multisig_ism {
             signature_from_vrs(v.into(), r, s)
         }
 
-        fn bool_is_eth_signature_valid(
-            self: @ContractState, msg_hash: u256, signature: Signature, signer: EthAddress
-        ) -> bool {
-            match is_eth_signature_valid(msg_hash, signature, signer) {
-                Result::Ok(()) => true,
-                Result::Err(_) => false
-            }
-        }
+        /// Returns a span of Ethereum addresses for validators based on a stored Legacy Map.
         fn build_validators_span(self: @ContractState) -> Span<EthAddress> {
             let mut validators = ArrayTrait::new();
             let mut cur_idx = 0;

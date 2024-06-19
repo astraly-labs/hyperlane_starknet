@@ -10,13 +10,13 @@ pub mod standard_hook_metadata {
     }
 
 
- /// Format of metadata:
- ///
- /// [0:2] variant
- /// [2:34] msg.value
- /// [34:66] Gas limit for message (IGP)
- /// [66:98] Refund address for message (IGP)
- /// [98:] Custom metadata
+    /// Format of metadata:
+    ///
+    /// [0:2] variant
+    /// [2:34] msg.value
+    /// [34:66] Gas limit for message (IGP)
+    /// [66:98] Refund address for message (IGP)
+    /// [98:] Custom metadata
 
     const VARIANT_OFFSET: u8 = 0;
     const MSG_VALUE_OFFSET: u8 = 2;
@@ -28,7 +28,6 @@ pub mod standard_hook_metadata {
 
     #[generate_trait]
     pub impl StandardHookMetadataImpl of StandardHookMetadata {
-
         /// Returns the variant of the metadata.
         /// 
         /// # Arguments
@@ -100,7 +99,7 @@ pub mod standard_hook_metadata {
             let (_, res) = _metadata.read_address(REFUND_ADDRESS_OFFSET.into());
             res
         }
-        
+
         ///Returns any custom metadata.
         /// 
         /// # Arguments

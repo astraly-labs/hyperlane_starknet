@@ -17,7 +17,7 @@ pub mod pausable_ism {
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::security::pausable::PausableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use starknet::{ContractAddress,ClassHash};
+    use starknet::{ContractAddress, ClassHash};
     use super::{IPausableIsm, IPausableIsmDispatcher, IPausableIsmDispatcherTrait,};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);

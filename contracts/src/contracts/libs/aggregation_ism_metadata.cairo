@@ -75,7 +75,7 @@ pub mod aggregation_ism_metadata {
     /// # Returns
     /// 
     /// Result<u32, u32), u8> -  Result on whether or not metadata was provided for the ISM at `_index`
-    fn metadata_range(_metadata: Bytes, _index: u8) -> Result<(u32, u32),u8>{
+    fn metadata_range(_metadata: Bytes, _index: u8) -> Result<(u32, u32), u8> {
         let start = _index.into() * RANGE_SIZE * 2;
         let mid = start + RANGE_SIZE;
         let (_, mid_metadata) = _metadata.read_u32(mid.into());

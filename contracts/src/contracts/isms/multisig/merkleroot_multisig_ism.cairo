@@ -9,11 +9,10 @@ pub mod merkleroot_multisig_ism {
         ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration,
     };
-    use hyperlane_starknet::utils::keccak256::{ByteData, HASH_SIZE};
+    use hyperlane_starknet::utils::keccak256::{ByteData, HASH_SIZE, bool_is_eth_signature_valid};
     use openzeppelin::access::ownable::OwnableComponent;
     use starknet::ContractAddress;
     use starknet::EthAddress;
-    use starknet::eth_signature::is_eth_signature_valid;
     use starknet::secp256_trait::{Signature, signature_from_vrs};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -87,7 +86,7 @@ pub mod merkleroot_multisig_ism {
                         break false;
                     }
                     let signer = *validators.at(cur_idx);
-                    if self.bool_is_eth_signature_valid(digest, signature, signer) {
+                    if bool_is_eth_signature_valid(digest, signature, signer) {
                         // we found a match
                         break true;
                     }
@@ -212,14 +211,7 @@ pub mod merkleroot_multisig_ism {
             signature_from_vrs(v.into(), r, s)
         }
 
-        fn bool_is_eth_signature_valid(
-            self: @ContractState, msg_hash: u256, signature: Signature, signer: EthAddress
-        ) -> bool {
-            match is_eth_signature_valid(msg_hash, signature, signer) {
-                Result::Ok(()) => true,
-                Result::Err(_) => false
-            }
-        }
+    
         fn build_validators_span(self: @ContractState) -> Span<EthAddress> {
             let mut validators = ArrayTrait::new();
             let mut cur_idx = 0;

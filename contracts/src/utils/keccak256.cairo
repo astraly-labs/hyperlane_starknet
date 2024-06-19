@@ -3,6 +3,10 @@ use core::integer::u128_byte_reverse;
 use core::keccak::cairo_keccak;
 use core::to_byte_array::{FormatAsByteArray, AppendFormattedToByteArray};
 use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::{HYPERLANE_ANNOUNCEMENT};
+use starknet::{ EthAddress, eth_signature::is_eth_signature_valid,
+    secp256_trait::Signature
+};
+
 pub const ETH_SIGNED_MESSAGE: felt252 = '\x19Ethereum Signed Message:\n32';
 
 
@@ -62,6 +66,23 @@ pub fn to_eth_signature(hash: u256) -> u256 {
     reverse_endianness(hash)
 }
 
+/// Determines the correctness of an ethereum signature given a digest, signer and signature 
+/// 
+/// # Arguments 
+/// 
+/// * - `_msg_hash` - to digest used to sign the message
+/// * - `_signature` - the signature to check
+/// * - `_signer` - the signer ethereum address
+/// 
+/// # Returns 
+/// 
+/// boolean - True if valid
+pub fn bool_is_eth_signature_valid(msg_hash: u256, signature: Signature, signer: EthAddress) -> bool {
+    match is_eth_signature_valid(msg_hash, signature, signer) {
+        Result::Ok(()) => true,
+        Result::Err(_) => false
+    }
+}
 
 /// Reverse an u64 word (little_endian <-> big endian)
 /// For example 0x12345678 will return 0x78563412

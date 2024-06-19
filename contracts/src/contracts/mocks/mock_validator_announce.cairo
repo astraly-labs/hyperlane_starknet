@@ -10,13 +10,12 @@ pub mod mock_validator_announce {
     use hyperlane_starknet::interfaces::{IMailboxClientDispatcher, IMailboxClientDispatcherTrait};
     use hyperlane_starknet::utils::keccak256::{
         reverse_endianness, to_eth_signature, compute_keccak, ByteData, u64_word_size,
-        u256_word_size, HASH_SIZE,
+        u256_word_size, HASH_SIZE,bool_is_eth_signature_valid
     };
     use hyperlane_starknet::utils::store_arrays::StoreFelt252Array;
 
     use starknet::ContractAddress;
     use starknet::EthAddress;
-    use starknet::eth_signature::is_eth_signature_valid;
     use starknet::secp256_trait::{Signature, signature_from_vrs};
 
     #[storage]
@@ -167,14 +166,6 @@ pub mod mock_validator_announce {
     }
 
 
-    fn bool_is_eth_signature_valid(
-        msg_hash: u256, signature: Signature, signer: EthAddress
-    ) -> bool {
-        match is_eth_signature_valid(msg_hash, signature, signer) {
-            Result::Ok(()) => true,
-            Result::Err(_) => false
-        }
-    }
 
     fn find_validators_index(self: @ContractState, _validator: EthAddress) -> Option<EthAddress> {
         let mut current_validator: EthAddress = 0.try_into().unwrap();

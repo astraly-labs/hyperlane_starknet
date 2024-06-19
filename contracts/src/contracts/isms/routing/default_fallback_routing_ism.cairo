@@ -28,6 +28,7 @@ pub mod default_fallback_routing_ism {
 
     type Domain = u32;
     type Index = u32;
+
     #[storage]
     struct Storage {
         modules: LegacyMap<Domain, ContractAddress>,
@@ -78,6 +79,14 @@ pub mod default_fallback_routing_ism {
 
     #[abi(embed_v0)]
     impl IDomainRoutingIsmImpl of IDomainRoutingIsm<ContractState> {
+        /// Initializes the contract with domains and ISMs
+        /// Dev: Callable only by the owner
+        /// Dev: Panics if domains and ISMs spans length mismatch or if module address is null
+        /// 
+        /// # Arguments
+        ///
+        /// * `_domains` - A span of origin domains
+        /// * `_modules` - A span of module addresses associated to the domains
         fn initialize(
             ref self: ContractState, _domains: Span<u32>, _modules: Span<ContractAddress>
         ) {
@@ -161,7 +170,6 @@ pub mod default_fallback_routing_ism {
 
     #[abi(embed_v0)]
     impl IRoutingIsmImpl of IRoutingIsm<ContractState> {
-
         ///  Returns the ISM responsible for verifying _message
         /// Dev: Can change based on the content of _message
         /// 
@@ -190,7 +198,7 @@ pub mod default_fallback_routing_ism {
         /// 
         /// # Arguments
         /// 
-        /// * - `_metadata` - encoded metadata (see aggregation_ism_metadata.cairo)
+        /// * - `_metadata` - encoded metadata 
         /// * - `_message` - message structure containing relevant information (see message.cairo)
         /// 
         /// # Returns 
@@ -207,6 +215,12 @@ pub mod default_fallback_routing_ism {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
+        /// Removes the specified origin domain
+        /// Dev: Callable only by the admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
         fn _remove(ref self: ContractState, _domain: u32) {
             let domain_index = match self.find_domain_index(_domain) {
                 Option::Some(index) => index,
@@ -219,6 +233,12 @@ pub mod default_fallback_routing_ism {
             self.domains.write(domain_index, next_domain);
         }
 
+        /// Sets the ISM to be used for the specified origin domain
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
+        /// * - `_module` -The ISM to use to verify messages
         fn _set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
             match self.find_domain_index(_domain) {
                 Option::Some(_) => {},
@@ -229,6 +249,12 @@ pub mod default_fallback_routing_ism {
             }
             self.modules.write(_domain, _module);
         }
+
+        /// Helper: finds the last domain in the storage Legacy Map
+        /// 
+        /// # Returns 
+        /// 
+        /// u32 - the last domain stored
         fn find_last_domain(self: @ContractState) -> u32 {
             let mut current_domain = self.domains.read(0);
             loop {
@@ -240,6 +266,15 @@ pub mod default_fallback_routing_ism {
             }
         }
 
+        /// Retrieves the index for a given domain
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_domain` - The origin domain
+        /// 
+        /// # Returns
+        /// 
+        /// Option<u32> - the index if found, else None
         fn find_domain_index(self: @ContractState, _domain: u32) -> Option<u32> {
             let mut current_domain = 0;
             loop {

@@ -57,7 +57,7 @@ pub mod merkleroot_ism_metadata {
             let (_, felt) = _metadata.read_u32(MESSAGE_INDEX_OFFSET);
             felt
         }
-       
+
         /// Returns the index of the signed checkpoint.
         /// 
         /// # Arguments

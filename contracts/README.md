@@ -2,10 +2,10 @@
 
 
 ### Installing Scarb 
-You can install Scarb following this [link] (https://docs.swmansion.com/scarb/download)
+You can install Scarb [here](https://docs.swmansion.com/scarb/download)
 
 ### Installing Starknet Foundry
-To install snforge, you can follow this [link](https://github.com/foundry-rs/starknet-foundry)
+You can install snforge [here](https://github.com/foundry-rs/starknet-foundry)
 
 ### Building
 Once installed, you can compile the contracts by executing this command:
@@ -27,8 +27,8 @@ snforge test
 
 ### Integration Tests
 To run the integration tests: 
-    - Install [Dojo] (https://book.dojoengine.org/getting-started)
-    - Install [Foundry] (https://book.getfoundry.sh/getting-started/installation)
+    - Install [Dojo](https://book.dojoengine.org/getting-started)
+    - Install [Foundry](https://book.getfoundry.sh/getting-started/installation)
 
 Once installed, build the contracts: 
 ```bash

@@ -112,7 +112,7 @@ pub mod merkle_tree_hook {
         }
 
         fn latest_checkpoint(self: @ContractState) -> (u256, u32) {
-            (self._root(), self.count() -1 )
+            (self._root(), self.count() - 1)
         }
     }
 
@@ -183,7 +183,11 @@ pub mod merkle_tree_hook {
                     break ();
                 }
                 let ith_bit = _get_ith_bit(index.into(), cur_idx);
-                let next = self.tree.read(cur_idx); // Will return 0 if no values is stored, in accordance with solidity impl
+                let next = self
+                    .tree
+                    .read(
+                        cur_idx
+                    ); // Will return 0 if no values is stored, in accordance with solidity impl
                 if (ith_bit == 1) {
                     current =
                         ByteData {
@@ -210,7 +214,7 @@ pub mod merkle_tree_hook {
             current.value
         }
         fn _branch_root(_item: ByteData, _branch: Span<ByteData>, _index: u256) -> u256 {
-            assert(_branch.len()>= TREE_DEPTH, Errors::TREE_DEPTH_NOT_REACHED);
+            assert(_branch.len() >= TREE_DEPTH, Errors::TREE_DEPTH_NOT_REACHED);
             let mut cur_idx = 0;
             let mut current = _item;
             loop {

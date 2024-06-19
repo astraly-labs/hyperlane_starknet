@@ -54,6 +54,20 @@ fn test_set_modules() {
 }
 
 #[test]
+#[should_panic(expected: ('Modules already stored',))]
+fn test_set_modules_fails_if_already_added_module() {
+    let aggregation = setup_aggregation();
+    let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    let module_1: ContractAddress = 'module_1'.try_into().unwrap();
+    let module_2: ContractAddress = 'module_2'.try_into().unwrap();
+    aggregation.set_modules(array![module_1, module_2].span());
+    assert(aggregation.get_modules() == array![module_1, module_2].span(), 'set modules failed');
+    aggregation.set_modules(array![module_1].span());
+}
+
+
+#[test]
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_module_fails_if_caller_is_not_owner() {
     let aggregation = setup_aggregation();

@@ -1,6 +1,6 @@
 #[starknet::contract]
 pub mod aggregation {
-    use alexandria_bytes::Bytes;
+    use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::libs::aggregation_ism_metadata::aggregation_ism_metadata::AggregationIsmMetadata;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::interfaces::{
@@ -68,10 +68,14 @@ pub mod aggregation {
 
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
             let (isms, mut threshold) = self.modules_and_threshold(_message.clone());
+
             assert(threshold != 0, Errors::THRESHOLD_NOT_SET);
             let modules = build_modules_span(self);
             let mut cur_idx: u8 = 0;
             loop {
+                if (threshold == 0) {
+                    break ();
+                }
                 if (cur_idx.into() == isms.len()) {
                     break ();
                 }
@@ -82,6 +86,7 @@ pub mod aggregation {
                 let ism = IInterchainSecurityModuleDispatcher {
                     contract_address: *modules.at(cur_idx.into())
                 };
+
                 let metadata = AggregationIsmMetadata::metadata_at(_metadata.clone(), cur_idx);
                 assert(ism.verify(metadata, _message.clone()), Errors::VERIFICATION_FAILED);
                 threshold -= 1;
@@ -142,7 +147,7 @@ pub mod aggregation {
             if (next_address == contract_address_const::<0>()) {
                 break ();
             }
-            modules.append(cur_address);
+            modules.append(next_address);
             cur_address = next_address
         };
         modules.span()

@@ -13,7 +13,7 @@ use hyperlane_starknet::interfaces::{
     IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait, IMockValidatorAnnounceDispatcher,
     ISpecifiesInterchainSecurityModuleDispatcher, ISpecifiesInterchainSecurityModuleDispatcherTrait,
     IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, IDomainRoutingIsmDispatcher,
-    IDomainRoutingIsmDispatcherTrait
+    IDomainRoutingIsmDispatcherTrait, IPausableIsmDispatcher, IPausableIsmDispatcherTrait
 };
 use openzeppelin::account::utils::signature::EthSignature;
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
@@ -294,6 +294,30 @@ pub fn setup_mock_hook() -> IPostDispatchHookDispatcher {
     IPostDispatchHookDispatcher { contract_address: mock_hook_addr }
 }
 
+pub fn setup_noop_ism() -> IInterchainSecurityModuleDispatcher {
+    let noop_ism = declare("noop_ism").unwrap();
+    let (noop_ism_addr, _) = noop_ism.deploy(@array![]).unwrap();
+    IInterchainSecurityModuleDispatcher { contract_address: noop_ism_addr }
+}
+
+
+pub fn setup_pausable_ism() -> (IInterchainSecurityModuleDispatcher, IPausableIsmDispatcher) {
+    let pausable_ism = declare("pausable_ism").unwrap();
+    let (pausable_ism_addr, _) = pausable_ism.deploy(@array![OWNER().into()]).unwrap();
+    (
+        IInterchainSecurityModuleDispatcher { contract_address: pausable_ism_addr },
+        IPausableIsmDispatcher { contract_address: pausable_ism_addr }
+    )
+}
+
+pub fn setup_trusted_relayer_ism() -> IInterchainSecurityModuleDispatcher {
+    let (mailbox, _, _, _) = setup();
+    let trusted_relayer_ism = declare("trusted_relayer_ism").unwrap();
+    let (trusted_relayer_ism_addr, _) = trusted_relayer_ism
+        .deploy(@array![mailbox.contract_address.into(), OWNER().into()])
+        .unwrap();
+    IInterchainSecurityModuleDispatcher { contract_address: trusted_relayer_ism_addr }
+}
 
 pub fn build_messageid_metadata(origin_merkle_tree_hook: u256, root: u256, index: u32) -> Bytes {
     let y_parity = 0x01;
@@ -383,6 +407,8 @@ pub fn build_merkle_metadata(
     };
     metadata
 }
+
+
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
 pub fn get_merkle_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignature>) {
     let msg_hash = 0x313C6A1725B61343B5B6A7882D194FAD12DCED93308CF5531AFAD1E78493396F;

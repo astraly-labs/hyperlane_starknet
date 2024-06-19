@@ -8,11 +8,14 @@ use hyperlane_starknet::interfaces::{
 };
 use hyperlane_starknet::tests::setup::{
     setup_aggregation, OWNER, setup_messageid_multisig_ism, get_message_and_signature, LOCAL_DOMAIN,
-    DESTINATION_DOMAIN, RECIPIENT_ADDRESS
+    DESTINATION_DOMAIN, RECIPIENT_ADDRESS, setup_merkleroot_multisig_ism, build_messageid_metadata,
+    VALID_OWNER, VALID_RECIPIENT, get_merkle_message_and_signature, build_merkle_metadata,
+    setup_noop_ism
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget, stop_prank};
+use starknet::ContractAddress;
 
 #[test]
 fn test_aggregation_module_type() {
@@ -40,13 +43,33 @@ fn test_aggregation_verify_fails_if_treshold_not_set() {
 }
 
 #[test]
-#[ignore]
-fn test_aggregation_verify() {
-    let (messageid, messageid_validator_config) = setup_messageid_multisig_ism();
+fn test_set_modules() {
     let aggregation = setup_aggregation();
-    let threshold = 1; // TO BE COMPLETED ONCE OTHER ISMS ARE IMPLEMENTED
     let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    let module_1: ContractAddress = 'module_1'.try_into().unwrap();
+    let module_2: ContractAddress = 'module_2'.try_into().unwrap();
+    aggregation.set_modules(array![module_1, module_2].span());
+    assert(aggregation.get_modules() == array![module_1, module_2].span(), 'set modules failed');
+}
+
+#[test]
+#[should_panic(expected: ('Caller is not the owner',))]
+fn test_set_module_fails_if_caller_is_not_owner() {
+    let aggregation = setup_aggregation();
+    let module_1: ContractAddress = 'module_1'.try_into().unwrap();
+    let module_2: ContractAddress = 'module_2'.try_into().unwrap();
+    aggregation.set_modules(array![module_1, module_2].span());
+    assert(aggregation.get_modules() == array![module_1, module_2].span(), 'set modules failed');
+}
+
+#[test]
+fn test_aggregation_verify() {
+    let aggregation = setup_aggregation();
+    let threshold = 2;
+
+    // MESSAGEID 
+
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -57,46 +80,38 @@ fn test_aggregation_verify() {
         version: HYPERLANE_VERSION,
         nonce: 0,
         origin: LOCAL_DOMAIN,
-        sender: OWNER(),
+        sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
-        recipient: RECIPIENT_ADDRESS(),
+        recipient: VALID_RECIPIENT(),
         body: message_body.clone()
     };
-    let (_, validators_address, signatures) = get_message_and_signature();
-    let y_parity = 0x01000000000000000000000000000000; // parity set to false
-    let metadata = array![
-        0x01020304050607080910111213141516,
-        0x16151413121110090807060504030201,
-        0x01020304050607080910111213141516,
-        0x01020304050607080920111213141516,
-        0x00000010000000000000000000000000,
-        *signatures.at(0).r.high,
-        *signatures.at(0).r.low,
-        *signatures.at(0).s.high,
-        *signatures.at(0).s.low,
-        y_parity,
-        *signatures.at(1).r.high,
-        *signatures.at(1).r.low,
-        *signatures.at(1).s.high,
-        *signatures.at(1).s.low,
-        y_parity,
-        *signatures.at(2).r.high,
-        *signatures.at(2).r.low,
-        *signatures.at(2).s.high,
-        *signatures.at(2).s.low,
-        y_parity,
-        *signatures.at(3).r.high,
-        *signatures.at(3).r.low,
-        *signatures.at(3).s.high,
-        *signatures.at(3).s.low,
-        y_parity,
-    ];
-    let ownable = IOwnableDispatcher { contract_address: messageid.contract_address };
+    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism();
+    let (_, validators_address, _) = get_message_and_signature();
+    let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
+    let root: u256 = 'root'.try_into().unwrap();
+    let index = 1;
+    let message_id_metadata = build_messageid_metadata(origin_merkle_tree, root, index);
+    let ownable = IOwnableDispatcher {
+        contract_address: messageid_validator_configuration.contract_address
+    };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    messageid_validator_config.set_validators(validators_address.span());
+    messageid_validator_configuration.set_validators(validators_address.span());
+    messageid_validator_configuration.set_threshold(5);
+    // Noop ism
+    let noop_ism = setup_noop_ism();
+
+    let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     aggregation.set_threshold(threshold);
-    let bytes_metadata = BytesTrait::new(496, metadata);
-    aggregation.set_modules(array![messageid.contract_address.into()].span());
-    assert(aggregation.verify(bytes_metadata, message), 'Aggregation: verify failed');
+    let mut concat_metadata = BytesTrait::new_empty();
+    concat_metadata.append_u128(0x00000010000001A0000001A0000001A9);
+    concat_metadata.concat(@message_id_metadata);
+    // dummy metadata for noop ism
+    concat_metadata.concat(@message_id_metadata);
+    aggregation
+        .set_modules(
+            array![messageid.contract_address.into(), noop_ism.contract_address.into(),].span()
+        );
+    assert(aggregation.verify(concat_metadata, message), 'Aggregation: verify failed');
 }
 

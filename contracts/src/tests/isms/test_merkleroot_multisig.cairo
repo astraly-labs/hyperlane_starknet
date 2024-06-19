@@ -5,16 +5,14 @@ use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERL
 use hyperlane_starknet::contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MerkleRootIsmMetadata;
 use hyperlane_starknet::interfaces::IMessageRecipientDispatcherTrait;
 use hyperlane_starknet::interfaces::{
-    IMailboxDispatcher, IMailboxDispatcherTrait, ModuleType,
-    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-    IInterchainSecurityModule, IValidatorConfigurationDispatcher,
-    IValidatorConfigurationDispatcherTrait,
+    IMailboxDispatcher, IMailboxDispatcherTrait, ModuleType, IInterchainSecurityModuleDispatcher,
+    IInterchainSecurityModuleDispatcherTrait, IInterchainSecurityModule,
+    IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait,
 };
 use hyperlane_starknet::tests::setup::{
     setup, setup_merkleroot_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1,
-    VALIDATOR_ADDRESS_2, get_merkle_message_and_signature, LOCAL_DOMAIN,
-    DESTINATION_DOMAIN, TEST_PROOF, build_merkle_metadata, VALID_OWNER,
-    VALID_RECIPIENT
+    VALIDATOR_ADDRESS_2, get_merkle_message_and_signature, LOCAL_DOMAIN, DESTINATION_DOMAIN,
+    TEST_PROOF, build_merkle_metadata, VALID_OWNER, VALID_RECIPIENT
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};

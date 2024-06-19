@@ -7,8 +7,8 @@ use hyperlane_starknet::interfaces::{
     IMerkleTreeHookDispatcherTrait
 };
 use hyperlane_starknet::tests::setup::{
-    setup_merkle_tree_hook, setup, MAILBOX, LOCAL_DOMAIN, VALID_OWNER,
-    VALID_RECIPIENT, DESTINATION_DOMAIN
+    setup_merkle_tree_hook, setup, MAILBOX, LOCAL_DOMAIN, VALID_OWNER, VALID_RECIPIENT,
+    DESTINATION_DOMAIN
 };
 use hyperlane_starknet::utils::keccak256::{ByteData, HASH_SIZE};
 use merkle_tree_hook::{InternalTrait, treeContractMemberStateTrait, countContractMemberStateTrait};

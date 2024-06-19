@@ -7,9 +7,7 @@ use hyperlane_starknet::interfaces::{
 };
 use hyperlane_starknet::tests::setup::{
     setup_aggregation, OWNER, setup_messageid_multisig_ism, get_message_and_signature, LOCAL_DOMAIN,
-    DESTINATION_DOMAIN, build_messageid_metadata,
-    VALID_OWNER, VALID_RECIPIENT,
-    setup_noop_ism
+    DESTINATION_DOMAIN, build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT, setup_noop_ism
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};

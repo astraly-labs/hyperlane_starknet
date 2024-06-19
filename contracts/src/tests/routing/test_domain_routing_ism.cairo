@@ -8,8 +8,9 @@ use hyperlane_starknet::interfaces::{
     IMailboxDispatcher, IMailboxDispatcherTrait
 };
 use hyperlane_starknet::tests::setup::{
-    OWNER, setup_domain_routing_ism, build_messageid_metadata, LOCAL_DOMAIN, DESTINATION_DOMAIN, setup_messageid_multisig_ism, get_message_and_signature,
-    setup_mailbox_client, VALID_OWNER, VALID_RECIPIENT
+    OWNER, setup_domain_routing_ism, build_messageid_metadata, LOCAL_DOMAIN, DESTINATION_DOMAIN,
+    setup_messageid_multisig_ism, get_message_and_signature, setup_mailbox_client, VALID_OWNER,
+    VALID_RECIPIENT
 };
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget, stop_prank, ContractClassTrait};

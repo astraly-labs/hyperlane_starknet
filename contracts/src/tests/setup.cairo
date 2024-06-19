@@ -218,10 +218,10 @@ pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
 pub fn setup_default_fallback_routing_ism() -> (
     IInterchainSecurityModuleDispatcher, IRoutingIsmDispatcher, IDomainRoutingIsmDispatcher
 ) {
-    let mailbox_client = setup_mailbox_client();
+    let (mailbox, _, _, _) = setup();
     let default_fallback_routing_ism = declare("default_fallback_routing_ism").unwrap();
     let (default_fallback_routing_ism_addr, _) = default_fallback_routing_ism
-        .deploy(@array![OWNER().into(), mailbox_client.contract_address.into()])
+        .deploy(@array![OWNER().into(), mailbox.contract_address.into()])
         .unwrap();
     (
         IInterchainSecurityModuleDispatcher { contract_address: default_fallback_routing_ism_addr },
@@ -244,9 +244,9 @@ pub fn setup_domain_routing_ism() -> (
 
 pub fn setup_validator_announce() -> (IValidatorAnnounceDispatcher, EventSpy) {
     let validator_announce_class = declare("validator_announce").unwrap();
-    let mailboxclient = setup_mailbox_client();
+    let (mailbox, _, _, _) = setup();
     let (validator_announce_addr, _) = validator_announce_class
-        .deploy(@array![mailboxclient.contract_address.into()])
+        .deploy(@array![mailbox.contract_address.into()])
         .unwrap();
     let mut spy = spy_events(SpyOn::One(validator_announce_addr));
     (IValidatorAnnounceDispatcher { contract_address: validator_announce_addr }, spy)

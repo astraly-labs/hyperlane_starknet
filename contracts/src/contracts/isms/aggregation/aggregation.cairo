@@ -107,7 +107,7 @@ pub mod aggregation {
 
         fn set_modules(ref self: ContractState, _modules: Span<ContractAddress>) {
             self.ownable.assert_only_owner();
-            assert(!self.are_modules_stored( _modules), Errors::MODULES_ALREADY_STORED);
+            assert(!self.are_modules_stored(_modules), Errors::MODULES_ALREADY_STORED);
             let mut last_module = self.find_last_module();
             let mut cur_idx = 0;
             loop {

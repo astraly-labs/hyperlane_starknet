@@ -2,7 +2,8 @@ pub mod checkpoint_lib {
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
     use hyperlane_starknet::contracts::libs::message::Message;
     use hyperlane_starknet::utils::keccak256::{
-        reverse_endianness, compute_keccak, ByteData, u64_word_size, u256_word_size, HASH_SIZE, to_eth_signature
+        reverse_endianness, compute_keccak, ByteData, u64_word_size, u256_word_size, HASH_SIZE,
+        to_eth_signature
     };
 
 

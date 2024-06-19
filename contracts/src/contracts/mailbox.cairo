@@ -348,7 +348,7 @@ pub mod mailbox {
         /// 
         ///  # Returns
         /// 
-        /// * The message ID inserted into the Mailbox's merkle tree
+        /// * The payment required to dispatch the message
         fn quote_dispatch(
             self: @ContractState,
             _destination_domain: u32,
@@ -365,7 +365,7 @@ pub mod mailbox {
                 Option::Some(hook_metadata) => hook_metadata,
                 Option::None(()) => BytesTrait::new_empty(),
             };
-            let (id, message) = build_message(
+            let (_, message) = build_message(
                 self, _destination_domain, _recipient_address, _message_body.clone()
             );
             let required_hook_address = self.required_hook.read();

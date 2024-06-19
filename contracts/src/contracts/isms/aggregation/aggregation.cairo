@@ -130,7 +130,7 @@ pub mod aggregation {
             self.threshold.read()
         }
 
-        /// Set the ISM modules responsible for the verification
+        /// Sets the ISM modules responsible for the verification
         /// Dev: reverts if module address is null
         /// Dev: Callable only by the owner
         /// 
@@ -157,7 +157,7 @@ pub mod aggregation {
             }
         }
 
-        /// Set the threshold for validation
+        /// Sets the threshold for validation
         /// Dev: callable only by the owner
         /// 
         /// # Arguments
@@ -170,7 +170,7 @@ pub mod aggregation {
     }
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        /// Helper:  find the last module stored in the legacy map
+        /// Helper:  finds the last module stored in the legacy map
         /// 
         /// # Returns
         /// 
@@ -185,6 +185,11 @@ pub mod aggregation {
                 current_module = next_module;
             }
         }
+        /// Helper:  finds the index associated to a module in the legacy map
+        /// 
+        /// # Returns
+        /// 
+        /// Option<ContractAddress> - the contract if found, else None
         fn find_module_index(
             self: @ContractState, _module: ContractAddress
         ) -> Option<ContractAddress> {
@@ -200,6 +205,11 @@ pub mod aggregation {
             }
         }
 
+        /// Helper:  determines if a span of modules are already stored in the Storage Mapping
+        /// 
+        /// # Returns
+        /// 
+        /// boolean - True if at least one module is stored
         fn are_modules_stored(self: @ContractState, _modules: Span<ContractAddress>) -> bool {
             let mut cur_idx = 0;
             let mut result = false;
@@ -215,11 +225,11 @@ pub mod aggregation {
             result
         }
 
-        /// Helper:  Build a module span out of a stored legacy Map
+        /// Helper:  Build a module span out of a storage map
         /// 
         /// # Returns
         /// 
-        /// Span<ContractAddress> -a span of module addresses
+        /// Span<ContractAddress> - a span of module addresses
         fn build_modules_span(self: @ContractState) -> Span<ContractAddress> {
             let mut cur_address = contract_address_const::<0>();
             let mut modules = array![];

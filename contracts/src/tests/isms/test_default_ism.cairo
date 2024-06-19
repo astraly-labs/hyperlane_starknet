@@ -1,8 +1,7 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 use hyperlane_starknet::interfaces::{
-    ModuleType, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-    IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, IPausableIsm, IPausableIsmDispatcher,
+    ModuleType, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait, IMailboxDispatcher, IMailboxDispatcherTrait, IPausableIsmDispatcher,
     IPausableIsmDispatcherTrait
 };
 use hyperlane_starknet::tests::setup::{
@@ -10,7 +9,7 @@ use hyperlane_starknet::tests::setup::{
     DESTINATION_DOMAIN, OWNER, LOCAL_DOMAIN, MAILBOX
 };
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{start_prank, CheatTarget, stop_prank};
+use snforge_std::{start_prank, CheatTarget};
 
 
 #[test]

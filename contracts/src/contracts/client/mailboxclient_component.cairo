@@ -55,7 +55,7 @@ pub mod MailboxclientComponent {
             self.interchain_security_module.write(_module);
         }
 
-        /// Retrieve the local domain of the mailbox associated to the maiblox client. 
+        /// Retrieves the local domain of the mailbox associated to the maiblox client. 
         /// 
         /// # Returns
         /// 
@@ -64,7 +64,7 @@ pub mod MailboxclientComponent {
             self.mailbox.read().get_local_domain()
         }
 
-        /// Retrieve the current hook set.
+        /// Retrieves the current hook set.
         /// 
         /// # Returns
         /// 
@@ -73,7 +73,7 @@ pub mod MailboxclientComponent {
             self.hook.read()
         }
 
-        /// Retrieve the current interchain security module 
+        /// Retrieves the current interchain security module 
         /// 
         /// # Returns
         /// 
@@ -85,13 +85,13 @@ pub mod MailboxclientComponent {
         }
 
 
-        /// Initialize the mailbox client configuration.
+        /// Initializes the mailbox client configuration.
         /// Dev: callable only by the admin
         /// 
         /// # Arguments
         /// 
-        /// * - `_hook` the contract address associated to the hook to be defined
-        /// * - `_interchain_security_module`- The contract address associated to the ISM to be defined
+        /// * - `_hook` the hook contract address to set
+        /// * - `_interchain_security_module`- the ISM contract address
         fn _MailboxClient_initialize(
             ref self: ComponentState<TContractState>,
             _hook: ContractAddress,
@@ -103,7 +103,7 @@ pub mod MailboxclientComponent {
             self.set_interchain_security_module(_interchain_security_module);
         }
 
-        /// Determine if a message associated to a given id is the mailbox's latest dispatched
+        /// Determines if a message associated to a given id is the mailbox's latest dispatched
         /// 
         /// # Arguments
         /// 
@@ -111,12 +111,12 @@ pub mod MailboxclientComponent {
         /// 
         /// # Returns
         /// 
-        /// boolean  - is it dispatched ?
+        /// boolean  - True if latest dispatched
         fn _is_latest_dispatched(self: @ComponentState<TContractState>, _id: u256) -> bool {
             self.mailbox.read().get_latest_dispatched_id() == _id
         }
 
-        /// Determine if a message associated to a given id is delivered
+        /// Determines if a message associated to a given id is delivered
         /// 
         /// # Arguments
         /// 
@@ -124,12 +124,12 @@ pub mod MailboxclientComponent {
         /// 
         /// # Returns
         /// 
-        /// boolean  - is it delivered ?
+        /// boolean  - True if delivered
         fn _is_delivered(self: @ComponentState<TContractState>, _id: u256) -> bool {
             self.mailbox.read().delivered(_id)
         }
 
-        /// Returns the mailbox contract associated to the mailbox client
+        /// Returns the mailbox contract address associated to the mailbox client
         /// 
         /// # Returns
         /// 
@@ -202,12 +202,12 @@ pub mod MailboxclientComponent {
         +HasComponent<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>
     > of InternalTrait<TContractState> {
-        /// Initialize the mailbox client configuration.
+        /// Initializes the mailbox client configuration.
         /// Dev: callable on constructor
         /// 
         /// # Arguments
         /// 
-        /// * - `_mailbox` the contract address associated to the mailbox to be used
+        /// * - `_mailbox` - mailbox contract address
         fn initialize(ref self: ComponentState<TContractState>, _mailbox: ContractAddress) {
             let mailbox = IMailboxDispatcher { contract_address: _mailbox };
             self.mailbox.write(mailbox);

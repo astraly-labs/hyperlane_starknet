@@ -1,5 +1,4 @@
 use alexandria_bytes::{Bytes, BytesTrait};
-use alexandria_data_structures::array_ext::ArrayTraitExt;
 use core::array::ArrayTrait;
 use core::array::SpanTrait;
 use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
@@ -13,18 +12,15 @@ use hyperlane_starknet::interfaces::{
     IValidatorConfigurationDispatcherTrait,
 };
 use hyperlane_starknet::tests::setup::{
-    setup, mock_setup, setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1,
-    VALIDATOR_ADDRESS_2, setup_validator_announce, get_message_and_signature, LOCAL_DOMAIN,
+    setup, setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1,
+    VALIDATOR_ADDRESS_2, get_message_and_signature, LOCAL_DOMAIN,
     DESTINATION_DOMAIN, RECIPIENT_ADDRESS, build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::cheatcodes::events::EventAssertions;
-use snforge_std::{start_prank, CheatTarget, stop_prank};
-use starknet::eth_address::EthAddress;
-use starknet::eth_signature::verify_eth_signature;
-use starknet::secp256_trait::Signature;
-use starknet::secp256_trait::signature_from_vrs;
+use snforge_std::{start_prank, CheatTarget};
+
 #[test]
 fn test_set_validators() {
     let new_validators = array![VALIDATOR_ADDRESS_1(), VALIDATOR_ADDRESS_2()].span();

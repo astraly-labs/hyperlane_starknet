@@ -8,7 +8,9 @@ pub mod validator_announce {
         MailboxclientComponent::MailboxClientImpl
     };
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
-    use hyperlane_starknet::interfaces::{IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IValidatorAnnounce};
+    use hyperlane_starknet::interfaces::{
+        IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IValidatorAnnounce
+    };
     use hyperlane_starknet::utils::keccak256::{
         reverse_endianness, to_eth_signature, compute_keccak, ByteData, u256_word_size,
         u64_word_size, HASH_SIZE, bool_is_eth_signature_valid
@@ -16,7 +18,9 @@ pub mod validator_announce {
     use hyperlane_starknet::utils::store_arrays::StoreFelt252Array;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use starknet::{ContractAddress, ClassHash,EthAddress,secp256_trait::{Signature, signature_from_vrs} };
+    use starknet::{
+        ContractAddress, ClassHash, EthAddress, secp256_trait::{Signature, signature_from_vrs}
+    };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -150,7 +154,7 @@ pub mod validator_announce {
         /// 
         /// # Arguments
         /// 
-        /// * - `_validators` - The list of validators to get registrations for
+        /// * - `_validators` - The span of validators to get registrations for
         /// 
         /// # Returns 
         /// 
@@ -215,7 +219,15 @@ pub mod validator_announce {
 
     #[generate_trait]
     pub impl ValidatorAnnounceInternalImpl of InternalTrait {
-
+        /// Converts a byte signature into a standard singature format (see Signature structure)
+        /// 
+        /// # Arguments
+        /// 
+        /// * - ` _signature` - The byte encoded Signature
+        /// 
+        /// # Returns
+        /// 
+        /// Signature - Standardized signature
         fn convert_to_signature(self: @ContractState, _signature: Bytes) -> Signature {
             let (_, r) = _signature.read_u256(0);
             let (_, s) = _signature.read_u256(32);
@@ -240,7 +252,16 @@ pub mod validator_announce {
             reverse_endianness(compute_keccak(input.span()))
         }
 
-
+        /// Helper: finds the index associated to a given validator, if found
+        /// Dev: Chained list (EthereumAddress -> EthereumAddress)
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_validator` - The validator to consider
+        /// 
+        /// # Returns 
+        /// 
+        /// EthAddress - the index of the validator in the Storage Map
         fn find_validators_index(
             self: @ContractState, _validator: EthAddress
         ) -> Option<EthAddress> {
@@ -256,6 +277,7 @@ pub mod validator_announce {
             }
         }
 
+        /// Helper: finds the last stored validator
         fn find_last_validator(self: @ContractState) -> EthAddress {
             let mut current_validator = self.validators.read(0.try_into().unwrap());
             loop {
@@ -267,6 +289,7 @@ pub mod validator_announce {
             }
         }
 
+        // Helper: builds a span of validators from the storage map
         fn build_validators_array(self: @ContractState) -> Span<EthAddress> {
             let mut index = 0.try_into().unwrap();
             let mut validators = array![];

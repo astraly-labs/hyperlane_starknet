@@ -79,7 +79,7 @@ pub mod merkle_tree_hook {
         pub index: u32
     }
 
-    /// Constructor of the contract
+    /// Contract constructor
     /// 
     /// # Arguments
     ///
@@ -143,7 +143,7 @@ pub mod merkle_tree_hook {
         }
 
         /// Post action after a message is dispatched via the Mailbox
-        /// Dev: revert if invalid metadata variant
+        /// Dev: reverts if invalid metadata variant
         /// 
         /// # Arguments
         /// 
@@ -154,8 +154,8 @@ pub mod merkle_tree_hook {
             self._post_dispatch(_metadata, _message);
         }
 
-        ///  Compute the payment required by the postDispatch call
-        /// Dev: revert if invalid metadata variant
+        ///  Computes the payment required by the postDispatch call
+        /// Dev: reverts if invalid metadata variant
         /// 
         /// # Arguments
         /// 
@@ -187,7 +187,7 @@ pub mod merkle_tree_hook {
         /// 
         /// # Arguments
         /// 
-        ///* - `_node`-  Element to insert into tree
+        ///* - `_node`-  Element to insert into tree (see ByteData structure)
         fn _insert(ref self: ContractState, mut _node: ByteData) {
             let MAX_LEAVES: u128 = pow(2_u128, TREE_DEPTH.into()) - 1;
             assert(self.count.read().into() < MAX_LEAVES, Errors::MERKLE_TREE_FULL);

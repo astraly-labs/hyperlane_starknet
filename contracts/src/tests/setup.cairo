@@ -1,6 +1,4 @@
 use alexandria_bytes::{Bytes, BytesTrait};
-use alexandria_data_structures::array_ext::ArrayTraitExt;
-use core::result::ResultTrait;
 use hyperlane_starknet::contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MERKLE_PROOF_ITERATION;
 use hyperlane_starknet::interfaces::{
     IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
@@ -8,8 +6,7 @@ use hyperlane_starknet::interfaces::{
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IValidatorAnnounceDispatcher, IValidatorAnnounceDispatcherTrait, IMailboxClientDispatcher,
     IMailboxClientDispatcherTrait, IAggregationDispatcher, IAggregationDispatcherTrait,
-    IValidatorConfigurationDispatcher, IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait,
-    IAggregation, IPostDispatchHookDispatcher, IProtocolFeeDispatcher,
+    IValidatorConfigurationDispatcher, IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait, IPostDispatchHookDispatcher, IProtocolFeeDispatcher,
     IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait, IMockValidatorAnnounceDispatcher,
     ISpecifiesInterchainSecurityModuleDispatcher, ISpecifiesInterchainSecurityModuleDispatcherTrait,
     IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, IDomainRoutingIsmDispatcher,
@@ -20,9 +17,6 @@ use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20Disp
 use snforge_std::{
     declare, ContractClassTrait, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn
 };
-use starknet::secp256_trait::Signature;
-
-
 use starknet::{ContractAddress, contract_address_const, EthAddress};
 
 pub const LOCAL_DOMAIN: u32 = 534352;

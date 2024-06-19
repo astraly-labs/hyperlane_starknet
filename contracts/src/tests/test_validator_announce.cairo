@@ -1,5 +1,4 @@
 use alexandria_bytes::{Bytes, BytesTrait, BytesIndex};
-use alexandria_data_structures::array_ext::ArrayTraitExt;
 use hyperlane_starknet::contracts::isms::multisig::validator_announce::validator_announce;
 use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::{HYPERLANE_ANNOUNCEMENT};
 use hyperlane_starknet::interfaces::{
@@ -8,7 +7,7 @@ use hyperlane_starknet::interfaces::{
 };
 use hyperlane_starknet::tests::setup::{setup_mock_validator_announce, setup_validator_announce};
 use snforge_std::cheatcodes::events::EventAssertions;
-use starknet::{ContractAddress, contract_address_const, EthAddress};
+use starknet::{contract_address_const, EthAddress};
 
 pub const TEST_STARKNET_DOMAIN: u32 = 23448593;
 

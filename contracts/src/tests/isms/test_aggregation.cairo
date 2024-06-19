@@ -1,20 +1,19 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 use hyperlane_starknet::interfaces::{
-    ModuleType, IAggregation, IAggregationDispatcher, IAggregationDispatcherTrait,
+    ModuleType, IAggregationDispatcher, IAggregationDispatcherTrait,
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait,
-    IValidatorConfiguration, IInterchainSecurityModule
 };
 use hyperlane_starknet::tests::setup::{
     setup_aggregation, OWNER, setup_messageid_multisig_ism, get_message_and_signature, LOCAL_DOMAIN,
-    DESTINATION_DOMAIN, RECIPIENT_ADDRESS, setup_merkleroot_multisig_ism, build_messageid_metadata,
-    VALID_OWNER, VALID_RECIPIENT, get_merkle_message_and_signature, build_merkle_metadata,
+    DESTINATION_DOMAIN, build_messageid_metadata,
+    VALID_OWNER, VALID_RECIPIENT,
     setup_noop_ism
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{start_prank, CheatTarget, stop_prank};
+use snforge_std::{start_prank, CheatTarget};
 use starknet::ContractAddress;
 
 #[test]

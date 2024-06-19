@@ -86,7 +86,7 @@ pub mod protocol_fee {
         }
 
         /// Post action after a message is dispatched via the Mailbox
-        /// Dev: revert if invalid metadata variant
+        /// Dev: reverts if invalid metadata variant
         /// 
         /// # Arguments
         /// 
@@ -97,8 +97,8 @@ pub mod protocol_fee {
             self._post_dispatch(_metadata, _message);
         }
 
-        ///  Compute the payment required by the postDispatch call
-        /// Dev: revert if invalid metadata variant
+        ///  Computes the payment required by the postDispatch call
+        /// Dev: reverts if invalid metadata variant
         /// 
         /// # Arguments
         /// 

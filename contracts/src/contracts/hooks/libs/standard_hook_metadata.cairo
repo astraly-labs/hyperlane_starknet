@@ -33,7 +33,6 @@ pub mod standard_hook_metadata {
         /// # Arguments
         /// 
         /// * - `_metadata` - encoded standard hook metadata
-        /// * - `_default` - Default fallback value.
         /// 
         /// # Returns
         /// 

@@ -8,11 +8,11 @@ pub mod messageid_multisig_ism {
         ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration
     };
+    use hyperlane_starknet::utils::keccak256::bool_is_eth_signature_valid;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::ContractAddress;
     use starknet::EthAddress;
-    use hyperlane_starknet::utils::keccak256::bool_is_eth_signature_valid;
     use starknet::secp256_trait::{Signature, signature_from_vrs};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -64,7 +64,7 @@ pub mod messageid_multisig_ism {
         /// 
         /// # Arguments
         /// 
-        /// * - `_metadata` - encoded metadata (see aggregation_ism_metadata.cairo)
+        /// * - `_metadata` - encoded metadata (see messageid_ism_metadata.cairo)
         /// * - `_message` - message structure containing relevant information (see message.cairo)
         /// 
         /// # Returns 
@@ -147,6 +147,17 @@ pub mod messageid_multisig_ism {
             self.threshold.write(_threshold);
         }
 
+        /// Returns the set of validators responsible for verifying _message and the number of signatures required
+        /// Dev: Can change based on the content of _message
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// Span<EthAddress> - a span of ethereum validator addresses
+        /// u32  - The number of validator signatures needed
         fn validators_and_threshold(
             self: @ContractState, _message: Message
         ) -> (Span<EthAddress>, u32) {
@@ -159,6 +170,16 @@ pub mod messageid_multisig_ism {
 
     #[generate_trait]
     pub impl MessageIdInternalImpl of InternalTrait {
+        /// Returns the digest to be used for signature verification.
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata (see messageid_ism_metadata.cairo)
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// u256 - The digest to be signed by validators
         fn digest(self: @ContractState, _metadata: Bytes, _message: Message) -> u256 {
             let origin_merkle_tree_hook = MessageIdIsmMetadata::origin_merkle_tree_hook(
                 _metadata.clone()
@@ -171,6 +192,16 @@ pub mod messageid_multisig_ism {
             )
         }
 
+        /// Returns the signature at a given index from the metadata.
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata (see messageid_ism_metadata.cairo)
+        /// * - `_index` - The index of the signature to return
+        /// 
+        /// # Returns 
+        /// 
+        /// Signature  - A formatted signature (see Signature structure)
         fn get_signature_at(self: @ContractState, _metadata: Bytes, _index: u32) -> Signature {
             let (v, r, s) = MessageIdIsmMetadata::signature_at(_metadata, _index);
             signature_from_vrs(v.into(), r, s)

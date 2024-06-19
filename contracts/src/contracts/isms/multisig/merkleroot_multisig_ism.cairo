@@ -61,7 +61,7 @@ pub mod merkleroot_multisig_ism {
         /// 
         /// # Arguments
         /// 
-        /// * - `_metadata` - encoded metadata (see aggregation_ism_metadata.cairo)
+        /// * - `_metadata` - encoded metadata (see merkleroot_ism_metadata.cairo)
         /// * - `_message` - message structure containing relevant information (see message.cairo)
         /// 
         /// # Returns 
@@ -168,6 +168,16 @@ pub mod merkleroot_multisig_ism {
 
     #[generate_trait]
     pub impl MerkleInternalImpl of InternalTrait {
+        /// Returns the digest to be used for signature verification.
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata (see merkleroot_ism_metadata.cairo)
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// u256 - The digest to be signed by validators
         fn digest(self: @ContractState, _metadata: Bytes, _message: Message) -> u256 {
             assert(
                 MerkleRootIsmMetadata::message_index(
@@ -206,12 +216,22 @@ pub mod merkleroot_multisig_ism {
             )
         }
 
+        /// Returns the signature at a given index from the metadata.
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata (see merkleroot_ism_metadata.cairo)
+        /// * - `_index` - The index of the signature to return
+        /// 
+        /// # Returns 
+        /// 
+        /// Signature  - A formatted signature (see Signature structure)
         fn get_signature_at(self: @ContractState, _metadata: Bytes, _index: u32) -> Signature {
             let (v, r, s) = MerkleRootIsmMetadata::signature_at(_metadata, _index);
             signature_from_vrs(v.into(), r, s)
         }
 
-    
+        /// Helper: buils an span of Ethereum validators addresses from the Storage Map
         fn build_validators_span(self: @ContractState) -> Span<EthAddress> {
             let mut validators = ArrayTrait::new();
             let mut cur_idx = 0;

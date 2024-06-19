@@ -10,7 +10,7 @@ pub mod mock_validator_announce {
     use hyperlane_starknet::interfaces::{IMailboxClientDispatcher, IMailboxClientDispatcherTrait};
     use hyperlane_starknet::utils::keccak256::{
         reverse_endianness, to_eth_signature, compute_keccak, ByteData, u64_word_size,
-        u256_word_size, HASH_SIZE,bool_is_eth_signature_valid
+        u256_word_size, HASH_SIZE, bool_is_eth_signature_valid
     };
     use hyperlane_starknet::utils::store_arrays::StoreFelt252Array;
 
@@ -164,7 +164,6 @@ pub mod mock_validator_announce {
         ];
         reverse_endianness(compute_keccak(input.span()))
     }
-
 
 
     fn find_validators_index(self: @ContractState, _validator: EthAddress) -> Option<EthAddress> {

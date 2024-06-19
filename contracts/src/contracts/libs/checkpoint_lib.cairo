@@ -57,7 +57,7 @@ pub mod checkpoint_lib {
             to_eth_signature(reverse_endianness(compute_keccak(input.span())))
         }
 
-        /// Returns the domain hash that validators are expected to use when signing checkpoints.
+        /// Returns the domain hash validators are expected to use when signing checkpoints.
         /// 
         /// # Arguments
         /// 

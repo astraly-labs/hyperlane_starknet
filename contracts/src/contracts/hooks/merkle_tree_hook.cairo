@@ -18,17 +18,14 @@ pub mod merkle_tree_hook {
         reverse_endianness, compute_keccak, ByteData, HASH_SIZE
     };
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::{ContractAddress, ClassHash};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
-    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
 
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
-    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
     #[derive(Serde, Drop)]
     pub struct Tree {
@@ -47,8 +44,6 @@ pub mod merkle_tree_hook {
         mailboxclient: MailboxclientComponent::Storage,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
-        #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage,
     }
 
 
@@ -67,8 +62,6 @@ pub mod merkle_tree_hook {
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event,
-        #[flat]
         MailboxclientEvent: MailboxclientComponent::Event,
     }
 
@@ -84,25 +77,9 @@ pub mod merkle_tree_hook {
     /// # Arguments
     ///
     /// * `_mailbox` - The mailbox to be associated to the mailbox client
-    /// * `_owner` - The owner of the contract
     #[constructor]
-    fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress,) {
+    fn constructor(ref self: ContractState, _mailbox: ContractAddress) {
         self.mailboxclient.initialize(_mailbox);
-        self.ownable.initializer(_owner);
-    }
-
-    #[abi(embed_v0)]
-    impl Upgradeable of IUpgradeable<ContractState> {
-        /// Upgrades the contract to a new implementation.
-        /// Callable only by the owner
-        /// 
-        /// # Arguments
-        ///
-        /// * `new_class_hash` - The class hash of the new implementation.
-        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
-            self.ownable.assert_only_owner();
-            self.upgradeable._upgrade(new_class_hash);
-        }
     }
 
     #[abi(embed_v0)]
@@ -149,9 +126,10 @@ pub mod merkle_tree_hook {
         /// 
         /// * - `_metadata` - the metadata required for the hook
         /// * - `_message` - the message passed from the Mailbox.dispatch() call
-        fn post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) {
+        /// * - `_fee_amount` - the payment provided for sending the message
+       fn post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256) {
             assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
-            self._post_dispatch(_metadata, _message);
+            self._post_dispatch(_metadata, _message, _fee_amount);
         }
 
         ///  Computes the payment required by the postDispatch call
@@ -172,8 +150,8 @@ pub mod merkle_tree_hook {
     }
 
     #[generate_trait]
-    pub impl InternalImpl of InternalTrait {
-        fn _post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) {
+    pub impl MerkleInternalImpl of InternalTrait {
+        fn _post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256) {
             let (id, _) = MessageTrait::format_message(_message);
             // ensure messages which were not dispatched are not inserted into the tree
             assert(self.mailboxclient._is_latest_dispatched(id), Errors::MESSAGE_NOT_DISPATCHING);

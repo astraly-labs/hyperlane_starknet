@@ -5,8 +5,8 @@ use hyperlane_starknet::interfaces::{
     IMailboxDispatcher, IMailboxDispatcherTrait, IPausableIsmDispatcher, IPausableIsmDispatcherTrait
 };
 use hyperlane_starknet::tests::setup::{
-    setup, setup_trusted_relayer_ism, setup_noop_ism, setup_pausable_ism, mock_setup,
-    DESTINATION_DOMAIN, OWNER, LOCAL_DOMAIN, MAILBOX
+    setup_trusted_relayer_ism, setup_noop_ism, setup_pausable_ism, mock_setup, DESTINATION_DOMAIN,
+    OWNER, LOCAL_DOMAIN, DESTINATION_MAILBOX
 };
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget};
@@ -25,12 +25,12 @@ fn test_verify_noop_ism() {
 #[test]
 fn test_verify_trusted_relayer_ism() {
     let trusted_ism = setup_trusted_relayer_ism();
-    let ownable = IOwnableDispatcher { contract_address: MAILBOX() };
+    let ownable = IOwnableDispatcher { contract_address: DESTINATION_MAILBOX() };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    let mailbox = IMailboxDispatcher { contract_address: MAILBOX() };
+    let mailbox = IMailboxDispatcher { contract_address: DESTINATION_MAILBOX() };
     mailbox.set_default_ism(trusted_ism.contract_address);
     let (mock_recipient, _) = mock_setup(trusted_ism.contract_address);
-    mailbox.set_local_domain(DESTINATION_DOMAIN);
+    // mailbox.set_local_domain(DESTINATION_DOMAIN);
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,

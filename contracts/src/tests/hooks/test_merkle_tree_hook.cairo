@@ -7,8 +7,7 @@ use hyperlane_starknet::interfaces::{
     IMerkleTreeHookDispatcherTrait
 };
 use hyperlane_starknet::tests::setup::{
-    setup_merkle_tree_hook, setup, MAILBOX, LOCAL_DOMAIN, VALID_OWNER, VALID_RECIPIENT,
-    DESTINATION_DOMAIN
+    setup_merkle_tree_hook, MAILBOX, LOCAL_DOMAIN, VALID_OWNER, VALID_RECIPIENT, DESTINATION_DOMAIN
 };
 use hyperlane_starknet::utils::keccak256::{ByteData, HASH_SIZE};
 use merkle_tree_hook::{InternalTrait, treeContractMemberStateTrait, countContractMemberStateTrait};
@@ -46,6 +45,7 @@ fn test_post_dispatch() {
             DESTINATION_DOMAIN,
             VALID_RECIPIENT(),
             BytesTrait::new_empty(),
+            0,
             Option::None,
             Option::None
         );
@@ -65,7 +65,7 @@ fn test_post_dispatch() {
         recipient: VALID_RECIPIENT(),
         body: BytesTrait::new_empty(),
     };
-    post_dispatch_hook.post_dispatch(metadata, message);
+    post_dispatch_hook.post_dispatch(metadata, message, 0);
     let expected_event = merkle_tree_hook::Event::InsertedIntoTree(
         merkle_tree_hook::InsertedIntoTree { id: id, index: count.try_into().unwrap() }
     );
@@ -89,7 +89,7 @@ fn test_post_dispatch_fails_if_message_not_dispatching() {
         recipient: VALID_RECIPIENT(),
         body: BytesTrait::new_empty(),
     };
-    post_dispatch_hook.post_dispatch(metadata, message);
+    post_dispatch_hook.post_dispatch(metadata, message, 0);
 }
 #[test]
 #[should_panic(expected: ('Invalid metadata variant',))]
@@ -99,7 +99,7 @@ fn test_post_dispatch_fails_if_invalid_variant() {
     let variant = 2;
     metadata.append_u16(variant);
     let message = MessageTrait::default();
-    post_dispatch_hook.post_dispatch(metadata, message);
+    post_dispatch_hook.post_dispatch(metadata, message, 0);
 }
 
 #[test]

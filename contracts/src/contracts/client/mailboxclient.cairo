@@ -1,5 +1,5 @@
 #[starknet::contract]
-mod mailboxclient {
+mod mailboxClientProxy {
     use hyperlane_starknet::contracts::client::mailboxclient_component::{
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
     };

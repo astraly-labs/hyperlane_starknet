@@ -146,6 +146,7 @@ pub mod MailboxclientComponent {
         /// * - `_destination_domain` Domain of destination chain
         /// * - `_recipient` Address of recipient on destination chain
         /// * - `_message_body` Bytes content of message body
+        /// * - `_fee_amount` - the payment provided for sending the message
         /// * - `_hook_metadata` Metadata used by the post dispatch hook
         /// * - `_hook` Custom hook to use instead of the default
         /// 
@@ -157,13 +158,21 @@ pub mod MailboxclientComponent {
             _destination_domain: u32,
             _recipient: ContractAddress,
             _message_body: Bytes,
+            _fee_amount: u256,
             _hook_metadata: Option<Bytes>,
             _hook: Option<ContractAddress>
         ) -> u256 {
             self
                 .mailbox
                 .read()
-                .dispatch(_destination_domain, _recipient, _message_body, _hook_metadata, _hook)
+                .dispatch(
+                    _destination_domain,
+                    _recipient,
+                    _message_body,
+                    _fee_amount,
+                    _hook_metadata,
+                    _hook
+                )
         }
 
         /// Computes quote for dispatching a message to the destination domain & recipient.
@@ -198,9 +207,7 @@ pub mod MailboxclientComponent {
 
     #[generate_trait]
     pub impl MailboxClientInternalImpl<
-        TContractState,
-        +HasComponent<TContractState>,
-        impl Owner: OwnableComponent::HasComponent<TContractState>
+        TContractState, +HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
         /// Initializes the mailbox client configuration.
         /// Dev: callable on constructor

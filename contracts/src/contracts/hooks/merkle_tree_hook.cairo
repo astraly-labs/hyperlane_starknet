@@ -127,9 +127,7 @@ pub mod merkle_tree_hook {
         /// * - `_metadata` - the metadata required for the hook
         /// * - `_message` - the message passed from the Mailbox.dispatch() call
         /// * - `_fee_amount` - the payment provided for sending the message
-        fn post_dispatch(
-            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
-        ) {
+       fn post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256) {
             assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
             self._post_dispatch(_metadata, _message, _fee_amount);
         }
@@ -153,9 +151,7 @@ pub mod merkle_tree_hook {
 
     #[generate_trait]
     pub impl MerkleInternalImpl of InternalTrait {
-        fn _post_dispatch(
-            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
-        ) {
+        fn _post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256) {
             let (id, _) = MessageTrait::format_message(_message);
             // ensure messages which were not dispatched are not inserted into the tree
             assert(self.mailboxclient._is_latest_dispatched(id), Errors::MESSAGE_NOT_DISPATCHING);

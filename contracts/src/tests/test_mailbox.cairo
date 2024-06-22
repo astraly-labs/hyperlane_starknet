@@ -8,7 +8,7 @@ use hyperlane_starknet::interfaces::{
 use hyperlane_starknet::tests::setup::{
     setup_mailbox, mock_setup, OWNER, LOCAL_DOMAIN, NEW_OWNER, DEFAULT_ISM, NEW_DEFAULT_ISM,
     NEW_DEFAULT_HOOK, NEW_REQUIRED_HOOK, DESTINATION_DOMAIN, RECIPIENT_ADDRESS, MAILBOX,
-    DESTINATION_MAILBOX, setup_protocol_fee, setup_mock_hook, PROTOCOL_FEE, INITIAL_SUPPLY
+    DESTINATION_MAILBOX, setup_protocol_fee, setup_mock_hook, PROTOCOL_FEE, INITIAL_SUPPLY, setup_mock_fee_hook
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
@@ -178,7 +178,7 @@ fn test_dispatch_with_protocol_fee_hook() {
     let erc20_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    erc20_dispatcher.approve(MAILBOX(), 2 * PROTOCOL_FEE);
+    erc20_dispatcher.approve(MAILBOX(), PROTOCOL_FEE);
     stop_prank(CheatTarget::One(ownable.contract_address));
     // The owner has the initial fee token supply
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
@@ -233,6 +233,73 @@ fn test_dispatch_with_protocol_fee_hook() {
 }
 
 
+
+#[test]
+fn test_dispatch_with_two_fee_hook() {
+    let (_, protocol_fee_hook) = setup_protocol_fee();
+    let mock_hook = setup_mock_fee_hook();
+    let (mailbox, mut spy, _, _) = setup_mailbox(
+        MAILBOX(),
+        Option::Some(protocol_fee_hook.contract_address),
+        Option::Some(mock_hook.contract_address)
+    );
+    let erc20_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
+    let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    // (mock_fee_hook consummes 3 * PROTOCOL_FEE)
+    erc20_dispatcher.approve(MAILBOX(),  5* PROTOCOL_FEE);
+    stop_prank(CheatTarget::One(ownable.contract_address));
+    // The owner has the initial fee token supply
+    let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    let array = array![
+        0x01020304050607080910111213141516,
+        0x01020304050607080910111213141516,
+        0x01020304050607080910000000000000
+    ];
+
+    let message_body = BytesTrait::new(42, array);
+    let message = Message {
+        version: HYPERLANE_VERSION,
+        nonce: 0,
+        origin: LOCAL_DOMAIN,
+        sender: OWNER(),
+        destination: DESTINATION_DOMAIN,
+        recipient: RECIPIENT_ADDRESS(),
+        body: message_body.clone()
+    };
+    let (message_id, _) = MessageTrait::format_message(message.clone());
+    mailbox
+        .dispatch(
+            DESTINATION_DOMAIN,
+            RECIPIENT_ADDRESS(),
+            message_body,
+            5 * PROTOCOL_FEE,
+            Option::None,
+            Option::None
+        );
+    let expected_event = mailbox::Event::Dispatch(
+        mailbox::Dispatch {
+            sender: OWNER(),
+            destination_domain: DESTINATION_DOMAIN,
+            recipient_address: RECIPIENT_ADDRESS(),
+            message: message
+        }
+    );
+    let expected_event_id = mailbox::Event::DispatchId(mailbox::DispatchId { id: message_id });
+
+    spy
+        .assert_emitted(
+            @array![
+                (mailbox.contract_address, expected_event),
+                (mailbox.contract_address, expected_event_id)
+            ]
+        );
+
+    // balance check
+    assert_eq!(erc20_dispatcher.balance_of(OWNER()), INITIAL_SUPPLY - 4 *PROTOCOL_FEE);
+    assert(mailbox.get_latest_dispatched_id() == message_id, 'Failed to fetch latest id');
+}
 #[test]
 #[should_panic(expected: ('Provided fee < required fee',))]
 fn test_dispatch_with_protocol_fee_hook_fails_if_provided_fee_lower_than_required_fee() {

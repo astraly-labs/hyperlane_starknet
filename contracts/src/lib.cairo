@@ -23,6 +23,7 @@ mod contracts {
     }
     pub mod mocks {
         pub mod fee_token;
+        pub mod fee_hook;
         pub mod hook;
         pub mod ism;
         pub mod message_recipient;

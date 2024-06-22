@@ -10,9 +10,9 @@ use hyperlane_starknet::interfaces::{
     IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait,
 };
 use hyperlane_starknet::tests::setup::{
-    setup_merkleroot_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1,
-    VALIDATOR_ADDRESS_2, get_merkle_message_and_signature, LOCAL_DOMAIN, DESTINATION_DOMAIN,
-    TEST_PROOF, build_merkle_metadata, VALID_OWNER, VALID_RECIPIENT,build_fake_merkle_metadata
+    setup_merkleroot_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1, VALIDATOR_ADDRESS_2,
+    get_merkle_message_and_signature, LOCAL_DOMAIN, DESTINATION_DOMAIN, TEST_PROOF,
+    build_merkle_metadata, VALID_OWNER, VALID_RECIPIENT, build_fake_merkle_metadata
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};

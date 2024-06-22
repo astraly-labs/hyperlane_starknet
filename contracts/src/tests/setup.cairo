@@ -380,7 +380,9 @@ pub fn build_messageid_metadata(origin_merkle_tree_hook: u256, root: u256, index
     metadata
 }
 
-pub fn build_fake_messageid_metadata(origin_merkle_tree_hook: u256, root: u256, index: u32) -> Bytes {
+pub fn build_fake_messageid_metadata(
+    origin_merkle_tree_hook: u256, root: u256, index: u32
+) -> Bytes {
     let y_parity = 0x01;
     let (_, _, signatures) = get_message_and_signature();
     let mut metadata = BytesTrait::new_empty();

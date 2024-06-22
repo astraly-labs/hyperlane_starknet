@@ -14,7 +14,7 @@ use hyperlane_starknet::interfaces::{
 use hyperlane_starknet::tests::setup::{
     setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1, VALIDATOR_ADDRESS_2,
     get_message_and_signature, LOCAL_DOMAIN, DESTINATION_DOMAIN, RECIPIENT_ADDRESS,
-    build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT,build_fake_messageid_metadata
+    build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT, build_fake_messageid_metadata
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};

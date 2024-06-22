@@ -234,7 +234,6 @@ fn test_dispatch_with_protocol_fee_hook() {
 }
 
 
-
 #[test]
 fn test_dispatch_with_two_fee_hook() {
     let (_, protocol_fee_hook) = setup_protocol_fee();
@@ -248,7 +247,7 @@ fn test_dispatch_with_two_fee_hook() {
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     // (mock_fee_hook consummes 3 * PROTOCOL_FEE)
-    erc20_dispatcher.approve(MAILBOX(),  5* PROTOCOL_FEE);
+    erc20_dispatcher.approve(MAILBOX(), 5 * PROTOCOL_FEE);
     stop_prank(CheatTarget::One(ownable.contract_address));
     // The owner has the initial fee token supply
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
@@ -298,7 +297,7 @@ fn test_dispatch_with_two_fee_hook() {
         );
 
     // balance check
-    assert_eq!(erc20_dispatcher.balance_of(OWNER()), INITIAL_SUPPLY - 4 *PROTOCOL_FEE);
+    assert_eq!(erc20_dispatcher.balance_of(OWNER()), INITIAL_SUPPLY - 4 * PROTOCOL_FEE);
     assert(mailbox.get_latest_dispatched_id() == message_id, 'Failed to fetch latest id');
 }
 #[test]

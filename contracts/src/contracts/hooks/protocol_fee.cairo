@@ -169,7 +169,7 @@ pub mod protocol_fee {
         /// * - `_fee_amount` - the payment provided for sending the message
         fn _post_dispatch(
             ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
-        ) {// Since payment is exact, no need for further operation
+        ) { // Since payment is exact, no need for further operation
         }
 
         ///  Returns the static protocol fee 

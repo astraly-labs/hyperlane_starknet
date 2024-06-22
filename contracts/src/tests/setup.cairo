@@ -517,3 +517,12 @@ pub fn setup_protocol_fee() -> (IProtocolFeeDispatcher, IPostDispatchHookDispatc
         IPostDispatchHookDispatcher { contract_address: protocol_fee_addr }
     )
 }
+
+pub fn setup_aggregation_hook(hooks: @Span<ContractAddress>) -> IPostDispatchHookDispatcher {
+    let aggregation_class = declare("aggregation_hook").unwrap();
+    let mut ctor_data = array![];
+    hooks.serialize(ref ctor_data);
+    let (aggregation_addr, _) = aggregation_class.deploy(@ctor_data).unwrap();
+
+    IPostDispatchHookDispatcher { contract_address: aggregation_addr }
+}

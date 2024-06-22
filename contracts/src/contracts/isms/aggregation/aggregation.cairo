@@ -169,21 +169,6 @@ pub mod aggregation {
                 last_module = module;
             }
         }
-        /// Helper:  finds the last module stored in the legacy map
-        /// 
-        /// # Returns
-        /// 
-        /// ContractAddress -the address of the last module stored. 
-        fn find_last_module(self: @ContractState) -> ContractAddress {
-            let mut current_module = self.modules.read(contract_address_const::<0>());
-            loop {
-                let next_module = self.modules.read(current_module);
-                if next_module == contract_address_const::<0>() {
-                    break current_module;
-                }
-                current_module = next_module;
-            }
-        }
         /// Helper:  finds the index associated to a module in the legacy map
         /// 
         /// # Returns
@@ -202,26 +187,6 @@ pub mod aggregation {
                 }
                 current_module = next_module;
             }
-        }
-
-        /// Helper:  determines if a span of modules are already stored in the Storage Mapping
-        /// 
-        /// # Returns
-        /// 
-        /// boolean - True if at least one module is stored
-        fn are_modules_stored(self: @ContractState, _modules: Span<ContractAddress>) -> bool {
-            let mut cur_idx = 0;
-            let mut result = false;
-            while cur_idx < _modules.len()
-                && result == false {
-                    let module = *_modules.at(cur_idx);
-                    match self.find_module_index(module) {
-                        Option::Some => result = true,
-                        Option::None => {}
-                    };
-                    cur_idx += 1;
-                };
-            result
         }
 
         /// Helper:  Build a module span out of a storage map

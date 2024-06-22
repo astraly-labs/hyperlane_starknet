@@ -11,7 +11,8 @@ use hyperlane_starknet::interfaces::{
     IProtocolFeeDispatcherTrait, IMockValidatorAnnounceDispatcher,
     ISpecifiesInterchainSecurityModuleDispatcher, ISpecifiesInterchainSecurityModuleDispatcherTrait,
     IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, IDomainRoutingIsmDispatcher,
-    IDomainRoutingIsmDispatcherTrait, IPausableIsmDispatcher, IPausableIsmDispatcherTrait
+    IDomainRoutingIsmDispatcherTrait, IPausableIsmDispatcher, IPausableIsmDispatcherTrait,
+    ETH_ADDRESS
 };
 use openzeppelin::account::utils::signature::EthSignature;
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
@@ -87,10 +88,22 @@ pub fn MAILBOX() -> ContractAddress {
     'MAILBOX'.try_into().unwrap()
 }
 
+pub fn DESTINATION_MAILBOX() -> ContractAddress {
+    'DESTINATION_MAILBOX'.try_into().unwrap()
+}
+
 pub fn MAILBOX_CLIENT() -> ContractAddress {
     'MAILBOX_CLIENT'.try_into().unwrap()
 }
+pub fn MODULES() -> Span<felt252> {
+    array!['module_1', 'module_2'].span()
+}
 
+pub fn CONTRACT_MODULES() -> Span<ContractAddress> {
+    let module_1 = 'module_1'.try_into().unwrap();
+    let module_2 = 'module_2'.try_into().unwrap();
+    array![module_1, module_2].span()
+}
 pub fn TEST_PROOF() -> Span<u256> {
     array![
         0x09020304050607080910111213141516,
@@ -128,26 +141,51 @@ pub fn TEST_PROOF() -> Span<u256> {
     ]
         .span()
 }
-pub fn setup() -> (
+pub fn setup_mailbox(
+    mailbox_address: ContractAddress,
+    _required_hook: Option<ContractAddress>,
+    _default_mock_hook: Option<ContractAddress>
+) -> (
     IMailboxDispatcher, EventSpy, IPostDispatchHookDispatcher, IInterchainSecurityModuleDispatcher
 ) {
+    let domain = if (mailbox_address == MAILBOX()) {
+        LOCAL_DOMAIN
+    } else {
+        DESTINATION_DOMAIN
+    };
     let mailbox_class = declare("mailbox").unwrap();
-    let mock_hook = setup_mock_hook();
+    let required_hook = match _required_hook {
+        Option::Some(address) => address,
+        Option::None => {
+            let mock_hook_dispatcher = setup_mock_hook();
+            mock_hook_dispatcher.contract_address
+        }
+    };
+    let default_hook = match _default_mock_hook {
+        Option::Some(address) => address,
+        Option::None => { required_hook }
+    };
     let mock_ism = setup_mock_ism();
+    setup_mock_token();
     mailbox_class
         .deploy_at(
             @array![
-                LOCAL_DOMAIN.into(),
+                domain.into(),
                 OWNER().into(),
                 mock_ism.contract_address.into(),
-                mock_hook.contract_address.into(),
-                mock_hook.contract_address.into()
+                default_hook.into(),
+                required_hook.into(),
             ],
-            MAILBOX()
+            mailbox_address
         )
         .unwrap();
-    let mut spy = spy_events(SpyOn::One(MAILBOX()));
-    (IMailboxDispatcher { contract_address: MAILBOX() }, spy, mock_hook, mock_ism)
+    let mut spy = spy_events(SpyOn::One(mailbox_address));
+    (
+        IMailboxDispatcher { contract_address: mailbox_address },
+        spy,
+        IPostDispatchHookDispatcher { contract_address: required_hook },
+        mock_ism
+    )
 }
 
 pub fn mock_setup(
@@ -168,14 +206,14 @@ pub fn setup_mock_ism() -> IInterchainSecurityModuleDispatcher {
     let (mock_ism_addr, _) = mock_ism.deploy(@array![]).unwrap();
     IInterchainSecurityModuleDispatcher { contract_address: mock_ism_addr }
 }
-pub fn setup_messageid_multisig_ism() -> (
-    IInterchainSecurityModuleDispatcher, IValidatorConfigurationDispatcher
-) {
+pub fn setup_messageid_multisig_ism(
+    validators: Span<felt252>
+) -> (IInterchainSecurityModuleDispatcher, IValidatorConfigurationDispatcher) {
     let messageid_multisig_class = declare("messageid_multisig_ism").unwrap();
-
-    let (messageid_multisig_addr, _) = messageid_multisig_class
-        .deploy(@array![OWNER().into()])
-        .unwrap();
+    let mut parameters = Default::default();
+    Serde::serialize(@OWNER(), ref parameters);
+    Serde::serialize(@validators, ref parameters);
+    let (messageid_multisig_addr, _) = messageid_multisig_class.deploy(@parameters).unwrap();
     (
         IInterchainSecurityModuleDispatcher { contract_address: messageid_multisig_addr },
         IValidatorConfigurationDispatcher { contract_address: messageid_multisig_addr }
@@ -183,14 +221,14 @@ pub fn setup_messageid_multisig_ism() -> (
 }
 
 
-pub fn setup_merkleroot_multisig_ism() -> (
-    IInterchainSecurityModuleDispatcher, IValidatorConfigurationDispatcher
-) {
+pub fn setup_merkleroot_multisig_ism(
+    validators: Span<felt252>
+) -> (IInterchainSecurityModuleDispatcher, IValidatorConfigurationDispatcher) {
     let merkleroot_multisig_class = declare("merkleroot_multisig_ism").unwrap();
-
-    let (merkleroot_multisig_addr, _) = merkleroot_multisig_class
-        .deploy(@array![OWNER().into()])
-        .unwrap();
+    let mut parameters = Default::default();
+    Serde::serialize(@OWNER(), ref parameters);
+    Serde::serialize(@validators, ref parameters);
+    let (merkleroot_multisig_addr, _) = merkleroot_multisig_class.deploy(@parameters).unwrap();
     (
         IInterchainSecurityModuleDispatcher { contract_address: merkleroot_multisig_addr },
         IValidatorConfigurationDispatcher { contract_address: merkleroot_multisig_addr }
@@ -199,7 +237,7 @@ pub fn setup_merkleroot_multisig_ism() -> (
 
 
 pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
-    let (mailbox, _, _, _) = setup();
+    let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let mailboxclient_class = declare("mailboxclient").unwrap();
     let res = mailboxclient_class
         .deploy_at(@array![mailbox.contract_address.into(), OWNER().into()], MAILBOX_CLIENT());
@@ -213,7 +251,7 @@ pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
 pub fn setup_default_fallback_routing_ism() -> (
     IInterchainSecurityModuleDispatcher, IRoutingIsmDispatcher, IDomainRoutingIsmDispatcher
 ) {
-    let (mailbox, _, _, _) = setup();
+    let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let default_fallback_routing_ism = declare("default_fallback_routing_ism").unwrap();
     let (default_fallback_routing_ism_addr, _) = default_fallback_routing_ism
         .deploy(@array![OWNER().into(), mailbox.contract_address.into()])
@@ -239,7 +277,7 @@ pub fn setup_domain_routing_ism() -> (
 
 pub fn setup_validator_announce() -> (IValidatorAnnounceDispatcher, EventSpy) {
     let validator_announce_class = declare("validator_announce").unwrap();
-    let (mailbox, _, _, _) = setup();
+    let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let (validator_announce_addr, _) = validator_announce_class
         .deploy(@array![mailbox.contract_address.into()])
         .unwrap();
@@ -257,19 +295,21 @@ pub fn setup_mock_validator_announce(
     IMockValidatorAnnounceDispatcher { contract_address: validator_announce_addr }
 }
 
-pub fn setup_aggregation() -> IAggregationDispatcher {
+pub fn setup_aggregation(modules: Span<felt252>) -> IAggregationDispatcher {
     let aggregation_class = declare("aggregation").unwrap();
-    let (aggregation_addr, _) = aggregation_class.deploy(@array![OWNER().into()]).unwrap();
+    let mut parameters = Default::default();
+    Serde::serialize(@OWNER(), ref parameters);
+    Serde::serialize(@modules, ref parameters);
+    let (aggregation_addr, _) = aggregation_class.deploy(@parameters).unwrap();
     IAggregationDispatcher { contract_address: aggregation_addr }
 }
 
 pub fn setup_merkle_tree_hook() -> (
     IMerkleTreeHookDispatcher, IPostDispatchHookDispatcher, EventSpy
 ) {
-    let (mailbox, _, _, _) = setup();
+    let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let merkle_tree_hook_class = declare("merkle_tree_hook").unwrap();
-    let res = merkle_tree_hook_class
-        .deploy(@array![mailbox.contract_address.into(), OWNER().into()]);
+    let res = merkle_tree_hook_class.deploy(@array![mailbox.contract_address.into()]);
     if (res.is_err()) {
         panic(res.unwrap_err());
     }
@@ -281,6 +321,12 @@ pub fn setup_merkle_tree_hook() -> (
         IPostDispatchHookDispatcher { contract_address: merkle_tree_hook_addr },
         spy
     )
+}
+
+pub fn setup_mock_fee_hook() -> IPostDispatchHookDispatcher {
+    let mock_hook = declare("fee_hook").unwrap();
+    let (mock_hook_addr, _) = mock_hook.deploy(@array![]).unwrap();
+    IPostDispatchHookDispatcher { contract_address: mock_hook_addr }
 }
 
 pub fn setup_mock_hook() -> IPostDispatchHookDispatcher {
@@ -306,7 +352,7 @@ pub fn setup_pausable_ism() -> (IInterchainSecurityModuleDispatcher, IPausableIs
 }
 
 pub fn setup_trusted_relayer_ism() -> IInterchainSecurityModuleDispatcher {
-    let (mailbox, _, _, _) = setup();
+    let (mailbox, _, _, _) = setup_mailbox(DESTINATION_MAILBOX(), Option::None, Option::None);
     let trusted_relayer_ism = declare("trusted_relayer_ism").unwrap();
     let (trusted_relayer_ism_addr, _) = trusted_relayer_ism
         .deploy(@array![mailbox.contract_address.into(), OWNER().into()])
@@ -335,9 +381,9 @@ pub fn build_messageid_metadata(origin_merkle_tree_hook: u256, root: u256, index
 }
 
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
-pub fn get_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignature>) {
+pub fn get_message_and_signature() -> (u256, Array<felt252>, Array<EthSignature>) {
     let msg_hash = 0xEBC2F3E10A13E54662AB9B1ABB83E954EA31E5622AF8239EB97D22CC351324D2;
-    let validators_array: Array<EthAddress> = array![
+    let validators_array: Array<felt252> = array![
         0x8a719a6529c8fdef4df79079f47ae74fd4037b08.try_into().unwrap(),
         0xb93289817c013182bf7f7d1e2e4577a77d4be7d7.try_into().unwrap(),
         0x92316e3bacc840258925ba3eba801aaae5347a09.try_into().unwrap(),
@@ -405,9 +451,9 @@ pub fn build_merkle_metadata(
 
 
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
-pub fn get_merkle_message_and_signature() -> (u256, Array<EthAddress>, Array<EthSignature>) {
+pub fn get_merkle_message_and_signature() -> (u256, Array<felt252>, Array<EthSignature>) {
     let msg_hash = 0x4B73BFF28F5521D6F2F38F344427CCF23DCE6BA26F96C4EB14C1656348F4D153;
-    let validators_array: Array<EthAddress> = array![
+    let validators_array: Array<felt252> = array![
         0xbce3b51b0d6ff506e23ddfd6789ac5a60a1103a4.try_into().unwrap(),
         0xe0c60d0f83f70f5eb497bfc7a2315cb5ca88f801.try_into().unwrap(),
         0x0dc578af77510a16da2a3557e822085a95df6962.try_into().unwrap(),
@@ -440,14 +486,18 @@ pub fn get_merkle_message_and_signature() -> (u256, Array<EthAddress>, Array<Eth
     (msg_hash, validators_array, signatures)
 }
 
-
-pub fn setup_protocol_fee() -> (
-    IERC20Dispatcher, IProtocolFeeDispatcher, IPostDispatchHookDispatcher
-) {
+pub fn setup_mock_token() -> IERC20Dispatcher {
     let fee_token_class = declare("mock_fee_token").unwrap();
     let (fee_token_addr, _) = fee_token_class
-        .deploy(@array![INITIAL_SUPPLY.low.into(), INITIAL_SUPPLY.high.into(), OWNER().into()])
+        .deploy_at(
+            @array![INITIAL_SUPPLY.low.into(), INITIAL_SUPPLY.high.into(), OWNER().into()],
+            ETH_ADDRESS()
+        )
         .unwrap();
+    IERC20Dispatcher { contract_address: fee_token_addr }
+}
+
+pub fn setup_protocol_fee() -> (IProtocolFeeDispatcher, IPostDispatchHookDispatcher) {
     let protocol_fee_class = declare("protocol_fee").unwrap();
     let (protocol_fee_addr, _) = protocol_fee_class
         .deploy(
@@ -458,12 +508,11 @@ pub fn setup_protocol_fee() -> (
                 PROTOCOL_FEE.high.into(),
                 BENEFICIARY().into(),
                 OWNER().into(),
-                fee_token_addr.into()
+                ETH_ADDRESS().into()
             ]
         )
         .unwrap();
     (
-        IERC20Dispatcher { contract_address: fee_token_addr },
         IProtocolFeeDispatcher { contract_address: protocol_fee_addr },
         IPostDispatchHookDispatcher { contract_address: protocol_fee_addr }
     )

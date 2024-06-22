@@ -10,7 +10,7 @@ use hyperlane_starknet::interfaces::{
 use hyperlane_starknet::tests::setup::{
     OWNER, setup_default_fallback_routing_ism, build_messageid_metadata, LOCAL_DOMAIN, VALID_OWNER,
     VALID_RECIPIENT, DESTINATION_DOMAIN, setup_messageid_multisig_ism, get_message_and_signature,
-    setup
+    setup_mailbox, MAILBOX
 };
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget, ContractClassTrait, declare};
@@ -42,7 +42,7 @@ fn test_initialize() {
 
 #[test]
 fn get_default_module() {
-    let (mailbox, _, _, _) = setup();
+    let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let default_fallback_routing_ism = declare("default_fallback_routing_ism").unwrap();
     let (default_fallback_routing_ism_addr, _) = default_fallback_routing_ism
         .deploy(@array![OWNER().into(), mailbox.contract_address.into()])
@@ -278,8 +278,10 @@ fn test_verify() {
         recipient: VALID_RECIPIENT(),
         body: message_body.clone()
     };
-    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism();
     let (_, validators_address, _) = get_message_and_signature();
+    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism(
+        validators_address.span()
+    );
     let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;
@@ -290,7 +292,6 @@ fn test_verify() {
         contract_address: messageid_validator_configuration.contract_address
     };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    messageid_validator_configuration.set_validators(validators_address.span());
     messageid_validator_configuration.set_threshold(4);
 
     // ROUTING TESTING

@@ -45,13 +45,14 @@ pub mod aggregation {
         pub const MODULE_ADDRESS_CANNOT_BE_NULL: felt252 = 'Module address cannot be null';
         pub const THRESHOLD_NOT_SET: felt252 = 'Threshold not set';
         pub const MODULES_ALREADY_STORED: felt252 = 'Modules already stored';
+        pub const NO_MODULES_PROVIDED: felt252 = 'No modules provided';
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _owner: ContractAddress) {
+    fn constructor(ref self: ContractState, _owner: ContractAddress, _modules: Span<felt252>) {
         self.ownable.initializer(_owner);
+        self.set_modules(_modules);
     }
-
 
     #[abi(embed_v0)]
     impl IAggregationImpl of IAggregation<ContractState> {
@@ -130,33 +131,6 @@ pub mod aggregation {
             self.threshold.read()
         }
 
-        /// Sets the ISM modules responsible for the verification
-        /// Dev: reverts if module address is null
-        /// Dev: Callable only by the owner
-        /// 
-        /// # Arguments
-        /// 
-        /// * - `_modules` - a span of module contract addresses
-        /// 
-        fn set_modules(ref self: ContractState, _modules: Span<ContractAddress>) {
-            self.ownable.assert_only_owner();
-            assert(!self.are_modules_stored(_modules), Errors::MODULES_ALREADY_STORED);
-            let mut last_module = self.find_last_module();
-            let mut cur_idx = 0;
-            loop {
-                if (cur_idx == _modules.len()) {
-                    break ();
-                }
-                let module = *_modules.at(cur_idx);
-                assert(
-                    module != contract_address_const::<0>(), Errors::MODULE_ADDRESS_CANNOT_BE_NULL
-                );
-                self.modules.write(last_module, module);
-                cur_idx += 1;
-                last_module = module;
-            }
-        }
-
         /// Sets the threshold for validation
         /// Dev: callable only by the owner
         /// 
@@ -170,19 +144,29 @@ pub mod aggregation {
     }
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        /// Helper:  finds the last module stored in the legacy map
+        /// Sets the ISM modules responsible for the verification
+        /// Dev: reverts if module address is null or if empty array
+        /// Dev: Callable only once during initialization
         /// 
-        /// # Returns
+        /// # Arguments
         /// 
-        /// ContractAddress -the address of the last module stored. 
-        fn find_last_module(self: @ContractState) -> ContractAddress {
-            let mut current_module = self.modules.read(contract_address_const::<0>());
+        /// * - `_modules` - a span of module contract addresses
+        /// 
+        fn set_modules(ref self: ContractState, _modules: Span<felt252>) {
+            assert(_modules.len() != 0, Errors::NO_MODULES_PROVIDED);
+            let mut last_module = contract_address_const::<0>();
+            let mut cur_idx = 0;
             loop {
-                let next_module = self.modules.read(current_module);
-                if next_module == contract_address_const::<0>() {
-                    break current_module;
+                if (cur_idx == _modules.len()) {
+                    break ();
                 }
-                current_module = next_module;
+                let module: ContractAddress = (*_modules.at(cur_idx)).try_into().unwrap();
+                assert(
+                    module != contract_address_const::<0>(), Errors::MODULE_ADDRESS_CANNOT_BE_NULL
+                );
+                self.modules.write(last_module, module);
+                cur_idx += 1;
+                last_module = module;
             }
         }
         /// Helper:  finds the index associated to a module in the legacy map
@@ -203,26 +187,6 @@ pub mod aggregation {
                 }
                 current_module = next_module;
             }
-        }
-
-        /// Helper:  determines if a span of modules are already stored in the Storage Mapping
-        /// 
-        /// # Returns
-        /// 
-        /// boolean - True if at least one module is stored
-        fn are_modules_stored(self: @ContractState, _modules: Span<ContractAddress>) -> bool {
-            let mut cur_idx = 0;
-            let mut result = false;
-            while cur_idx < _modules.len()
-                && result == false {
-                    let module = *_modules.at(cur_idx);
-                    match self.find_module_index(module) {
-                        Option::Some => result = true,
-                        Option::None => {}
-                    };
-                    cur_idx += 1;
-                };
-            result
         }
 
         /// Helper:  Build a module span out of a storage map

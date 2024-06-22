@@ -2,16 +2,14 @@
 pub mod protocol_fee {
     use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::{
-        StandardHookMetadata, VARIANT
+        StandardHookMetadata, VARIANT,
     };
     use hyperlane_starknet::contracts::libs::message::Message;
-    use hyperlane_starknet::interfaces::{IPostDispatchHook, Types, IProtocolFee};
+    use hyperlane_starknet::interfaces::{IPostDispatchHook, Types, IProtocolFee, ETH_ADDRESS};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use starknet::{
-        ContractAddress, contract_address_const, get_caller_address, get_contract_address
-    };
+    use starknet::{ContractAddress, contract_address_const, get_contract_address};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
@@ -33,6 +31,7 @@ pub mod protocol_fee {
         pub const EXCEEDS_MAX_PROTOCOL_FEE: felt252 = 'Exceeds max protocol fee';
         pub const INSUFFICIENT_BALANCE: felt252 = 'Insufficient balance';
         pub const INSUFFICIENT_ALLOWANCE: felt252 = 'Insufficient allowance';
+        pub const INSUFFICIENT_PROTOCOL_FEE: felt252 = 'Insufficient protocol fee';
     }
 
     #[event]
@@ -92,9 +91,12 @@ pub mod protocol_fee {
         /// 
         /// * - `_metadata` - the metadata required for the hook
         /// * - `_message` - the message passed from the Mailbox.dispatch() call
-        fn post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) {
+        /// * - `_fee_amount` - the payment provided for sending the message
+        fn post_dispatch(
+            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
+        ) {
             assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
-            self._post_dispatch(_metadata, _message);
+            self._post_dispatch(_metadata, _message, _fee_amount);
         }
 
         ///  Computes the payment required by the postDispatch call
@@ -158,25 +160,16 @@ pub mod protocol_fee {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        /// Post action after a message is dispatched via the Mailbox
-        /// Dev: revert if insufficient balance or allowance
+        /// Post action after a message is dispatched via the Mailbox (in our case, nothing because the )
         /// 
         /// # Arguments
         /// 
         /// * - `_metadata` - the metadata required for the hook
         /// * - `_message` - the message passed from the Mailbox.dispatch() call
-        fn _post_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) {
-            let token_dispatcher = IERC20Dispatcher { contract_address: self.fee_token.read() };
-            let caller_address = get_caller_address();
-            let contract_address = get_contract_address();
-            let user_balance = token_dispatcher.balance_of(caller_address);
-            assert(user_balance != 0, Errors::INSUFFICIENT_BALANCE);
-            let protocol_fee = self.protocol_fee.read();
-            assert(
-                token_dispatcher.allowance(caller_address, contract_address) >= protocol_fee,
-                Errors::INSUFFICIENT_ALLOWANCE
-            );
-            token_dispatcher.transfer_from(caller_address, contract_address, protocol_fee);
+        /// * - `_fee_amount` - the payment provided for sending the message
+        fn _post_dispatch(
+            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
+        ) { // Since payment is exact, no need for further operation
         }
 
         ///  Returns the static protocol fee 

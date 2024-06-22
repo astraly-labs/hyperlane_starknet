@@ -1,7 +1,7 @@
 #[starknet::contract]
 pub mod merkleroot_multisig_ism {
     use alexandria_bytes::{Bytes, BytesTrait};
-    use hyperlane_starknet::contracts::hooks::merkle_tree_hook::merkle_tree_hook::InternalImpl;
+    use hyperlane_starknet::contracts::hooks::merkle_tree_hook::merkle_tree_hook::MerkleInternalImpl;
     use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MerkleRootIsmMetadata;
@@ -35,6 +35,7 @@ pub mod merkleroot_multisig_ism {
         pub const NO_MATCH_FOR_SIGNATURE: felt252 = 'No match for given signature';
         pub const EMPTY_METADATA: felt252 = 'Empty metadata';
         pub const VALIDATOR_ADDRESS_CANNOT_BE_NULL: felt252 = 'Validator address cannot be 0';
+        pub const NO_VALIDATORS_PROVIDED: felt252 = 'No validators provided';
     }
 
     #[event]
@@ -45,8 +46,9 @@ pub mod merkleroot_multisig_ism {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _owner: ContractAddress) {
+    fn constructor(ref self: ContractState, _owner: ContractAddress, _validators: Span<felt252>) {
         self.ownable.initializer(_owner);
+        self.set_validators(_validators);
     }
 
     #[abi(embed_v0)]
@@ -110,29 +112,6 @@ pub mod merkleroot_multisig_ism {
             self.threshold.read()
         }
 
-        /// Sets a span of validators responsible to verify the message
-        /// Dev: callable only by the admin
-        /// 
-        /// # Arguments 
-        ///
-        /// * - `_validators` - a span of validators to set
-        fn set_validators(ref self: ContractState, _validators: Span<EthAddress>) {
-            self.ownable.assert_only_owner();
-            let mut cur_idx = 0;
-
-            loop {
-                if (cur_idx == _validators.len()) {
-                    break ();
-                }
-                let validator = *_validators.at(cur_idx);
-                assert(
-                    validator != 0.try_into().unwrap(), Errors::VALIDATOR_ADDRESS_CANNOT_BE_NULL
-                );
-                self.validators.write(cur_idx.into(), validator);
-                cur_idx += 1;
-            }
-        }
-
         /// Sets the threshold, the number of validator signatures needed to verify a message 
         /// Dev: callable only by the admin
         /// 
@@ -167,7 +146,7 @@ pub mod merkleroot_multisig_ism {
 
 
     #[generate_trait]
-    pub impl MerkleInternalImpl of InternalTrait {
+    pub impl MerkleISMInternalImpl of InternalTrait {
         /// Returns the digest to be used for signature verification.
         /// 
         /// # Arguments
@@ -202,7 +181,7 @@ pub mod merkleroot_multisig_ism {
                 formatted_proof.append(ByteData { value: *proof.at(cur_idx), size: HASH_SIZE });
                 cur_idx += 1;
             };
-            let signed_root = InternalImpl::_branch_root(
+            let signed_root = MerkleInternalImpl::_branch_root(
                 ByteData { value: id, size: HASH_SIZE },
                 formatted_proof.span(),
                 message_index.into()
@@ -244,6 +223,30 @@ pub mod merkleroot_multisig_ism {
                 cur_idx += 1;
             };
             validators.span()
+        }
+
+        /// Sets a span of validators responsible to verify the message
+        /// Dev: callable only during initialization
+        /// Dev: reverts if null validator address or empty span
+        /// 
+        /// # Arguments 
+        ///
+        /// * - `_validators` - a span of validators to set
+        fn set_validators(ref self: ContractState, _validators: Span<felt252>) {
+            assert(_validators.len() != 0, Errors::NO_VALIDATORS_PROVIDED);
+            let mut cur_idx = 0;
+
+            loop {
+                if (cur_idx == _validators.len()) {
+                    break ();
+                }
+                let validator: EthAddress = (*_validators.at(cur_idx)).try_into().unwrap();
+                assert(
+                    validator != 0.try_into().unwrap(), Errors::VALIDATOR_ADDRESS_CANNOT_BE_NULL
+                );
+                self.validators.write(cur_idx.into(), validator);
+                cur_idx += 1;
+            }
         }
     }
 }

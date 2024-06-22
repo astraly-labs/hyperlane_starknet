@@ -8,14 +8,15 @@ pub mod mailbox {
         IInterchainSecurityModuleDispatcherTrait, IPostDispatchHookDispatcher,
         ISpecifiesInterchainSecurityModuleDispatcher,
         ISpecifiesInterchainSecurityModuleDispatcherTrait, IPostDispatchHookDispatcherTrait,
-        IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait,
+        IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait, ETH_ADDRESS,
     };
     use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::{
-        ContractAddress, ClassHash, get_caller_address, get_block_number, contract_address_const
+        ContractAddress, ClassHash, get_caller_address, get_block_number, contract_address_const,
+        get_contract_address
     };
-
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -45,7 +46,7 @@ pub mod mailbox {
         default_hook: ContractAddress,
         // The required post dispatch hook, used for post processing of ALL dispatches.
         required_hook: ContractAddress,
-        // Mapping of message ID to delivery context that processed the message.
+        // Mapping of message ID to delivery context that processed the message.        
         deliveries: LegacyMap::<u256, Delivery>,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
@@ -118,6 +119,9 @@ pub mod mailbox {
         pub const NO_ISM_FOUND: felt252 = 'ISM: no ISM found';
         pub const NEW_OWNER_IS_ZERO: felt252 = 'Ownable: new owner cannot be 0';
         pub const ALREADY_OWNER: felt252 = 'Ownable: already owner';
+        pub const INSUFFICIENT_BALANCE: felt252 = 'Insufficient balance';
+        pub const INSUFFICIENT_ALLOWANCE: felt252 = 'Insufficient allowance';
+        pub const NOT_ENOUGH_FEE_PROVIDED: felt252 = 'Provided fee < required fee';
     }
 
     #[constructor]
@@ -207,16 +211,6 @@ pub mod mailbox {
             self.emit(RequiredHookSet { hook: _hook });
         }
 
-        /// Sets the domain of chain for the mailbox
-        /// Callable only by the admin
-        /// 
-        /// # Arguments
-        /// 
-        /// * `_local_domain` - The new local domain
-        fn set_local_domain(ref self: ContractState, _local_domain: u32) {
-            self.ownable.assert_only_owner();
-            self.local_domain.write(_local_domain);
-        }
 
         /// Dispatches a message to the destination domain & recipient using the default hook and empty metadata.
         /// 
@@ -225,6 +219,7 @@ pub mod mailbox {
         /// * `_destination_domain` - Domain of destination chain
         /// * `_recipient_address` -  Address of recipient on destination chain 
         /// * `_message_body` - Raw bytes content of message body
+        /// * `_fee_amount` - the payment provided for sending the message
         /// * `_custom_hook_metadata` - Metadata used by the post dispatch hook
         /// * `_custom_hook` - Custom hook to use instead of the default
         /// 
@@ -236,6 +231,7 @@ pub mod mailbox {
             _destination_domain: u32,
             _recipient_address: ContractAddress,
             _message_body: Bytes,
+            _fee_amount: u256,
             _custom_hook_metadata: Option<Bytes>,
             _custom_hook: Option<ContractAddress>
         ) -> u256 {
@@ -268,15 +264,43 @@ pub mod mailbox {
 
             // HOOKS
 
+            let caller_address = get_caller_address();
             let required_hook_address = self.required_hook.read();
             let required_hook = IPostDispatchHookDispatcher {
                 contract_address: required_hook_address
             };
-            if (hook != contract_address_const::<0>()) {
-                let hook = IPostDispatchHookDispatcher { contract_address: hook };
-                hook.post_dispatch(hook_metadata.clone(), message.clone());
+            let token_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
+
+            let mut required_fee = required_hook
+                .quote_dispatch(hook_metadata.clone(), message.clone());
+            if (required_fee > 0) {
+                assert(_fee_amount >= required_fee, Errors::NOT_ENOUGH_FEE_PROVIDED);
+                let contract_address = get_contract_address();
+                let user_balance = token_dispatcher.balance_of(caller_address);
+                assert(user_balance >= _fee_amount, Errors::INSUFFICIENT_BALANCE);
+                assert(
+                    token_dispatcher.allowance(caller_address, contract_address) >= _fee_amount,
+                    Errors::INSUFFICIENT_ALLOWANCE
+                );
+
+                token_dispatcher.transfer_from(caller_address, required_hook_address, required_fee);
             }
-            required_hook.post_dispatch(hook_metadata, message.clone());
+
+            required_hook.post_dispatch(hook_metadata.clone(), message.clone(), required_fee);
+
+            if (hook != contract_address_const::<0>()) {
+                let hook_dispatcher = IPostDispatchHookDispatcher { contract_address: hook };
+                let default_fee = hook_dispatcher
+                    .quote_dispatch(hook_metadata.clone(), message.clone());
+                if (default_fee == 0) {
+                    hook_dispatcher
+                        .post_dispatch(hook_metadata.clone(), message.clone(), default_fee);
+                }
+                if (_fee_amount - required_fee >= default_fee) {
+                    token_dispatcher.transfer_from(caller_address, hook, default_fee);
+                    hook_dispatcher.post_dispatch(hook_metadata, message.clone(), default_fee);
+                }
+            }
 
             id
         }

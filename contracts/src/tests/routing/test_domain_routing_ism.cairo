@@ -9,8 +9,7 @@ use hyperlane_starknet::interfaces::{
 };
 use hyperlane_starknet::tests::setup::{
     OWNER, setup_domain_routing_ism, build_messageid_metadata, LOCAL_DOMAIN, DESTINATION_DOMAIN,
-    setup_messageid_multisig_ism, get_message_and_signature, setup_mailbox_client, VALID_OWNER,
-    VALID_RECIPIENT
+    setup_messageid_multisig_ism, get_message_and_signature, VALID_OWNER, VALID_RECIPIENT
 };
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget, stop_prank, ContractClassTrait};
@@ -268,8 +267,10 @@ fn test_verify() {
         recipient: VALID_RECIPIENT(),
         body: message_body.clone()
     };
-    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism();
     let (_, validators_address, _) = get_message_and_signature();
+    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism(
+        validators_address.span()
+    );
     let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;
@@ -280,7 +281,6 @@ fn test_verify() {
         contract_address: messageid_validator_configuration.contract_address
     };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    messageid_validator_configuration.set_validators(validators_address.span());
     messageid_validator_configuration.set_threshold(4);
 
     // ROUTING TESTING

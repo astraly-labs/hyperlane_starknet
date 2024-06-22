@@ -58,7 +58,7 @@ pub mod aggregation_ism_metadata {
         /// boolean -  Whether or not metadata was provided for the ISM at `_index`
         fn has_metadata(_metadata: Bytes, _index: u8) -> bool {
             match metadata_range(_metadata, _index) {
-                Result::Ok((start, _)) => { start > 0 },
+                Result::Ok((start, _)) => true,
                 Result::Err(_) => false
             }
         }

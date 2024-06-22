@@ -14,7 +14,7 @@ use hyperlane_starknet::interfaces::{
 use hyperlane_starknet::tests::setup::{
     setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1, VALIDATOR_ADDRESS_2,
     get_message_and_signature, LOCAL_DOMAIN, DESTINATION_DOMAIN, RECIPIENT_ADDRESS,
-    build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT
+    build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT,build_fake_messageid_metadata
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
@@ -201,3 +201,37 @@ fn test_message_id_multisig_verify_with_empty_metadata() {
     assert(messageid.verify(bytes_metadata, message) == true, 'verification failed');
 }
 
+
+#[test]
+#[should_panic(expected: ('No match for given signature',))]
+fn test_message_id_multisig_verify_with_4_valid_signatures_fails_if_duplicate_signatures() {
+    let array = array![
+        0x01020304050607080910111213141516,
+        0x01020304050607080910111213141516,
+        0x01020304050607080910000000000000
+    ];
+    let message_body = BytesTrait::new(42, array);
+    let message = Message {
+        version: HYPERLANE_VERSION,
+        nonce: 0,
+        origin: LOCAL_DOMAIN,
+        sender: VALID_OWNER(),
+        destination: DESTINATION_DOMAIN,
+        recipient: VALID_RECIPIENT(),
+        body: message_body.clone()
+    };
+    let (_, validators_address, _) = get_message_and_signature();
+    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism(
+        validators_address.span()
+    );
+    let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
+    let root: u256 = 'root'.try_into().unwrap();
+    let index = 1;
+    let metadata = build_fake_messageid_metadata(origin_merkle_tree, root, index);
+    let ownable = IOwnableDispatcher {
+        contract_address: messageid_validator_configuration.contract_address
+    };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    messageid_validator_configuration.set_threshold(4);
+    assert(messageid.verify(metadata, message) == true, 'verification failed');
+}

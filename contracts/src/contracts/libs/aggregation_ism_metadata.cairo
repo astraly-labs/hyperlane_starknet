@@ -86,7 +86,7 @@ pub mod aggregation_ism_metadata {
 
 
 #[cfg(test)]
-mod tets {
+mod test {
     use alexandria_bytes::{Bytes, BytesTrait};
     use super::aggregation_ism_metadata::AggregationIsmMetadata;
 
@@ -116,5 +116,20 @@ mod tets {
             );
             cur_idx += 1;
         };
+    }
+
+    #[test]
+    fn test_aggregation_ism_has_metadata() {
+        let encoded_metadata = BytesTrait::new(
+            64,
+            array![
+                0x00000018000000240000000000000000,
+                0x0000002C00000034AAAAAAAAAAAAAAAA,
+                0xBBBBCCCCDDDDDDDDEEEEEEEEFFFFFFFF,
+                0x00000000000000000000000000000000
+            ]
+        );
+        assert_eq!(AggregationIsmMetadata::has_metadata(encoded_metadata.clone(), 0), true);
+        assert_eq!(AggregationIsmMetadata::has_metadata(encoded_metadata.clone(), 1), false);
     }
 }

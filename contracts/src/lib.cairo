@@ -22,8 +22,8 @@ mod contracts {
         pub mod mailboxclient_component;
     }
     pub mod mocks {
-        pub mod fee_token;
         pub mod fee_hook;
+        pub mod fee_token;
         pub mod hook;
         pub mod ism;
         pub mod message_recipient;

@@ -21,10 +21,7 @@ pub mod fee_hook {
         }
 
         fn post_dispatch(
-            ref self: ContractState,
-            _metadata: Bytes,
-            _message: Message,
-            _fee_amount: u256,
+            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256,
         ) {}
 
         fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {

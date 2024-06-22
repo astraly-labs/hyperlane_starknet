@@ -323,7 +323,7 @@ pub fn setup_merkle_tree_hook() -> (
     )
 }
 
-pub fn setup_mock_fee_hook() -> IPostDispatchHookDispatcher{
+pub fn setup_mock_fee_hook() -> IPostDispatchHookDispatcher {
     let mock_hook = declare("fee_hook").unwrap();
     let (mock_hook_addr, _) = mock_hook.deploy(@array![]).unwrap();
     IPostDispatchHookDispatcher { contract_address: mock_hook_addr }

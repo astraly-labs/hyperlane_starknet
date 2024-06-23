@@ -42,6 +42,7 @@ cainome = { git = "https://github.com/cartridge-gg/cainome", tag = "v0.2.9", fea
 ] }
 starknet = "0.10.0"
 cairo-lang-starknet-classes = "2.6.3"
+katana-runner = { git = "https://github.com/dojoengine/dojo", branch = "main" }
 
 # eth
 ethers = "2.0.7"

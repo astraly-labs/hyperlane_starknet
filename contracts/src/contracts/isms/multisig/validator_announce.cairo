@@ -138,7 +138,7 @@ pub mod validator_announce {
                 }
             };
             let mut storage_location = self.storage_location.read(_validator);
-            let concat_storage_location = if (storage_location.len() ==0){
+            let concat_storage_location = if (storage_location.len() == 0) {
                 _storage_location
             } else {
                 storage_location.concat(@_storage_location)

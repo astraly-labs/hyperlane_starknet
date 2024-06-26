@@ -230,6 +230,7 @@ pub mod default_fallback_routing_ism {
                 }
             };
             let next_domain = self.domains.read(_domain);
+            self.modules.write(_domain, contract_address_const::<0>());
             self.domains.write(domain_index, next_domain);
         }
 

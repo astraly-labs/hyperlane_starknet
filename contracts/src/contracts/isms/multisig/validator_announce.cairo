@@ -125,6 +125,7 @@ pub mod validator_announce {
             );
             assert(!self.replay_protection.read(replay_id), Errors::REPLAY_PROTECTION_ERROR);
             let announcement_digest = self.get_announcement_digest(u256_storage_location);
+            println!("here is the announcement digest");
             let signature: Signature = self.convert_to_signature(_signature);
             assert(
                 bool_is_eth_signature_valid(announcement_digest, signature, _validator),
@@ -239,14 +240,8 @@ pub mod validator_announce {
         fn domain_hash(self: @ContractState) -> u256 {
             let mailbox_address: felt252 = self.mailboxclient.mailbox().try_into().unwrap();
             let mut input: Array<ByteData> = array![
-                ByteData {
-                    value: self.mailboxclient.get_local_domain().into(),
-                    size: 4
-                },
-                ByteData {
-                    value: mailbox_address.try_into().unwrap(),
-                    size: 32
-                },
+                ByteData { value: self.mailboxclient.get_local_domain().into(), size: 4 },
+                ByteData { value: mailbox_address.try_into().unwrap(), size: 32 },
                 ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 }
             ];
             reverse_endianness(compute_keccak(input.span()))

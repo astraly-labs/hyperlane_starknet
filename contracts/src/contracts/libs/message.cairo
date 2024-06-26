@@ -52,25 +52,12 @@ pub impl MessageImpl of MessageTrait {
         let recipient: felt252 = _message.recipient.into();
 
         let mut input: Array<ByteData> = array![
-            ByteData {
-                value: _message.version.into(), size: 1
-            },
-            ByteData {
-                value: _message.nonce.into(), size: 4
-            },
-            ByteData {
-                value: _message.origin.into(), size:4
-            },
+            ByteData { value: _message.version.into(), size: 1 },
+            ByteData { value: _message.nonce.into(), size: 4 },
+            ByteData { value: _message.origin.into(), size: 4 },
             ByteData { value: sender.into(), size: 32 },
-            ByteData {
-                value: _message.destination.into(),
-                size: 4
-            },
+            ByteData { value: _message.destination.into(), size: 4 },
             ByteData { value: recipient.into(), size: 32 },
-            ByteData {
-                value: _message.body.size().into(),
-                size: u64_word_size(_message.body.size().into()).into()
-            },
         ];
 
         let mut message_data = _message.clone().body.data();

@@ -241,11 +241,11 @@ pub mod validator_announce {
             let mut input: Array<ByteData> = array![
                 ByteData {
                     value: self.mailboxclient.get_local_domain().into(),
-                    size: u64_word_size(self.mailboxclient.get_local_domain().into()).into()
+                    size: 4
                 },
                 ByteData {
                     value: mailbox_address.try_into().unwrap(),
-                    size: u256_word_size(mailbox_address.try_into().unwrap()).into()
+                    size: 32
                 },
                 ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 }
             ];

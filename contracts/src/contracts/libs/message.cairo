@@ -53,20 +53,20 @@ pub impl MessageImpl of MessageTrait {
 
         let mut input: Array<ByteData> = array![
             ByteData {
-                value: _message.version.into(), size: u64_word_size(_message.version.into()).into()
+                value: _message.version.into(), size: 1
             },
             ByteData {
-                value: _message.nonce.into(), size: u64_word_size(_message.nonce.into()).into()
+                value: _message.nonce.into(), size: 4
             },
             ByteData {
-                value: _message.origin.into(), size: u64_word_size(_message.origin.into()).into()
+                value: _message.origin.into(), size:4
             },
-            ByteData { value: sender.into(), size: ADDRESS_SIZE },
+            ByteData { value: sender.into(), size: 32 },
             ByteData {
                 value: _message.destination.into(),
-                size: u64_word_size(_message.destination.into()).into()
+                size: 4
             },
-            ByteData { value: recipient.into(), size: ADDRESS_SIZE },
+            ByteData { value: recipient.into(), size: 32 },
             ByteData {
                 value: _message.body.size().into(),
                 size: u64_word_size(_message.body.size().into()).into()

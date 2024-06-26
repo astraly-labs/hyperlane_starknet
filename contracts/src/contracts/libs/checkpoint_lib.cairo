@@ -46,11 +46,11 @@ pub mod checkpoint_lib {
                 ByteData { value: domain_hash.into(), size: HASH_SIZE },
                 ByteData {
                     value: _checkpoint_root.into(),
-                    size: u256_word_size(_checkpoint_root.into()).into()
+                    size: 32
                 },
                 ByteData {
                     value: _checkpoint_index.into(),
-                    size: u64_word_size(_checkpoint_index.into()).into()
+                    size: 4
                 },
                 ByteData { value: _message_id.into(), size: HASH_SIZE },
             ];
@@ -69,10 +69,10 @@ pub mod checkpoint_lib {
         /// u256 -  The domain hash.
         fn domain_hash(_origin: u32, _origin_merkle_tree_hook: u256) -> u256 {
             let mut input: Array<ByteData> = array![
-                ByteData { value: _origin.into(), size: u64_word_size(_origin.into()).into() },
+                ByteData { value: _origin.into(), size: 4 },
                 ByteData {
                     value: _origin_merkle_tree_hook.into(),
-                    size: u256_word_size(_origin_merkle_tree_hook).into()
+                    size: 32
                 },
                 ByteData { value: HYPERLANE.into(), size: 9 }
             ];

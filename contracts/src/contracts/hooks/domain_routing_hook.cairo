@@ -133,7 +133,7 @@ pub mod domain_routing_hook {
             let user_balance = token_dispatcher.balance_of(from);
             assert(user_balance >= amount, Errors::INSUFFICIENT_BALANCE);
             let transfer_flag: bool = token_dispatcher.transfer_from(from, to, amount);
-            assert(transfer_flag, Errors::FEE_AMOUNT_TRANSFER_FAILED);
+            assert(transfer_flag == false, Errors::FEE_AMOUNT_TRANSFER_FAILED);
         }
     }
 }

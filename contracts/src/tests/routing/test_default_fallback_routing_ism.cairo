@@ -130,8 +130,8 @@ fn test_remove_domain_module_check() {
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
     fallback_routing_ism.remove(12345);
-    let mailbox_dispatcher = IMailboxDispatcher{contract_address: MAILBOX()};
-    assert_eq!(fallback_routing_ism.module(12345),mailbox_dispatcher.get_default_ism());
+    let mailbox_dispatcher = IMailboxDispatcher { contract_address: MAILBOX() };
+    assert_eq!(fallback_routing_ism.module(12345), mailbox_dispatcher.get_default_ism());
 }
 
 

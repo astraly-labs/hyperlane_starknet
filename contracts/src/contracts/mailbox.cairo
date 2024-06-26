@@ -280,8 +280,7 @@ pub mod mailbox {
 
             let hook_dispatcher = IPostDispatchHookDispatcher { contract_address: hook };
             let default_fee = hook_dispatcher
-                    .quote_dispatch(hook_metadata.clone(), message.clone());
-
+                .quote_dispatch(hook_metadata.clone(), message.clone());
 
             assert(_fee_amount >= required_fee + default_fee, Errors::NOT_ENOUGH_FEE_PROVIDED);
 
@@ -292,12 +291,12 @@ pub mod mailbox {
             let user_balance = token_dispatcher.balance_of(caller_address);
 
             assert(user_balance >= required_fee + default_fee, Errors::INSUFFICIENT_BALANCE);
-            
+
             assert(
                 token_dispatcher.allowance(caller_address, contract_address) >= _fee_amount,
                 Errors::INSUFFICIENT_ALLOWANCE
             );
-        
+
             if (required_fee > 0) {
                 token_dispatcher.transfer_from(caller_address, required_hook_address, required_fee);
             }

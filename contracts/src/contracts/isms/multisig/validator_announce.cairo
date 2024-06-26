@@ -137,8 +137,13 @@ pub mod validator_announce {
                     self.validators.write(last_validator, _validator);
                 }
             };
-
-            self.storage_location.write(_validator, _storage_location);
+            let mut storage_location = self.storage_location.read(_validator);
+            let concat_storage_location = if (storage_location.len() ==0){
+                _storage_location
+            } else {
+                storage_location.concat(@_storage_location)
+            };
+            self.storage_location.write(_validator, concat_storage_location);
             self.replay_protection.write(replay_id, true);
             self
                 .emit(

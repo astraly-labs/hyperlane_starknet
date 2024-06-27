@@ -28,13 +28,13 @@ pub mod mock_validator_announce {
 
     #[storage]
     struct Storage {
-        mailbox: ContractAddress,  // for testing purpose, we set directly the mailbox address here
+        mailbox: ContractAddress, // for testing purpose, we set directly the mailbox address here
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
         domain: u32,
-        storage_location_len : LegacyMap::<EthAddress, u256>,
+        storage_location_len: LegacyMap::<EthAddress, u256>,
         storage_locations: LegacyMap::<(EthAddress, u256), Array<felt252>>,
         replay_protection: LegacyMap::<felt252, bool>,
         validators: LegacyMap::<EthAddress, EthAddress>,
@@ -134,7 +134,7 @@ pub mod mock_validator_announce {
             };
             let mut validator_len = self.storage_location_len.read(_validator);
             self.storage_locations.write((_validator, validator_len), _storage_location);
-            self.storage_location_len.write(_validator, validator_len +1);
+            self.storage_location_len.write(_validator, validator_len + 1);
             self.replay_protection.write(replay_id, true);
             self
                 .emit(
@@ -165,12 +165,13 @@ pub mod mock_validator_announce {
                         let mut cur_idx = 0;
                         let validator_len = self.storage_location_len.read(*validator);
                         let mut validator_metadata = array![];
-                        loop{
-                            if (cur_idx == validator_len){
-                                break();
+                        loop {
+                            if (cur_idx == validator_len) {
+                                break ();
                             }
-                            validator_metadata.append(self.storage_locations.read((*validator,cur_idx)));
-                            cur_idx +=1;
+                            validator_metadata
+                                .append(self.storage_locations.read((*validator, cur_idx)));
+                            cur_idx += 1;
                         };
                         metadata.append(validator_metadata.span())
                     },
@@ -243,7 +244,9 @@ pub mod mock_validator_announce {
         }
 
         /// Returns the domain separator used in validator announcements.
-        fn domain_hash(self: @ContractState, _mailbox_address: ContractAddress, _domain: u32) -> u256 {
+        fn domain_hash(
+            self: @ContractState, _mailbox_address: ContractAddress, _domain: u32
+        ) -> u256 {
             let felt_address: felt252 = _mailbox_address.into();
             let mut input: Array<ByteData> = array![
                 ByteData { value: _domain.into(), size: u64_word_size(_domain.into()).into() },
@@ -310,7 +313,6 @@ pub mod mock_validator_announce {
 }
 
 
-
 #[starknet::contract]
 pub mod validator_announce {
     use alexandria_bytes::{Bytes, BytesTrait};
@@ -352,7 +354,7 @@ pub mod validator_announce {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
-        storage_location_len : LegacyMap::<EthAddress, u256>,
+        storage_location_len: LegacyMap::<EthAddress, u256>,
         storage_locations: LegacyMap::<(EthAddress, u256), Array<felt252>>,
         replay_protection: LegacyMap::<felt252, bool>,
         validators: LegacyMap::<EthAddress, EthAddress>,
@@ -453,7 +455,7 @@ pub mod validator_announce {
             };
             let mut validator_len = self.storage_location_len.read(_validator);
             self.storage_locations.write((_validator, validator_len), _storage_location);
-            self.storage_location_len.write(_validator, validator_len +1);
+            self.storage_location_len.write(_validator, validator_len + 1);
             self.replay_protection.write(replay_id, true);
             self
                 .emit(
@@ -484,12 +486,13 @@ pub mod validator_announce {
                         let mut cur_idx = 0;
                         let validator_len = self.storage_location_len.read(*validator);
                         let mut validator_metadata = array![];
-                        loop{
-                            if (cur_idx == validator_len){
-                                break();
+                        loop {
+                            if (cur_idx == validator_len) {
+                                break ();
                             }
-                            validator_metadata.append(self.storage_locations.read((*validator,cur_idx)));
-                            cur_idx +=1;
+                            validator_metadata
+                                .append(self.storage_locations.read((*validator, cur_idx)));
+                            cur_idx += 1;
                         };
                         metadata.append(validator_metadata.span())
                     },

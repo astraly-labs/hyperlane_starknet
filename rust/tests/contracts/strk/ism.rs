@@ -3,6 +3,7 @@ use futures::{stream::FuturesUnordered, StreamExt};
 use starknet::{accounts::Account, core::types::FieldElement, macros::felt};
 
 use super::bind::multisig_ism::messageid_multisig_ism;
+use super::bind::multisig_ism:: { messageid_multisig_ism, Bytes, Message };
 use super::bind::routing::domain_routing_ism;
 use crate::validator::{self, TestValidators};
 
@@ -48,6 +49,25 @@ impl Ism {
         deployer: &StarknetAccount,
     ) -> eyre::Result<FieldElement> {
         let res = deploy_contract(codes.ism_multisig, vec![owner.address()], deployer).await;
+        let res2 = deploy_contract(codes.ism_multisig, vec![owner.address()], deployer).await;
+        
+        let metadata = Bytes {
+            size: 128,
+            data: vec![0x01, 0x23, 0x45, 0x67], // Example data
+        };
+
+        let message = Message {
+            version: 1,
+            nonce: 12345,
+            origin: 54321,
+            sender: ContractAddress(res.0),
+            destination: 98765,
+            recipient: ContractAddress(res2.0),
+            body: Bytes {
+                size: 256,
+                data: vec![0x12, 0x34, 0x56, 0x78], // Example data
+            },
+        };
 
         let contract = messageid_multisig_ism::new(res.0, owner);
         contract
@@ -59,6 +79,7 @@ impl Ism {
             )
             .send()
             .await?;
+            .verify(&metadata, &message);
 
         Ok(res.0)
     }

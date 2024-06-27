@@ -4,7 +4,7 @@ mod contracts;
 mod validator;
 
 use bytes::{BufMut, BytesMut};
-use cainome::cairo_serde::CairoSerde;
+use cainome::cairo_serde:: {CairoSerde, U256};
 use contracts::{
     eth::mailbox::{DispatchFilter, DispatchIdFilter},
     strk::mailbox::{mailbox, Bytes, Dispatch as DispatchEvent, Message},
@@ -133,7 +133,13 @@ where
     receiver[12..].copy_from_slice(&to.core.msg_receiver.address().0);
     let _sender = from.acc_tester.address();
     let msg_body = b"hello world";
+    let val_u256 = U256::from_bytes_be(&receiver);
 
+    let num: u64 = 10000000;
+    let mut bytes = [0u8; 32];
+    bytes[24..32].copy_from_slice(&num.to_be_bytes());
+    let val_u256 = U256::from_bytes_be(&bytes);
+    
     // dispatch
     let mailbox_contract = mailbox::new(from.core.mailbox, &from.acc_tester);
     let dispatch_res = mailbox_contract
@@ -141,6 +147,7 @@ where
             &DOMAIN_EVM,
             &cainome::cairo_serde::ContractAddress(FieldElement::from_bytes_be(&receiver).unwrap()),
             &to_strk_message_bytes(msg_body),
+            &val_u256,
             &None,
             &None,
         )

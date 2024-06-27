@@ -2,7 +2,6 @@ use cainome::cairo_serde::ContractAddress;
 use futures::{stream::FuturesUnordered, StreamExt};
 use starknet::{accounts::Account, core::types::FieldElement, macros::felt};
 
-use super::bind::multisig_ism::messageid_multisig_ism;
 use super::bind::multisig_ism:: { messageid_multisig_ism, Bytes, Message };
 use super::bind::routing::domain_routing_ism;
 use crate::validator::{self, TestValidators};
@@ -71,14 +70,6 @@ impl Ism {
 
         let contract = messageid_multisig_ism::new(res.0, owner);
         contract
-            .set_validators(
-                &set.validators
-                    .iter()
-                    .map(|v| v.eth_addr())
-                    .collect::<Vec<_>>(),
-            )
-            .send()
-            .await?;
             .verify(&metadata, &message);
 
         Ok(res.0)

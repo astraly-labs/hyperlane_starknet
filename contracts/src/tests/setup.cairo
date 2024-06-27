@@ -382,13 +382,13 @@ pub fn build_messageid_metadata(origin_merkle_tree_hook: u256, root: u256, index
 
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
 pub fn get_message_and_signature() -> (u256, Array<felt252>, Array<EthSignature>) {
-    let msg_hash = 0xEBC2F3E10A13E54662AB9B1ABB83E954EA31E5622AF8239EB97D22CC351324D2;
+    let msg_hash = 0x91745536C898FFA3831357EDCE68E1584287129C8E3AE9A065AC5B31AA355E8C;
     let validators_array: Array<felt252> = array![
-        0x8a719a6529c8fdef4df79079f47ae74fd4037b08.try_into().unwrap(),
-        0xb93289817c013182bf7f7d1e2e4577a77d4be7d7.try_into().unwrap(),
-        0x92316e3bacc840258925ba3eba801aaae5347a09.try_into().unwrap(),
-        0xef7cc63f461666cb47688a9c3975504341e2e12b.try_into().unwrap(),
-        0x3ba6645137a79068c4e83ea6f97d35c2b3d1e3fb.try_into().unwrap()
+        0xcc802e4ba45ee188d1955bba8d3ac4d64efe561e.try_into().unwrap(),
+0x3f20deb9b7de97fe4d1c07cdd189eafece816489.try_into().unwrap(),
+0x58adaf0255f4626f75cdeb5f75f0c5a309847132.try_into().unwrap(),
+0x4e30030da04bf8f52a4ff5cf0fc2ef7bd7d4a840.try_into().unwrap(),
+0x3c521ab0c2ade5410483d95e40a7a1f956b87fa9.try_into().unwrap(),
     ];
     let signatures = array![
         EthSignature {
@@ -452,13 +452,13 @@ pub fn build_merkle_metadata(
 
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
 pub fn get_merkle_message_and_signature() -> (u256, Array<felt252>, Array<EthSignature>) {
-    let msg_hash = 0x4B73BFF28F5521D6F2F38F344427CCF23DCE6BA26F96C4EB14C1656348F4D153;
+    let msg_hash = 0x59771D2D2620ABA94DF0A5E7EE7B1FE0D437D7710D43847097A471A4101AE2D4;
     let validators_array: Array<felt252> = array![
-        0xbce3b51b0d6ff506e23ddfd6789ac5a60a1103a4.try_into().unwrap(),
-        0xe0c60d0f83f70f5eb497bfc7a2315cb5ca88f801.try_into().unwrap(),
-        0x0dc578af77510a16da2a3557e822085a95df6962.try_into().unwrap(),
-        0x6593c1d433696640d90b76d804fdaa0e5277230f.try_into().unwrap(),
-        0x9350b8b7031e7df5e2f7b95697bc90d42357fa1f.try_into().unwrap()
+        0xf4a1ea6c9380f182730df38c8f2347ac95a15839.try_into().unwrap(),
+0xe8d8f27c89192757cd4be34d5cf5eda849b85929.try_into().unwrap(),
+0x18836f7e081a0a971178413c428230dc3b5d62c5.try_into().unwrap(),
+0x77a0172ee7de58a66da42fee91c0cb92775cf4e1.try_into().unwrap(),
+0x7058f79d7b18f6ee3808139a0b9ccf9fd8883574.try_into().unwrap(),
     ];
     let signatures = array![
         EthSignature {

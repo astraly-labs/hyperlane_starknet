@@ -39,7 +39,8 @@ pub mod validator_announce {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
-        storage_location: LegacyMap::<EthAddress, Array<felt252>>,
+        storage_location_len : LegacyMap::<EthAddress, u256>,
+        storage_locations: LegacyMap::<(EthAddress, u256), Array<felt252>>,
         replay_protection: LegacyMap::<felt252, bool>,
         validators: LegacyMap::<EthAddress, EthAddress>,
     }
@@ -137,13 +138,9 @@ pub mod validator_announce {
                     self.validators.write(last_validator, _validator);
                 }
             };
-            let mut storage_location = self.storage_location.read(_validator);
-            let concat_storage_location = if (storage_location.len() == 0) {
-                _storage_location
-            } else {
-                storage_location.concat(@_storage_location)
-            };
-            self.storage_location.write(_validator, concat_storage_location);
+            let mut validator_len = self.storage_location_len.read(_validator);
+            self.storage_locations.write((_validator, validator_len), _storage_location);
+            self.storage_location_len.write(_validator, validator_len +1);
             self.replay_protection.write(replay_id, true);
             self
                 .emit(
@@ -166,12 +163,21 @@ pub mod validator_announce {
         /// Span<Span<felt252>> -  A list of registered storage metadata
         fn get_announced_storage_locations(
             self: @ContractState, mut _validators: Span<EthAddress>
-        ) -> Span<Span<felt252>> {
+        ) -> Span<Span<Array<felt252>>> {
             let mut metadata = array![];
             loop {
                 match _validators.pop_front() {
                     Option::Some(validator) => {
-                        let validator_metadata = self.storage_location.read(*validator);
+                        let mut cur_idx = 0;
+                        let validator_len = self.storage_location_len.read(*validator);
+                        let mut validator_metadata = array![];
+                        loop{
+                            if (cur_idx == validator_len){
+                                break();
+                            }
+                            validator_metadata.append(self.storage_locations.read((*validator,cur_idx)));
+                            cur_idx +=1;
+                        };
                         metadata.append(validator_metadata.span())
                     },
                     Option::None => { break (); }

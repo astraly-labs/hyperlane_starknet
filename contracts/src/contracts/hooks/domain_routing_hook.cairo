@@ -13,7 +13,9 @@ pub mod domain_routing_hook {
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use starknet::{ContractAddress, contract_address_const, get_caller_address};
+    use starknet::{
+        ContractAddress, contract_address_const, get_caller_address, get_contract_address
+    };
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -41,6 +43,7 @@ pub mod domain_routing_hook {
         pub const INSUFFICIENT_BALANCE: felt252 = 'Insufficient balance';
         pub const FEE_AMOUNT_TRANSFER_FAILED: felt252 = 'Hook fee transfer failed';
         pub const ZERO_FEE: felt252 = 'Zero fee amount';
+        pub const INSUFFICIENT_ALLOWANCE: felt252 = 'Insufficient allowance';
     }
 
     #[event]
@@ -132,6 +135,11 @@ pub mod domain_routing_hook {
             let token_dispatcher = IERC20Dispatcher { contract_address: self.fee_token.read() };
             let user_balance = token_dispatcher.balance_of(from);
             assert(user_balance >= amount, Errors::INSUFFICIENT_BALANCE);
+            let contract_address = get_contract_address();
+            assert(
+                token_dispatcher.allowance(from, contract_address) >= amount,
+                Errors::INSUFFICIENT_ALLOWANCE
+            );
             let transfer_flag: bool = token_dispatcher.transfer_from(from, to, amount);
             assert(transfer_flag == false, Errors::FEE_AMOUNT_TRANSFER_FAILED);
         }

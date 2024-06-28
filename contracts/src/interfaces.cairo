@@ -233,7 +233,7 @@ pub trait IValidatorAnnounce<TContractState> {
 
     fn get_announced_storage_locations(
         self: @TContractState, _validators: Span<EthAddress>
-    ) -> Span<Span<felt252>>;
+    ) -> Span<Span<Array<felt252>>>;
 
     fn announce(
         ref self: TContractState,
@@ -251,7 +251,7 @@ pub trait IMockValidatorAnnounce<TContractState> {
 
     fn get_announced_storage_locations(
         self: @TContractState, _validators: Span<EthAddress>
-    ) -> Span<Span<felt252>>;
+    ) -> Span<Span<Array<felt252>>>;
 
     fn announce(
         ref self: TContractState,

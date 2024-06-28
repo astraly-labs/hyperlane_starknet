@@ -78,8 +78,9 @@ pub mod merkle_tree_hook {
     ///
     /// * `_mailbox` - The mailbox to be associated to the mailbox client
     #[constructor]
-    fn constructor(ref self: ContractState, _mailbox: ContractAddress) {
+    fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress) {
         self.mailboxclient.initialize(_mailbox);
+        self.ownable.initializer(_owner);
     }
 
     #[abi(embed_v0)]

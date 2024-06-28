@@ -272,6 +272,9 @@ fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
     output_string
 }
 
+
+// --------------------------------------------------------
+// This section is part of the cairo core contract (see: https://github.com/starkware-libs/cairo/blob/953afd5e7ede296c99deaf189e18e361229517c0/corelib/src/keccak.cairo)
 pub fn compute_keccak_byte_array(arr: @ByteArray) -> u256 {
     let mut input = array![];
     let mut i = 0;
@@ -356,6 +359,9 @@ fn finalize_padding(ref input: Array<u64>, num_padding_words: u32) {
     finalize_padding(ref input, num_padding_words - 1);
 }
 
+
+// --------------------------------------------------------------------------------------------
+// END SECTION
 
 /// The general function that computes the keccak hash for an input span of ByteData
 /// 

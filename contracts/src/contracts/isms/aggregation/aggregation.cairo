@@ -1,6 +1,6 @@
 #[starknet::contract]
 pub mod aggregation {
-    use alexandria_bytes::Bytes;
+    use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::libs::aggregation_ism_metadata::aggregation_ism_metadata::AggregationIsmMetadata;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::interfaces::{
@@ -44,13 +44,15 @@ pub mod aggregation {
         pub const THRESHOLD_NOT_REACHED: felt252 = 'Threshold not reached';
         pub const MODULE_ADDRESS_CANNOT_BE_NULL: felt252 = 'Module address cannot be null';
         pub const THRESHOLD_NOT_SET: felt252 = 'Threshold not set';
+        pub const MODULES_ALREADY_STORED: felt252 = 'Modules already stored';
+        pub const NO_MODULES_PROVIDED: felt252 = 'No modules provided';
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _owner: ContractAddress) {
+    fn constructor(ref self: ContractState, _owner: ContractAddress, _modules: Span<felt252>) {
         self.ownable.initializer(_owner);
+        self.set_modules(_modules);
     }
-
 
     #[abi(embed_v0)]
     impl IAggregationImpl of IAggregation<ContractState> {
@@ -58,20 +60,49 @@ pub mod aggregation {
             ModuleType::AGGREGATION(starknet::get_contract_address())
         }
 
+
+        /// Returns the set of ISMs responsible for verifying _message and the number of ISMs that must verify
+        /// Dev: Can change based on the content of _message
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_message` - the message to consider
+        /// 
+        /// # Returns 
+        /// 
+        /// Span<ContractAddress> - The array of ISM addresses
+        /// threshold - The number of ISMs needed to verify
         fn modules_and_threshold(
             self: @ContractState, _message: Message
         ) -> (Span<ContractAddress>, u8) {
             // THE USER CAN DEFINE HERE CONDITIONS FOR THE MODULE AND THRESHOLD SELECTION
             let threshold = self.threshold.read();
-            (build_modules_span(self), threshold)
+            (self.build_modules_span(), threshold)
         }
 
+
+        /// Requires that m-of-n ISMs verify the provided interchain message.
+        /// Dev: Can change based on the content of _message
+        /// Dev: Reverts if threshold is not set
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_metadata` - encoded metadata (see aggregation_ism_metadata.cairo)
+        /// * - `_message` - message structure containing relevant information (see message.cairo)
+        /// 
+        /// # Returns 
+        /// 
+        /// boolean - wheter the verification succeed or not.
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
             let (isms, mut threshold) = self.modules_and_threshold(_message.clone());
+
             assert(threshold != 0, Errors::THRESHOLD_NOT_SET);
-            let modules = build_modules_span(self);
+            let modules = self.build_modules_span();
             let mut cur_idx: u8 = 0;
             loop {
+                if (threshold == 0) {
+                    break ();
+                }
                 if (cur_idx.into() == isms.len()) {
                     break ();
                 }
@@ -82,6 +113,7 @@ pub mod aggregation {
                 let ism = IInterchainSecurityModuleDispatcher {
                     contract_address: *modules.at(cur_idx.into())
                 };
+
                 let metadata = AggregationIsmMetadata::metadata_at(_metadata.clone(), cur_idx);
                 assert(ism.verify(metadata, _message.clone()), Errors::VERIFICATION_FAILED);
                 threshold -= 1;
@@ -92,22 +124,43 @@ pub mod aggregation {
         }
 
         fn get_modules(self: @ContractState) -> Span<ContractAddress> {
-            build_modules_span(self)
+            self.build_modules_span()
         }
 
         fn get_threshold(self: @ContractState) -> u8 {
             self.threshold.read()
         }
 
-        fn set_modules(ref self: ContractState, _modules: Span<ContractAddress>) {
+        /// Sets the threshold for validation
+        /// Dev: callable only by the owner
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_threshold` - The number of validator signatures needed
+        fn set_threshold(ref self: ContractState, _threshold: u8) {
             self.ownable.assert_only_owner();
-            let mut last_module = find_last_module(@self);
+            self.threshold.write(_threshold);
+        }
+    }
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        /// Sets the ISM modules responsible for the verification
+        /// Dev: reverts if module address is null or if empty array
+        /// Dev: Callable only once during initialization
+        /// 
+        /// # Arguments
+        /// 
+        /// * - `_modules` - a span of module contract addresses
+        /// 
+        fn set_modules(ref self: ContractState, _modules: Span<felt252>) {
+            assert(_modules.len() != 0, Errors::NO_MODULES_PROVIDED);
+            let mut last_module = contract_address_const::<0>();
             let mut cur_idx = 0;
             loop {
                 if (cur_idx == _modules.len()) {
                     break ();
                 }
-                let module = *_modules.at(cur_idx);
+                let module: ContractAddress = (*_modules.at(cur_idx)).try_into().unwrap();
                 assert(
                     module != contract_address_const::<0>(), Errors::MODULE_ADDRESS_CANNOT_BE_NULL
                 );
@@ -116,35 +169,43 @@ pub mod aggregation {
                 last_module = module;
             }
         }
-
-        fn set_threshold(ref self: ContractState, _threshold: u8) {
-            self.ownable.assert_only_owner();
-            self.threshold.write(_threshold);
-        }
-    }
-
-    fn find_last_module(self: @ContractState) -> ContractAddress {
-        let mut current_module = self.modules.read(contract_address_const::<0>());
-        loop {
-            let next_module = self.modules.read(current_module);
-            if next_module == contract_address_const::<0>() {
-                break current_module;
+        /// Helper:  finds the index associated to a module in the legacy map
+        /// 
+        /// # Returns
+        /// 
+        /// Option<ContractAddress> - the contract if found, else None
+        fn find_module_index(
+            self: @ContractState, _module: ContractAddress
+        ) -> Option<ContractAddress> {
+            let mut current_module: ContractAddress = 0.try_into().unwrap();
+            loop {
+                let next_module = self.modules.read(current_module);
+                if next_module == _module {
+                    break Option::Some(current_module);
+                } else if next_module == 0.try_into().unwrap() {
+                    break Option::None(());
+                }
+                current_module = next_module;
             }
-            current_module = next_module;
         }
-    }
 
-    fn build_modules_span(self: @ContractState) -> Span<ContractAddress> {
-        let mut cur_address = contract_address_const::<0>();
-        let mut modules = array![];
-        loop {
-            let next_address = self.modules.read(cur_address);
-            if (next_address == contract_address_const::<0>()) {
-                break ();
-            }
-            modules.append(cur_address);
-            cur_address = next_address
-        };
-        modules.span()
+        /// Helper:  Build a module span out of a storage map
+        /// 
+        /// # Returns
+        /// 
+        /// Span<ContractAddress> - a span of module addresses
+        fn build_modules_span(self: @ContractState) -> Span<ContractAddress> {
+            let mut cur_address = contract_address_const::<0>();
+            let mut modules = array![];
+            loop {
+                let next_address = self.modules.read(cur_address);
+                if (next_address == contract_address_const::<0>()) {
+                    break ();
+                }
+                modules.append(next_address);
+                cur_address = next_address
+            };
+            modules.span()
+        }
     }
 }

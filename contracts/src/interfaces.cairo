@@ -1,9 +1,13 @@
 use alexandria_bytes::Bytes;
 use core::array::ArrayTrait;
-use hyperlane_starknet::contracts::libs::merkle_lib::merkle_lib::Tree;
+use hyperlane_starknet::contracts::hooks::merkle_tree_hook::merkle_tree_hook::Tree;
 use hyperlane_starknet::contracts::libs::message::Message;
 use starknet::ContractAddress;
 use starknet::EthAddress;
+
+pub fn ETH_ADDRESS() -> ContractAddress {
+    0x049D36570D4e46f48e99674bd3fcc84644DdD6b96F7C741B1562B82f9e004dC7.try_into().unwrap()
+}
 
 #[derive(Serde, Drop, Debug, PartialEq)]
 pub enum Types {
@@ -55,6 +59,7 @@ pub trait IMailbox<TContractState> {
         _destination_domain: u32,
         _recipient_address: ContractAddress,
         _message_body: Bytes,
+        _fee_amount: u256,
         _custom_hook_metadata: Option<Bytes>,
         _custom_hook: Option<ContractAddress>,
     ) -> u256;
@@ -68,7 +73,7 @@ pub trait IMailbox<TContractState> {
         _custom_hook: Option<ContractAddress>,
     ) -> u256;
 
-    fn process(ref self: TContractState, _metadata: Bytes, _message: Message,);
+    fn process(ref self: TContractState, _metadata: Bytes, _message: Message);
 
     fn recipient_ism(self: @TContractState, _recipient: ContractAddress) -> ContractAddress;
 
@@ -78,8 +83,6 @@ pub trait IMailbox<TContractState> {
 
     fn set_required_hook(ref self: TContractState, _hook: ContractAddress);
 
-    fn set_local_domain(ref self: TContractState, _local_domain: u32);
-
     fn processor(self: @TContractState, _id: u256) -> ContractAddress;
 
     fn processed_at(self: @TContractState, _id: u256) -> u64;
@@ -88,17 +91,8 @@ pub trait IMailbox<TContractState> {
 
 #[starknet::interface]
 pub trait IInterchainSecurityModule<TContractState> {
-    /// Returns an enum that represents the type of security model encoded by this ISM.
-    /// Relayers infer how to fetch and format metadata.
     fn module_type(self: @TContractState) -> ModuleType;
 
-    /// Defines a security model responsible for verifying interchain messages based on the provided metadata.
-    /// Returns true if the message was verified.
-    /// 
-    /// # Arguments
-    /// * `_metadata` - Off-chain metadata provided by a relayer, specific to the security model encoded by 
-    /// the module (e.g. validator signatures)
-    /// * `_message` - Hyperlane encoded interchain message
     fn verify(self: @TContractState, _metadata: Bytes, _message: Message,) -> bool;
 }
 
@@ -111,8 +105,6 @@ pub trait IValidatorConfiguration<TContractState> {
     fn get_validators(self: @TContractState) -> Span<EthAddress>;
 
     fn get_threshold(self: @TContractState) -> u32;
-
-    fn set_validators(ref self: TContractState, _validators: Span<EthAddress>);
 
     fn set_threshold(ref self: TContractState, _threshold: u32);
 }
@@ -129,7 +121,9 @@ pub trait IPostDispatchHook<TContractState> {
 
     fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
 
-    fn post_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message);
+    fn post_dispatch(
+        ref self: TContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
+    );
 
     fn quote_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message) -> u256;
 }
@@ -176,6 +170,7 @@ pub trait IMailboxClient<TContractState> {
         _destination_domain: u32,
         _recipient: ContractAddress,
         _message_body: Bytes,
+        _fee_amount: u256,
         _hook_metadata: Option<Bytes>,
         _hook: Option<ContractAddress>
     ) -> u256;
@@ -204,23 +199,6 @@ pub trait IInterchainGasPaymaster<TContractState> {
     fn quote_gas_payment(
         ref self: TContractState, _destination_domain: u32, _gas_amount: u256
     ) -> u256;
-}
-
-#[starknet::interface]
-pub trait IRouter<TContractState> {
-    fn routers(self: @TContractState, _domain: u32) -> ContractAddress;
-
-    fn unenroll_remote_router(ref self: TContractState, _domain: u32);
-
-    fn enroll_remote_router(ref self: TContractState, _domain: u32, _router: ContractAddress);
-
-    fn enroll_remote_routers(
-        ref self: TContractState, _domains: Span<u32>, _routers: Span<ContractAddress>
-    );
-
-    fn unenroll_remote_routers(ref self: TContractState, _domains: Span<u32>);
-
-    fn handle(self: @TContractState, _origin: u32, _sender: ContractAddress, _message: Message);
 }
 
 
@@ -298,8 +276,6 @@ pub trait IAggregation<TContractState> {
     fn get_modules(self: @TContractState) -> Span<ContractAddress>;
 
     fn get_threshold(self: @TContractState) -> u8;
-
-    fn set_modules(ref self: TContractState, _modules: Span<ContractAddress>);
 
     fn set_threshold(ref self: TContractState, _threshold: u8);
 }

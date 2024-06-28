@@ -4,7 +4,6 @@ mod contracts {
     pub mod libs {
         pub mod aggregation_ism_metadata;
         pub mod checkpoint_lib;
-        pub mod merkle_lib;
         pub mod message;
         pub mod multisig {
             pub mod merkleroot_ism_metadata;
@@ -22,9 +21,9 @@ mod contracts {
     pub mod client {
         pub mod mailboxclient;
         pub mod mailboxclient_component;
-        pub mod router;
     }
     pub mod mocks {
+        pub mod fee_hook;
         pub mod fee_token;
         pub mod hook;
         pub mod ism;
@@ -61,6 +60,7 @@ mod tests {
     pub mod test_validator_announce;
     pub mod isms {
         pub mod test_aggregation;
+        pub mod test_default_ism;
         pub mod test_merkleroot_multisig;
         pub mod test_messageid_multisig;
     }

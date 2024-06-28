@@ -1,5 +1,4 @@
 use alexandria_bytes::{Bytes, BytesTrait, BytesIndex};
-use alexandria_data_structures::array_ext::ArrayTraitExt;
 use hyperlane_starknet::contracts::isms::multisig::validator_announce::validator_announce;
 use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::{HYPERLANE_ANNOUNCEMENT};
 use hyperlane_starknet::interfaces::{
@@ -8,7 +7,7 @@ use hyperlane_starknet::interfaces::{
 };
 use hyperlane_starknet::tests::setup::{setup_mock_validator_announce, setup_validator_announce};
 use snforge_std::cheatcodes::events::EventAssertions;
-use starknet::{ContractAddress, contract_address_const, EthAddress};
+use starknet::{contract_address_const, EthAddress};
 
 pub const TEST_STARKNET_DOMAIN: u32 = 23448593;
 
@@ -16,7 +15,7 @@ pub const TEST_STARKNET_DOMAIN: u32 = 23448593;
 #[test]
 fn test_announce() {
     let (validator_announce, mut spy) = setup_validator_announce();
-    let validator_address: EthAddress = 0x6f4c33301bba9fb23d5189885463b9029dbfeb1e
+    let validator_address: EthAddress = 0xe6076407ca06f2b0a0ec716db2b5361beccdcfa8
         .try_into()
         .unwrap();
     let mut _storage_location: Array<felt252> = array![
@@ -64,7 +63,7 @@ fn test_announce_fails_if_wrong_signer() {
 #[should_panic(expected: ('Announce already occured',))]
 fn test_announce_fails_if_replay() {
     let (validator_announce, _) = setup_validator_announce();
-    let validator_address: EthAddress = 0x6f4c33301bba9fb23d5189885463b9029dbfeb1e
+    let validator_address: EthAddress = 0xe6076407ca06f2b0a0ec716db2b5361beccdcfa8
         .try_into()
         .unwrap();
     let mut storage_location: Array<felt252> = array![

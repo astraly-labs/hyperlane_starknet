@@ -9,13 +9,13 @@ pub mod mock_validator_announce {
     use hyperlane_starknet::interfaces::IMockValidatorAnnounce;
     use hyperlane_starknet::interfaces::{IMailboxClientDispatcher, IMailboxClientDispatcherTrait};
     use hyperlane_starknet::utils::keccak256::{
-        reverse_endianness, to_eth_signature, compute_keccak, ByteData
+        reverse_endianness, to_eth_signature, compute_keccak, ByteData, u64_word_size,
+        u256_word_size, HASH_SIZE, bool_is_eth_signature_valid
     };
     use hyperlane_starknet::utils::store_arrays::StoreFelt252Array;
 
     use starknet::ContractAddress;
     use starknet::EthAddress;
-    use starknet::eth_signature::is_eth_signature_valid;
     use starknet::secp256_trait::{Signature, signature_from_vrs};
 
     #[storage]
@@ -126,14 +126,16 @@ pub mod mock_validator_announce {
                 match _storage_location.pop_front() {
                     Option::Some(storage) => {
                         byte_data_storage_location
-                            .append(ByteData { value: storage, is_address: false });
+                            .append(
+                                ByteData { value: storage, size: u256_word_size(storage).into() }
+                            );
                     },
                     Option::None(_) => { break (); }
                 }
             };
             let hash = reverse_endianness(
                 compute_keccak(
-                    array![ByteData { value: domain_hash, is_address: false }]
+                    array![ByteData { value: domain_hash, size: HASH_SIZE }]
                         .concat(@byte_data_storage_location)
                         .span()
                 )
@@ -154,22 +156,15 @@ pub mod mock_validator_announce {
     fn domain_hash(self: @ContractState, _mailbox_address: ContractAddress, _domain: u32) -> u256 {
         let felt_address: felt252 = _mailbox_address.into();
         let mut input: Array<ByteData> = array![
-            ByteData { value: _domain.into(), is_address: false },
-            ByteData { value: felt_address.into(), is_address: true },
-            ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), is_address: false }
+            ByteData { value: _domain.into(), size: u64_word_size(_domain.into()).into() },
+            ByteData {
+                value: felt_address.into(), size: u256_word_size(felt_address.into()).into()
+            },
+            ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 }
         ];
         reverse_endianness(compute_keccak(input.span()))
     }
 
-
-    fn bool_is_eth_signature_valid(
-        msg_hash: u256, signature: Signature, signer: EthAddress
-    ) -> bool {
-        match is_eth_signature_valid(msg_hash, signature, signer) {
-            Result::Ok(()) => true,
-            Result::Err(_) => false
-        }
-    }
 
     fn find_validators_index(self: @ContractState, _validator: EthAddress) -> Option<EthAddress> {
         let mut current_validator: EthAddress = 0.try_into().unwrap();

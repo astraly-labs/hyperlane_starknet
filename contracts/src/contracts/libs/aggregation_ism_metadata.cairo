@@ -6,11 +6,27 @@ pub mod aggregation_ism_metadata {
         fn metadata_at(_metadata: Bytes, _index: u8) -> Bytes;
         fn has_metadata(_metadata: Bytes, _index: u8) -> bool;
     }
-
+    /// * Format of metadata:
+    /// *
+    /// * [????:????] Metadata start/end uint32 ranges, packed as uint64
+    /// * [????:????] ISM metadata, packed encoding
+    /// *
     const RANGE_SIZE: u8 = 4;
     const BYTES_PER_ELEMENT: u8 = 16;
 
     impl AggregationIsmMetadataImpl of AggregationIsmMetadata {
+        /// Returns the metadata provided for the ISM at `_index`
+        /// Dev: Callers must ensure _index is less than the number of metadatas provided
+        /// Dev: Callers must ensure `hasMetadata(_metadata, _index)`
+        /// 
+        /// # Arguments
+        ///
+        /// * - `_metadata` -Encoded Aggregation ISM metadata
+        /// * - `_index` - The index of the ISM to check for metadata for
+        /// 
+        /// # Returns
+        /// 
+        /// Bytes -  The metadata provided for the ISM at `_index`
         fn metadata_at(_metadata: Bytes, _index: u8) -> Bytes {
             let (mut start, end) = match metadata_range(_metadata.clone(), _index) {
                 Result::Ok((start, end)) => (start, end),
@@ -29,6 +45,17 @@ pub mod aggregation_ism_metadata {
             };
             bytes_array
         }
+        /// Returns whether or not metadata was provided for the ISM at _index
+        /// Dev: Callers must ensure _index is less than the number of metadatas provided
+        /// 
+        /// # Arguments
+        ///
+        /// * - `_metadata` -Encoded Aggregation ISM metadata
+        /// * - `_index` - The index of the ISM to check for metadata for
+        /// 
+        /// # Returns
+        /// 
+        /// boolean -  Whether or not metadata was provided for the ISM at `_index`
         fn has_metadata(_metadata: Bytes, _index: u8) -> bool {
             match metadata_range(_metadata, _index) {
                 Result::Ok((_, _)) => true,
@@ -37,6 +64,17 @@ pub mod aggregation_ism_metadata {
         }
     }
 
+    /// Returns the range of the metadata provided for the ISM at _index
+    /// Dev: Callers must ensure _index is less than the number of metadatas provided
+    /// 
+    /// # Arguments
+    ///
+    /// * - `_metadata` -Encoded Aggregation ISM metadata
+    /// * - `_index` - The index of the ISM to check for metadata for
+    /// 
+    /// # Returns
+    /// 
+    /// Result<u32, u32), u8> -  Result on whether or not metadata was provided for the ISM at `_index`
     fn metadata_range(_metadata: Bytes, _index: u8) -> Result<(u32, u32), u8> {
         let start = _index.into() * RANGE_SIZE * 2;
         let mid = start + RANGE_SIZE;

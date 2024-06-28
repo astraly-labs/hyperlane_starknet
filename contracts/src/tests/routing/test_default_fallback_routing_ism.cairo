@@ -8,12 +8,12 @@ use hyperlane_starknet::interfaces::{
     IMailboxDispatcher, IMailboxDispatcherTrait
 };
 use hyperlane_starknet::tests::setup::{
-    OWNER, setup_default_fallback_routing_ism, build_messageid_metadata, LOCAL_DOMAIN,
-    DESTINATION_DOMAIN, RECIPIENT_ADDRESS, setup_messageid_multisig_ism, get_message_and_signature,
-    setup_mailbox_client
+    OWNER, setup_default_fallback_routing_ism, build_messageid_metadata, LOCAL_DOMAIN, VALID_OWNER,
+    VALID_RECIPIENT, DESTINATION_DOMAIN, setup_messageid_multisig_ism, get_message_and_signature,
+    setup_mailbox, MAILBOX
 };
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{start_prank, CheatTarget, stop_prank, ContractClassTrait, declare};
+use snforge_std::{start_prank, CheatTarget, ContractClassTrait, declare};
 use starknet::{ContractAddress, contract_address_const};
 
 #[test]
@@ -42,19 +42,16 @@ fn test_initialize() {
 
 #[test]
 fn get_default_module() {
-    let mailbox_client = setup_mailbox_client();
+    let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let default_fallback_routing_ism = declare("default_fallback_routing_ism").unwrap();
     let (default_fallback_routing_ism_addr, _) = default_fallback_routing_ism
-        .deploy(@array![OWNER().into(), mailbox_client.contract_address.into()])
+        .deploy(@array![OWNER().into(), mailbox.contract_address.into()])
         .unwrap();
     let test_address = contract_address_const::<0x1331341>();
     let dispatcher = IDomainRoutingIsmDispatcher {
         contract_address: default_fallback_routing_ism_addr
     };
-    let mailboxclient_dispatcher = IMailboxClientDispatcher {
-        contract_address: mailbox_client.contract_address
-    };
-    let mailbox = IMailboxDispatcher { contract_address: mailboxclient_dispatcher.mailbox() };
+    let mailbox = IMailboxDispatcher { contract_address: mailbox.contract_address };
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     mailbox.set_default_ism(test_address);
@@ -276,13 +273,15 @@ fn test_verify() {
         version: HYPERLANE_VERSION,
         nonce: 0,
         origin: LOCAL_DOMAIN,
-        sender: OWNER(),
+        sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
-        recipient: RECIPIENT_ADDRESS(),
+        recipient: VALID_RECIPIENT(),
         body: message_body.clone()
     };
-    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism();
     let (_, validators_address, _) = get_message_and_signature();
+    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism(
+        validators_address.span()
+    );
     let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;
@@ -293,7 +292,6 @@ fn test_verify() {
         contract_address: messageid_validator_configuration.contract_address
     };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    messageid_validator_configuration.set_validators(validators_address.span());
     messageid_validator_configuration.set_threshold(4);
 
     // ROUTING TESTING

@@ -4,6 +4,7 @@ use core::keccak::cairo_keccak;
 use core::to_byte_array::{FormatAsByteArray, AppendFormattedToByteArray};
 use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
 use starknet::{EthAddress, eth_signature::is_eth_signature_valid, secp256_trait::Signature};
+use alexandria_math::BitShift;
 
 pub const ETH_SIGNED_MESSAGE: felt252 = '\x19Ethereum Signed Message:\n32';
 
@@ -376,18 +377,19 @@ fn reverse_u64_word(words: Span<u64>, padding: u8) -> Span<u64> {
 fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
     let mut output_string: ByteArray = Default::default();
     let mut cur_idx = 0;
-
     loop {
-        if (cur_idx == bytes.len()) {
-            break ();
+        if cur_idx == bytes.len() {
+            break;
         }
         let byte = *bytes.at(cur_idx);
-        if (byte.size == 32) {
-            // in order to store a 32-bytes entry in a ByteArray, we need to first append the upper 1-byte part , then the lower 31-bytes part
-            let up_byte = (byte.value / FELT252_MASK).try_into().unwrap();
-            output_string.append_word(up_byte, 1);
-            let down_byte = (byte.value & FELT252_MASK).try_into().unwrap();
-            output_string.append_word(down_byte, 31);
+        if byte.size == 32 {
+            // Extract the upper 1-byte part
+            let up_byte = BitShift::shr(byte.value, 248) & 0xFF;
+            output_string.append_word(up_byte.try_into().unwrap(), 1);
+            
+            // Extract the lower 31-byte part
+            let down_byte = byte.value & FELT252_MASK;
+            output_string.append_word(down_byte.try_into().unwrap(), 31);
         } else {
             output_string.append_word(byte.value.try_into().unwrap(), byte.size);
         }

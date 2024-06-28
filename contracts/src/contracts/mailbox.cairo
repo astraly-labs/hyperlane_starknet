@@ -338,10 +338,11 @@ pub mod mailbox {
             let block_number = get_block_number();
             assert(!self.delivered(id), Errors::ALREADY_DELIVERED);
 
+            self.deliveries.write(id, Delivery { processor: caller, block_number: block_number });
+
             let recipient_ism = self.recipient_ism(_message.recipient);
             let ism = IInterchainSecurityModuleDispatcher { contract_address: recipient_ism };
 
-            self.deliveries.write(id, Delivery { processor: caller, block_number: block_number });
             self
                 .emit(
                     Process {

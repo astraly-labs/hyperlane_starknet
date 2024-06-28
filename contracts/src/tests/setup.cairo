@@ -385,10 +385,10 @@ pub fn get_message_and_signature() -> (u256, Array<felt252>, Array<EthSignature>
     let msg_hash = 0x91745536C898FFA3831357EDCE68E1584287129C8E3AE9A065AC5B31AA355E8C;
     let validators_array: Array<felt252> = array![
         0xcc802e4ba45ee188d1955bba8d3ac4d64efe561e.try_into().unwrap(),
-0x3f20deb9b7de97fe4d1c07cdd189eafece816489.try_into().unwrap(),
-0x58adaf0255f4626f75cdeb5f75f0c5a309847132.try_into().unwrap(),
-0x4e30030da04bf8f52a4ff5cf0fc2ef7bd7d4a840.try_into().unwrap(),
-0x3c521ab0c2ade5410483d95e40a7a1f956b87fa9.try_into().unwrap(),
+        0x3f20deb9b7de97fe4d1c07cdd189eafece816489.try_into().unwrap(),
+        0x58adaf0255f4626f75cdeb5f75f0c5a309847132.try_into().unwrap(),
+        0x4e30030da04bf8f52a4ff5cf0fc2ef7bd7d4a840.try_into().unwrap(),
+        0x3c521ab0c2ade5410483d95e40a7a1f956b87fa9.try_into().unwrap(),
     ];
     let signatures = array![
         EthSignature {
@@ -455,10 +455,10 @@ pub fn get_merkle_message_and_signature() -> (u256, Array<felt252>, Array<EthSig
     let msg_hash = 0x59771D2D2620ABA94DF0A5E7EE7B1FE0D437D7710D43847097A471A4101AE2D4;
     let validators_array: Array<felt252> = array![
         0xf4a1ea6c9380f182730df38c8f2347ac95a15839.try_into().unwrap(),
-0xe8d8f27c89192757cd4be34d5cf5eda849b85929.try_into().unwrap(),
-0x18836f7e081a0a971178413c428230dc3b5d62c5.try_into().unwrap(),
-0x77a0172ee7de58a66da42fee91c0cb92775cf4e1.try_into().unwrap(),
-0x7058f79d7b18f6ee3808139a0b9ccf9fd8883574.try_into().unwrap(),
+        0xe8d8f27c89192757cd4be34d5cf5eda849b85929.try_into().unwrap(),
+        0x18836f7e081a0a971178413c428230dc3b5d62c5.try_into().unwrap(),
+        0x77a0172ee7de58a66da42fee91c0cb92775cf4e1.try_into().unwrap(),
+        0x7058f79d7b18f6ee3808139a0b9ccf9fd8883574.try_into().unwrap(),
     ];
     let signatures = array![
         EthSignature {

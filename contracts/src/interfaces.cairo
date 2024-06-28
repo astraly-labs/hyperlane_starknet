@@ -317,7 +317,6 @@ pub trait IProtocolFee<TContractState> {
     fn collect_protocol_fees(ref self: TContractState);
 }
 
-
 #[starknet::interface]
 pub trait IRoutingIsm<TContractState> {
     fn route(self: @TContractState, _message: Message) -> ContractAddress;

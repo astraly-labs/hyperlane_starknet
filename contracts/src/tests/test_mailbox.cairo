@@ -300,6 +300,7 @@ fn test_dispatch_with_two_fee_hook() {
     assert_eq!(erc20_dispatcher.balance_of(OWNER()), INITIAL_SUPPLY - 4 * PROTOCOL_FEE);
     assert(mailbox.get_latest_dispatched_id() == message_id, 'Failed to fetch latest id');
 }
+
 #[test]
 #[should_panic(expected: ('Provided fee < required fee',))]
 fn test_dispatch_with_protocol_fee_hook_fails_if_provided_fee_lower_than_required_fee() {

@@ -1,10 +1,10 @@
+use alexandria_math::BitShift;
 use core::byte_array::{ByteArray, ByteArrayTrait};
 use core::integer::u128_byte_reverse;
 use core::keccak::cairo_keccak;
 use core::to_byte_array::{FormatAsByteArray, AppendFormattedToByteArray};
 use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
 use starknet::{EthAddress, eth_signature::is_eth_signature_valid, secp256_trait::Signature};
-use alexandria_math::BitShift;
 
 pub const ETH_SIGNED_MESSAGE: felt252 = '\x19Ethereum Signed Message:\n32';
 
@@ -386,7 +386,7 @@ fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
             // Extract the upper 1-byte part
             let up_byte = BitShift::shr(byte.value, 248) & 0xFF;
             output_string.append_word(up_byte.try_into().unwrap(), 1);
-            
+
             // Extract the lower 31-byte part
             let down_byte = byte.value & FELT252_MASK;
             output_string.append_word(down_byte.try_into().unwrap(), 31);

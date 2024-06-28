@@ -59,21 +59,37 @@ pub impl MessageImpl of MessageTrait {
             ByteData { value: _message.destination.into(), size: 4 },
             ByteData { value: recipient.into(), size: 32 },
         ];
+        let message_data = _message.clone().body.data();
+        let finalized_input = MessageImpl::append_span_u128_to_byte_data(input, message_data.span(), _message.clone().body.size());
+        (reverse_endianness(compute_keccak(finalized_input)), _message)
+    }
 
-        let mut message_data = _message.clone().body.data();
+    fn append_span_u128_to_byte_data(mut _input: Array<ByteData>, _to_append: Span<u128>, size: u32) -> Span<ByteData>{
+        let mut cur_idx = 0;
+        let range = size /16;
         loop {
-            match message_data.pop_front() {
-                Option::Some(data) => {
-                    input
+            if (cur_idx == range)
+            {
+                if (size % 16 == 0){
+                    break;
+                } else {
+                    _input
                         .append(
                             ByteData {
-                                value: data.into(), size: u256_word_size(data.into()).into()
+                                value: (*_to_append.at(cur_idx)).into(), size: size - cur_idx * 16
                             }
                         );
-                },
-                Option::None(_) => { break (); }
-            };
+                    break;
+                }
+            }
+            _input
+                .append(
+                    ByteData {
+                        value: (*_to_append.at(cur_idx)).into() ,size: 16
+                    }
+                );
+            cur_idx +=1;
         };
-        (reverse_endianness(compute_keccak(input.span())), _message)
+        _input.span()
     }
 }

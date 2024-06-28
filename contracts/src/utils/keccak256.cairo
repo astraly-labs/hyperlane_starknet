@@ -384,11 +384,11 @@ fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
         let byte = *bytes.at(cur_idx);
         if byte.size == 32 {
             // Extract the upper 1-byte part
-            let up_byte = BitShift::shr(byte.value, 248) & 0xFF;
+            let up_byte = up_bytes(byte.value);
             output_string.append_word(up_byte.try_into().unwrap(), 1);
 
             // Extract the lower 31-byte part
-            let down_byte = byte.value & FELT252_MASK;
+            let down_byte = down_bytes(byte.value);
             output_string.append_word(down_byte.try_into().unwrap(), 31);
         } else {
             output_string.append_word(byte.value.try_into().unwrap(), byte.size);
@@ -398,6 +398,15 @@ fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
     output_string
 }
 
+/// Retrieve the 1 up byte of a given u256 input
+fn up_bytes(input: u256) -> u256 {
+    BitShift::shr(input, 248) & 0xFF
+}
+
+/// Retrieve the 31 low byte of a given u256 input
+fn down_bytes(input: u256) -> u256 {
+    input & FELT252_MASK
+}
 
 /// The general function that computes the keccak hash for an input span of ByteData
 /// 
@@ -455,10 +464,34 @@ mod tests {
     use super::{
         reverse_endianness, ByteData, HYPERLANE_ANNOUNCEMENT, compute_keccak, u64_word_size,
         reverse_u64_word, cairo_keccak, keccak_cairo_words64, build_u64_array, get_two_last_words,
-        ADDRESS_SIZE
+        ADDRESS_SIZE, up_bytes, down_bytes
     };
     const TEST_STARKNET_DOMAIN: u32 = 23448594;
 
+    #[test]
+    fn test_up_bytes() {
+        let input = 0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        let expected = 0x01;
+        assert_eq!(up_bytes(input), expected);
+
+        let input = 0x11FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        let expected = 0x11;
+        assert_eq!(up_bytes(input), expected);
+
+        let input = 0x11;
+        let expected = 0;
+        assert_eq!(up_bytes(input), expected);
+    }
+    #[test]
+    fn test_down_bytes() {
+        let input = 0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        let expected = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        assert_eq!(down_bytes(input), expected);
+
+        let input = 0x0100FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        let expected = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        assert_eq!(down_bytes(input), expected);
+    }
 
     #[test]
     fn test_get_last_two_words() {

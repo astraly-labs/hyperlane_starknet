@@ -265,7 +265,8 @@ fn test_route_ism() {
             recipient: 'RECIPIENT'.try_into().unwrap(),
             body: BytesTrait::new_empty(),
         };
-    assert_eq!(ism.route(message), contract_address_const::<0>());
+    let mailbox_dispatcher = IMailboxDispatcher { contract_address: MAILBOX() };
+    assert_eq!(ism.route(message), mailbox_dispatcher.get_default_ism());
 }
 
 

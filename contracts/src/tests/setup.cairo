@@ -381,6 +381,29 @@ pub fn build_messageid_metadata(origin_merkle_tree_hook: u256, root: u256, index
     metadata
 }
 
+pub fn build_fake_messageid_metadata(
+    origin_merkle_tree_hook: u256, root: u256, index: u32
+) -> Bytes {
+    let y_parity = 0x01;
+    let (_, _, signatures) = get_message_and_signature();
+    let mut metadata = BytesTrait::new_empty();
+    metadata.append_u256(origin_merkle_tree_hook);
+    metadata.append_u256(root);
+    metadata.append_u32(index);
+    let mut cur_idx = 0;
+    loop {
+        if (cur_idx == signatures.len()) {
+            break ();
+        }
+        metadata.append_u256(*signatures.at(0).r);
+        metadata.append_u256(*signatures.at(0).s);
+        metadata.append_u8(y_parity);
+        cur_idx += 1;
+    };
+    metadata
+}
+
+
 // Configuration from the main cairo repo: https://github.com/starkware-libs/cairo/blob/main/corelib/src/test/secp256k1_test.cairo
 pub fn get_message_and_signature() -> (u256, Array<felt252>, Array<EthSignature>) {
     let msg_hash = 0x91745536C898FFA3831357EDCE68E1584287129C8E3AE9A065AC5B31AA355E8C;
@@ -444,6 +467,39 @@ pub fn build_merkle_metadata(
         }
         metadata.append_u256(*signatures.at(cur_idx).r);
         metadata.append_u256(*signatures.at(cur_idx).s);
+        metadata.append_u8(y_parity);
+        cur_idx += 1;
+    };
+    metadata
+}
+
+
+pub fn build_fake_merkle_metadata(
+    origin_merkle_tree_hook: u256, message_index: u32, signed_index: u32, signed_message_id: u256
+) -> Bytes {
+    let proof = TEST_PROOF();
+    let y_parity = 0x01;
+    let (_, _, signatures) = get_merkle_message_and_signature();
+    let mut metadata = BytesTrait::new_empty();
+    metadata.append_u256(origin_merkle_tree_hook);
+    metadata.append_u32(message_index);
+    metadata.append_u256(signed_message_id);
+    let mut cur_idx = 0;
+    loop {
+        if (cur_idx == MERKLE_PROOF_ITERATION) {
+            break ();
+        }
+        metadata.append_u256(*proof.at(cur_idx));
+        cur_idx += 1;
+    };
+    metadata.append_u32(signed_index);
+    cur_idx = 0;
+    loop {
+        if (cur_idx == signatures.len()) {
+            break ();
+        }
+        metadata.append_u256(*signatures.at(0).r);
+        metadata.append_u256(*signatures.at(0).s);
         metadata.append_u8(y_parity);
         cur_idx += 1;
     };

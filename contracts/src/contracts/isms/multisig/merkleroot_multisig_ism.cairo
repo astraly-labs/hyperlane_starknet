@@ -74,6 +74,7 @@ pub mod merkleroot_multisig_ism {
             let digest = self.digest(_metadata.clone(), _message.clone());
             let (validators, threshold) = self.validators_and_threshold(_message);
             assert(threshold > 0, Errors::NO_MULTISIG_THRESHOLD_FOR_MESSAGE);
+            let mut validator_index = 0;
             let mut i = 0;
             // Assumes that signatures are ordered by validator
             loop {
@@ -82,19 +83,19 @@ pub mod merkleroot_multisig_ism {
                 }
                 let signature = self.get_signature_at(_metadata.clone(), i);
                 // we loop on the validators list public key in order to find a match
-                let mut cur_idx = 0;
                 let is_signer_in_list = loop {
-                    if (cur_idx == validators.len()) {
+                    if (validator_index == validators.len()) {
                         break false;
                     }
-                    let signer = *validators.at(cur_idx);
+                    let signer = *validators.at(validator_index);
                     if bool_is_eth_signature_valid(digest, signature, signer) {
                         // we found a match
                         break true;
                     }
-                    cur_idx += 1;
+                    validator_index += 1;
                 };
                 assert(is_signer_in_list, Errors::NO_MATCH_FOR_SIGNATURE);
+                validator_index += 1;
                 i += 1;
             };
             true

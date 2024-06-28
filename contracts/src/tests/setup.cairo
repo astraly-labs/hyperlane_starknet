@@ -384,11 +384,11 @@ pub fn build_messageid_metadata(origin_merkle_tree_hook: u256, root: u256, index
 pub fn get_message_and_signature() -> (u256, Array<felt252>, Array<EthSignature>) {
     let msg_hash = 0xEBC2F3E10A13E54662AB9B1ABB83E954EA31E5622AF8239EB97D22CC351324D2;
     let validators_array: Array<felt252> = array![
-        0x8a719a6529c8fdef4df79079f47ae74fd4037b08.try_into().unwrap(),
-        0xb93289817c013182bf7f7d1e2e4577a77d4be7d7.try_into().unwrap(),
-        0x92316e3bacc840258925ba3eba801aaae5347a09.try_into().unwrap(),
-        0xef7cc63f461666cb47688a9c3975504341e2e12b.try_into().unwrap(),
-        0x3ba6645137a79068c4e83ea6f97d35c2b3d1e3fb.try_into().unwrap()
+        0xa1e1e3828da2b719540647f871001d388a5a5be3.try_into().unwrap(),
+        0x514978443da8d7666e5b1c8b3248672446030641.try_into().unwrap(),
+        0x50089635061bc078fa6dec9a977f32f6b5b07543.try_into().unwrap(),
+        0xf4b39f9c7a316ad149331362eedf5d5e267eaf7c.try_into().unwrap(),
+        0xe5b6878b4a09506b74469830359352bf18146b77.try_into().unwrap(),
     ];
     let signatures = array![
         EthSignature {
@@ -454,11 +454,11 @@ pub fn build_merkle_metadata(
 pub fn get_merkle_message_and_signature() -> (u256, Array<felt252>, Array<EthSignature>) {
     let msg_hash = 0x4B73BFF28F5521D6F2F38F344427CCF23DCE6BA26F96C4EB14C1656348F4D153;
     let validators_array: Array<felt252> = array![
-        0xbce3b51b0d6ff506e23ddfd6789ac5a60a1103a4.try_into().unwrap(),
-        0xe0c60d0f83f70f5eb497bfc7a2315cb5ca88f801.try_into().unwrap(),
-        0x0dc578af77510a16da2a3557e822085a95df6962.try_into().unwrap(),
-        0x6593c1d433696640d90b76d804fdaa0e5277230f.try_into().unwrap(),
-        0x9350b8b7031e7df5e2f7b95697bc90d42357fa1f.try_into().unwrap()
+        0x801354039158d5dff4aa08960f3d45012d3ef8ac.try_into().unwrap(),
+        0xf5cffc8cf76c21b5e8328ea6ec5eb30cc97fbae1.try_into().unwrap(),
+        0xf6e2d37855290213c83338030a2fa401a2557659.try_into().unwrap(),
+        0xfae471201a1aae1cdcf4a2a610cff97b6f2b42d1.try_into().unwrap(),
+        0xbc5b3bb45de40b898da1fb94a7003478e494f0ad.try_into().unwrap(),
     ];
     let signatures = array![
         EthSignature {

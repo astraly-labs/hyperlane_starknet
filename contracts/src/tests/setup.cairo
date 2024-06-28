@@ -279,7 +279,7 @@ pub fn setup_validator_announce() -> (IValidatorAnnounceDispatcher, EventSpy) {
     let validator_announce_class = declare("validator_announce").unwrap();
     let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let (validator_announce_addr, _) = validator_announce_class
-        .deploy(@array![mailbox.contract_address.into()])
+        .deploy(@array![mailbox.contract_address.into(), OWNER().into()])
         .unwrap();
     let mut spy = spy_events(SpyOn::One(validator_announce_addr));
     (IValidatorAnnounceDispatcher { contract_address: validator_announce_addr }, spy)
@@ -309,7 +309,8 @@ pub fn setup_merkle_tree_hook() -> (
 ) {
     let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let merkle_tree_hook_class = declare("merkle_tree_hook").unwrap();
-    let res = merkle_tree_hook_class.deploy(@array![mailbox.contract_address.into()]);
+    let res = merkle_tree_hook_class
+        .deploy(@array![mailbox.contract_address.into(), OWNER().into()]);
     if (res.is_err()) {
         panic(res.unwrap_err());
     }

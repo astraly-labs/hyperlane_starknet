@@ -334,16 +334,3 @@ pub trait IDomainRoutingHook<TContractState> {
     fn set_hook(ref self: TContractState, _destination: u32, _hook: ContractAddress);
     fn set_hooks(ref self: TContractState, configs: Array<DomainRoutingHookConfig>);
 }
-
-#[starknet::interface]
-pub trait IPostDispatchHookForDomainRoutingHook<TContractState> {
-    fn hook_type(self: @TContractState) -> Types;
-
-    fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
-
-    fn post_dispatch(
-        ref self: TContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
-    );
-
-    fn quote_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message) -> u256;
-}

@@ -8,7 +8,7 @@ pub mod domain_routing_hook {
     use hyperlane_starknet::contracts::libs::message::Message;
     use hyperlane_starknet::interfaces::{
         IPostDispatchHook, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
-        DomainRoutingHookConfig, IDomainRoutingHook, Types, IPostDispatchHookForDomainRoutingHook,
+        DomainRoutingHookConfig, IDomainRoutingHook, Types
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
@@ -70,9 +70,7 @@ pub mod domain_routing_hook {
     }
 
     #[abi(embed_v0)]
-    impl IPostDispatchHookForDomainRoutingHookImpl of IPostDispatchHookForDomainRoutingHook<
-        ContractState
-    > {
+    impl IPostDispatchHookImpl of IPostDispatchHook<ContractState> {
         fn hook_type(self: @ContractState) -> Types {
             Types::ROUTING(())
         }
@@ -90,7 +88,9 @@ pub mod domain_routing_hook {
                 ._get_configured_hook(_message.clone())
                 .contract_address;
             self._transfer_routing_fee_to_hook(caller, configured_hook_address, _fee_amount);
-            self._get_configured_hook(_message.clone()).post_dispatch(_metadata, _message);
+            self
+                ._get_configured_hook(_message.clone())
+                .post_dispatch(_metadata, _message, _fee_amount);
         }
 
         fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
@@ -135,9 +135,9 @@ pub mod domain_routing_hook {
             let token_dispatcher = IERC20Dispatcher { contract_address: self.fee_token.read() };
             let user_balance = token_dispatcher.balance_of(from);
             assert(user_balance >= amount, Errors::INSUFFICIENT_BALANCE);
-            let contract_address = get_contract_address();
+            let this_contract_address = get_contract_address();
             assert(
-                token_dispatcher.allowance(from, contract_address) >= amount,
+                token_dispatcher.allowance(from, this_contract_address) >= amount,
                 Errors::INSUFFICIENT_ALLOWANCE
             );
             let transfer_flag: bool = token_dispatcher.transfer_from(from, to, amount);

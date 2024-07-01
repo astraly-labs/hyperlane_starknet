@@ -12,9 +12,8 @@ use hyperlane_starknet::interfaces::{
     ISpecifiesInterchainSecurityModuleDispatcher, ISpecifiesInterchainSecurityModuleDispatcherTrait,
     IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, IDomainRoutingIsmDispatcher,
     IDomainRoutingIsmDispatcherTrait, IDomainRoutingHookDispatcher,
-    IDomainRoutingHookDispatcherTrait
-    IDomainRoutingIsmDispatcherTrait, IPausableIsmDispatcher, IPausableIsmDispatcherTrait,
-    ETH_ADDRESS
+    IDomainRoutingHookDispatcherTrait, IPausableIsmDispatcher, IPausableIsmDispatcherTrait,
+    ETH_ADDRESS,
 };
 use openzeppelin::account::utils::signature::EthSignature;
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
@@ -521,11 +520,11 @@ pub fn setup_protocol_fee() -> (IProtocolFeeDispatcher, IPostDispatchHookDispatc
 }
 
 pub fn setup_domain_routing_hook() -> (IPostDispatchHookDispatcher, IDomainRoutingHookDispatcher) {
-    let (mailbox, _, _, _) = setup();
-
+    let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let domain_routing_hook_class = declare("domain_routing_hook").unwrap();
+
     let (domain_routing_hook_addrs, _) = domain_routing_hook_class
-        .deploy(@array![mailbox.contract_address.into(), OWNER().into()])
+        .deploy(@array![mailbox.contract_address.into(), OWNER().into(), ETH_ADDRESS().into()])
         .unwrap();
     (
         IPostDispatchHookDispatcher { contract_address: domain_routing_hook_addrs },

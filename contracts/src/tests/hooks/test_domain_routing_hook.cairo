@@ -2,12 +2,13 @@ use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
 use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 use hyperlane_starknet::interfaces::{
     Types, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
-    IDomainRoutingHookDispatcher, IDomainRoutingHookDispatcherTrait, DomainRoutingHookConfig
+    IDomainRoutingHookDispatcher, IDomainRoutingHookDispatcherTrait, DomainRoutingHookConfig,
+    ETH_ADDRESS
 };
-use hyperlane_starknet::tests::setup::{setup_domain_routing_hook, setup_mock_hook, OWNER};
+use hyperlane_starknet::tests::setup::{setup_domain_routing_hook, OWNER, PROTOCOL_FEE, NEW_OWNER};
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-
-use snforge_std::{start_prank, CheatTarget};
+use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+use snforge_std::{start_prank, CheatTarget, stop_prank};
 use starknet::{get_caller_address, contract_address_const, ContractAddress};
 
 
@@ -93,18 +94,19 @@ fn hook_not_set_for_destination_should_fail() {
         body: BytesTrait::new_empty(),
     };
     let metadata = BytesTrait::new_empty();
-    routing_hook_addrs.post_dispatch(metadata, message);
+    let protocol_fee = 12_u256;
+    routing_hook_addrs.post_dispatch(metadata, message, protocol_fee);
 }
 
-// Note: Test fails with msg('Result::unwrap failed')
 #[ignore]
 #[test]
 fn hook_set_for_destination_post_dispatch() {
     let (routing_hook_addrs, set_routing_hook_addrs) = setup_domain_routing_hook();
+    let fee_token_instance = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
     let ownable = IOwnableDispatcher { contract_address: set_routing_hook_addrs.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     let destination: u32 = 18;
-    let hook: ContractAddress = setup_mock_hook().contract_address;
+    let hook: ContractAddress = contract_address_const::<12>();
     set_routing_hook_addrs.set_hook(destination, hook);
 
     let message = Message {
@@ -117,10 +119,19 @@ fn hook_set_for_destination_post_dispatch() {
         body: BytesTrait::new_empty(),
     };
     let metadata = BytesTrait::new_empty();
-    routing_hook_addrs.post_dispatch(metadata, message);
+    stop_prank(CheatTarget::One(ownable.contract_address));
+
+    let erc20Ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
+    start_prank(CheatTarget::One(erc20Ownable.contract_address), NEW_OWNER());
+    fee_token_instance.transfer(ownable.contract_address, PROTOCOL_FEE);
+    stop_prank(CheatTarget::One(erc20Ownable.contract_address));
+
+    assert_eq!(fee_token_instance.balance_of(ownable.contract_address), PROTOCOL_FEE);
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    fee_token_instance.approve(routing_hook_addrs.contract_address, PROTOCOL_FEE);
+    routing_hook_addrs.post_dispatch(metadata, message, PROTOCOL_FEE);
 }
 
-// Note: Test fails with msg('Result::unwrap failed')
 #[ignore]
 #[test]
 fn hook_set_for_destination_quote_dispatch() {
@@ -128,7 +139,7 @@ fn hook_set_for_destination_quote_dispatch() {
     let ownable = IOwnableDispatcher { contract_address: set_routing_hook_addrs.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     let destination: u32 = 18;
-    let hook: ContractAddress = setup_mock_hook().contract_address;
+    let hook: ContractAddress = contract_address_const::<1212>();
     set_routing_hook_addrs.set_hook(destination, hook);
 
     let message = Message {

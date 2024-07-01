@@ -125,7 +125,6 @@ pub mod validator_announce {
             );
             assert(!self.replay_protection.read(replay_id), Errors::REPLAY_PROTECTION_ERROR);
             let announcement_digest = self.get_announcement_digest(u256_storage_location);
-            println!("here is the announcement digest");
             let signature: Signature = self.convert_to_signature(_signature);
             assert(
                 bool_is_eth_signature_valid(announcement_digest, signature, _validator),

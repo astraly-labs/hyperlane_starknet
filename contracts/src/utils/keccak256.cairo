@@ -389,8 +389,8 @@ mod tests {
     use alexandria_bytes::{Bytes, BytesTrait};
     use starknet::contract_address_const;
     use super::{
-        reverse_endianness, ByteData, HYPERLANE_ANNOUNCEMENT, compute_keccak, u64_word_size,zero_keccak_hash,
-        ADDRESS_SIZE
+        reverse_endianness, ByteData, HYPERLANE_ANNOUNCEMENT, compute_keccak, u64_word_size,
+        zero_keccak_hash, ADDRESS_SIZE
     };
     const TEST_STARKNET_DOMAIN: u32 = 23448594;
 
@@ -469,17 +469,19 @@ mod tests {
             0x8310DAC21721349FCFA72BB5499303F0C6FAB4006FA2A637D02F7D6BB2188B47
         );
 
-        let array = array![
-            ByteData{value: 0, size : 1}
-        ]; 
-        assert_eq!(compute_keccak(array.span()), zero_keccak_hash(1)); 
+        let array = array![ByteData { value: 0, size: 1 }];
+        assert_eq!(compute_keccak(array.span()), zero_keccak_hash(1));
 
         let array = array![
-            ByteData{value: 0, size : 10}, ByteData{value:0x007a9a2e1663480b3845df0d714e8caa49f9241e13a826a678da3f366e546f2a, size: 32}, 
-        ]; 
-        assert_eq!(compute_keccak(array.span()), 0xA9EC21A66254DD00FA8F01E445CACEAA0D16A1E91700C85FB3ED6C1229B38D2A); 
-
-
+            ByteData { value: 0, size: 10 },
+            ByteData {
+                value: 0x007a9a2e1663480b3845df0d714e8caa49f9241e13a826a678da3f366e546f2a, size: 32
+            },
+        ];
+        assert_eq!(
+            compute_keccak(array.span()),
+            0xA9EC21A66254DD00FA8F01E445CACEAA0D16A1E91700C85FB3ED6C1229B38D2A
+        );
     }
 
     #[test]

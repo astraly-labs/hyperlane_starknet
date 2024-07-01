@@ -326,6 +326,30 @@ pub fn one_shift_left_bytes_u256(n_bytes: u8) -> u256 {
 }
 
 
+pub fn u128_mask(n_bytes: u8) -> u128 {
+    match n_bytes {
+        0 => 0,
+        1 => 0xFF,
+        2 => 0xFFFF,
+        3 => 0xFFFFFF,
+        4 => 0xFFFFFFFF,
+        5 => 0xFFFFFFFFFF,
+        6 => 0xFFFFFFFFFFFF,
+        7 => 0xFFFFFFFFFFFFFF,
+        8 => 0xFFFFFFFFFFFFFFFF,
+        9 => 0xFFFFFFFFFFFFFFFFFF,
+        10 => 0xFFFFFFFFFFFFFFFFFFFF,
+        11 => 0xFFFFFFFFFFFFFFFFFFFFFF,
+        12 => 0xFFFFFFFFFFFFFFFFFFFFFFFF,
+        13 => 0xFFFFFFFFFFFFFFFFFFFFFFFFFF,
+        14 => 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
+        15 => 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
+        16 => 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
+        _ => core::panic_with_felt252('n_bytes too big'),
+    }
+}
+
+
 /// Reverses an u64 word. If a padding is provided, shift the result with the padding. 
 /// 
 /// # Arguments

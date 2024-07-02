@@ -1,5 +1,4 @@
 use cainome::cairo_serde::EthAddress;
-use ethers::types::{Address, H160};
 use ethers::utils::hex::FromHex;
 use k256::{
     ecdsa::{RecoveryId, SigningKey, VerifyingKey},

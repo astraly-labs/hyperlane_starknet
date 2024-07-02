@@ -10,6 +10,8 @@ use hyperlane_starknet::tests::setup::{
 };
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget};
+use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
+
 
 
 #[test]
@@ -26,7 +28,7 @@ fn test_verify_noop_ism() {
 fn test_verify_trusted_relayer_ism() {
     let trusted_ism = setup_trusted_relayer_ism();
     let ownable = IOwnableDispatcher { contract_address: DESTINATION_MAILBOX() };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     let mailbox = IMailboxDispatcher { contract_address: DESTINATION_MAILBOX() };
     mailbox.set_default_ism(trusted_ism.contract_address);
     let (mock_recipient, _) = mock_setup(trusted_ism.contract_address);
@@ -36,7 +38,7 @@ fn test_verify_trusted_relayer_ism() {
         0x01020304050607080910111213141516,
         0x01020304050607080910000000000000
     ];
-
+    let recipient : felt252 = mock_recipient.contract_address.into();
     let message_body = BytesTrait::new(42, array);
     let message = Message {
         version: HYPERLANE_VERSION,
@@ -44,7 +46,7 @@ fn test_verify_trusted_relayer_ism() {
         origin: LOCAL_DOMAIN,
         sender: OWNER(),
         destination: DESTINATION_DOMAIN,
-        recipient: mock_recipient.contract_address,
+        recipient: recipient.into(),
         body: message_body.clone()
     };
     let metadata = message_body;
@@ -58,7 +60,7 @@ fn test_verify_trusted_relayer_ism() {
 fn test_pause_unpause_pausable_ism() {
     let (_, pausable_ism) = setup_pausable_ism();
     let ownable = IOwnableDispatcher { contract_address: pausable_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     pausable_ism.pause();
     pausable_ism.unpause();
 }
@@ -93,7 +95,7 @@ fn test_veriy_pausable_ism_fails_if_paused() {
     let message = MessageTrait::default();
     let metadata = BytesTrait::new_empty();
     let ownable = IOwnableDispatcher { contract_address: pausable.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     pausable.pause();
     ism.verify(metadata, message);
 }

@@ -15,6 +15,7 @@ use hyperlane_starknet::tests::setup::{
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget};
+use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use starknet::ContractAddress;
 
 #[test]
@@ -31,7 +32,7 @@ fn test_aggregation_set_threshold() {
     let threshold = 3;
     let aggregation = setup_aggregation(MODULES());
     let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     aggregation.set_threshold(threshold);
 }
 
@@ -53,7 +54,7 @@ fn test_setup_aggregation_with_null_module_address() {
 fn test_get_modules() {
     let aggregation = setup_aggregation(MODULES());
     let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     assert(aggregation.get_modules() == CONTRACT_MODULES(), 'set modules failed');
 }
 
@@ -90,7 +91,7 @@ fn test_aggregation_verify() {
     let ownable = IOwnableDispatcher {
         contract_address: messageid_validator_configuration.contract_address
     };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     messageid_validator_configuration.set_threshold(5);
     // Noop ism
     let noop_ism = setup_noop_ism();
@@ -98,7 +99,7 @@ fn test_aggregation_verify() {
         array![messageid.contract_address.into(), noop_ism.contract_address.into(),].span()
     );
     let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     aggregation.set_threshold(threshold);
     let mut concat_metadata = BytesTrait::new_empty();
     concat_metadata.append_u128(0x00000010000001A0000001A0000001A9);

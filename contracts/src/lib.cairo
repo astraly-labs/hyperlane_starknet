@@ -50,6 +50,7 @@ mod contracts {
 mod utils {
     pub mod keccak256;
     pub mod store_arrays;
+    pub mod utils;
 }
 
 #[cfg(test)]

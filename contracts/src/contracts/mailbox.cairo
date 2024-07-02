@@ -10,6 +10,7 @@ pub mod mailbox {
         ISpecifiesInterchainSecurityModuleDispatcherTrait, IPostDispatchHookDispatcherTrait,
         IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait, ETH_ADDRESS,
     };
+    use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
@@ -88,8 +89,8 @@ pub mod mailbox {
     #[derive(starknet::Event, Drop)]
     pub struct Process {
         pub origin: u32,
-        pub sender: ContractAddress,
-        pub recipient: ContractAddress
+        pub sender: u256,
+        pub recipient: u256
     }
 
     #[derive(starknet::Event, Drop)]
@@ -99,9 +100,9 @@ pub mod mailbox {
 
     #[derive(starknet::Event, Drop)]
     pub struct Dispatch {
-        pub sender: ContractAddress,
+        pub sender: u256,
         pub destination_domain: u32,
-        pub recipient_address: ContractAddress,
+        pub recipient_address: u256,
         pub message: Message
     }
 
@@ -229,7 +230,7 @@ pub mod mailbox {
         fn dispatch(
             ref self: ContractState,
             _destination_domain: u32,
-            _recipient_address: ContractAddress,
+            _recipient_address: u256,
             _message_body: Bytes,
             _fee_amount: u256,
             _custom_hook_metadata: Option<Bytes>,
@@ -250,11 +251,11 @@ pub mod mailbox {
             self.latest_dispatched_id.write(id);
             let current_nonce = self.nonce.read();
             self.nonce.write(current_nonce + 1);
-            let caller = get_caller_address();
+            let caller: felt252 = get_caller_address().into();
             self
                 .emit(
                     Dispatch {
-                        sender: caller,
+                        sender: caller.into(),
                         destination_domain: _destination_domain,
                         recipient_address: _recipient_address,
                         message: message.clone()
@@ -355,7 +356,7 @@ pub mod mailbox {
             assert(ism.verify(_metadata, _message.clone()), Errors::ISM_VERIFICATION_FAILED);
 
             let message_recipient = IMessageRecipientDispatcher {
-                contract_address: _message.recipient
+                contract_address: _message.recipient.try_into().unwrap()
             };
             message_recipient.handle(_message.origin, _message.sender, _message.body);
         }
@@ -376,7 +377,7 @@ pub mod mailbox {
         fn quote_dispatch(
             self: @ContractState,
             _destination_domain: u32,
-            _recipient_address: ContractAddress,
+            _recipient_address: u256,
             _message_body: Bytes,
             _custom_hook_metadata: Option<Bytes>,
             _custom_hook: Option<ContractAddress>,
@@ -410,10 +411,12 @@ pub mod mailbox {
         ///  # Returns
         /// 
         /// * The ISM to use for `_recipient`
-        fn recipient_ism(self: @ContractState, _recipient: ContractAddress) -> ContractAddress {
+        fn recipient_ism(self: @ContractState, _recipient: u256) -> ContractAddress {
             let mut call_data: Array<felt252> = ArrayTrait::new();
             let mut res = starknet::syscalls::call_contract_syscall(
-                _recipient, selector!("interchain_security_module"), call_data.span()
+                _recipient.try_into().unwrap(),
+                selector!("interchain_security_module"),
+                call_data.span()
             );
             let mut ism_res = match res {
                 Result::Ok(ism) => ism,
@@ -461,19 +464,18 @@ pub mod mailbox {
     fn build_message(
         self: @ContractState,
         _destination_domain: u32,
-        _recipient_address: ContractAddress,
+        _recipient_address: u256,
         _message_body: Bytes
     ) -> (u256, Message) {
         let nonce = self.nonce.read();
         let local_domain = self.local_domain.read();
-        let caller = get_caller_address();
-
+        let caller: felt252 = get_caller_address().into();
         MessageTrait::format_message(
             Message {
                 version: HYPERLANE_VERSION,
                 nonce: nonce,
                 origin: local_domain,
-                sender: caller,
+                sender: caller.into(),
                 destination: _destination_domain,
                 recipient: _recipient_address,
                 body: _message_body

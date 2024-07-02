@@ -57,7 +57,7 @@ pub trait IMailbox<TContractState> {
     fn dispatch(
         ref self: TContractState,
         _destination_domain: u32,
-        _recipient_address: ContractAddress,
+        _recipient_address: u256,
         _message_body: Bytes,
         _fee_amount: u256,
         _custom_hook_metadata: Option<Bytes>,
@@ -67,7 +67,7 @@ pub trait IMailbox<TContractState> {
     fn quote_dispatch(
         self: @TContractState,
         _destination_domain: u32,
-        _recipient_address: ContractAddress,
+        _recipient_address: u256,
         _message_body: Bytes,
         _custom_hook_metadata: Option<Bytes>,
         _custom_hook: Option<ContractAddress>,
@@ -75,7 +75,7 @@ pub trait IMailbox<TContractState> {
 
     fn process(ref self: TContractState, _metadata: Bytes, _message: Message);
 
-    fn recipient_ism(self: @TContractState, _recipient: ContractAddress) -> ContractAddress;
+    fn recipient_ism(self: @TContractState, _recipient: u256) -> ContractAddress;
 
     fn set_default_ism(ref self: TContractState, _module: ContractAddress);
 
@@ -131,11 +131,11 @@ pub trait IPostDispatchHook<TContractState> {
 
 #[starknet::interface]
 pub trait IMessageRecipient<TContractState> {
-    fn handle(ref self: TContractState, _origin: u32, _sender: ContractAddress, _message: Bytes);
+    fn handle(ref self: TContractState, _origin: u32, _sender: u256, _message: Bytes);
 
     fn get_origin(self: @TContractState) -> u32;
 
-    fn get_sender(self: @TContractState) -> ContractAddress;
+    fn get_sender(self: @TContractState) -> u256;
 
     fn get_message(self: @TContractState) -> Bytes;
 }
@@ -168,7 +168,7 @@ pub trait IMailboxClient<TContractState> {
     fn _dispatch(
         self: @TContractState,
         _destination_domain: u32,
-        _recipient: ContractAddress,
+        _recipient: u256,
         _message_body: Bytes,
         _fee_amount: u256,
         _hook_metadata: Option<Bytes>,
@@ -178,7 +178,7 @@ pub trait IMailboxClient<TContractState> {
     fn quote_dispatch(
         self: @TContractState,
         _destination_domain: u32,
-        _recipient: ContractAddress,
+        _recipient: u256,
         _message_body: Bytes,
         _hook_metadata: Option<Bytes>,
         _hook: Option<ContractAddress>

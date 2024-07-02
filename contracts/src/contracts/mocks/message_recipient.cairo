@@ -13,7 +13,7 @@ pub mod message_recipient {
     #[storage]
     struct Storage {
         origin: u32,
-        sender: ContractAddress,
+        sender: u256,
         message: Bytes,
         ism: ContractAddress
     }
@@ -25,9 +25,7 @@ pub mod message_recipient {
 
     #[abi(embed_v0)]
     impl IMessageRecipientImpl of IMessageRecipient<ContractState> {
-        fn handle(
-            ref self: ContractState, _origin: u32, _sender: ContractAddress, _message: Bytes
-        ) {
+        fn handle(ref self: ContractState, _origin: u32, _sender: u256, _message: Bytes) {
             self.message.write(_message);
             self.origin.write(_origin);
             self.sender.write(_sender);
@@ -37,7 +35,7 @@ pub mod message_recipient {
             self.origin.read()
         }
 
-        fn get_sender(self: @ContractState) -> ContractAddress {
+        fn get_sender(self: @ContractState) -> u256 {
             self.sender.read()
         }
 

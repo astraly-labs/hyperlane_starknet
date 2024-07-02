@@ -107,27 +107,73 @@ mod tests {
     use super::{MessageImpl, ByteData};
 
     #[test]
-    fn test_append_u128_to_byte_array(){
-        let input: Array<u128> = array![0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, 0xcc000000000000000000000000000000];
+    fn test_append_u128_to_byte_array() {
+        let input: Array<u128> = array![
+            0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+            0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,
+            0xcc000000000000000000000000000000
+        ];
         let output_array = MessageImpl::append_span_u128_to_byte_data(array![], input.span(), 33);
-        assert_eq!(output_array, array![ByteData{value: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, size: 16}, ByteData{value: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, size: 16},ByteData{value: 0xcc, size: 1}].span()); 
+        assert_eq!(
+            output_array,
+            array![
+                ByteData { value: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, size: 16 },
+                ByteData { value: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, size: 16 },
+                ByteData { value: 0xcc, size: 1 }
+            ]
+                .span()
+        );
 
-
-        let input: Array<u128> = array![0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, 0xcccccccccccccccccccccccccccccccc];
+        let input: Array<u128> = array![
+            0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+            0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,
+            0xcccccccccccccccccccccccccccccccc
+        ];
         let output_array = MessageImpl::append_span_u128_to_byte_data(array![], input.span(), 48);
-        assert_eq!(output_array, array![ByteData{value: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, size: 16}, ByteData{value: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, size: 16},ByteData{value: 0xcccccccccccccccccccccccccccccccc, size: 16}].span()); 
+        assert_eq!(
+            output_array,
+            array![
+                ByteData { value: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, size: 16 },
+                ByteData { value: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, size: 16 },
+                ByteData { value: 0xcccccccccccccccccccccccccccccccc, size: 16 }
+            ]
+                .span()
+        );
 
-
-        let input: Array<u128> = array![0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, 0xcccccccccccccccccccccccccccccc00];
+        let input: Array<u128> = array![
+            0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+            0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,
+            0xcccccccccccccccccccccccccccccc00
+        ];
         let output_array = MessageImpl::append_span_u128_to_byte_data(array![], input.span(), 47);
-        assert_eq!(output_array, array![ByteData{value: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, size: 16}, ByteData{value: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, size: 16},ByteData{value: 0xcccccccccccccccccccccccccccccc, size: 15}].span());
+        assert_eq!(
+            output_array,
+            array![
+                ByteData { value: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, size: 16 },
+                ByteData { value: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, size: 16 },
+                ByteData { value: 0xcccccccccccccccccccccccccccccc, size: 15 }
+            ]
+                .span()
+        );
 
-
-        let input: Array<u128> = array![0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, 0xcccccccccccccccccccccccccc000000];
+        let input: Array<u128> = array![
+            0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+            0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,
+            0xcccccccccccccccccccccccccc000000
+        ];
         let output_array = MessageImpl::append_span_u128_to_byte_data(array![], input.span(), 45);
-        assert_eq!(output_array, array![ByteData{value: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, size: 16}, ByteData{value: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, size: 16},ByteData{value: 0xcccccccccccccccccccccccccc, size: 13}].span()); 
+        assert_eq!(
+            output_array,
+            array![
+                ByteData { value: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, size: 16 },
+                ByteData { value: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, size: 16 },
+                ByteData { value: 0xcccccccccccccccccccccccccc, size: 13 }
+            ]
+                .span()
+        );
 
-
-
+        let input: Array<u128> = array![0x12345678000000000000000000000000];
+        let output_array = MessageImpl::append_span_u128_to_byte_data(array![], input.span(), 4);
+        assert_eq!(output_array, array![ByteData { value: 0x12345678, size: 4 }].span());
     }
 }

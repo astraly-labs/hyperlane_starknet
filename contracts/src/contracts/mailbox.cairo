@@ -299,6 +299,8 @@ pub mod mailbox {
                 if (_fee_amount - required_fee >= default_fee) {
                     token_dispatcher.transfer_from(caller_address, hook, default_fee);
                     hook_dispatcher.post_dispatch(hook_metadata, message.clone(), default_fee);
+                } else {
+                    panic(array![Errors::NOT_ENOUGH_FEE_PROVIDED]);
                 }
             }
 

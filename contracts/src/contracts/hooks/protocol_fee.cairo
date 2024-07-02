@@ -32,6 +32,7 @@ pub mod protocol_fee {
         pub const INSUFFICIENT_BALANCE: felt252 = 'Insufficient balance';
         pub const INSUFFICIENT_ALLOWANCE: felt252 = 'Insufficient allowance';
         pub const INSUFFICIENT_PROTOCOL_FEE: felt252 = 'Insufficient protocol fee';
+        pub const FEE_TOKEN_NOT_PROVIDED: felt252 = 'fee token not provided';
     }
 
     #[event]
@@ -63,6 +64,7 @@ pub mod protocol_fee {
         self._set_protocol_fee(_protocol_fee);
         self._set_beneficiary(_beneficiary);
         self.ownable.initializer(_owner);
+        assert(_token_address != contract_address_const::<0>(), Errors::FEE_TOKEN_NOT_PROVIDED);
         self.fee_token.write(_token_address);
     }
 
@@ -168,8 +170,10 @@ pub mod protocol_fee {
         /// * - `_message` - the message passed from the Mailbox.dispatch() call
         /// * - `_fee_amount` - the payment provided for sending the message
         fn _post_dispatch(
-            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
-        ) { // Since payment is exact, no need for further operation
+            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256,
+        ) {
+            let quote = self.quote_dispatch(_metadata, _message);
+            assert(_fee_amount >= quote, Errors::INSUFFICIENT_PROTOCOL_FEE);
         }
 
         ///  Returns the static protocol fee 
@@ -186,7 +190,7 @@ pub mod protocol_fee {
             self.protocol_fee.read()
         }
 
-        ///  Sets the protocol fee.
+        /// Sets the protocol fee.
         /// Dev: reverts if protocol exceeds max protocol fee
         /// 
         /// # Arguments

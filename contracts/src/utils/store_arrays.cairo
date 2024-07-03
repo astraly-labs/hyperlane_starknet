@@ -49,7 +49,8 @@ pub impl StoreFelt252Array of Store<Array<felt252>> {
         loop {
             match value.pop_front() {
                 Option::Some(element) => {
-                    Store::<felt252>::write_at_offset(address_domain, base, offset, element).unwrap();
+                    Store::<felt252>::write_at_offset(address_domain, base, offset, element)
+                        .unwrap();
                     offset += Store::<felt252>::size();
                 },
                 Option::None => { break Result::Ok(()); }

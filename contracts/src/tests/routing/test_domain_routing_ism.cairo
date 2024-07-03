@@ -248,7 +248,7 @@ fn test_route_ism() {
 
 #[test]
 #[should_panic(expected: ('Origin not found',))]
-fn test_route_ism_fails_if_origin_not_found(){
+fn test_route_ism_fails_if_origin_not_found() {
     let mut message = Message {
         version: 3_u8,
         nonce: 0_u32,

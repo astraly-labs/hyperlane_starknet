@@ -69,8 +69,9 @@ pub mod validator_announce {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _mailbox: ContractAddress) {
+    fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress) {
         self.mailboxclient.initialize(_mailbox);
+        self.ownable.initializer(_owner);
     }
 
 
@@ -125,7 +126,7 @@ pub mod validator_announce {
             );
             assert(!self.replay_protection.read(replay_id), Errors::REPLAY_PROTECTION_ERROR);
             let announcement_digest = self.get_announcement_digest(u256_storage_location);
-            let signature: Signature = self.convert_to_signature(_signature);
+            let signature: Signature = convert_to_signature(_signature);
             assert(
                 bool_is_eth_signature_valid(announcement_digest, signature, _validator),
                 Errors::WRONG_SIGNER
@@ -219,22 +220,6 @@ pub mod validator_announce {
 
     #[generate_trait]
     pub impl ValidatorAnnounceInternalImpl of InternalTrait {
-        /// Converts a byte signature into a standard singature format (see Signature structure)
-        /// 
-        /// # Arguments
-        /// 
-        /// * - ` _signature` - The byte encoded Signature
-        /// 
-        /// # Returns
-        /// 
-        /// Signature - Standardized signature
-        fn convert_to_signature(self: @ContractState, _signature: Bytes) -> Signature {
-            let (_, r) = _signature.read_u256(0);
-            let (_, s) = _signature.read_u256(32);
-            let (_, v) = _signature.read_u8(64);
-            signature_from_vrs(v.try_into().unwrap(), r, s)
-        }
-
         /// Returns the domain separator used in validator announcements.
         fn domain_hash(self: @ContractState) -> u256 {
             let mailbox_address: felt252 = self.mailboxclient.mailbox().try_into().unwrap();
@@ -304,5 +289,21 @@ pub mod validator_announce {
 
             validators.span()
         }
+    }
+
+    /// Converts a byte signature into a standard singature format (see Signature structure)
+    /// 
+    /// # Arguments
+    /// 
+    /// * - ` _signature` - The byte encoded Signature
+    /// 
+    /// # Returns
+    /// 
+    /// Signature - Standardized signature
+    fn convert_to_signature(_signature: Bytes) -> Signature {
+        let (_, r) = _signature.read_u256(0);
+        let (_, s) = _signature.read_u256(32);
+        let (_, v) = _signature.read_u8(64);
+        signature_from_vrs(v.try_into().unwrap(), r, s)
     }
 }

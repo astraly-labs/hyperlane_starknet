@@ -117,6 +117,22 @@ fn test_remove_domain() {
     _domains.pop_front().unwrap();
     assert(_domains.span() == fallback_routing_ism.domains(), 'wrong domain del');
 }
+#[test]
+fn test_remove_domain_module_check() {
+    let mut _domains = array![12345, 1123322, 312441];
+    let _modules: Array<ContractAddress> = array![
+        contract_address_const::<0x111>(),
+        contract_address_const::<0x222>(),
+        contract_address_const::<0x333>()
+    ];
+    let (_, _, fallback_routing_ism) = setup_default_fallback_routing_ism();
+    let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    fallback_routing_ism.initialize(_domains.span(), _modules.span());
+    fallback_routing_ism.remove(12345);
+    let mailbox_dispatcher = IMailboxDispatcher { contract_address: MAILBOX() };
+    assert_eq!(fallback_routing_ism.module(12345), mailbox_dispatcher.get_default_ism());
+}
 
 
 #[test]

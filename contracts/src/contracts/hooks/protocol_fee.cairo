@@ -7,7 +7,9 @@ pub mod protocol_fee {
     use hyperlane_starknet::contracts::libs::message::Message;
     use hyperlane_starknet::interfaces::{IPostDispatchHook, Types, IProtocolFee, ETH_ADDRESS};
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::token::erc20::interface::{
+        ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait
+    };
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::{ContractAddress, contract_address_const, get_contract_address};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -149,9 +151,9 @@ pub mod protocol_fee {
         /// Collects protocol fees from the contract.
         /// Fees are sent to the beneficary address
         fn collect_protocol_fees(ref self: ContractState) {
-            let token_dispatcher = IERC20Dispatcher { contract_address: self.fee_token.read() };
+            let token_dispatcher = ERC20ABIDispatcher { contract_address: self.fee_token.read() };
             let contract_address = get_contract_address();
-            let balance = token_dispatcher.balance_of(contract_address);
+            let balance = token_dispatcher.balanceOf(contract_address);
             assert(balance != 0, Errors::INSUFFICIENT_BALANCE);
             token_dispatcher.transfer(self.beneficiary.read(), balance);
         }

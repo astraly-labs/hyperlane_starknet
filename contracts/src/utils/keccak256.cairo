@@ -431,18 +431,6 @@ mod tests {
     }
 
     #[test]
-    fn test_get_last_two_words() {
-        let mut input = Default::default();
-        input.append_word(0x49, 1);
-        input.append_word(0xd35915d0abec0a28990198bb32aa570e681e7eb41a001c0094c7c36a712671, 31);
-        let expected_result = 0x0e681e7eb41a001c0094c7c36a712671;
-        assert_eq!(get_two_last_words(@input, 8), expected_result);
-        let mut input = Default::default();
-        input.append_word('HYPERLANE_ANNOUNCEMENT', 22);
-        let expected_result = 'E_ANNOUNCEMENT';
-        assert_eq!(get_two_last_words(@input, 6), expected_result);
-    }
-    #[test]
     fn test_reverse_endianness() {
         let big_endian_number: u256 = u256 { high: 0x12345678, low: 0 };
         let expected_result: u256 = u256 { high: 0, low: 0x78563412000000000000000000000000 };

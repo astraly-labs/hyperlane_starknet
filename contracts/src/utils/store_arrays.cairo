@@ -7,7 +7,7 @@ use starknet::storage_access::{Store, StorageBaseAddress,};
 // Core lib imports.
 use starknet::{ContractAddress, SyscallResult,};
 
-impl StoreFelt252Array of Store<Array<felt252>> {
+pub impl StoreFelt252Array of Store<Array<felt252>> {
     fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult<Array<felt252>> {
         StoreFelt252Array::read_at_offset(address_domain, base, 0)
     }
@@ -43,13 +43,13 @@ impl StoreFelt252Array of Store<Array<felt252>> {
     ) -> SyscallResult<()> {
         // // Store the length of the array in the first storage slot. 255 of elements is max
         let len: u8 = value.len().try_into().expect('Storage - Span too large');
-        Store::<u8>::write_at_offset(address_domain, base, offset, len);
+        Store::<u8>::write_at_offset(address_domain, base, offset, len).unwrap();
         offset += 1;
         // Store the array elements sequentially
         loop {
             match value.pop_front() {
                 Option::Some(element) => {
-                    Store::<felt252>::write_at_offset(address_domain, base, offset, element);
+                    Store::<felt252>::write_at_offset(address_domain, base, offset, element).unwrap();
                     offset += Store::<felt252>::size();
                 },
                 Option::None => { break Result::Ok(()); }

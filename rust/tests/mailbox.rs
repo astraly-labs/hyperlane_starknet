@@ -141,6 +141,7 @@ where
             &DOMAIN_EVM,
             &cainome::cairo_serde::ContractAddress(FieldElement::from_bytes_be(&receiver).unwrap()),
             &to_strk_message_bytes(msg_body),
+            &cainome::cairo_serde::U256 { low: 0, high: 0 },
             &None,
             &None,
         )
@@ -235,7 +236,6 @@ async fn test_mailbox_strk_to_evm() -> eyre::Result<()> {
 
     // init eth env
     let anvil = eth::setup_env(DOMAIN_EVM).await?;
-
     let _ = send_msg_strk_to_evm(&strk, &anvil).await?;
 
     Ok(())

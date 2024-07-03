@@ -13,7 +13,7 @@ use hyperlane_starknet::tests::setup::{
 };
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+use openzeppelin::token::erc20::interface::{ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 use snforge_std::cheatcodes::events::EventAssertions;
 use snforge_std::{start_prank, CheatTarget, stop_prank};
 
@@ -176,7 +176,7 @@ fn test_dispatch_with_protocol_fee_hook() {
         Option::Some(protocol_fee_hook.contract_address),
         Option::Some(mock_hook.contract_address)
     );
-    let erc20_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
+    let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     erc20_dispatcher.approve(MAILBOX(), PROTOCOL_FEE);
@@ -229,7 +229,7 @@ fn test_dispatch_with_protocol_fee_hook() {
         );
 
     // balance check 
-    assert_eq!(erc20_dispatcher.balance_of(OWNER()), INITIAL_SUPPLY - PROTOCOL_FEE);
+    assert_eq!(erc20_dispatcher.balanceOf(OWNER()), INITIAL_SUPPLY - PROTOCOL_FEE);
     assert(mailbox.get_latest_dispatched_id() == message_id, 'Failed to fetch latest id');
 }
 
@@ -243,7 +243,7 @@ fn test_dispatch_with_two_fee_hook() {
         Option::Some(protocol_fee_hook.contract_address),
         Option::Some(mock_hook.contract_address)
     );
-    let erc20_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
+    let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     // (mock_fee_hook consummes 3 * PROTOCOL_FEE)
@@ -297,7 +297,7 @@ fn test_dispatch_with_two_fee_hook() {
         );
 
     // balance check
-    assert_eq!(erc20_dispatcher.balance_of(OWNER()), INITIAL_SUPPLY - 4 * PROTOCOL_FEE);
+    assert_eq!(erc20_dispatcher.balanceOf(OWNER()), INITIAL_SUPPLY - 4 * PROTOCOL_FEE);
     assert(mailbox.get_latest_dispatched_id() == message_id, 'Failed to fetch latest id');
 }
 
@@ -315,7 +315,7 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_provided_fee_lower_than_require
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     // We transfer some token to the new owner
-    let erc20_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
+    let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     erc20_dispatcher.transfer(NEW_OWNER(), PROTOCOL_FEE - 10);
 
     // The new owner has has PROTOCOL_FEE -10 tokens so the required hook post dispatch fails
@@ -355,7 +355,7 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_user_balance_lower_than_fee_amo
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     // We transfer some token to the new owner
-    let erc20_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
+    let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     erc20_dispatcher.transfer(NEW_OWNER(), PROTOCOL_FEE - 10);
 
     // The new owner has has PROTOCOL_FEE -10 tokens so the required hook post dispatch fails
@@ -397,7 +397,7 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_insufficient_allowance() {
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     // We transfer some token to the new owner
-    let erc20_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
+    let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     erc20_dispatcher.transfer(NEW_OWNER(), PROTOCOL_FEE);
 
     // The new owner has has PROTOCOL_FEE -10 tokens so the required hook post dispatch fails

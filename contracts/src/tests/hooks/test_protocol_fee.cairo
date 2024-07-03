@@ -9,7 +9,7 @@ use hyperlane_starknet::tests::setup::{
     setup_mock_token
 };
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
+use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget, stop_prank};
 
 
@@ -79,12 +79,12 @@ fn test_collect_protocol_fee() {
 
     // First transfer the token to the contract
     fee_token.transfer(protocol_fee.contract_address, PROTOCOL_FEE);
-    assert_eq!(fee_token.balance_of(protocol_fee.contract_address), PROTOCOL_FEE);
+    assert_eq!(fee_token.balanceOf(protocol_fee.contract_address), PROTOCOL_FEE);
     stop_prank(CheatTarget::One(ownable.contract_address));
 
     protocol_fee.collect_protocol_fees();
-    assert_eq!(fee_token.balance_of(BENEFICIARY()), PROTOCOL_FEE);
-    assert_eq!(fee_token.balance_of(protocol_fee.contract_address), 0);
+    assert_eq!(fee_token.balanceOf(BENEFICIARY()), PROTOCOL_FEE);
+    assert_eq!(fee_token.balanceOf(protocol_fee.contract_address), 0);
 }
 
 #[test]
@@ -113,7 +113,7 @@ fn test_supports_metadata() {
 #[test]
 #[should_panic(expected: ('Invalid metadata variant',))]
 fn test_post_dispatch_fails_if_invalid_variant() {
-    let fee_token = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
+    let fee_token = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     let (_, post_dispatch_hook) = setup_protocol_fee();
     let ownable = IOwnableDispatcher { contract_address: fee_token.contract_address };
     let mut metadata = BytesTrait::new_empty();

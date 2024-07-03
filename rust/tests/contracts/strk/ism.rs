@@ -37,7 +37,6 @@ impl Ism {
 
 impl Ism {
     async fn deploy_mock(codes: &Codes, deployer: &StarknetAccount) -> eyre::Result<FieldElement> {
-        println!("mock ism address: {}", codes.test_mock_ism);
         let res = deploy_contract(codes.test_mock_ism, vec![], deployer).await;
         Ok(res.0)
     }

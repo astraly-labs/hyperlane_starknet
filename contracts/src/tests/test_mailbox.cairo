@@ -18,6 +18,7 @@ use openzeppelin::token::erc20::interface::{ERC20ABI, ERC20ABIDispatcher, ERC20A
 use snforge_std::cheatcodes::events::EventAssertions;
 use snforge_std::{start_prank, CheatTarget, stop_prank};
 
+
 #[test]
 fn test_local_domain() {
     let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
@@ -232,7 +233,7 @@ fn test_dispatch_with_protocol_fee_hook() {
         );
 
     // balance check 
-    assert_eq!(erc20_dispatcher.balanceOf(OWNER()), INITIAL_SUPPLY - PROTOCOL_FEE);
+    assert_eq!(erc20_dispatcher.balanceOf(OWNER().try_into().unwrap()), INITIAL_SUPPLY - PROTOCOL_FEE);
     assert(mailbox.get_latest_dispatched_id() == message_id, 'Failed to fetch latest id');
 }
 
@@ -300,7 +301,7 @@ fn test_dispatch_with_two_fee_hook() {
         );
 
     // balance check
-    assert_eq!(erc20_dispatcher.balanceOf(OWNER()), INITIAL_SUPPLY - 4 * PROTOCOL_FEE);
+    assert_eq!(erc20_dispatcher.balanceOf(OWNER().try_into().unwrap()), INITIAL_SUPPLY - 4 * PROTOCOL_FEE);
     assert(mailbox.get_latest_dispatched_id() == message_id, 'Failed to fetch latest id');
 }
 
@@ -319,7 +320,7 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_provided_fee_lower_than_require
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     // We transfer some token to the new owner
     let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
-    erc20_dispatcher.transfer(NEW_OWNER(), PROTOCOL_FEE - 10);
+    erc20_dispatcher.transfer(NEW_OWNER().try_into().unwrap(), PROTOCOL_FEE - 10);
 
     // The new owner has has PROTOCOL_FEE -10 tokens so the required hook post dispatch fails
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
@@ -359,7 +360,7 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_user_balance_lower_than_fee_amo
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     // We transfer some token to the new owner
     let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
-    erc20_dispatcher.transfer(NEW_OWNER(), PROTOCOL_FEE - 10);
+    erc20_dispatcher.transfer(NEW_OWNER().try_into().unwrap(), PROTOCOL_FEE - 10);
 
     // The new owner has has PROTOCOL_FEE -10 tokens so the required hook post dispatch fails
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
@@ -401,7 +402,7 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_insufficient_allowance() {
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     // We transfer some token to the new owner
     let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
-    erc20_dispatcher.transfer(NEW_OWNER(), PROTOCOL_FEE);
+    erc20_dispatcher.transfer(NEW_OWNER().try_into().unwrap(), PROTOCOL_FEE);
 
     // The new owner has has PROTOCOL_FEE -10 tokens so the required hook post dispatch fails
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };

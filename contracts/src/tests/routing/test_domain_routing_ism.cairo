@@ -268,7 +268,7 @@ fn test_route_ism_fails_if_origin_not_found() {
     ];
     let (_, ism, domain_routing_ism) = setup_domain_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     domain_routing_ism.initialize(_domains.span(), _modules.span());
     ism.route(message);
 }

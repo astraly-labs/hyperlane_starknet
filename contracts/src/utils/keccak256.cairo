@@ -240,43 +240,37 @@ pub fn one_shift_left_bytes_u256(n_bytes: u8) -> u256 {
     }
 }
 
-
-/// Reverses an u64 word. If a padding is provided, shift the result with the padding. 
+/// Shifts equivalent u128 mask for a given number of bytes
+/// dev : panics if u128 overflow
 /// 
 /// # Arguments
 /// 
-/// * `words` - Span of u64, which is the concatenation of the arguments put into u64s
-/// * `padding` - Padding, to avoid information loss (see https://github.com/astraly-labs/hyperlane_starknet/pull/39)
+/// * `n_bytes` - The number of bytes shift 
 /// 
 /// # Returns 
 /// 
-/// A span of u64 corresponding to the reverse endianness of the input. 
-fn reverse_u64_word(words: Span<u64>, padding: u8) -> Span<u64> {
-    let mut cur_idx = 0;
-    let mut reverse_u64 = array![];
-    let last_word = *words.at(words.len() - 1);
-    let number_words = u64_word_size(last_word);
-    loop {
-        if (cur_idx == words.len()) {
-            break ();
-        }
-        if (cur_idx == words.len() - 1) {
-            if (number_words == 0) {
-                reverse_u64.append(0_u64);
-            } else {
-                reverse_u64
-                    .append(
-                        (u64_byte_reverse(*words.at(cur_idx))
-                            / one_shift_left_bytes_u64(8 - number_words))
-                            * one_shift_left_bytes_u64(padding)
-                    );
-            }
-        } else {
-            reverse_u64.append(u64_byte_reverse(*words.at(cur_idx)));
-        }
-        cur_idx += 1;
-    };
-    reverse_u64.span()
+/// u256 representing the associated mask
+pub fn u128_mask(n_bytes: u8) -> u128 {
+    match n_bytes {
+        0 => 0,
+        1 => 0xFF,
+        2 => 0xFFFF,
+        3 => 0xFFFFFF,
+        4 => 0xFFFFFFFF,
+        5 => 0xFFFFFFFFFF,
+        6 => 0xFFFFFFFFFFFF,
+        7 => 0xFFFFFFFFFFFFFF,
+        8 => 0xFFFFFFFFFFFFFFFF,
+        9 => 0xFFFFFFFFFFFFFFFFFF,
+        10 => 0xFFFFFFFFFFFFFFFFFFFF,
+        11 => 0xFFFFFFFFFFFFFFFFFFFFFF,
+        12 => 0xFFFFFFFFFFFFFFFFFFFFFFFF,
+        13 => 0xFFFFFFFFFFFFFFFFFFFFFFFFFF,
+        14 => 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
+        15 => 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
+        16 => 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
+        _ => core::panic_with_felt252('n_bytes too big'),
+    }
 }
 
 /// Givens a span of ByteData, returns a concatenated string (ByteArray) of the input

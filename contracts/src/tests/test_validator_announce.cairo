@@ -71,6 +71,7 @@ fn test_double_announce() {
     ];
     let res = validator_announce
         .announce(validator_address, _storage_location_2.clone(), signature);
+    assert_eq!(res, true);
     let validators = validator_announce.get_announced_validators();
     assert(validators == array![validator_address].span(), 'validator array mismatch');
     let storage_location = validator_announce.get_announced_storage_locations(validators);

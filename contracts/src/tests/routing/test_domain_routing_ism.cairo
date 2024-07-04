@@ -23,17 +23,17 @@ fn test_initialize() {
         contract_address_const::<0x222>(),
         contract_address_const::<0x333>()
     ];
-    let (_, _, fallback_routing_ism) = setup_domain_routing_ism();
-    let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
+    let (_, _, domain_routing_ism) = setup_domain_routing_ism();
+    let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    fallback_routing_ism.initialize(_domains.span(), _modules.span());
-    assert(fallback_routing_ism.domains() == _domains.span(), 'wrong domains init');
+    domain_routing_ism.initialize(_domains.span(), _modules.span());
+    assert(domain_routing_ism.domains() == _domains.span(), 'wrong domains init');
     let mut cur_idx = 0;
     loop {
         if (cur_idx == _domains.len()) {
             break ();
         }
-        assert_eq!(*_modules.at(cur_idx), fallback_routing_ism.module(*_domains.at(cur_idx)));
+        assert_eq!(*_modules.at(cur_idx), domain_routing_ism.module(*_domains.at(cur_idx)));
         cur_idx += 1;
     }
 }
@@ -42,36 +42,36 @@ fn test_initialize() {
 #[test]
 #[should_panic(expected: ('Origin not found',))]
 fn get_module_fails_if_origin_not_found() {
-    let (_, _, fallback_routing_ism) = setup_domain_routing_ism();
-    fallback_routing_ism.module(1233);
+    let (_, _, domain_routing_ism) = setup_domain_routing_ism();
+    domain_routing_ism.module(1233);
 }
 
 #[test]
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_initialize_fails_if_caller_not_owner() {
-    let (_, _, fallback_routing_ism) = setup_domain_routing_ism();
+    let (_, _, domain_routing_ism) = setup_domain_routing_ism();
     let _domains = array![12345, 1123322, 312441];
     let _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
         contract_address_const::<0x333>()
     ];
-    fallback_routing_ism.initialize(_domains.span(), _modules.span())
+    domain_routing_ism.initialize(_domains.span(), _modules.span())
 }
 
 #[test]
 #[should_panic(expected: ('Module cannot be zero',))]
 fn test_initialize_fails_if_module_is_zero() {
-    let (_, _, fallback_routing_ism) = setup_domain_routing_ism();
+    let (_, _, domain_routing_ism) = setup_domain_routing_ism();
     let _domains = array![12345, 1123322, 312441];
     let _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
         contract_address_const::<0>()
     ];
-    let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
+    let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    fallback_routing_ism.initialize(_domains.span(), _modules.span())
+    domain_routing_ism.initialize(_domains.span(), _modules.span())
 }
 
 #[test]
@@ -83,10 +83,10 @@ fn test_initialize_fails_if_length_mismatch() {
         contract_address_const::<0x222>(),
         contract_address_const::<0x333>()
     ];
-    let (_, _, fallback_routing_ism) = setup_domain_routing_ism();
-    let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
+    let (_, _, domain_routing_ism) = setup_domain_routing_ism();
+    let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    fallback_routing_ism.initialize(_domains.span(), _modules.span());
+    domain_routing_ism.initialize(_domains.span(), _modules.span());
 }
 
 
@@ -98,15 +98,31 @@ fn test_remove_domain() {
         contract_address_const::<0x222>(),
         contract_address_const::<0x333>()
     ];
-    let (_, _, fallback_routing_ism) = setup_domain_routing_ism();
-    let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
+    let (_, _, domain_routing_ism) = setup_domain_routing_ism();
+    let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    fallback_routing_ism.initialize(_domains.span(), _modules.span());
-    fallback_routing_ism.remove(12345);
+    domain_routing_ism.initialize(_domains.span(), _modules.span());
+    domain_routing_ism.remove(12345);
     _domains.pop_front().unwrap();
-    assert(_domains.span() == fallback_routing_ism.domains(), 'wrong domain del');
+    assert(_domains.span() == domain_routing_ism.domains(), 'wrong domain del');
 }
 
+#[test]
+#[should_panic(expected: ('Origin not found',))]
+fn test_remove_domain_check_module() {
+    let mut _domains = array![12345, 1123322, 312441];
+    let _modules: Array<ContractAddress> = array![
+        contract_address_const::<0x111>(),
+        contract_address_const::<0x222>(),
+        contract_address_const::<0x333>()
+    ];
+    let (_, _, domain_routing_ism) = setup_domain_routing_ism();
+    let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    domain_routing_ism.initialize(_domains.span(), _modules.span());
+    domain_routing_ism.remove(12345);
+    domain_routing_ism.module(12345);
+}
 
 #[test]
 #[should_panic(expected: ('Domain not found',))]
@@ -117,11 +133,11 @@ fn test_remove_domain_fails_if_domain_not_found() {
         contract_address_const::<0x222>(),
         contract_address_const::<0x333>()
     ];
-    let (_, _, fallback_routing_ism) = setup_domain_routing_ism();
-    let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
+    let (_, _, domain_routing_ism) = setup_domain_routing_ism();
+    let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    fallback_routing_ism.initialize(_domains.span(), _modules.span());
-    fallback_routing_ism.remove(1);
+    domain_routing_ism.initialize(_domains.span(), _modules.span());
+    domain_routing_ism.remove(1);
 }
 
 #[test]
@@ -133,9 +149,9 @@ fn test_remove_domain_fails_if_caller_not_owner() {
         contract_address_const::<0x222>(),
         contract_address_const::<0x333>()
     ];
-    let (_, _, fallback_routing_ism) = setup_domain_routing_ism();
-    fallback_routing_ism.initialize(_domains.span(), _modules.span());
-    fallback_routing_ism.remove(12345);
+    let (_, _, domain_routing_ism) = setup_domain_routing_ism();
+    domain_routing_ism.initialize(_domains.span(), _modules.span());
+    domain_routing_ism.remove(12345);
 }
 
 
@@ -147,22 +163,22 @@ fn test_set_domain_and_module() {
         contract_address_const::<0x222>(),
         contract_address_const::<0x333>()
     ];
-    let (_, _, fallback_routing_ism) = setup_domain_routing_ism();
-    let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
+    let (_, _, domain_routing_ism) = setup_domain_routing_ism();
+    let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    fallback_routing_ism.initialize(_domains.span(), _modules.span());
+    domain_routing_ism.initialize(_domains.span(), _modules.span());
     let new_domain = 111111;
     let new_module = contract_address_const::<0x2134242342342>();
-    fallback_routing_ism.set(new_domain, new_module);
+    domain_routing_ism.set(new_domain, new_module);
     _domains.append(new_domain);
     _modules.append(new_module);
-    assert(_domains.span() == fallback_routing_ism.domains(), 'wrong domain add');
+    assert(_domains.span() == domain_routing_ism.domains(), 'wrong domain add');
     let mut cur_idx = 0;
     loop {
         if (cur_idx == _domains.len()) {
             break ();
         }
-        assert_eq!(*_modules.at(cur_idx), fallback_routing_ism.module(*_domains.at(cur_idx)));
+        assert_eq!(*_modules.at(cur_idx), domain_routing_ism.module(*_domains.at(cur_idx)));
         cur_idx += 1;
     }
 }
@@ -176,11 +192,11 @@ fn test_set_domain_and_module_fails_if_caller_is_not_owner() {
         contract_address_const::<0x222>(),
         contract_address_const::<0x333>()
     ];
-    let (_, _, fallback_routing_ism) = setup_domain_routing_ism();
-    fallback_routing_ism.initialize(_domains.span(), _modules.span());
+    let (_, _, domain_routing_ism) = setup_domain_routing_ism();
+    domain_routing_ism.initialize(_domains.span(), _modules.span());
     let new_domain = 111111;
     let new_module = contract_address_const::<0x2134242342342>();
-    fallback_routing_ism.set(new_domain, new_module);
+    domain_routing_ism.set(new_domain, new_module);
 }
 
 
@@ -201,10 +217,10 @@ fn test_route_ism() {
         contract_address_const::<0x222>(),
         contract_address_const::<0x333>()
     ];
-    let (_, ism, fallback_routing_ism) = setup_domain_routing_ism();
-    let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
+    let (_, ism, domain_routing_ism) = setup_domain_routing_ism();
+    let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    fallback_routing_ism.initialize(_domains.span(), _modules.span());
+    domain_routing_ism.initialize(_domains.span(), _modules.span());
     assert_eq!(ism.route(message), *_modules.at(0));
     message =
         Message {
@@ -290,9 +306,9 @@ fn test_verify() {
         contract_address_const::<0x222>(),
         contract_address_const::<0x333>()
     ];
-    let (ism, _, fallback_routing_ism) = setup_domain_routing_ism();
-    let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
+    let (ism, _, domain_routing_ism) = setup_domain_routing_ism();
+    let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    fallback_routing_ism.initialize(_domains.span(), _modules.span());
+    domain_routing_ism.initialize(_domains.span(), _modules.span());
     assert_eq!(ism.verify(metadata, message), true);
 }

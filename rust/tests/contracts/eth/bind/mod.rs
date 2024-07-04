@@ -5,8 +5,8 @@ pub mod fast_hyp_erc20_collateral;
 #[allow(clippy::all)]
 pub mod mailbox;
 #[allow(clippy::all)]
+pub mod test_merkle_tree_hook;
+#[allow(clippy::all)]
 pub mod test_mock_ism;
 #[allow(clippy::all)]
 pub mod test_mock_msg_receiver;
-#[allow(clippy::all)]
-pub mod test_merkle_tree_hook;

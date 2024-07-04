@@ -589,7 +589,7 @@
             "name": "wrappedToken",
             "outputs": [
                 {
-                    "internalType": "contract IERC20",
+                    "internalType": "contract ERC20ABI",
                     "name": "",
                     "type": "address"
                 }

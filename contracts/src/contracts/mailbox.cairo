@@ -11,7 +11,9 @@ pub mod mailbox {
         IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait, ETH_ADDRESS,
     };
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::token::erc20::interface::{
+        ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait
+    };
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::{
         ContractAddress, ClassHash, get_caller_address, get_block_number, contract_address_const,
@@ -343,10 +345,11 @@ pub mod mailbox {
             let block_number = get_block_number();
             assert(!self.delivered(id), Errors::ALREADY_DELIVERED);
 
+            self.deliveries.write(id, Delivery { processor: caller, block_number: block_number });
+
             let recipient_ism = self.recipient_ism(_message.recipient);
             let ism = IInterchainSecurityModuleDispatcher { contract_address: recipient_ism };
 
-            self.deliveries.write(id, Delivery { processor: caller, block_number: block_number });
             self
                 .emit(
                     Process {

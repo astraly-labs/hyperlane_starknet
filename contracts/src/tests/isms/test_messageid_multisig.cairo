@@ -16,11 +16,11 @@ use hyperlane_starknet::tests::setup::{
     get_message_and_signature, LOCAL_DOMAIN, DESTINATION_DOMAIN, RECIPIENT_ADDRESS,
     build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT, build_fake_messageid_metadata
 };
+use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::cheatcodes::events::EventAssertions;
 use snforge_std::{start_prank, CheatTarget};
-use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 
 
 #[test]

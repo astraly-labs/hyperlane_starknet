@@ -8,10 +8,9 @@ use hyperlane_starknet::tests::setup::{
     setup_trusted_relayer_ism, setup_noop_ism, setup_pausable_ism, mock_setup, DESTINATION_DOMAIN,
     OWNER, LOCAL_DOMAIN, DESTINATION_MAILBOX
 };
+use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget};
-use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
-
 
 
 #[test]
@@ -38,7 +37,7 @@ fn test_verify_trusted_relayer_ism() {
         0x01020304050607080910111213141516,
         0x01020304050607080910000000000000
     ];
-    let recipient : felt252 = mock_recipient.contract_address.into();
+    let recipient: felt252 = mock_recipient.contract_address.into();
     let message_body = BytesTrait::new(42, array);
     let message = Message {
         version: HYPERLANE_VERSION,

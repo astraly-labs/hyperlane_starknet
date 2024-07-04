@@ -11,11 +11,11 @@ use hyperlane_starknet::tests::setup::{
     DESTINATION_DOMAIN, build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT, setup_noop_ism,
     MODULES, CONTRACT_MODULES
 };
+use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget};
-use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use starknet::ContractAddress;
 
 #[test]

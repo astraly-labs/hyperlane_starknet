@@ -11,8 +11,8 @@ use hyperlane_starknet::tests::setup::{
     DESTINATION_MAILBOX, setup_protocol_fee, setup_mock_hook, PROTOCOL_FEE, INITIAL_SUPPLY,
     setup_mock_fee_hook
 };
-use openzeppelin::access::ownable::OwnableComponent;
 use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
+use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use openzeppelin::token::erc20::interface::{ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 use snforge_std::cheatcodes::events::EventAssertions;
@@ -38,7 +38,7 @@ fn test_transfer_ownership() {
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     ownable.transfer_ownership(NEW_OWNER().try_into().unwrap());
     stop_prank(CheatTarget::One(ownable.contract_address));
-    let owner : felt252 = ownable.owner().into();
+    let owner: felt252 = ownable.owner().into();
     assert(owner == NEW_OWNER().try_into().unwrap(), 'Failed transfer ownership');
 
     let expected_event = OwnableComponent::OwnershipTransferred {
@@ -443,7 +443,7 @@ fn test_process() {
     ];
 
     let message_body = BytesTrait::new(42, array);
-    let recipient : felt252 = mock_recipient.contract_address.into();
+    let recipient: felt252 = mock_recipient.contract_address.into();
     let message = Message {
         version: HYPERLANE_VERSION,
         nonce: 0,
@@ -457,9 +457,7 @@ fn test_process() {
     let metadata = message_body;
     mailbox.process(metadata.clone(), message);
     let expected_event = mailbox::Event::Process(
-        mailbox::Process {
-            origin: LOCAL_DOMAIN, sender: OWNER(), recipient: recipient.into(),
-        }
+        mailbox::Process { origin: LOCAL_DOMAIN, sender: OWNER(), recipient: recipient.into(), }
     );
     let expected_event_id = mailbox::Event::ProcessId(mailbox::ProcessId { id: message_id });
 
@@ -494,7 +492,7 @@ fn test_process_fails_if_version_mismatch() {
     ];
 
     let message_body = BytesTrait::new(42, array);
-    let recipient : felt252= mock_recipient.contract_address.into();
+    let recipient: felt252 = mock_recipient.contract_address.into();
     let message = Message {
         version: HYPERLANE_VERSION + 1,
         nonce: 0,

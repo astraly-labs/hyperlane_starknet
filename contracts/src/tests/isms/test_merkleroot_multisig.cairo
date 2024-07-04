@@ -1,7 +1,7 @@
-use core::option::OptionTrait;
 use alexandria_bytes::{Bytes, BytesTrait};
 use core::array::ArrayTrait;
 use core::array::SpanTrait;
+use core::option::OptionTrait;
 use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 use hyperlane_starknet::contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MerkleRootIsmMetadata;
 use hyperlane_starknet::interfaces::IMessageRecipientDispatcherTrait;
@@ -15,11 +15,11 @@ use hyperlane_starknet::tests::setup::{
     get_merkle_message_and_signature, LOCAL_DOMAIN, DESTINATION_DOMAIN, TEST_PROOF,
     build_merkle_metadata, VALID_OWNER, VALID_RECIPIENT, build_fake_merkle_metadata
 };
+use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::cheatcodes::events::EventAssertions;
 use snforge_std::{start_prank, CheatTarget};
-use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 
 
 #[test]

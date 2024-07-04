@@ -168,14 +168,13 @@ pub fn setup_mailbox(
     let mock_ism = setup_mock_ism();
     setup_mock_token();
     let params: Array<felt252> = array![
-        domain.into(), OWNER().try_into().unwrap(), mock_ism.contract_address.into(), default_hook.into(), required_hook.into()
+        domain.into(),
+        OWNER().try_into().unwrap(),
+        mock_ism.contract_address.into(),
+        default_hook.into(),
+        required_hook.into()
     ];
-    mailbox_class
-        .deploy_at(
-            @params,
-            mailbox_address
-        )
-        .unwrap();
+    mailbox_class.deploy_at(@params, mailbox_address).unwrap();
     let mut spy = spy_events(SpyOn::One(mailbox_address));
     (
         IMailboxDispatcher { contract_address: mailbox_address },
@@ -238,9 +237,10 @@ pub fn setup_merkleroot_multisig_ism(
 pub fn setup_mailbox_client() -> IMailboxClientDispatcher {
     let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let mailboxclient_class = declare("mailboxclient").unwrap();
-    let params: Array<felt252> = array![mailbox.contract_address.into(), OWNER().try_into().unwrap()];
-    let res = mailboxclient_class
-        .deploy_at(@params, MAILBOX_CLIENT());
+    let params: Array<felt252> = array![
+        mailbox.contract_address.into(), OWNER().try_into().unwrap()
+    ];
+    let res = mailboxclient_class.deploy_at(@params, MAILBOX_CLIENT());
     if (res.is_err()) {
         panic(res.unwrap_err());
     }
@@ -268,7 +268,9 @@ pub fn setup_domain_routing_ism() -> (
     IInterchainSecurityModuleDispatcher, IRoutingIsmDispatcher, IDomainRoutingIsmDispatcher
 ) {
     let domain_routing_ism = declare("domain_routing_ism").unwrap();
-    let (domain_routing_ism_addr, _) = domain_routing_ism.deploy(@array![OWNER().try_into().unwrap()]).unwrap();
+    let (domain_routing_ism_addr, _) = domain_routing_ism
+        .deploy(@array![OWNER().try_into().unwrap()])
+        .unwrap();
     (
         IInterchainSecurityModuleDispatcher { contract_address: domain_routing_ism_addr },
         IRoutingIsmDispatcher { contract_address: domain_routing_ism_addr },
@@ -299,7 +301,7 @@ pub fn setup_mock_validator_announce(
 pub fn setup_aggregation(modules: Span<felt252>) -> IAggregationDispatcher {
     let aggregation_class = declare("aggregation").unwrap();
     let mut parameters = Default::default();
-    let owner : felt252 = OWNER().try_into().unwrap();
+    let owner: felt252 = OWNER().try_into().unwrap();
     Serde::serialize(@owner, ref parameters);
     Serde::serialize(@modules, ref parameters);
     let (aggregation_addr, _) = aggregation_class.deploy(@parameters).unwrap();
@@ -549,7 +551,9 @@ pub fn setup_mock_token() -> ERC20ABIDispatcher {
     let fee_token_class = declare("mock_fee_token").unwrap();
     let (fee_token_addr, _) = fee_token_class
         .deploy_at(
-            @array![INITIAL_SUPPLY.low.into(), INITIAL_SUPPLY.high.into(), OWNER().try_into().unwrap()],
+            @array![
+                INITIAL_SUPPLY.low.into(), INITIAL_SUPPLY.high.into(), OWNER().try_into().unwrap()
+            ],
             ETH_ADDRESS()
         )
         .unwrap();

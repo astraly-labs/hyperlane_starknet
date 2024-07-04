@@ -39,7 +39,8 @@ pub mod validator_announce {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
-        storage_location: LegacyMap::<EthAddress, Array<felt252>>,
+        storage_location_len: LegacyMap::<EthAddress, u256>,
+        storage_locations: LegacyMap::<(EthAddress, u256), Array<felt252>>,
         replay_protection: LegacyMap::<felt252, bool>,
         validators: LegacyMap::<EthAddress, EthAddress>,
     }
@@ -69,8 +70,9 @@ pub mod validator_announce {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _mailbox: ContractAddress) {
+    fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress) {
         self.mailboxclient.initialize(_mailbox);
+        self.ownable.initializer(_owner);
     }
 
 
@@ -125,7 +127,7 @@ pub mod validator_announce {
             );
             assert(!self.replay_protection.read(replay_id), Errors::REPLAY_PROTECTION_ERROR);
             let announcement_digest = self.get_announcement_digest(u256_storage_location);
-            let signature: Signature = self.convert_to_signature(_signature);
+            let signature: Signature = convert_to_signature(_signature);
             assert(
                 bool_is_eth_signature_valid(announcement_digest, signature, _validator),
                 Errors::WRONG_SIGNER
@@ -137,8 +139,9 @@ pub mod validator_announce {
                     self.validators.write(last_validator, _validator);
                 }
             };
-
-            self.storage_location.write(_validator, _storage_location);
+            let mut validator_len = self.storage_location_len.read(_validator);
+            self.storage_locations.write((_validator, validator_len), _storage_location);
+            self.storage_location_len.write(_validator, validator_len + 1);
             self.replay_protection.write(replay_id, true);
             self
                 .emit(
@@ -161,12 +164,22 @@ pub mod validator_announce {
         /// Span<Span<felt252>> -  A list of registered storage metadata
         fn get_announced_storage_locations(
             self: @ContractState, mut _validators: Span<EthAddress>
-        ) -> Span<Span<felt252>> {
+        ) -> Span<Span<Array<felt252>>> {
             let mut metadata = array![];
             loop {
                 match _validators.pop_front() {
                     Option::Some(validator) => {
-                        let validator_metadata = self.storage_location.read(*validator);
+                        let mut cur_idx = 0;
+                        let validator_len = self.storage_location_len.read(*validator);
+                        let mut validator_metadata = array![];
+                        loop {
+                            if (cur_idx == validator_len) {
+                                break ();
+                            }
+                            validator_metadata
+                                .append(self.storage_locations.read((*validator, cur_idx)));
+                            cur_idx += 1;
+                        };
                         metadata.append(validator_metadata.span())
                     },
                     Option::None => { break (); }
@@ -219,22 +232,6 @@ pub mod validator_announce {
 
     #[generate_trait]
     pub impl ValidatorAnnounceInternalImpl of InternalTrait {
-        /// Converts a byte signature into a standard singature format (see Signature structure)
-        /// 
-        /// # Arguments
-        /// 
-        /// * - ` _signature` - The byte encoded Signature
-        /// 
-        /// # Returns
-        /// 
-        /// Signature - Standardized signature
-        fn convert_to_signature(self: @ContractState, _signature: Bytes) -> Signature {
-            let (_, r) = _signature.read_u256(0);
-            let (_, s) = _signature.read_u256(32);
-            let (_, v) = _signature.read_u8(64);
-            signature_from_vrs(v.try_into().unwrap(), r, s)
-        }
-
         /// Returns the domain separator used in validator announcements.
         fn domain_hash(self: @ContractState) -> u256 {
             let mailbox_address: felt252 = self.mailboxclient.mailbox().try_into().unwrap();
@@ -298,5 +295,21 @@ pub mod validator_announce {
 
             validators.span()
         }
+    }
+
+    /// Converts a byte signature into a standard singature format (see Signature structure)
+    /// 
+    /// # Arguments
+    /// 
+    /// * - ` _signature` - The byte encoded Signature
+    /// 
+    /// # Returns
+    /// 
+    /// Signature - Standardized signature
+    fn convert_to_signature(_signature: Bytes) -> Signature {
+        let (_, r) = _signature.read_u256(0);
+        let (_, s) = _signature.read_u256(32);
+        let (_, v) = _signature.read_u8(64);
+        signature_from_vrs(v.try_into().unwrap(), r, s)
     }
 }

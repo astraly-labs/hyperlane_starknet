@@ -172,7 +172,7 @@ pub mod domain_routing_ism {
         /// 
         /// ContractAddress - the ISM contract address
         fn route(self: @ContractState, _message: Message) -> ContractAddress {
-            self.modules.read(_message.origin)
+            self.module(_message.origin)
         }
     }
 
@@ -220,6 +220,7 @@ pub mod domain_routing_ism {
                 }
             };
             let next_domain = self.domains.read(_domain);
+            self.modules.write(_domain, contract_address_const::<0>());
             self.domains.write(domain_index, next_domain);
         }
 

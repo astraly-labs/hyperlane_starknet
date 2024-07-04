@@ -181,7 +181,7 @@ pub mod default_fallback_routing_ism {
         /// 
         /// ContractAddress - The ISM address to use to verify _message
         fn route(self: @ContractState, _message: Message) -> ContractAddress {
-            self.modules.read(_message.origin)
+            self.module(_message.origin)
         }
     }
 
@@ -230,6 +230,7 @@ pub mod default_fallback_routing_ism {
                 }
             };
             let next_domain = self.domains.read(_domain);
+            self.modules.write(_domain, contract_address_const::<0>());
             self.domains.write(domain_index, next_domain);
         }
 

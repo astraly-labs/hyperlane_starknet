@@ -1,6 +1,8 @@
+use alexandria_math::BitShift;
 use core::byte_array::{ByteArray, ByteArrayTrait};
 use core::integer::u128_byte_reverse;
 use core::keccak::cairo_keccak;
+use core::starknet::SyscallResultTrait;
 use core::to_byte_array::{FormatAsByteArray, AppendFormattedToByteArray};
 use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
 use starknet::{EthAddress, eth_signature::is_eth_signature_valid, secp256_trait::Signature};
@@ -12,12 +14,12 @@ pub const ETH_SIGNED_MESSAGE: felt252 = '\x19Ethereum Signed Message:\n32';
 type Words64 = Span<u64>;
 
 // CONSTANTS DEFINITION
-const EMPTY_KECCAK: u256 = 0x70A4855D04D8FA7B3B2782CA53B600E5C003C7DCB27D7E923C23F7860146D2C5;
+
 pub const ONE_SHIFT_64: u128 = 0x10000000000000000;
 pub const FELT252_MASK: u256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 pub const ADDRESS_SIZE: usize = 32;
 pub const HASH_SIZE: usize = 32;
-
+const KECCAK_FULL_RATE_IN_U64S: usize = 17;
 
 /// 
 /// Structure specifying for each element, the value of this element as u256 and the size (in bytes) of this element 
@@ -28,6 +30,44 @@ pub struct ByteData {
     pub size: usize
 }
 
+fn zero_keccak_hash(index: u32) -> u256 {
+    let zero_hashes = array![
+        0x70a4855d04d8fa7b3b2782ca53b600e5c003c7dcb27d7e923c23f7860146d2c5,
+        0x8ac9bc64e0a996ff9165d677b4f712667d818f822942463614281e7a9e7836bc,
+        0x9867d524c957cd4a34ab5cb41cf07a61b9a21b01fd478bb4bf153c65abc0a854,
+        0x4786f66fb0dfef4cc6c44c8c079a50602ceb5ae16212a13195fce125910dff99,
+        0x4c24d3cb4a3a6364b152e840bd5e68f7b70bbf4b7b4c3655b9736f582676e7e8,
+        0xec20d0c108ce727d4435781105cb4c026a879dd1da80204aea049855e78915c4,
+        0xb3d5b06f1965e76affc51cc6f4fd3573c17aca0e130b851b1b082ee0a5e13750,
+        0x2fee92aa6bc7129f61059dec151e37832a0c5391ff956a0501a55e7254e0cbdf,
+        0xce7b1eba890df1f0c6e5831b1d7f164b7e814c9ccf439104f1018cdd034d1b01,
+        0x715325eaf93144c3121df9be1e502565203c8c2d1c7d8cab1625d69d205e31ad,
+        0x07b634fd0ff4184560dbb4b1f8fb1246c6fd24bf58934233eecb08d46bddd26b,
+        0xc4885e2eaa4fe0e9a9a4b9a9bd5468438b29849c0d56a2eae38807d900039c6f,
+        0x1173b4507b58cf903327ca3b7f6b2b18e6c4a14fc58c1a8a213c2faddabfe230,
+        0x57e542ab2576985e8144bb5c35db1189474ea3fb34f456db95044b5286fc8431,
+        0xdda769b8a7519cf92bc60f37373ea91d07ec8114c189833b9e3a512ed7c86691,
+        0xc0a98ba674651a884e48389eb69e8735e12c90b4faed3106cb58f4d8e93910bf,
+        0xb42369a2f775c0b3d24d3ab0e99b6fc728aa52882013ebab5fa3c82029de90f4,
+        0x6d99cc2723be666f8d40e78fc5198f83792aaa7f41a5d71bfe9d5822ba7e7d5b,
+        0x278b338d887ab8cc46e85863c221336c9d3b27cb6e6114b9070409cdecf38a5d,
+        0x7bb968fd99be569582d15c8d43c9148fd5558ca10c9c70de9b57488ec2fd2954,
+        0x2a316717a4aa2d60bed23e95fc3595fdd71f4ade789c8db98ea581aeb7c78053,
+        0x584efaff23ec6158ce7d30ca6b514abb1892923e656c973c21a193c40571655a,
+        0x0e89b39caa331523d4b98c3abdae38563bed440ec164ac81ecc738804bd46255,
+        0xd8383520305dd28bde1cef07a7234d4381a1c9bad3aba3a9bf050b43f9f9b9e2,
+        0xcd5c4ff8dae018efefdba2ebf35857546284b6b8912cceecbda0a2bd9b657b82,
+        0xaba91af7fd52ef0bceaaee96fc1fc46feb087fb1985720e739cdc5b6b11dd4c0,
+        0xb2dc520d17b9a82a12f5ec7af5ed8882b468b7a3f8492188181c2c4448db33a5,
+        0x5d1e89019bf642bbc63a008d7aef19c40a461dcf7adade5029ca4592802f6459,
+        0x2ec59c21bd5581d0c5b10d6b392a2d40a0ce500e29ccb5c7f75d50a01e0396b6,
+        0x6f00c6b91b5194e948cefb0042862c5f36525b11ccf87581a3debd79cbcd1c47,
+        0x7c312f53e36ec8bcca3e9530f94cc0d5acc3fd2cdf88258cd72e52321ce748f5,
+        0xcfb409c77e66d490e1b4b57818f255deb978c8415aecf3952d51991445d0fe15,
+        0x63e5f30e16932f36f608404895bca64bc86f3888a94503d6a8628b54d9ec0d29
+    ];
+    *zero_hashes.at(index)
+}
 
 /// Reverses the endianness of an u256
 /// 
@@ -84,58 +124,6 @@ pub fn bool_is_eth_signature_valid(
     }
 }
 
-/// Reverses an u64 word (little_endian <-> big endian)
-/// For example 0x12345678 will return 0x78563412
-/// For this function, we used an existing function of the cairo lib `u128_byte_reverse`
-/// 
-/// # Argument 
-/// 
-///  * - `value` - value to reverse 
-/// 
-/// # Returns 
-/// 
-/// The equivalent little endian (or big endian)
-pub fn u64_byte_reverse(value: u64) -> u64 {
-    let reversed = u128_byte_reverse(value.into()) / ONE_SHIFT_64.try_into().expect('not zero');
-    reversed.try_into().unwrap()
-}
-
-
-/// Computes the keccak hash of an given input of Words64(Span<u64>)
-/// dev: harcoded result if the array is empty
-/// dev: using keccak hash function (`cairo_keccak`) from the cairo core lib
-///  
-/// # Arguments
-/// 
-/// * `words` - A Words64 element containing the information to be hash, as u64 span.
-/// * `last_word_bytes` - the size(in bytes) of the last word in the words span. 
-/// 
-/// # Returns the corresponding hash
-fn keccak_cairo_words64(words: Words64, last_word_bytes: usize) -> u256 {
-    if words.is_empty() {
-        return EMPTY_KECCAK;
-    }
-
-    let n = words.len();
-    let mut keccak_input = ArrayTrait::new();
-    let mut i: usize = 0;
-    loop {
-        if i >= n - 1 {
-            break ();
-        }
-        keccak_input.append(*words.at(i));
-        i += 1;
-    };
-
-    let mut last = *words.at(n - 1);
-    if (last_word_bytes == 8 || last_word_bytes == 0) {
-        keccak_input.append(last);
-        cairo_keccak(ref keccak_input, 0, 0)
-    } else {
-        cairo_keccak(ref keccak_input, last, last_word_bytes)
-    }
-}
-
 
 /// Determines the size of a u64 element, by successive division 
 ///
@@ -178,47 +166,6 @@ pub fn u256_word_size(word: u256) -> u8 {
     word_len
 }
 
-/// Builds an u64 span out of a concatenated string (ByteArray)
-/// dev: ByteArray is in fact a array of Bytes31 (u8) 
-/// 
-/// # Argument
-/// 
-/// * `bytes` - A string containing the concatenation of all the arguments to hash
-/// 
-/// # Returns 
-/// 
-/// A span of u64 associated to the input
-fn build_u64_array(bytes: @ByteArray) -> Span<u64> {
-    let mut u64_array = array![];
-    let mut cur_idx = 0;
-    let bytes_len = bytes.len();
-    loop {
-        // Break the loop if we've processed all the bytes
-        if cur_idx * 8 >= bytes_len {
-            break;
-        }
-        let mut u64_word: u64 = 0;
-        let mut offset: u8 = 0;
-        let remaining_bytes = bytes_len - cur_idx * 8;
-        loop {
-            if offset == 8 || cur_idx * 8 + offset.into() >= bytes_len {
-                break;
-            }
-            let u8_bytes: u8 = bytes[cur_idx * 8 + offset.into()];
-            let shift: u8 = if (remaining_bytes < 8) {
-                remaining_bytes.try_into().unwrap()
-            } else {
-                8
-            };
-            u64_word += u8_bytes.into() * one_shift_left_bytes_u64(shift - 1 - offset);
-            offset += 1;
-        };
-        u64_array.append(u64_word);
-        cur_idx += 1;
-    };
-    u64_array.span()
-}
-
 
 /// Shifts helper for u64
 /// dev : panics if u64 overflow
@@ -242,38 +189,6 @@ pub fn one_shift_left_bytes_u64(n_bytes: u8) -> u64 {
         7 => 0x100000000000000,
         _ => core::panic_with_felt252('n_bytes too big'),
     }
-}
-
-/// Retrieves the two last words (u64) for a given string (ByteArray)
-/// 
-/// # Arguments
-/// * `word` - a snapshot of the string to consider 
-/// * `last_word_len` - the length of the last word
-/// 
-/// # Returns 
-/// 
-/// The last two words as u128. 
-fn get_two_last_words(word: @ByteArray, last_word_len: u8) -> u128 {
-    let mut u128_res: u128 = 0;
-    let stop_index: usize = word.len();
-    let start_index = stop_index - last_word_len.into() - 8;
-    let mid_index = start_index + 8;
-    let mut i = start_index;
-    while i < mid_index
-        && i < stop_index {
-            let byte: u128 = word[i].into();
-            let pos: u8 = (i - start_index).try_into().unwrap();
-            u128_res += byte
-                * one_shift_left_bytes_u256(8 + last_word_len - 1 - pos).try_into().unwrap();
-            i += 1;
-        };
-    while i < stop_index {
-        let byte: u128 = word[i].into();
-        let pos: u8 = (i - mid_index).try_into().unwrap();
-        u128_res += byte * one_shift_left_bytes_u64(last_word_len - 1 - pos).try_into().unwrap();
-        i += 1;
-    };
-    u128_res
 }
 
 
@@ -321,30 +236,6 @@ pub fn one_shift_left_bytes_u256(n_bytes: u8) -> u256 {
         29 => 0x10000000000000000000000000000000000000000000000000000000000,
         30 => 0x1000000000000000000000000000000000000000000000000000000000000,
         31 => 0x100000000000000000000000000000000000000000000000000000000000000,
-        _ => core::panic_with_felt252('n_bytes too big'),
-    }
-}
-
-
-pub fn u128_mask(n_bytes: u8) -> u128 {
-    match n_bytes {
-        0 => 0,
-        1 => 0xFF,
-        2 => 0xFFFF,
-        3 => 0xFFFFFF,
-        4 => 0xFFFFFFFF,
-        5 => 0xFFFFFFFFFF,
-        6 => 0xFFFFFFFFFFFF,
-        7 => 0xFFFFFFFFFFFFFF,
-        8 => 0xFFFFFFFFFFFFFFFF,
-        9 => 0xFFFFFFFFFFFFFFFFFF,
-        10 => 0xFFFFFFFFFFFFFFFFFFFF,
-        11 => 0xFFFFFFFFFFFFFFFFFFFFFF,
-        12 => 0xFFFFFFFFFFFFFFFFFFFFFFFF,
-        13 => 0xFFFFFFFFFFFFFFFFFFFFFFFFFF,
-        14 => 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
-        15 => 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
-        16 => 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
         _ => core::panic_with_felt252('n_bytes too big'),
     }
 }
@@ -400,18 +291,19 @@ fn reverse_u64_word(words: Span<u64>, padding: u8) -> Span<u64> {
 fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
     let mut output_string: ByteArray = Default::default();
     let mut cur_idx = 0;
-
     loop {
-        if (cur_idx == bytes.len()) {
-            break ();
+        if cur_idx == bytes.len() {
+            break;
         }
         let byte = *bytes.at(cur_idx);
-        if (byte.size == 32) {
-            // in order to store a 32-bytes entry in a ByteArray, we need to first append the upper 1-byte part , then the lower 31-bytes part
-            let up_byte = (byte.value / FELT252_MASK).try_into().unwrap();
-            output_string.append_word(up_byte, 1);
-            let down_byte = (byte.value & FELT252_MASK).try_into().unwrap();
-            output_string.append_word(down_byte, 31);
+        if byte.size == 32 {
+            // Extract the upper 1-byte part
+            let up_byte = up_bytes(byte.value);
+            output_string.append_word(up_byte.try_into().unwrap(), 1);
+
+            // Extract the lower 31-byte part
+            let down_byte = down_bytes(byte.value);
+            output_string.append_word(down_byte.try_into().unwrap(), 31);
         } else {
             output_string.append_word(byte.value.try_into().unwrap(), byte.size);
         }
@@ -420,6 +312,105 @@ fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
     output_string
 }
 
+
+// --------------------------------------------------------
+// This section is part of the cairo core contract (see: https://github.com/starkware-libs/cairo/blob/953afd5e7ede296c99deaf189e18e361229517c0/corelib/src/keccak.cairo)
+pub fn compute_keccak_byte_array(arr: @ByteArray) -> u256 {
+    let mut input = array![];
+    let mut i = 0;
+    let mut inner = 0;
+    let mut limb: u64 = 0;
+    let mut factor: u64 = 1;
+    while let Option::Some(b) = arr
+        .at(i) {
+            limb = limb + b.into() * factor;
+            i += 1;
+            inner += 1;
+            if inner == 8 {
+                input.append(limb);
+                inner = 0;
+                limb = 0;
+                factor = 1;
+            } else {
+                factor *= 0x100;
+            }
+        };
+    add_padding(ref input, limb, inner);
+    starknet::syscalls::keccak_syscall(input.span()).unwrap_syscall()
+}
+
+
+/// The padding in keccak256 is "1 0* 1".
+/// `last_input_num_bytes` (0-7) is the number of bytes in the last u64 input - `last_input_word`.
+fn add_padding(ref input: Array<u64>, last_input_word: u64, last_input_num_bytes: usize) {
+    let words_divisor = KECCAK_FULL_RATE_IN_U64S.try_into().unwrap();
+    // `last_block_num_full_words` is in range [0, KECCAK_FULL_RATE_IN_U64S - 1]
+    let (_, last_block_num_full_words) = core::integer::u32_safe_divmod(input.len(), words_divisor);
+
+    // The first word to append would be of the form
+    //     0x1<`last_input_num_bytes` LSB bytes of `last_input_word`>.
+    // For example, for `last_input_num_bytes == 4`:
+    //     0x1000000 + (last_input_word & 0xffffff)
+    let first_word_to_append = if last_input_num_bytes == 0 {
+        // This case is handled separately to avoid unnecessary computations.
+        1
+    } else {
+        let first_padding_byte_part = if last_input_num_bytes == 1 {
+            0x100
+        } else if last_input_num_bytes == 2 {
+            0x10000
+        } else if last_input_num_bytes == 3 {
+            0x1000000
+        } else if last_input_num_bytes == 4 {
+            0x100000000
+        } else if last_input_num_bytes == 5 {
+            0x10000000000
+        } else if last_input_num_bytes == 6 {
+            0x1000000000000
+        } else if last_input_num_bytes == 7 {
+            0x100000000000000
+        } else {
+            core::panic_with_felt252('Keccak last input word >7b')
+        };
+        let (_, r) = core::integer::u64_safe_divmod(
+            last_input_word, first_padding_byte_part.try_into().unwrap()
+        );
+        first_padding_byte_part + r
+    };
+
+    if last_block_num_full_words == KECCAK_FULL_RATE_IN_U64S - 1 {
+        input.append(0x8000000000000000 + first_word_to_append);
+        return;
+    }
+
+    // last_block_num_full_words < KECCAK_FULL_RATE_IN_U64S - 1
+    input.append(first_word_to_append);
+    finalize_padding(ref input, KECCAK_FULL_RATE_IN_U64S - 1 - last_block_num_full_words);
+}
+
+/// Finalize the padding by appending "0* 1".
+fn finalize_padding(ref input: Array<u64>, num_padding_words: u32) {
+    if (num_padding_words == 1) {
+        input.append(0x8000000000000000);
+        return;
+    }
+
+    input.append(0);
+    finalize_padding(ref input, num_padding_words - 1);
+}
+
+
+// --------------------------------------------------------------------------------------------
+// END SECTION
+/// Retrieve the 1 up byte of a given u256 input
+fn up_bytes(input: u256) -> u256 {
+    BitShift::shr(input, 248) & 0xFF
+}
+
+/// Retrieve the 31 low byte of a given u256 input
+fn down_bytes(input: u256) -> u256 {
+    input & FELT252_MASK
+}
 
 /// The general function that computes the keccak hash for an input span of ByteData
 /// 
@@ -432,41 +423,13 @@ fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
 /// The corresponding keccak hash for the input arguments
 pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
     if (bytes.is_empty()) {
-        return keccak_cairo_words64(array![].span(), 0);
+        return zero_keccak_hash(0);
     }
-    if (*bytes.at(0).value == 0) {
-        return keccak_cairo_words64(array![].span(), 0);
+    if (*bytes.at(0).value == 0 && bytes.len() == 1) {
+        return zero_keccak_hash(*bytes.at(0).size);
     }
     let concatenate_input = concatenate_input(bytes);
-    let size = concatenate_input.len();
-
-    let u64_span = build_u64_array(@concatenate_input);
-    let mut padding = 0;
-    // if there two words at lest, we need to make sure that the u64 span separation does not remove information on the last word
-    if size > 8 {
-        let size_last_word = if (size % 8 != 0) {
-            size % 8
-        } else {
-            8
-        };
-        let two_last_word = get_two_last_words(
-            @concatenate_input, size_last_word.try_into().unwrap()
-        );
-        let u128_last_word: u128 = (*u64_span.at(u64_span.len() - 1)).into();
-        let size_concat_words = u256_word_size(two_last_word.into());
-        let size_arr_word = u256_word_size(u128_last_word.into());
-        padding =
-            if (size_concat_words == 0 && size_arr_word == 0) {
-                0
-            } else if (size_arr_word + 8 != size_concat_words) {
-                size_concat_words - (size_arr_word + 8)
-            } else {
-                0
-            };
-    }
-    let reverse_words64 = reverse_u64_word(u64_span, padding);
-    let n_bytes = u64_word_size(*reverse_words64.at(reverse_words64.len() - 1));
-    keccak_cairo_words64(reverse_words64, n_bytes.into())
+    compute_keccak_byte_array(@concatenate_input)
 }
 
 
@@ -476,24 +439,35 @@ mod tests {
     use starknet::contract_address_const;
     use super::{
         reverse_endianness, ByteData, HYPERLANE_ANNOUNCEMENT, compute_keccak, u64_word_size,
-        reverse_u64_word, cairo_keccak, keccak_cairo_words64, build_u64_array, get_two_last_words,
-        ADDRESS_SIZE
+        zero_keccak_hash, ADDRESS_SIZE, up_bytes, down_bytes
     };
     const TEST_STARKNET_DOMAIN: u32 = 23448594;
 
-
     #[test]
-    fn test_get_last_two_words() {
-        let mut input = Default::default();
-        input.append_word(0x49, 1);
-        input.append_word(0xd35915d0abec0a28990198bb32aa570e681e7eb41a001c0094c7c36a712671, 31);
-        let expected_result = 0x0e681e7eb41a001c0094c7c36a712671;
-        assert_eq!(get_two_last_words(@input, 8), expected_result);
-        let mut input = Default::default();
-        input.append_word('HYPERLANE_ANNOUNCEMENT', 22);
-        let expected_result = 'E_ANNOUNCEMENT';
-        assert_eq!(get_two_last_words(@input, 6), expected_result);
+    fn test_up_bytes() {
+        let input = 0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        let expected = 0x01;
+        assert_eq!(up_bytes(input), expected);
+
+        let input = 0x11FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        let expected = 0x11;
+        assert_eq!(up_bytes(input), expected);
+
+        let input = 0x11;
+        let expected = 0;
+        assert_eq!(up_bytes(input), expected);
     }
+    #[test]
+    fn test_down_bytes() {
+        let input = 0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        let expected = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        assert_eq!(down_bytes(input), expected);
+
+        let input = 0x0100FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        let expected = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        assert_eq!(down_bytes(input), expected);
+    }
+
     #[test]
     fn test_reverse_endianness() {
         let big_endian_number: u256 = u256 { high: 0x12345678, low: 0 };
@@ -567,6 +541,20 @@ mod tests {
             compute_keccak(array.span()),
             0x8310DAC21721349FCFA72BB5499303F0C6FAB4006FA2A637D02F7D6BB2188B47
         );
+
+        let array = array![ByteData { value: 0, size: 1 }];
+        assert_eq!(compute_keccak(array.span()), zero_keccak_hash(1));
+
+        let array = array![
+            ByteData { value: 0, size: 10 },
+            ByteData {
+                value: 0x007a9a2e1663480b3845df0d714e8caa49f9241e13a826a678da3f366e546f2a, size: 32
+            },
+        ];
+        assert_eq!(
+            compute_keccak(array.span()),
+            0xA9EC21A66254DD00FA8F01E445CACEAA0D16A1E91700C85FB3ED6C1229B38D2A
+        );
     }
 
     #[test]
@@ -583,154 +571,5 @@ mod tests {
         assert_eq!(u64_word_size(test), 3);
         let test = 0x1;
         assert_eq!(u64_word_size(test), 1);
-    }
-
-
-    #[test]
-    fn test_u64_from_input() {
-        let mut input = Default::default();
-        input.append_word(0x40, 1);
-        input.append_word(0x50, 1);
-        input.append_word(0x60, 1);
-
-        let span_input = build_u64_array(@input);
-        let expected_result = array![0x405060].span();
-        assert_eq!(span_input, expected_result);
-
-        let mut input = Default::default();
-        input.append_word(0x4000, 2);
-        input.append_word(0x5000, 2);
-        input.append_word(0x6000, 2);
-        input.append_word(0x7000, 2);
-
-        let span_input = build_u64_array(@input);
-        let expected_result = array![0x4000500060007000].span();
-        assert_eq!(span_input, expected_result);
-
-        let mut input = Default::default();
-        input.append_word(0x48595045524c414e45, 9);
-        let span_input = build_u64_array(@input);
-        let expected_result = array![0x48595045524c414e, 0x45].span();
-        assert_eq!(span_input, expected_result);
-
-        let mut input = Default::default();
-        input.append_word(0x48595045524c414e457, 10);
-        let span_input = build_u64_array(@input);
-        let expected_result = array![0x48595045524c414, 0xe457].span();
-        assert_eq!(span_input, expected_result);
-
-        let mut input = Default::default();
-        input.append_word(0x007a9a2e1663480b3845df0d714e8caa49f9241e13a826a678da3f366e546f2a, 32);
-        let span_input = build_u64_array(@input);
-        let expected_result = array![
-            0x007a9a2e1663480b, 0x3845df0d714e8caa, 0x49f9241e13a826a6, 0x78da3f366e546f2a
-        ]
-            .span();
-        assert_eq!(span_input, expected_result);
-
-        let mut input = Default::default();
-        input.append_word(0x48595045524c414e45, 9);
-        input.append_word(0x12343153153132342343, 10);
-        input.append_word(0x1231312321312333333, 10);
-        let span_input_2 = build_u64_array(@input);
-        let expected_result_2 = array![
-            0x48595045524c414e, 0x4512343153153132, 0x3423430123131232, 0x1312333333
-        ]
-            .span();
-        assert_eq!(span_input_2, expected_result_2);
-
-        let mut input = Default::default();
-        input.append_word(0x12CC6501, 4);
-        input.append_word(0x12343153153132342343, 10);
-        input.append_word(0x1231312321312333333, 10);
-
-        let span_input_2 = build_u64_array(@input);
-        let expected_result_2 = array![0x12CC650112343153, 0x1531323423430123, 0x1312321312333333]
-            .span();
-        assert_eq!(span_input_2, expected_result_2);
-
-        let mut input = Default::default();
-        input.append_word(0x61, 1);
-        input.append_word(0xa4bcca63b5e8a46da3abe2080f75c16c18467d5838f00b375d9ba4c7c313dd, 31);
-        let span_input_2 = build_u64_array(@input);
-        let expected_result_2 = array![
-            0x61a4bcca63b5e8a4, 0x6da3abe2080f75c1, 0x6c18467d5838f00b, 0x375d9ba4c7c313dd
-        ]
-            .span();
-        assert_eq!(span_input_2, expected_result_2);
-
-        let mut input = Default::default();
-        input.append_word(0x49, 1);
-        input.append_word(0xd35915d0abec0a28990198bb32aa570e681e7eb41a001c0094c7c36a712671, 31);
-        let span_input_2 = build_u64_array(@input);
-        let expected_result_2 = array![
-            0x49d35915d0abec0a, 0x28990198bb32aa57, 0x0e681e7eb41a001c, 0x0094c7c36a712671
-        ]
-            .span();
-        assert_eq!(span_input_2, expected_result_2);
-
-        let mut input = Default::default();
-        input.append_word(0x61, 1);
-        input.append_word(0xa4bcca63b5e8a46da3abe2080f75c16c18467d5838f00b375d9ba4c7c313dd, 31);
-        input.append_word(0x49, 1);
-        input.append_word(0xd35915d0abec0a28990198bb32aa570e681e7eb41a001c0094c7c36a712671, 31);
-        let span_input_2 = build_u64_array(@input);
-        let expected_result_2 = array![
-            0x61a4bcca63b5e8a4,
-            0x6da3abe2080f75c1,
-            0x6c18467d5838f00b,
-            0x375d9ba4c7c313dd,
-            0x49d35915d0abec0a,
-            0x28990198bb32aa57,
-            0x0e681e7eb41a001c,
-            0x0094c7c36a712671
-        ]
-            .span();
-        assert_eq!(span_input_2, expected_result_2);
-    }
-
-    #[test]
-    fn test_reverse_u64_word() {
-        let array = array![0x12345656, 0x46e12df86, 0x23e098a8c5b850];
-        let expected_result = array![0x5656341200000000, 0x86df126e04000000, 0x50b8c5a898e023];
-        assert_eq!(reverse_u64_word(array.span(), 0), expected_result.span());
-
-        let array = array![0x12345656, 0x46e12df86, 0x23e098a8c5b85040];
-        let expected_result = array![0x5656341200000000, 0x86df126e04000000, 0x4050b8c5a898e023];
-        assert_eq!(reverse_u64_word(array.span(), 0), expected_result.span());
-
-        let array = array![
-            0x007a9a2e1663480b, 0x3845df0d714e8caa, 0x49f9241e13a826a6, 0x78da3f366e546f2a
-        ];
-        let expected_result = array![
-            0x0B4863162E9A7A00, 0xAA8C4E710DDF4538, 0xA626A8131E24F949, 0x2A6F546E363FDA78
-        ];
-        assert_eq!(reverse_u64_word(array.span(), 0), expected_result.span());
-
-        let array = array![0x0165CC12];
-        let expected_result = array![0x12cc6501];
-        assert_eq!(reverse_u64_word(array.span(), 0), expected_result.span());
-
-        let array = array![
-            0x61a4bcca63b5e8a4,
-            0x6da3abe2080f75c1,
-            0x6c18467d5838f00b,
-            0x375d9ba4c7c313dd,
-            0x49d35915d0abec0a,
-            0x28990198bb32aa57,
-            0x0e681e7eb41a001c,
-            0x0094c7c36a712671
-        ];
-        let expected_result = array![
-            0xa4e8b563cabca461,
-            0xc1750f08e2aba36d,
-            0x0bf038587d46186c,
-            0xdd13c3c7a49b5d37,
-            0x0aecabd01559d349,
-            0x57aa32bb98019928,
-            0x1c001ab47e1e680e,
-            0x7126716ac3c79400
-        ];
-        assert_eq!(reverse_u64_word(array.span(), 1), expected_result.span());
     }
 }

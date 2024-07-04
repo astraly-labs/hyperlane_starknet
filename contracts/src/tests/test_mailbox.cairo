@@ -233,7 +233,9 @@ fn test_dispatch_with_protocol_fee_hook() {
         );
 
     // balance check 
-    assert_eq!(erc20_dispatcher.balanceOf(OWNER().try_into().unwrap()), INITIAL_SUPPLY - PROTOCOL_FEE);
+    assert_eq!(
+        erc20_dispatcher.balanceOf(OWNER().try_into().unwrap()), INITIAL_SUPPLY - PROTOCOL_FEE
+    );
     assert(mailbox.get_latest_dispatched_id() == message_id, 'Failed to fetch latest id');
 }
 
@@ -301,7 +303,9 @@ fn test_dispatch_with_two_fee_hook() {
         );
 
     // balance check
-    assert_eq!(erc20_dispatcher.balanceOf(OWNER().try_into().unwrap()), INITIAL_SUPPLY - 4 * PROTOCOL_FEE);
+    assert_eq!(
+        erc20_dispatcher.balanceOf(OWNER().try_into().unwrap()), INITIAL_SUPPLY - 4 * PROTOCOL_FEE
+    );
     assert(mailbox.get_latest_dispatched_id() == message_id, 'Failed to fetch latest id');
 }
 

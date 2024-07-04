@@ -311,7 +311,7 @@ fn test_dispatch_with_two_fee_hook_fails_if_greater_than_required_and_lower_than
         Option::Some(protocol_fee_hook.contract_address),
         Option::Some(mock_hook.contract_address)
     );
-    let erc20_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
+    let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     // (mock_fee_hook consummes 3 * PROTOCOL_FEE)

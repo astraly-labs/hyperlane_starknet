@@ -289,8 +289,8 @@ pub mod mailbox {
             let caller_address = get_caller_address();
             let contract_address = get_contract_address();
 
-            let token_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
-            let user_balance = token_dispatcher.balance_of(caller_address);
+            let token_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
+            let user_balance = token_dispatcher.balanceOf(caller_address);
 
             assert(user_balance >= required_fee + default_fee, Errors::INSUFFICIENT_BALANCE);
 
@@ -300,12 +300,12 @@ pub mod mailbox {
             );
 
             if (required_fee > 0) {
-                token_dispatcher.transfer_from(caller_address, required_hook_address, required_fee);
+                token_dispatcher.transferFrom(caller_address, required_hook_address, required_fee);
             }
             required_hook.post_dispatch(hook_metadata.clone(), message.clone(), required_fee);
 
             if (default_fee > 0) {
-                token_dispatcher.transfer_from(caller_address, hook, default_fee);
+                token_dispatcher.transferFrom(caller_address, hook, default_fee);
             }
             hook_dispatcher.post_dispatch(hook_metadata, message.clone(), default_fee);
 

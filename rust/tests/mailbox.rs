@@ -3,7 +3,7 @@ mod constants;
 mod contracts;
 mod validator;
 
-use bytes::{BufMut, BytesMut};
+use bytes::{buf, BufMut, BytesMut};
 use cainome::cairo_serde::CairoSerde;
 use contracts::{
     eth::mailbox::{DispatchFilter, DispatchIdFilter},
@@ -16,6 +16,7 @@ use starknet::{
     accounts::{Account, ConnectedAccount},
     core::types::{Event, FieldElement, MaybePendingTransactionReceipt},
     core::utils::get_selector_from_name,
+    macros::felt,
     providers::{AnyProvider, Provider},
 };
 
@@ -29,12 +30,11 @@ use crate::{
 pub fn parse_dispatch_from_res(events: &[Event]) -> DispatchEvent {
     let key = get_selector_from_name("Dispatch").unwrap(); // safe to unwrap
     let found = events.iter().find(|v| v.keys.contains(&key)).unwrap();
-
     DispatchEvent {
-        sender: cainome::cairo_serde::ContractAddress(found.data[0]),
-        destination_domain: found.data[1].try_into().unwrap(),
-        recipient_address: cainome::cairo_serde::ContractAddress(found.data[2]),
-        message: Message::cairo_deserialize(&found.data, 3).expect("Failed to deserialize message"),
+        sender: cainome::cairo_serde::U256::from_bytes_be(&found.data[0].to_bytes_be()),
+        destination_domain: found.data[2].try_into().unwrap(),
+        recipient_address: cainome::cairo_serde::U256::from_bytes_be(&found.data[3].to_bytes_be()),
+        message: Message::cairo_deserialize(&found.data, 5).expect("Failed to deserialize message"),
     }
 }
 
@@ -54,9 +54,9 @@ fn to_eth_message_bytes(starknet_message: Message) -> Vec<u8> {
     buf.put_u8(starknet_message.version);
     buf.put_u32(starknet_message.nonce);
     buf.put_u32(starknet_message.origin);
-    buf.put_slice(&starknet_message.sender.0.to_bytes_be().as_slice());
+    buf.put_slice(&starknet_message.sender.to_bytes_be().as_slice());
     buf.put_u32(starknet_message.destination);
-    buf.put_slice(starknet_message.recipient.0.to_bytes_be().as_slice());
+    buf.put_slice(starknet_message.recipient.to_bytes_be().as_slice());
     buf.put_slice(&u128_vec_to_u8_vec(starknet_message.body.data));
 
     println!("ETH message bytes: {:?}", buf.to_vec());
@@ -66,12 +66,10 @@ fn to_eth_message_bytes(starknet_message: Message) -> Vec<u8> {
 
 /// Convert a dispatch event to a starknet message
 fn eth_dispatch_event_to_strk_message(event: DispatchFilter) -> Message {
-    let sender = cainome::cairo_serde::ContractAddress(
-        FieldElement::from_byte_slice_be(event.sender.as_bytes()).expect("Invalid sender"),
-    );
-    let recipient = cainome::cairo_serde::ContractAddress(
-        FieldElement::from_bytes_be(&event.recipient).expect("Invalid recipient"),
-    );
+    let mut buffer: [u8; 32] = [0; 32];
+    buffer[..20].copy_from_slice(event.sender.as_bytes());
+    let sender = cainome::cairo_serde::U256::from_bytes_be(&buffer);
+    let recipient = cainome::cairo_serde::U256::from_bytes_be(&event.recipient);
     let destination = event.destination;
 
     let m = event.message;
@@ -139,7 +137,7 @@ where
     let dispatch_res = mailbox_contract
         .dispatch(
             &DOMAIN_EVM,
-            &cainome::cairo_serde::ContractAddress(FieldElement::from_bytes_be(&receiver).unwrap()),
+            &cainome::cairo_serde::U256::from_bytes_be(&receiver),
             &to_strk_message_bytes(msg_body),
             &cainome::cairo_serde::U256 { low: 0, high: 0 },
             &None,
@@ -200,7 +198,6 @@ where
         .mailbox
         .dispatch_0(DOMAIN_STRK, receiver, msg_body.into());
     let dispatch_res = dispatch_tx_call.send().await?.await?.unwrap();
-
     let dispatch: DispatchFilter = parse_log(dispatch_res.logs[0].clone())?;
     let dispatch_id: DispatchIdFilter = parse_log(dispatch_res.logs[1].clone())?;
 

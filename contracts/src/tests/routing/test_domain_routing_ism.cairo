@@ -246,17 +246,31 @@ fn test_route_ism() {
             body: BytesTrait::new_empty(),
         };
     assert_eq!(ism.route(message), *_modules.at(2));
-    message =
-        Message {
-            version: 3_u8,
-            nonce: 0_u32,
-            origin: 1,
-            sender: 'SENDER'.try_into().unwrap(),
-            destination: 0_u32,
-            recipient: 'RECIPIENT'.try_into().unwrap(),
-            body: BytesTrait::new_empty(),
-        };
-    assert_eq!(ism.route(message), contract_address_const::<0>());
+}
+
+#[test]
+#[should_panic(expected: ('Origin not found',))]
+fn test_route_ism_fails_if_origin_not_found() {
+    let mut message = Message {
+        version: 3_u8,
+        nonce: 0_u32,
+        origin: 1,
+        sender: 'SENDER'.try_into().unwrap(),
+        destination: 0_u32,
+        recipient: 'RECIPIENT'.try_into().unwrap(),
+        body: BytesTrait::new_empty(),
+    };
+    let mut _domains = array![12345, 1123322, 312441];
+    let mut _modules: Array<ContractAddress> = array![
+        contract_address_const::<0x111>(),
+        contract_address_const::<0x222>(),
+        contract_address_const::<0x333>()
+    ];
+    let (_, ism, domain_routing_ism) = setup_domain_routing_ism();
+    let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    domain_routing_ism.initialize(_domains.span(), _modules.span());
+    ism.route(message);
 }
 
 

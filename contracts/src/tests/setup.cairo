@@ -15,7 +15,7 @@ use hyperlane_starknet::interfaces::{
     ETH_ADDRESS
 };
 use openzeppelin::account::utils::signature::EthSignature;
-use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+use openzeppelin::token::erc20::interface::{ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 use snforge_std::{
     declare, ContractClassTrait, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn
 };
@@ -545,7 +545,7 @@ pub fn get_merkle_message_and_signature() -> (u256, Array<felt252>, Array<EthSig
     (msg_hash, validators_array, signatures)
 }
 
-pub fn setup_mock_token() -> IERC20Dispatcher {
+pub fn setup_mock_token() -> ERC20ABIDispatcher {
     let fee_token_class = declare("mock_fee_token").unwrap();
     let (fee_token_addr, _) = fee_token_class
         .deploy_at(
@@ -553,7 +553,7 @@ pub fn setup_mock_token() -> IERC20Dispatcher {
             ETH_ADDRESS()
         )
         .unwrap();
-    IERC20Dispatcher { contract_address: fee_token_addr }
+    ERC20ABIDispatcher { contract_address: fee_token_addr }
 }
 
 pub fn setup_protocol_fee() -> (IProtocolFeeDispatcher, IPostDispatchHookDispatcher) {

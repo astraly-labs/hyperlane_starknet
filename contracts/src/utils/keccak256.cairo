@@ -1,3 +1,4 @@
+use alexandria_math::BitShift;
 use core::byte_array::{ByteArray, ByteArrayTrait};
 use core::integer::u128_byte_reverse;
 use core::keccak::cairo_keccak;
@@ -252,18 +253,19 @@ pub fn one_shift_left_bytes_u256(n_bytes: u8) -> u256 {
 fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
     let mut output_string: ByteArray = Default::default();
     let mut cur_idx = 0;
-
     loop {
-        if (cur_idx == bytes.len()) {
-            break ();
+        if cur_idx == bytes.len() {
+            break;
         }
         let byte = *bytes.at(cur_idx);
-        if (byte.size == 32) {
-            // in order to store a 32-bytes entry in a ByteArray, we need to first append the upper 1-byte part , then the lower 31-bytes part
-            let up_byte = (byte.value / FELT252_MASK).try_into().unwrap();
-            output_string.append_word(up_byte, 1);
-            let down_byte = (byte.value & FELT252_MASK).try_into().unwrap();
-            output_string.append_word(down_byte, 31);
+        if byte.size == 32 {
+            // Extract the upper 1-byte part
+            let up_byte = up_bytes(byte.value);
+            output_string.append_word(up_byte.try_into().unwrap(), 1);
+
+            // Extract the lower 31-byte part
+            let down_byte = down_bytes(byte.value);
+            output_string.append_word(down_byte.try_into().unwrap(), 31);
         } else {
             output_string.append_word(byte.value.try_into().unwrap(), byte.size);
         }
@@ -362,6 +364,15 @@ fn finalize_padding(ref input: Array<u64>, num_padding_words: u32) {
 
 // --------------------------------------------------------------------------------------------
 // END SECTION
+/// Retrieve the 1 up byte of a given u256 input
+fn up_bytes(input: u256) -> u256 {
+    BitShift::shr(input, 248) & 0xFF
+}
+
+/// Retrieve the 31 low byte of a given u256 input
+fn down_bytes(input: u256) -> u256 {
+    input & FELT252_MASK
+}
 
 /// The general function that computes the keccak hash for an input span of ByteData
 /// 
@@ -376,7 +387,7 @@ pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
     if (bytes.is_empty()) {
         return zero_keccak_hash(0);
     }
-    if (*bytes.at(0).value == 0) {
+    if (*bytes.at(0).value == 0 && bytes.len() == 1) {
         return zero_keccak_hash(*bytes.at(0).size);
     }
     let concatenate_input = concatenate_input(bytes);
@@ -390,10 +401,34 @@ mod tests {
     use starknet::contract_address_const;
     use super::{
         reverse_endianness, ByteData, HYPERLANE_ANNOUNCEMENT, compute_keccak, u64_word_size,
-        ADDRESS_SIZE
+        zero_keccak_hash, ADDRESS_SIZE, up_bytes, down_bytes
     };
     const TEST_STARKNET_DOMAIN: u32 = 23448594;
 
+    #[test]
+    fn test_up_bytes() {
+        let input = 0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        let expected = 0x01;
+        assert_eq!(up_bytes(input), expected);
+
+        let input = 0x11FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        let expected = 0x11;
+        assert_eq!(up_bytes(input), expected);
+
+        let input = 0x11;
+        let expected = 0;
+        assert_eq!(up_bytes(input), expected);
+    }
+    #[test]
+    fn test_down_bytes() {
+        let input = 0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        let expected = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        assert_eq!(down_bytes(input), expected);
+
+        let input = 0x0100FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        let expected = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        assert_eq!(down_bytes(input), expected);
+    }
 
     #[test]
     fn test_reverse_endianness() {
@@ -467,6 +502,20 @@ mod tests {
         assert_eq!(
             compute_keccak(array.span()),
             0x8310DAC21721349FCFA72BB5499303F0C6FAB4006FA2A637D02F7D6BB2188B47
+        );
+
+        let array = array![ByteData { value: 0, size: 1 }];
+        assert_eq!(compute_keccak(array.span()), zero_keccak_hash(1));
+
+        let array = array![
+            ByteData { value: 0, size: 10 },
+            ByteData {
+                value: 0x007a9a2e1663480b3845df0d714e8caa49f9241e13a826a678da3f366e546f2a, size: 32
+            },
+        ];
+        assert_eq!(
+            compute_keccak(array.span()),
+            0xA9EC21A66254DD00FA8F01E445CACEAA0D16A1E91700C85FB3ED6C1229B38D2A
         );
     }
 

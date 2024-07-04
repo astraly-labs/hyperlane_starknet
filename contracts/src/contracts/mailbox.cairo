@@ -12,7 +12,9 @@ pub mod mailbox {
     };
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::token::erc20::interface::{
+        ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait
+    };
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::{
         ContractAddress, ClassHash, get_caller_address, get_block_number, contract_address_const,
@@ -270,21 +272,21 @@ pub mod mailbox {
             let required_hook = IPostDispatchHookDispatcher {
                 contract_address: required_hook_address
             };
-            let token_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
+            let token_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
 
             let mut required_fee = required_hook
                 .quote_dispatch(hook_metadata.clone(), message.clone());
             if (required_fee > 0) {
                 assert(_fee_amount >= required_fee, Errors::NOT_ENOUGH_FEE_PROVIDED);
                 let contract_address = get_contract_address();
-                let user_balance = token_dispatcher.balance_of(caller_address);
+                let user_balance = token_dispatcher.balanceOf(caller_address);
                 assert(user_balance >= _fee_amount, Errors::INSUFFICIENT_BALANCE);
                 assert(
                     token_dispatcher.allowance(caller_address, contract_address) >= _fee_amount,
                     Errors::INSUFFICIENT_ALLOWANCE
                 );
 
-                token_dispatcher.transfer_from(caller_address, required_hook_address, required_fee);
+                token_dispatcher.transferFrom(caller_address, required_hook_address, required_fee);
             }
 
             required_hook.post_dispatch(hook_metadata.clone(), message.clone(), required_fee);
@@ -298,7 +300,7 @@ pub mod mailbox {
                         .post_dispatch(hook_metadata.clone(), message.clone(), default_fee);
                 }
                 if (_fee_amount - required_fee >= default_fee) {
-                    token_dispatcher.transfer_from(caller_address, hook, default_fee);
+                    token_dispatcher.transferFrom(caller_address, hook, default_fee);
                     hook_dispatcher.post_dispatch(hook_metadata, message.clone(), default_fee);
                 }
             }
@@ -339,10 +341,11 @@ pub mod mailbox {
             let block_number = get_block_number();
             assert(!self.delivered(id), Errors::ALREADY_DELIVERED);
 
+            self.deliveries.write(id, Delivery { processor: caller, block_number: block_number });
+
             let recipient_ism = self.recipient_ism(_message.recipient);
             let ism = IInterchainSecurityModuleDispatcher { contract_address: recipient_ism };
 
-            self.deliveries.write(id, Delivery { processor: caller, block_number: block_number });
             self
                 .emit(
                     Process {

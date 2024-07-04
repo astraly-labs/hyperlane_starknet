@@ -47,19 +47,17 @@ impl Ism {
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
     ) -> eyre::Result<FieldElement> {
-        let res = deploy_contract(codes.ism_multisig, vec![owner.address()], deployer).await;
+        let params: Vec<FieldElement> = std::iter::once(owner.address())
+            .chain(
+                set.validators
+                    .iter()
+                    .map(|validator| validator.eth_addr().0),
+            )
+            .collect();
+        let res: (FieldElement, starknet::core::types::InvokeTransactionResult) =
+            deploy_contract(codes.ism_multisig, params, deployer).await;
 
         let contract = messageid_multisig_ism::new(res.0, owner);
-        contract
-            .set_validators(
-                &set.validators
-                    .iter()
-                    .map(|v| v.eth_addr())
-                    .collect::<Vec<_>>(),
-            )
-            .send()
-            .await?;
-
         Ok(res.0)
     }
 

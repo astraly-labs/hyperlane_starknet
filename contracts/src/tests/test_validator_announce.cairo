@@ -69,8 +69,7 @@ fn test_double_announce() {
         180946006308525359965345158532346553211983108462325076142963585023296502126,
         276191619276790668637754154763775604
     ];
-    let res = validator_announce
-        .announce(validator_address, _storage_location_2.clone(), signature);
+    validator_announce.announce(validator_address, _storage_location_2.clone(), signature);
     let validators = validator_announce.get_announced_validators();
     assert(validators == array![validator_address].span(), 'validator array mismatch');
     let storage_location = validator_announce.get_announced_storage_locations(validators);

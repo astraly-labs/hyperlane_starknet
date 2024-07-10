@@ -157,7 +157,7 @@ pub trait IMailboxClient<TContractState> {
 
     fn get_local_domain(self: @TContractState) -> u32;
 
-    fn get_interchain_security_module(self: @TContractState) -> ContractAddress;
+    fn interchain_security_module(self: @TContractState) -> ContractAddress;
 
     fn _is_latest_dispatched(self: @TContractState, _id: u256) -> bool;
 

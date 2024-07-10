@@ -78,7 +78,7 @@ pub mod MailboxclientComponent {
         /// # Returns
         /// 
         /// ContractAddress  - The defined ISM
-        fn get_interchain_security_module(
+        fn interchain_security_module(
             self: @ComponentState<TContractState>
         ) -> ContractAddress {
             self.interchain_security_module.read()

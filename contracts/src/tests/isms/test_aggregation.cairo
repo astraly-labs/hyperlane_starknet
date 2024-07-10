@@ -37,15 +37,15 @@ fn test_aggregation_set_threshold() {
 
 #[test]
 #[should_panic]
-fn test_aggregation_initialize_with_too_many_modules(){
+fn test_aggregation_initialize_with_too_many_modules() {
     let mut modules = array![];
     let mut cur_idx = 0;
-    loop{
+    loop {
         if (cur_idx == 256) {
             break;
         }
         modules.append('module_1'.into());
-        cur_idx +=1;
+        cur_idx += 1;
     };
     setup_aggregation(modules.span());
 }

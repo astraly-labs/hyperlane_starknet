@@ -52,7 +52,7 @@ pub mod aggregation {
     #[constructor]
     fn constructor(ref self: ContractState, _owner: ContractAddress, _modules: Span<felt252>) {
         self.ownable.initializer(_owner);
-        assert(_modules.len() < 255, Errors::TOO_MANY_MODULES_PROVIDED);
+        assert(_modules.len() < 256, Errors::TOO_MANY_MODULES_PROVIDED);
         self.set_modules(_modules);
     }
 

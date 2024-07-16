@@ -41,7 +41,7 @@ fn test_aggregation_initialize_with_too_many_modules() {
     let mut modules = array![];
     let mut cur_idx = 0;
     loop {
-        if (cur_idx == 255) {
+        if (cur_idx == 256) {
             break;
         }
         modules.append('module_1'.into());

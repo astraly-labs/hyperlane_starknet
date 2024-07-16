@@ -46,11 +46,13 @@ pub mod aggregation {
         pub const THRESHOLD_NOT_SET: felt252 = 'Threshold not set';
         pub const MODULES_ALREADY_STORED: felt252 = 'Modules already stored';
         pub const NO_MODULES_PROVIDED: felt252 = 'No modules provided';
+        pub const TOO_MANY_MODULES_PROVIDED: felt252 = 'Too many modules provided';
     }
 
     #[constructor]
     fn constructor(ref self: ContractState, _owner: ContractAddress, _modules: Span<felt252>) {
         self.ownable.initializer(_owner);
+        assert(_modules.len() < 256, Errors::TOO_MANY_MODULES_PROVIDED);
         self.set_modules(_modules);
     }
 

@@ -303,8 +303,8 @@ pub mod merkle_tree_hook {
             let mut cur_idx = 0;
             let mut tree = array![];
             loop {
-                if (cur_idx == self.count.read() - 1) {
-                    break ();
+                if (cur_idx >= TREE_DEPTH) {
+                    break;
                 }
                 tree.append(self.tree.read(cur_idx));
                 cur_idx += 1;

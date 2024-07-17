@@ -20,39 +20,27 @@ use starknet::ContractAddress;
 
 #[test]
 fn test_aggregation_module_type() {
-    let aggregation = setup_aggregation(MODULES());
+    let threshold = 2;
+    let aggregation = setup_aggregation(MODULES(), threshold);
     assert(
         aggregation.module_type() == ModuleType::AGGREGATION(aggregation.contract_address),
         'Aggregation: Wrong module type'
     );
 }
 
-#[test]
-fn test_aggregation_set_threshold() {
-    let threshold = 3;
-    let aggregation = setup_aggregation(MODULES());
-    let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
-    aggregation.set_threshold(threshold);
-}
-
-#[test]
-#[should_panic(expected: ('Threshold not set',))]
-fn test_aggregation_verify_fails_if_treshold_not_set() {
-    let aggregation = setup_aggregation(MODULES());
-    aggregation.verify(BytesTrait::new(42, array![]), MessageTrait::default());
-}
 
 #[test]
 #[should_panic]
 fn test_setup_aggregation_with_null_module_address() {
+    let threshold = 2;
     let modules: Span<felt252> = array![0, 'module_1'].span();
-    setup_aggregation(modules);
+    setup_aggregation(modules, threshold);
 }
 
 #[test]
 fn test_get_modules() {
-    let aggregation = setup_aggregation(MODULES());
+    let threshold = 2;
+    let aggregation = setup_aggregation(MODULES(), threshold);
     let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     assert(aggregation.get_modules() == CONTRACT_MODULES(), 'set modules failed');
@@ -96,11 +84,11 @@ fn test_aggregation_verify() {
     // Noop ism
     let noop_ism = setup_noop_ism();
     let aggregation = setup_aggregation(
-        array![messageid.contract_address.into(), noop_ism.contract_address.into(),].span()
+        array![messageid.contract_address.into(), noop_ism.contract_address.into(),].span(),
+        threshold
     );
     let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
-    aggregation.set_threshold(threshold);
     let mut concat_metadata = BytesTrait::new_empty();
     concat_metadata.append_u128(0x00000010000001A0000001A0000001A9);
     concat_metadata.concat(@message_id_metadata);

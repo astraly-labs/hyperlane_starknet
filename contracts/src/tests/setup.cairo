@@ -298,12 +298,13 @@ pub fn setup_mock_validator_announce(
     IMockValidatorAnnounceDispatcher { contract_address: validator_announce_addr }
 }
 
-pub fn setup_aggregation(modules: Span<felt252>) -> IAggregationDispatcher {
+pub fn setup_aggregation(modules: Span<felt252>, threshold: u8) -> IAggregationDispatcher {
     let aggregation_class = declare("aggregation").unwrap();
     let mut parameters = Default::default();
     let owner: felt252 = OWNER().try_into().unwrap();
     Serde::serialize(@owner, ref parameters);
     Serde::serialize(@modules, ref parameters);
+    Serde::serialize(@threshold, ref parameters);
     let (aggregation_addr, _) = aggregation_class.deploy(@parameters).unwrap();
     IAggregationDispatcher { contract_address: aggregation_addr }
 }

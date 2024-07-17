@@ -36,6 +36,7 @@ pub mod messageid_multisig_ism {
         pub const EMPTY_METADATA: felt252 = 'Empty metadata';
         pub const VALIDATOR_ADDRESS_CANNOT_BE_NULL: felt252 = 'Validator address cannot be 0';
         pub const NO_VALIDATORS_PROVIDED: felt252 = 'No validators provided';
+        pub const THRESHOLD_TOO_HIGH: felt252 = 'Threshold too high';
     }
 
     #[event]
@@ -49,8 +50,15 @@ pub mod messageid_multisig_ism {
 
 
     #[constructor]
-    fn constructor(ref self: ContractState, _owner: ContractAddress, _validators: Span<felt252>) {
+    fn constructor(
+        ref self: ContractState,
+        _owner: ContractAddress,
+        _validators: Span<felt252>,
+        _threshold: u32
+    ) {
         self.ownable.initializer(_owner);
+        assert(_threshold <= 0xffffffff, Errors::THRESHOLD_TOO_HIGH);
+        self.threshold.write(_threshold);
         self.set_validators(_validators);
     }
 
@@ -114,18 +122,6 @@ pub mod messageid_multisig_ism {
 
         fn get_threshold(self: @ContractState) -> u32 {
             self.threshold.read()
-        }
-
-
-        /// Set the threshold for validation
-        /// Dev: callable only by the owner
-        /// 
-        /// # Arguments
-        /// 
-        /// * - `_threshold` - The number of validator signatures needed
-        fn set_threshold(ref self: ContractState, _threshold: u32) {
-            self.ownable.assert_only_owner();
-            self.threshold.write(_threshold);
         }
 
         /// Returns the set of validators responsible for verifying _message and the number of signatures required

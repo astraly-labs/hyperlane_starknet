@@ -24,10 +24,11 @@ use snforge_std::{start_prank, CheatTarget};
 
 #[test]
 fn test_set_validators() {
+    let threshold = 2;
     let new_validators: Array<felt252> = array![
         VALIDATOR_ADDRESS_1().into(), VALIDATOR_ADDRESS_2().into()
     ];
-    let (_, validators) = setup_merkleroot_multisig_ism(new_validators.span());
+    let (_, validators) = setup_merkleroot_multisig_ism(new_validators.span(), threshold);
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     let validators_span = validators.get_validators();
@@ -38,30 +39,20 @@ fn test_set_validators() {
 
 #[test]
 fn test_set_threshold() {
-    let new_threshold = 3;
-    let (_, validators) = setup_merkleroot_multisig_ism(array!['validator_1'].span());
+    let threshold = 3;
+    let (_, validators) = setup_merkleroot_multisig_ism(array!['validator_1'].span(), threshold);
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
-    validators.set_threshold(new_threshold);
-    assert(validators.get_threshold() == new_threshold, 'wrong validator threshold');
+    assert(validators.get_threshold() == threshold, 'wrong validator threshold');
 }
 
 
 #[test]
 #[should_panic]
 fn test_set_validators_fails_if_null_validator() {
+    let threshold = 2;
     let new_validators = array![VALIDATOR_ADDRESS_1().into(), 0].span();
-    setup_merkleroot_multisig_ism(new_validators);
-}
-
-#[test]
-#[should_panic(expected: ('Caller is not the owner',))]
-fn test_set_threshold_fails_if_caller_not_owner() {
-    let new_threshold = 3;
-    let (_, validators) = setup_merkleroot_multisig_ism(array!['validator_1'].span());
-    let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER().try_into().unwrap());
-    validators.set_threshold(new_threshold);
+    setup_merkleroot_multisig_ism(new_validators, threshold);
 }
 
 
@@ -111,7 +102,10 @@ fn test_merkleroot_ism_metadata() {
 
 #[test]
 fn test_merkle_root_multisig_module_type() {
-    let (merkleroot_ism, _) = setup_merkleroot_multisig_ism(array!['validator_1'].span());
+    let threshold = 2;
+    let (merkleroot_ism, _) = setup_merkleroot_multisig_ism(
+        array!['validator_1'].span(), threshold
+    );
     assert(
         merkleroot_ism
             .module_type() == ModuleType::MERKLE_ROOT_MULTISIG(merkleroot_ism.contract_address),
@@ -122,6 +116,7 @@ fn test_merkle_root_multisig_module_type() {
 
 #[test]
 fn test_merkle_root_multisig_verify_with_4_valid_signatures() {
+    let threshold = 4;
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -139,7 +134,7 @@ fn test_merkle_root_multisig_verify_with_4_valid_signatures() {
     };
     let (_, validators_address, _) = get_merkle_message_and_signature();
     let (merkleroot_ism, merkleroot_validator_configuration) = setup_merkleroot_multisig_ism(
-        validators_address.span()
+        validators_address.span(), threshold
     );
     let origin_merkle_tree_hook: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let message_index: u32 = 1;
@@ -148,11 +143,6 @@ fn test_merkle_root_multisig_verify_with_4_valid_signatures() {
     let metadata = build_merkle_metadata(
         origin_merkle_tree_hook, message_index, signed_index, signed_message_id
     );
-    let ownable = IOwnableDispatcher {
-        contract_address: merkleroot_validator_configuration.contract_address
-    };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
-    merkleroot_validator_configuration.set_threshold(4);
     assert(merkleroot_ism.verify(metadata, message) == true, 'verification failed');
 }
 
@@ -160,6 +150,7 @@ fn test_merkle_root_multisig_verify_with_4_valid_signatures() {
 #[test]
 #[should_panic(expected: ('No match for given signature',))]
 fn test_merkle_root_multisig_verify_with_insufficient_valid_signatures() {
+    let threshold = 4;
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -177,7 +168,7 @@ fn test_merkle_root_multisig_verify_with_insufficient_valid_signatures() {
     };
     let (_, validators_address, _) = get_merkle_message_and_signature();
     let (merkleroot_ism, merkleroot_validator_config) = setup_merkleroot_multisig_ism(
-        validators_address.span()
+        validators_address.span(), threshold
     );
     let origin_merkle_tree_hook: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let message_index: u32 = 1;
@@ -187,9 +178,6 @@ fn test_merkle_root_multisig_verify_with_insufficient_valid_signatures() {
         origin_merkle_tree_hook, message_index, signed_index, signed_message_id
     );
     metadata.update_at(1100, 0);
-    let ownable = IOwnableDispatcher { contract_address: merkleroot_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
-    merkleroot_validator_config.set_threshold(4);
     assert(merkleroot_ism.verify(metadata, message) == true, 'verification failed');
 }
 
@@ -197,6 +185,7 @@ fn test_merkle_root_multisig_verify_with_insufficient_valid_signatures() {
 #[test]
 #[should_panic(expected: ('Empty metadata',))]
 fn test_merkle_root_multisig_verify_with_empty_metadata() {
+    let threshold = 4;
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -214,11 +203,8 @@ fn test_merkle_root_multisig_verify_with_empty_metadata() {
     };
     let (_, validators_address, _) = get_merkle_message_and_signature();
     let (merkle_root_ism, merkleroot_validator_config) = setup_merkleroot_multisig_ism(
-        validators_address.span()
+        validators_address.span(), threshold
     );
-    let ownable = IOwnableDispatcher { contract_address: merkle_root_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
-    merkleroot_validator_config.set_threshold(4);
     let bytes_metadata = BytesTrait::new_empty();
     assert(merkle_root_ism.verify(bytes_metadata, message) == true, 'verification failed');
 }
@@ -227,6 +213,8 @@ fn test_merkle_root_multisig_verify_with_empty_metadata() {
 #[test]
 #[should_panic(expected: ('No match for given signature',))]
 fn test_merkle_root_multisig_verify_with_4_valid_signatures_fails_if_duplicate_signatures() {
+    let threshold = 4;
+
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -244,7 +232,7 @@ fn test_merkle_root_multisig_verify_with_4_valid_signatures_fails_if_duplicate_s
     };
     let (_, validators_address, _) = get_merkle_message_and_signature();
     let (merkleroot_ism, merkleroot_validator_configuration) = setup_merkleroot_multisig_ism(
-        validators_address.span()
+        validators_address.span(), threshold
     );
     let origin_merkle_tree_hook: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let message_index: u32 = 1;
@@ -253,10 +241,5 @@ fn test_merkle_root_multisig_verify_with_4_valid_signatures_fails_if_duplicate_s
     let metadata = build_fake_merkle_metadata(
         origin_merkle_tree_hook, message_index, signed_index, signed_message_id
     );
-    let ownable = IOwnableDispatcher {
-        contract_address: merkleroot_validator_configuration.contract_address
-    };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
-    merkleroot_validator_configuration.set_threshold(4);
     assert(merkleroot_ism.verify(metadata, message) == true, 'verification failed');
 }

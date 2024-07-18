@@ -28,6 +28,22 @@ fn test_aggregation_module_type() {
     );
 }
 
+#[test]
+#[should_panic]
+fn test_aggregation_initialize_with_too_many_modules() {
+    let threshold = 2;
+    let mut modules = array![];
+    let mut cur_idx = 0;
+    loop {
+        if (cur_idx == 256) {
+            break;
+        }
+        modules.append('module_1'.into());
+        cur_idx += 1;
+    };
+    setup_aggregation(modules.span(),threshold);
+}
+
 
 #[test]
 #[should_panic]

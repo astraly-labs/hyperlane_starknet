@@ -47,6 +47,7 @@ pub mod aggregation {
         pub const MODULES_ALREADY_STORED: felt252 = 'Modules already stored';
         pub const NO_MODULES_PROVIDED: felt252 = 'No modules provided';
         pub const THRESHOLD_TOO_HIGH: felt252 = 'Threshold too high';
+        pub const TOO_MANY_MODULES_PROVIDED: felt252 = 'Too many modules provided';
     }
 
     #[constructor]
@@ -56,6 +57,7 @@ pub mod aggregation {
         self.ownable.initializer(_owner);
         assert(_threshold <= 255, Errors::THRESHOLD_TOO_HIGH);
         self.threshold.write(_threshold);
+        assert(_modules.len() < 256, Errors::TOO_MANY_MODULES_PROVIDED);
         self.set_modules(_modules);
     }
 

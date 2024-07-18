@@ -119,12 +119,15 @@ pub mod mailbox {
         pub const UNEXPECTED_DESTINATION: felt252 = 'Unexpected destination';
         pub const ALREADY_DELIVERED: felt252 = 'Mailbox: already delivered';
         pub const ISM_VERIFICATION_FAILED: felt252 = 'Mailbox:ism verification failed';
+        pub const ISM_CANNOT_BE_NULL: felt252 = 'ISM cannot be null';
+        pub const OWNER_CANNOT_BE_NULL: felt252 = 'ISM cannot be null';
+        pub const HOOK_CANNOT_BE_NULL: felt252 = 'Hook cannot be null';
         pub const NO_ISM_FOUND: felt252 = 'ISM: no ISM found';
         pub const NEW_OWNER_IS_ZERO: felt252 = 'Ownable: new owner cannot be 0';
         pub const ALREADY_OWNER: felt252 = 'Ownable: already owner';
         pub const INSUFFICIENT_BALANCE: felt252 = 'Insufficient balance';
         pub const INSUFFICIENT_ALLOWANCE: felt252 = 'Insufficient allowance';
-        pub const NOT_ENOUGH_FEE_PROVIDED: felt252 = 'Provided fee < required fee';
+        pub const NOT_ENOUGH_FEE_PROVIDED: felt252 = 'Provided fee < needed fee';
     }
 
     #[constructor]
@@ -136,6 +139,10 @@ pub mod mailbox {
         _default_hook: ContractAddress,
         _required_hook: ContractAddress
     ) {
+        assert(_default_ism != contract_address_const::<0>(), Errors::ISM_CANNOT_BE_NULL);
+        assert(_default_hook != contract_address_const::<0>(), Errors::HOOK_CANNOT_BE_NULL);
+        assert(_default_hook != contract_address_const::<0>(), Errors::HOOK_CANNOT_BE_NULL);
+        assert(owner != contract_address_const::<0>(), Errors::OWNER_CANNOT_BE_NULL);
         self.local_domain.write(_local_domain);
         self.default_ism.write(_default_ism);
         self.default_hook.write(_default_hook);
@@ -267,43 +274,41 @@ pub mod mailbox {
 
             // HOOKS
 
-            let caller_address = get_caller_address();
             let required_hook_address = self.required_hook.read();
             let required_hook = IPostDispatchHookDispatcher {
                 contract_address: required_hook_address
             };
-            let token_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
-
             let mut required_fee = required_hook
                 .quote_dispatch(hook_metadata.clone(), message.clone());
-            if (required_fee > 0) {
-                assert(_fee_amount >= required_fee, Errors::NOT_ENOUGH_FEE_PROVIDED);
-                let contract_address = get_contract_address();
-                let user_balance = token_dispatcher.balanceOf(caller_address);
-                assert(user_balance >= _fee_amount, Errors::INSUFFICIENT_BALANCE);
-                assert(
-                    token_dispatcher.allowance(caller_address, contract_address) >= _fee_amount,
-                    Errors::INSUFFICIENT_ALLOWANCE
-                );
 
+            let hook_dispatcher = IPostDispatchHookDispatcher { contract_address: hook };
+            let default_fee = hook_dispatcher
+                .quote_dispatch(hook_metadata.clone(), message.clone());
+
+            assert(_fee_amount >= required_fee + default_fee, Errors::NOT_ENOUGH_FEE_PROVIDED);
+
+            let caller_address = get_caller_address();
+            let contract_address = get_contract_address();
+
+            let token_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
+            let user_balance = token_dispatcher.balanceOf(caller_address);
+
+            assert(user_balance >= required_fee + default_fee, Errors::INSUFFICIENT_BALANCE);
+
+            assert(
+                token_dispatcher.allowance(caller_address, contract_address) >= _fee_amount,
+                Errors::INSUFFICIENT_ALLOWANCE
+            );
+
+            if (required_fee > 0) {
                 token_dispatcher.transferFrom(caller_address, required_hook_address, required_fee);
             }
-
             required_hook.post_dispatch(hook_metadata.clone(), message.clone(), required_fee);
 
-            if (hook != contract_address_const::<0>()) {
-                let hook_dispatcher = IPostDispatchHookDispatcher { contract_address: hook };
-                let default_fee = hook_dispatcher
-                    .quote_dispatch(hook_metadata.clone(), message.clone());
-                if (default_fee == 0) {
-                    hook_dispatcher
-                        .post_dispatch(hook_metadata.clone(), message.clone(), default_fee);
-                }
-                if (_fee_amount - required_fee >= default_fee) {
-                    token_dispatcher.transferFrom(caller_address, hook, default_fee);
-                    hook_dispatcher.post_dispatch(hook_metadata, message.clone(), default_fee);
-                }
+            if (default_fee > 0) {
+                token_dispatcher.transferFrom(caller_address, hook, default_fee);
             }
+            hook_dispatcher.post_dispatch(hook_metadata, message.clone(), default_fee);
 
             id
         }

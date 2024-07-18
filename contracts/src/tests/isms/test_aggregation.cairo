@@ -41,7 +41,7 @@ fn test_aggregation_initialize_with_too_many_modules() {
         modules.append('module_1'.into());
         cur_idx += 1;
     };
-    setup_aggregation(modules.span(),threshold);
+    setup_aggregation(modules.span(), threshold);
 }
 
 

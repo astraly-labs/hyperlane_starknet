@@ -373,7 +373,9 @@ fn test_dispatch_with_two_fee_hook_fails_if_greater_than_required_and_lower_than
         );
 
     // balance check
-    assert_eq!(erc20_dispatcher.balance_of(OWNER().try_into().unwrap()), INITIAL_SUPPLY - 4 * PROTOCOL_FEE);
+    assert_eq!(
+        erc20_dispatcher.balance_of(OWNER().try_into().unwrap()), INITIAL_SUPPLY - 4 * PROTOCOL_FEE
+    );
     assert(mailbox.get_latest_dispatched_id() == message_id, 'Failed to fetch latest id');
 }
 #[test]

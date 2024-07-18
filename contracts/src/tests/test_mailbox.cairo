@@ -321,13 +321,13 @@ fn test_dispatch_with_two_fee_hook_fails_if_greater_than_required_and_lower_than
     );
     let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     // (mock_fee_hook consummes 3 * PROTOCOL_FEE)
     erc20_dispatcher.approve(MAILBOX(), 3 * PROTOCOL_FEE);
     stop_prank(CheatTarget::One(ownable.contract_address));
     // The owner has the initial fee token supply
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -373,7 +373,7 @@ fn test_dispatch_with_two_fee_hook_fails_if_greater_than_required_and_lower_than
         );
 
     // balance check
-    assert_eq!(erc20_dispatcher.balance_of(OWNER()), INITIAL_SUPPLY - 4 * PROTOCOL_FEE);
+    assert_eq!(erc20_dispatcher.balance_of(OWNER().try_into().unwrap()), INITIAL_SUPPLY - 4 * PROTOCOL_FEE);
     assert(mailbox.get_latest_dispatched_id() == message_id, 'Failed to fetch latest id');
 }
 #[test]

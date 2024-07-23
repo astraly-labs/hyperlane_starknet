@@ -54,9 +54,9 @@ pub impl MessageImpl of MessageTrait {
             ByteData { value: _message.version.into(), size: 1 },
             ByteData { value: _message.nonce.into(), size: 4 },
             ByteData { value: _message.origin.into(), size: 4 },
-            ByteData { value: sender.into(), size: 32 },
+            ByteData { value: _message.sender, size: 32 },
             ByteData { value: _message.destination.into(), size: 4 },
-            ByteData { value: recipient.into(), size: 32 },
+            ByteData { value: _message.recipient, size: 32 },
         ];
         let message_data = _message.clone().body.data();
         let finalized_input = MessageImpl::append_span_u128_to_byte_data(

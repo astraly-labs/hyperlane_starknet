@@ -28,6 +28,30 @@ fn test_aggregation_module_type() {
     );
 }
 
+#[test]
+fn test_aggregation_set_threshold() {
+    let threshold = 3;
+    let aggregation = setup_aggregation(MODULES());
+    let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    aggregation.set_threshold(threshold);
+}
+
+#[test]
+#[should_panic]
+fn test_aggregation_initialize_with_too_many_modules() {
+    let mut modules = array![];
+    let mut cur_idx = 0;
+    loop {
+        if (cur_idx == 256) {
+            break;
+        }
+        modules.append('module_1'.into());
+        cur_idx += 1;
+    };
+    setup_aggregation(modules.span());
+}
+
 
 #[test]
 #[should_panic]

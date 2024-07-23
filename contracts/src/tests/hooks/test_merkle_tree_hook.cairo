@@ -165,15 +165,20 @@ fn test_insert_node_into_merkle_tree_hook() {
     assert_eq!(state.tree.read(0), ByteData { value: node_3, size: 6 });
     assert_eq!(state.tree.read(1), ByteData { value: expected_hash, size: HASH_SIZE });
     assert_eq!(state.tree.read(2), ByteData { value: expected_hash_2, size: HASH_SIZE });
-    assert(
-        state
-            ._build_tree() == array![
-                ByteData { value: node_3, size: 6 },
-                ByteData { value: expected_hash, size: HASH_SIZE },
-                ByteData { value: expected_hash_2, size: HASH_SIZE }
-            ],
-        'build tree failed'
-    );
+    let mut expected_result = array![
+        ByteData { value: node_3, size: 6 },
+        ByteData { value: expected_hash, size: HASH_SIZE },
+        ByteData { value: expected_hash_2, size: HASH_SIZE },
+    ];
+    let mut cur_idx = 0;
+    loop {
+        if (cur_idx >= merkle_tree_hook::TREE_DEPTH - 3) {
+            break;
+        }
+        expected_result.append(ByteData { value: 0, size: 0 });
+        cur_idx += 1;
+    };
+    assert(state._build_tree() == expected_result, 'build tree failed');
     assert(state._root() != 0, 'root computation failed');
     let (root, count) = state.latest_checkpoint();
     assert_eq!(root, state._root());

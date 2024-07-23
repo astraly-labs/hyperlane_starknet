@@ -128,6 +128,8 @@ pub mod mailbox {
         pub const INSUFFICIENT_BALANCE: felt252 = 'Insufficient balance';
         pub const INSUFFICIENT_ALLOWANCE: felt252 = 'Insufficient allowance';
         pub const NOT_ENOUGH_FEE_PROVIDED: felt252 = 'Provided fee < needed fee';
+        pub const SIZE_DOES_NOT_MATCH_MESSAGE_BODY: felt252 = 'Size does not match msg body';
+        pub const SIZE_DOES_NOT_MATCH_METADATA: felt252 = 'Size does not match metadata';
     }
 
     #[constructor]
@@ -250,10 +252,23 @@ pub mod mailbox {
                 Option::None(()) => self.default_hook.read(),
             };
             let hook_metadata = match _custom_hook_metadata {
-                Option::Some(hook_metadata) => hook_metadata,
+                Option::Some(hook_metadata) => {
+                    let mut sanitized_bytes_metadata = BytesTrait::new_empty();
+                    sanitized_bytes_metadata.concat(@hook_metadata);
+                    assert(
+                        sanitized_bytes_metadata == hook_metadata,
+                        Errors::SIZE_DOES_NOT_MATCH_METADATA
+                    );
+                    hook_metadata
+                },
                 Option::None(()) => BytesTrait::new_empty()
             };
-
+            let mut sanitized_bytes_message_body = BytesTrait::new_empty();
+            sanitized_bytes_message_body.concat(@_message_body);
+            assert(
+                sanitized_bytes_message_body == _message_body,
+                Errors::SIZE_DOES_NOT_MATCH_MESSAGE_BODY
+            );
             let (id, message) = build_message(
                 @self, _destination_domain, _recipient_address, _message_body
             );
@@ -337,6 +352,16 @@ pub mod mailbox {
         /// * `_metadata` - Metadata used by the ISM to verify `_message`.
         /// * `_message` -  Formatted Hyperlane message (ref: message.cairo) 
         fn process(ref self: ContractState, _metadata: Bytes, _message: Message) {
+            let mut sanitized_bytes_metadata = BytesTrait::new_empty();
+            sanitized_bytes_metadata.concat(@_metadata);
+            assert(sanitized_bytes_metadata == _metadata, Errors::SIZE_DOES_NOT_MATCH_METADATA);
+            let mut sanitized_bytes_message_body = BytesTrait::new_empty();
+            sanitized_bytes_message_body.concat(@_message.body);
+            assert(
+                sanitized_bytes_message_body == _message.body,
+                Errors::SIZE_DOES_NOT_MATCH_MESSAGE_BODY
+            );
+
             assert(_message.version == HYPERLANE_VERSION, Errors::WRONG_HYPERLANE_VERSION);
             assert(
                 _message.destination == self.local_domain.read(), Errors::UNEXPECTED_DESTINATION

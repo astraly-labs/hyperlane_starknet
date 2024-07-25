@@ -36,6 +36,22 @@ You can learn more about Hyperlane [here](https://docs.hyperlane.xyz/docs/protoc
 
 The implementation guidelines can be found [here](https://docs.hyperlane.xyz/docs/guides/implementation-guide).
 
+## Supported Features
+| Feature  |  Supported |
+|---|---|
+| Mailbox   |  ✅ |  
+| Merkle Tree Hook  | ✅  |  
+| Protocol Fee Hook  | ✅  |  
+|  Aggregation Hook | ❌ |  
+|  Routing Hook | ❌ |  
+|  Pausable Hook | ❌ |  
+|  Multisig ISM | ✅ |  
+|  Pausable ISM | ✅ |  
+|  Aggregation ISM | ✅ |  
+|  Routing ISM | ✅ |  
+|  Interchain Gas Payment | ❌ |  
+|  Warp Routes | ❌ |  
+
 
 ## Project structure
 

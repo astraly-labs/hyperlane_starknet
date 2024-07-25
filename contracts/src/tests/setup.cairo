@@ -203,13 +203,14 @@ pub fn setup_mock_ism() -> IInterchainSecurityModuleDispatcher {
     IInterchainSecurityModuleDispatcher { contract_address: mock_ism_addr }
 }
 pub fn setup_messageid_multisig_ism(
-    validators: Span<felt252>
+    validators: Span<felt252>, threshold: u32
 ) -> (IInterchainSecurityModuleDispatcher, IValidatorConfigurationDispatcher) {
     let messageid_multisig_class = declare("messageid_multisig_ism").unwrap();
     let mut parameters = Default::default();
     let owner: felt252 = OWNER().try_into().unwrap();
     Serde::serialize(@owner, ref parameters);
     Serde::serialize(@validators, ref parameters);
+    Serde::serialize(@threshold, ref parameters);
     let (messageid_multisig_addr, _) = messageid_multisig_class.deploy(@parameters).unwrap();
     (
         IInterchainSecurityModuleDispatcher { contract_address: messageid_multisig_addr },
@@ -219,13 +220,14 @@ pub fn setup_messageid_multisig_ism(
 
 
 pub fn setup_merkleroot_multisig_ism(
-    validators: Span<felt252>
+    validators: Span<felt252>, threshold: u32
 ) -> (IInterchainSecurityModuleDispatcher, IValidatorConfigurationDispatcher) {
     let merkleroot_multisig_class = declare("merkleroot_multisig_ism").unwrap();
     let mut parameters = Default::default();
     let owner: felt252 = OWNER().try_into().unwrap();
     Serde::serialize(@owner, ref parameters);
     Serde::serialize(@validators, ref parameters);
+    Serde::serialize(@threshold, ref parameters);
     let (merkleroot_multisig_addr, _) = merkleroot_multisig_class.deploy(@parameters).unwrap();
     (
         IInterchainSecurityModuleDispatcher { contract_address: merkleroot_multisig_addr },

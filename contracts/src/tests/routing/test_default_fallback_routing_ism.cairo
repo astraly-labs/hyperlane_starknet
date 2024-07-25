@@ -283,6 +283,7 @@ fn test_module_type() {
 // for this test, we will reuse existing tests
 #[test]
 fn test_verify() {
+    let threshold = 4;
     // ISM MESSAGE AND METADATA CONFIGURATION
     let array = array![
         0x01020304050607080910111213141516,
@@ -300,20 +301,11 @@ fn test_verify() {
         body: message_body.clone()
     };
     let (_, validators_address, _) = get_message_and_signature();
-    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism(
-        validators_address.span()
-    );
+    let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
     let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;
     let metadata = build_messageid_metadata(origin_merkle_tree, root, index);
-
-    // ISM CONFIGURATION
-    let ownable = IOwnableDispatcher {
-        contract_address: messageid_validator_configuration.contract_address
-    };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
-    messageid_validator_configuration.set_threshold(4);
 
     // ROUTING TESTING
     let mut _domains = array![LOCAL_DOMAIN, 1123322, 312441];

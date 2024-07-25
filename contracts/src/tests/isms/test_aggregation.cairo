@@ -28,7 +28,6 @@ fn test_aggregation_module_type() {
     );
 }
 
-
 #[test]
 #[should_panic]
 fn test_aggregation_initialize_with_too_many_modules() {
@@ -86,23 +85,16 @@ fn test_aggregation_verify() {
         body: message_body.clone()
     };
     let (_, validators_address, _) = get_message_and_signature();
-    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism(
-        validators_address.span()
-    );
+    let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
     let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;
     let message_id_metadata = build_messageid_metadata(origin_merkle_tree, root, index);
-    let ownable = IOwnableDispatcher {
-        contract_address: messageid_validator_configuration.contract_address
-    };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
-    messageid_validator_configuration.set_threshold(5);
     // Noop ism
     let noop_ism = setup_noop_ism();
     let aggregation = setup_aggregation(
         array![messageid.contract_address.into(), noop_ism.contract_address.into(),].span(),
-        threshold
+        threshold.try_into().unwrap()
     );
     let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());

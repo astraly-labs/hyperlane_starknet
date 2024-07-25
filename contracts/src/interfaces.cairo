@@ -105,8 +105,6 @@ pub trait IValidatorConfiguration<TContractState> {
     fn get_validators(self: @TContractState) -> Span<EthAddress>;
 
     fn get_threshold(self: @TContractState) -> u32;
-
-    fn set_threshold(ref self: TContractState, _threshold: u32);
 }
 
 #[starknet::interface]

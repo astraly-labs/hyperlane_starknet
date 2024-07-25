@@ -10,6 +10,7 @@ use hyperlane_starknet::tests::setup::{
     setup_merkle_tree_hook, MAILBOX, LOCAL_DOMAIN, VALID_OWNER, VALID_RECIPIENT, DESTINATION_DOMAIN
 };
 use hyperlane_starknet::utils::keccak256::{ByteData, HASH_SIZE};
+use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use merkle_tree_hook::{InternalTrait, treeContractMemberStateTrait, countContractMemberStateTrait};
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::cheatcodes::events::EventAssertions;
@@ -39,7 +40,7 @@ fn test_post_dispatch() {
     let (merkle_tree, post_dispatch_hook, mut spy) = setup_merkle_tree_hook();
     let mailbox = IMailboxDispatcher { contract_address: MAILBOX() };
     let ownable = IOwnableDispatcher { contract_address: MAILBOX() };
-    start_prank(CheatTarget::One(ownable.contract_address), VALID_OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), VALID_OWNER().try_into().unwrap());
     let id = mailbox
         .dispatch(
             DESTINATION_DOMAIN,

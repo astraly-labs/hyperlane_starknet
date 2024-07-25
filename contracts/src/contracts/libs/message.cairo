@@ -14,9 +14,9 @@ pub struct Message {
     pub version: u8,
     pub nonce: u32,
     pub origin: u32,
-    pub sender: ContractAddress,
+    pub sender: u256,
     pub destination: u32,
-    pub recipient: ContractAddress,
+    pub recipient: u256,
     pub body: Bytes,
 }
 
@@ -33,9 +33,9 @@ pub impl MessageImpl of MessageTrait {
             version: HYPERLANE_VERSION,
             nonce: 0_u32,
             origin: 0_u32,
-            sender: contract_address_const::<0>(),
+            sender: 0,
             destination: 0_u32,
-            recipient: contract_address_const::<0>(),
+            recipient: 0,
             body: BytesTrait::new_empty(),
         }
     }
@@ -50,16 +50,13 @@ pub impl MessageImpl of MessageTrait {
     /// 
     /// * u256 representing the hash of the message
     fn format_message(_message: Message) -> (u256, Message) {
-        let sender: felt252 = _message.sender.into();
-        let recipient: felt252 = _message.recipient.into();
-
         let mut input: Array<ByteData> = array![
             ByteData { value: _message.version.into(), size: 1 },
             ByteData { value: _message.nonce.into(), size: 4 },
             ByteData { value: _message.origin.into(), size: 4 },
-            ByteData { value: sender.into(), size: 32 },
+            ByteData { value: _message.sender, size: 32 },
             ByteData { value: _message.destination.into(), size: 4 },
-            ByteData { value: recipient.into(), size: 32 },
+            ByteData { value: _message.recipient, size: 32 },
         ];
         let message_data = _message.clone().body.data();
         let finalized_input = MessageImpl::append_span_u128_to_byte_data(

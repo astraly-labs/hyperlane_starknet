@@ -11,6 +11,7 @@ use hyperlane_starknet::tests::setup::{
     DESTINATION_DOMAIN, build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT, setup_noop_ism,
     MODULES, CONTRACT_MODULES
 };
+use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
@@ -19,25 +20,19 @@ use starknet::ContractAddress;
 
 #[test]
 fn test_aggregation_module_type() {
-    let aggregation = setup_aggregation(MODULES());
+    let threshold = 2;
+    let aggregation = setup_aggregation(MODULES(), threshold);
     assert(
         aggregation.module_type() == ModuleType::AGGREGATION(aggregation.contract_address),
         'Aggregation: Wrong module type'
     );
 }
 
-#[test]
-fn test_aggregation_set_threshold() {
-    let threshold = 3;
-    let aggregation = setup_aggregation(MODULES());
-    let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    aggregation.set_threshold(threshold);
-}
 
 #[test]
 #[should_panic]
 fn test_aggregation_initialize_with_too_many_modules() {
+    let threshold = 2;
     let mut modules = array![];
     let mut cur_idx = 0;
     loop {
@@ -47,29 +42,24 @@ fn test_aggregation_initialize_with_too_many_modules() {
         modules.append('module_1'.into());
         cur_idx += 1;
     };
-    setup_aggregation(modules.span());
+    setup_aggregation(modules.span(), threshold);
 }
 
-
-#[test]
-#[should_panic(expected: ('Threshold not set',))]
-fn test_aggregation_verify_fails_if_treshold_not_set() {
-    let aggregation = setup_aggregation(MODULES());
-    aggregation.verify(BytesTrait::new(42, array![]), MessageTrait::default());
-}
 
 #[test]
 #[should_panic]
 fn test_setup_aggregation_with_null_module_address() {
+    let threshold = 2;
     let modules: Span<felt252> = array![0, 'module_1'].span();
-    setup_aggregation(modules);
+    setup_aggregation(modules, threshold);
 }
 
 #[test]
 fn test_get_modules() {
-    let aggregation = setup_aggregation(MODULES());
+    let threshold = 2;
+    let aggregation = setup_aggregation(MODULES(), threshold);
     let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     assert(aggregation.get_modules() == CONTRACT_MODULES(), 'set modules failed');
 }
 
@@ -106,16 +96,16 @@ fn test_aggregation_verify() {
     let ownable = IOwnableDispatcher {
         contract_address: messageid_validator_configuration.contract_address
     };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     messageid_validator_configuration.set_threshold(5);
     // Noop ism
     let noop_ism = setup_noop_ism();
     let aggregation = setup_aggregation(
-        array![messageid.contract_address.into(), noop_ism.contract_address.into(),].span()
+        array![messageid.contract_address.into(), noop_ism.contract_address.into(),].span(),
+        threshold
     );
     let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    aggregation.set_threshold(threshold);
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     let mut concat_metadata = BytesTrait::new_empty();
     concat_metadata.append_u128(0x00000010000001A0000001A0000001A9);
     concat_metadata.concat(@message_id_metadata);

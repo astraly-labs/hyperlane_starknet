@@ -46,12 +46,17 @@ pub mod aggregation {
         pub const THRESHOLD_NOT_SET: felt252 = 'Threshold not set';
         pub const MODULES_ALREADY_STORED: felt252 = 'Modules already stored';
         pub const NO_MODULES_PROVIDED: felt252 = 'No modules provided';
+        pub const THRESHOLD_TOO_HIGH: felt252 = 'Threshold too high';
         pub const TOO_MANY_MODULES_PROVIDED: felt252 = 'Too many modules provided';
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _owner: ContractAddress, _modules: Span<felt252>) {
+    fn constructor(
+        ref self: ContractState, _owner: ContractAddress, _modules: Span<felt252>, _threshold: u8
+    ) {
         self.ownable.initializer(_owner);
+        assert(_threshold <= 255, Errors::THRESHOLD_TOO_HIGH);
+        self.threshold.write(_threshold);
         assert(_modules.len() < 256, Errors::TOO_MANY_MODULES_PROVIDED);
         self.set_modules(_modules);
     }
@@ -131,17 +136,6 @@ pub mod aggregation {
 
         fn get_threshold(self: @ContractState) -> u8 {
             self.threshold.read()
-        }
-
-        /// Sets the threshold for validation
-        /// Dev: callable only by the owner
-        /// 
-        /// # Arguments
-        /// 
-        /// * - `_threshold` - The number of validator signatures needed
-        fn set_threshold(ref self: ContractState, _threshold: u8) {
-            self.ownable.assert_only_owner();
-            self.threshold.write(_threshold);
         }
     }
     #[generate_trait]

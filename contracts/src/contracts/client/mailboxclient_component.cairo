@@ -154,7 +154,7 @@ pub mod MailboxclientComponent {
         fn _dispatch(
             self: @ComponentState<TContractState>,
             _destination_domain: u32,
-            _recipient: ContractAddress,
+            _recipient: u256,
             _message_body: Bytes,
             _fee_amount: u256,
             _hook_metadata: Option<Bytes>,
@@ -189,7 +189,7 @@ pub mod MailboxclientComponent {
         fn quote_dispatch(
             self: @ComponentState<TContractState>,
             _destination_domain: u32,
-            _recipient: ContractAddress,
+            _recipient: u256,
             _message_body: Bytes,
             _hook_metadata: Option<Bytes>,
             _hook: Option<ContractAddress>

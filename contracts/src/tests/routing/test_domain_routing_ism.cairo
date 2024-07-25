@@ -11,9 +11,11 @@ use hyperlane_starknet::tests::setup::{
     OWNER, setup_domain_routing_ism, build_messageid_metadata, LOCAL_DOMAIN, DESTINATION_DOMAIN,
     setup_messageid_multisig_ism, get_message_and_signature, VALID_OWNER, VALID_RECIPIENT
 };
+use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget, stop_prank, ContractClassTrait};
 use starknet::{ContractAddress, contract_address_const};
+
 
 #[test]
 fn test_initialize() {
@@ -25,7 +27,7 @@ fn test_initialize() {
     ];
     let (_, _, domain_routing_ism) = setup_domain_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     domain_routing_ism.initialize(_domains.span(), _modules.span());
     assert(domain_routing_ism.domains() == _domains.span(), 'wrong domains init');
     let mut cur_idx = 0;
@@ -70,7 +72,7 @@ fn test_initialize_fails_if_module_is_zero() {
         contract_address_const::<0>()
     ];
     let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     domain_routing_ism.initialize(_domains.span(), _modules.span())
 }
 
@@ -85,7 +87,7 @@ fn test_initialize_fails_if_length_mismatch() {
     ];
     let (_, _, domain_routing_ism) = setup_domain_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     domain_routing_ism.initialize(_domains.span(), _modules.span());
 }
 
@@ -100,7 +102,7 @@ fn test_remove_domain() {
     ];
     let (_, _, domain_routing_ism) = setup_domain_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     domain_routing_ism.initialize(_domains.span(), _modules.span());
     domain_routing_ism.remove(12345);
     _domains.pop_front().unwrap();
@@ -118,7 +120,7 @@ fn test_remove_domain_check_module() {
     ];
     let (_, _, domain_routing_ism) = setup_domain_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     domain_routing_ism.initialize(_domains.span(), _modules.span());
     domain_routing_ism.remove(12345);
     domain_routing_ism.module(12345);
@@ -135,7 +137,7 @@ fn test_remove_domain_fails_if_domain_not_found() {
     ];
     let (_, _, domain_routing_ism) = setup_domain_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     domain_routing_ism.initialize(_domains.span(), _modules.span());
     domain_routing_ism.remove(1);
 }
@@ -165,7 +167,7 @@ fn test_set_domain_and_module() {
     ];
     let (_, _, domain_routing_ism) = setup_domain_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     domain_routing_ism.initialize(_domains.span(), _modules.span());
     let new_domain = 111111;
     let new_module = contract_address_const::<0x2134242342342>();
@@ -219,7 +221,7 @@ fn test_route_ism() {
     ];
     let (_, ism, domain_routing_ism) = setup_domain_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     domain_routing_ism.initialize(_domains.span(), _modules.span());
     assert_eq!(ism.route(message), *_modules.at(0));
     message =
@@ -266,7 +268,7 @@ fn test_route_ism_fails_if_origin_not_found() {
     ];
     let (_, ism, domain_routing_ism) = setup_domain_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     domain_routing_ism.initialize(_domains.span(), _modules.span());
     ism.route(message);
 }
@@ -310,7 +312,7 @@ fn test_verify() {
     let ownable = IOwnableDispatcher {
         contract_address: messageid_validator_configuration.contract_address
     };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     messageid_validator_configuration.set_threshold(4);
 
     // ROUTING TESTING
@@ -322,7 +324,7 @@ fn test_verify() {
     ];
     let (ism, _, domain_routing_ism) = setup_domain_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: domain_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER());
+    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     domain_routing_ism.initialize(_domains.span(), _modules.span());
     assert_eq!(ism.verify(metadata, message), true);
 }

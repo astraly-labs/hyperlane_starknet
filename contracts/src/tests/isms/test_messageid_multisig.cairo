@@ -114,9 +114,7 @@ fn test_message_id_multisig_verify_with_4_valid_signatures() {
         body: message_body.clone()
     };
     let (_, validators_address, _) = get_message_and_signature();
-    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism(
-        validators_address.span(), threshold
-    );
+    let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
     let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;
@@ -145,9 +143,7 @@ fn test_message_id_multisig_verify_with_insufficient_valid_signatures() {
         body: message_body.clone()
     };
     let (_, validators_address, _) = get_message_and_signature();
-    let (messageid, messageid_validator_config) = setup_messageid_multisig_ism(
-        validators_address.span(), threshold
-    );
+    let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
     let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;
@@ -178,9 +174,7 @@ fn test_message_id_multisig_verify_with_empty_metadata() {
         body: message_body.clone()
     };
     let (_, validators_address, _) = get_message_and_signature();
-    let (messageid, messageid_validator_config) = setup_messageid_multisig_ism(
-        validators_address.span(), threshold
-    );
+    let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
     let bytes_metadata = BytesTrait::new_empty();
     assert(messageid.verify(bytes_metadata, message) == true, 'verification failed');
 }
@@ -206,9 +200,7 @@ fn test_message_id_multisig_verify_with_4_valid_signatures_fails_if_duplicate_si
         body: message_body.clone()
     };
     let (_, validators_address, _) = get_message_and_signature();
-    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism(
-        validators_address.span(), threshold
-    );
+    let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
     let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;

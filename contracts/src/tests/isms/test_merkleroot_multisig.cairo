@@ -133,9 +133,7 @@ fn test_merkle_root_multisig_verify_with_4_valid_signatures() {
         body: message_body.clone()
     };
     let (_, validators_address, _) = get_merkle_message_and_signature();
-    let (merkleroot_ism, merkleroot_validator_configuration) = setup_merkleroot_multisig_ism(
-        validators_address.span(), threshold
-    );
+    let (merkleroot_ism, _) = setup_merkleroot_multisig_ism(validators_address.span(), threshold);
     let origin_merkle_tree_hook: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let message_index: u32 = 1;
     let signed_index: u32 = 2;
@@ -167,9 +165,7 @@ fn test_merkle_root_multisig_verify_with_insufficient_valid_signatures() {
         body: message_body.clone()
     };
     let (_, validators_address, _) = get_merkle_message_and_signature();
-    let (merkleroot_ism, merkleroot_validator_config) = setup_merkleroot_multisig_ism(
-        validators_address.span(), threshold
-    );
+    let (merkleroot_ism, _) = setup_merkleroot_multisig_ism(validators_address.span(), threshold);
     let origin_merkle_tree_hook: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let message_index: u32 = 1;
     let signed_index: u32 = 2;
@@ -202,9 +198,7 @@ fn test_merkle_root_multisig_verify_with_empty_metadata() {
         body: message_body.clone()
     };
     let (_, validators_address, _) = get_merkle_message_and_signature();
-    let (merkle_root_ism, merkleroot_validator_config) = setup_merkleroot_multisig_ism(
-        validators_address.span(), threshold
-    );
+    let (merkle_root_ism, _) = setup_merkleroot_multisig_ism(validators_address.span(), threshold);
     let bytes_metadata = BytesTrait::new_empty();
     assert(merkle_root_ism.verify(bytes_metadata, message) == true, 'verification failed');
 }
@@ -231,9 +225,7 @@ fn test_merkle_root_multisig_verify_with_4_valid_signatures_fails_if_duplicate_s
         body: message_body.clone()
     };
     let (_, validators_address, _) = get_merkle_message_and_signature();
-    let (merkleroot_ism, merkleroot_validator_configuration) = setup_merkleroot_multisig_ism(
-        validators_address.span(), threshold
-    );
+    let (merkleroot_ism, _) = setup_merkleroot_multisig_ism(validators_address.span(), threshold);
     let origin_merkle_tree_hook: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let message_index: u32 = 1;
     let signed_index: u32 = 2;

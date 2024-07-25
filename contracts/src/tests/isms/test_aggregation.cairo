@@ -85,9 +85,7 @@ fn test_aggregation_verify() {
         body: message_body.clone()
     };
     let (_, validators_address, _) = get_message_and_signature();
-    let (messageid, messageid_validator_configuration) = setup_messageid_multisig_ism(
-        validators_address.span(), threshold
-    );
+    let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
     let origin_merkle_tree: u256 = 'origin_merkle_tree_hook'.try_into().unwrap();
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;

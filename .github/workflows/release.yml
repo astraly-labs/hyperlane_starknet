@@ -17,6 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.6.3"
       - name: Build contracts
         working-directory: ${{ env.working-directory}}
         run: scarb build

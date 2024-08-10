@@ -3,7 +3,7 @@ name: release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 jobs:
   artifact:
@@ -12,11 +12,13 @@ jobs:
       pull-requests: write
     name: artifact
     runs-on: ubuntu-latest
-    env: 
+    env:
       working-directory: ./contracts
     steps:
       - uses: actions/checkout@v4
       - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.6.5"
       - name: Build contracts
         working-directory: ${{ env.working-directory}}
         run: scarb build
@@ -41,7 +43,7 @@ jobs:
           cd ..
           sha256sum hyperlane-starknet-${{ github.ref_name }}.zip > hyperlane-starknet-${{ github.ref_name }}.CHECKSUM
           md5sum hyperlane-starknet-${{ github.ref_name }}.zip > hyperlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
-  
+
       - name: Find zip files
         working-directory: ${{ env.working-directory}}
         run: |
@@ -55,5 +57,3 @@ jobs:
             ./contracts/hyperlane-starknet-${{ github.ref_name }}.zip
             ./contracts/hyperlane-starknet-${{ github.ref_name }}.CHECKSUM
             ./contracts/hyperlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
-
-            

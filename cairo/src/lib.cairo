@@ -29,6 +29,34 @@ mod contracts {
         pub mod message_recipient;
         pub mod mock_validator_announce;
     }
+    pub mod token {
+        pub mod hyp_erc20;
+        pub mod hyp_erc20_collateral;
+        pub mod hyp_erc721;
+        pub mod hyp_erc721_collateral;
+        pub mod hyp_native;
+        pub mod extensions {
+            pub mod fast_hyp_erc20;
+            pub mod fast_hyp_erc20_collateral;
+            pub mod hyp_erc20_collateral_vault_deposit;
+            pub mod hyp_erc721_URI_collateral;
+            pub mod hyp_erc721_URI_storage;
+            pub mod hyp_fiat_token;
+            pub mod hyp_native_scaled;
+            pub mod hyp_xerc20;
+            pub mod hyp_xerc20_lockbox;
+        }
+        pub mod interfaces {
+            pub mod ifiat_token;
+            pub mod ixerc20;
+            pub mod ixerc20_lockbox;
+        }
+        pub mod libs {
+            pub mod fast_token_router;
+            pub mod token_message;
+            pub mod token_router;
+        }
+    }
     pub mod isms {
         pub mod noop_ism;
         pub mod pausable_ism;

@@ -138,3 +138,22 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+
+
+## 🪛 Deployment
+
+This section details the steps to deploy Hyperlane contracts on Starknet. Note that the deployment script will set a basic configuration for all the required contracts. Further configuration process might be required based on the use case. Constructors parameters can be specified in the `contract_config.json`.
+Firstly, set the following environment variables, important for the deployment process: 
+```bash
+STARKNET_RPC_URL=
+ACCOUNT_ADDRESS=
+BENEFICIARY_ADDRESS=
+NETWORK=
+PRIVATE_KEY=
+``` 
+The beneficiary address is the account that will be used to recover funds from the protocol fee. 
+Once set, the contracts can be deployed using this command( assuming `ts-node` is installed): 
+
+```bash
+ts-node deploy.ts  
+``` 

@@ -18,7 +18,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: "2.6.3"
+          scarb-version: "2.6.5"
+
       - name: Build contracts
         run: |
           cd contracts && scarb build
@@ -30,7 +31,7 @@ jobs:
       - name: Install dojoup
         run: |
           curl -L https://install.dojoengine.org | bash
-      
+
       - name: Install dojo
         run: |-
           /home/runner/.config/.dojo/bin/dojoup -v 0.7.0-alpha.2
@@ -54,9 +55,7 @@ jobs:
       - name: run katana
         run: |
           katana -b 1000 &
-          
+
       - name: Run strk -> evm test
         run: |
           cd rust && cargo test -- test_mailbox_strk_to_evm
-
-        

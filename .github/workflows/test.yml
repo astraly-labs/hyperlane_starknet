@@ -6,17 +6,17 @@ on:
 jobs:
   contracts:
     runs-on: ubuntu-latest
-    env: 
+    env:
       working-directory: ./contracts
     steps:
       - uses: actions/checkout@v3
-      
+
       - uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: "2.6.3"
+          scarb-version: "2.6.5"
       - uses: foundry-rs/setup-snfoundry@v3
         with:
-          starknet-foundry-version: '0.22.0'
+          starknet-foundry-version: "0.22.0"
       - working-directory: ${{ env.working-directory}}
         run: scarb fmt --check
 
@@ -31,6 +31,3 @@ jobs:
         run: scarb build
       - working-directory: ${{ env.working-directory}}
         run: snforge test
-
-
-      

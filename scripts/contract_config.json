@@ -1,0 +1,216 @@
+{
+    "contracts": {
+    "merkleroot_multisig_ism": {
+        "name": "merkleroot_multisig_ism",
+        "constructor": {
+          "owner": {
+            "type": "ContractAddress",
+            "value": "$OWNER_ADDRESS"
+          },
+          "validators": {
+            "type": "Span<felt252>",
+            "value": [
+                "0x0000000000000000000000000000000000000000000000000000000000000002"
+            ]
+          },
+          "threshold": {
+            "type": "u32",
+            "value": "1"
+          }
+        }
+      },
+      "protocol_fee": {
+        "name": "protocol_fee",
+        "constructor": {
+          "max_protocol_fee_low": {
+            "type": "u128",
+            "value": "1000000000000000000"
+          },
+          "max_protocol_fee_high": {
+            "type": "u128",
+            "value": "0"
+          },
+          "protocol_fee_low": {
+            "type": "u128",
+            "value": "10000000000000000"
+          },
+          "protocol_fee_high": {
+            "type": "u128",
+            "value": "0"
+          },
+          "beneficiary": {
+            "type": "ContractAddress",
+            "value": "$BENEFICIARY_ADDRESS"
+          },
+          "owner": {
+            "type": "ContractAddress",
+            "value": "$OWNER_ADDRESS"
+          },
+          "token_address": {
+            "type": "ContractAddress",
+            "value": "0x049D36570D4e46f48e99674bd3fcc84644DdD6b96F7C741B1562B82f9e004dC7"
+          }
+        }
+      }, 
+      "merkle_tree_hook" : {
+        "name": "merkle_tree_hook", 
+        "constructor": {
+            "mailbox": {
+                "type": "ContractAddress", 
+                "value": "$mailbox"
+            }, 
+            "owner": {
+                "type": "ContractAddress", 
+                "value": "$OWNER_ADDRESS"
+            }
+        }
+      }, 
+      "noop_ism": {
+        "name": "noop_ism", 
+        "constructor": {
+
+        }
+      },
+      "hook": {
+        "name": "hook", 
+        "constructor": {
+
+        }
+      },
+      "pausable_ism": {
+        "name": "pausable_ism", 
+        "constructor": {
+            "owner": {
+                "type": "ContractAddress", 
+                "value": "$OWNER_ADDRESS"
+            }
+        }
+      }, 
+      "trusted_relayer_ism": {
+        "name": "trusted_relayer_ism", 
+        "constructor": {
+            "mailbox":{
+                "type": "ContractAddress", 
+                "value": "$mailbox"
+            }, 
+            "trusted_relayer": {
+                "type": "ContractAddress", 
+                "value": "0x0000000000000000000000000000000000000000000000000000000000000001"
+            }
+        }
+      },
+      "mailbox": {
+        "name": "mailbox", 
+        "constructor": {
+            "local_domain": {
+                "type": "u32",
+                "value": "100"
+            }, 
+            "owner": {
+                "type": "ContractAddress", 
+                "value": "$OWNER_ADDRESS"
+            }, 
+            "default_ism": {
+                "type": "ContractAddress", 
+                "value": "$merkleroot_multisig_ism"
+            }, 
+            "default_hook":{
+                "type": "ContractAddress", 
+                "value": "$hook"
+            }, 
+            "required_hook": {
+                "type": "ContractAddress", 
+                "value": "$protocol_fee"
+            }
+        }
+      }, 
+      "validator_announce": {
+        "name": "validator_announce", 
+        "constructor": {
+            "mailbox": {
+                "type": "ContractAddress", 
+                "value": "$mailbox"
+            }, 
+            "owner": {
+                "type": "ContractAddress", 
+                "value": "$OWNER_ADDRESS"
+            }
+        }
+      }, 
+      "aggregation": {
+        "name": "aggregation", 
+        "constructor": {
+            "owner":{
+                "type": "ContractAddress", 
+                "value": "$OWNER_ADDRESS"
+            }, 
+            "modules": {
+                "type": "Span<felt252>", 
+                "value": [
+                    "0x0000000000000000000000000000000000000000000000000000000000000002"
+                ]
+            }, 
+            "threshold": {
+                "type": "u32", 
+                "value": "1"
+            }
+        }
+      }, 
+      "messageid_multisig_ism": {
+        "name": "messageid_multisig_ism", 
+        "constructor": {
+            "owner": {
+              "type": "ContractAddress",
+              "value": "$OWNER_ADDRESS"
+            },
+            "validators": {
+              "type": "Span<felt252>",
+              "value": [
+                  "0x0000000000000000000000000000000000000000000000000000000000000003"
+              ]
+            },
+            "threshold": {
+              "type": "u32",
+              "value": "1"
+            }
+          }
+      }, 
+      "default_fallback_routing_ism": {
+        "name": "default_fallback_routing_ism", 
+        "constructor": {
+            "owner": {
+              "type": "ContractAddress",
+              "value": "$OWNER_ADDRESS"
+            },
+            "mailbox": {
+                "type": "ContractAddress", 
+                "value": "$mailbox"
+            }
+        }
+      }, 
+      "domain_routing_ism": {
+        "name": "domain_routing_ism", 
+        "constructor": {
+            "owner": {
+              "type": "ContractAddress",
+              "value": "$OWNER_ADDRESS"
+            }
+        }
+      }
+    }, 
+    "deploymentOrder": [
+    "merkleroot_multisig_ism",
+    "messageid_multisig_ism",
+    "domain_routing_ism",
+    "noop_ism",
+    "pausable_ism",
+    "aggregation",
+    "protocol_fee",
+    "hook", 
+    "mailbox", 
+    "merkle_tree_hook",
+    "default_fallback_routing_ism", 
+    "trusted_relayer_ism",
+    "validator_announce"
+  ]
+  }

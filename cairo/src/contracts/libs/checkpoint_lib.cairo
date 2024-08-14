@@ -41,7 +41,7 @@ pub mod checkpoint_lib {
             _checkpoint_index: u32,
             _message_id: u256
         ) -> u256 {
-            let domain_hash = CheckpointLib::domain_hash(_origin, _origin_merkle_tree_hook);
+            let domain_hash = CheckpointLibImpl::domain_hash(_origin, _origin_merkle_tree_hook);
             let mut input: Array<ByteData> = array![
                 ByteData { value: domain_hash.into(), size: HASH_SIZE },
                 ByteData { value: _checkpoint_root.into(), size: 32 },

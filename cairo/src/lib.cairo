@@ -18,8 +18,10 @@ mod contracts {
         }
     }
     pub mod client {
+        pub mod gas_router_component;
         pub mod mailboxclient;
         pub mod mailboxclient_component;
+        pub mod router_component;
     }
     pub mod mocks {
         pub mod fee_hook;

@@ -119,6 +119,37 @@ pub mod standard_hook_metadata {
                 );
             res
         }
+
+        fn format_metadata(
+            msg_value: u256,
+            gas_limit: u256,
+            refund_address: ContractAddress,
+            custom_metadata: Bytes
+        ) -> Bytes {
+            // NOTE: sence ContractAddress might not fit into u128, we need to convert it to u256
+            // and then split it into low and high parts
+            let refund_address_felt: felt252 = refund_address.into();
+            let refund_address_u256: u256 = refund_address_felt.into();
+            let mut data: Array<u128> = array![
+                VARIANT.into(),
+                msg_value.low,
+                msg_value.high,
+                gas_limit.low,
+                gas_limit.high,
+                refund_address_u256.low,
+                refund_address_u256.high
+            ];
+
+            let mut formatted_metadata = BytesTrait::new(data.len(), data);
+            formatted_metadata.concat(@custom_metadata);
+            formatted_metadata
+        }
+
+        fn override_gas_limits(gas_limit: u256) -> Bytes {
+            StandardHookMetadata::format_metadata(
+                0, gas_limit, starknet::get_caller_address(), BytesTrait::new_empty()
+            )
+        }
     }
 }
 

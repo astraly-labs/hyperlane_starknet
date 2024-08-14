@@ -20,9 +20,8 @@ pub mod MailboxclientComponent {
         pub const ADDRESS_CANNOT_BE_ZERO: felt252 = 'Address cannot be zero';
     }
 
-
     #[embeddable_as(MailboxClientImpl)]
-    impl MailboxClient<
+    pub impl MailboxClient<
         TContractState,
         +HasComponent<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>

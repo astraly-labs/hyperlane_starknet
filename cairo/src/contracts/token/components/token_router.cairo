@@ -27,7 +27,7 @@ pub mod TokenRouterComponent {
     use hyperlane_starknet::contracts::client::router_component::{
         RouterComponent, RouterComponent::RouterComponentInternalImpl, IRouter,
     };
-    use hyperlane_starknet::contracts::token::libs::token_message::TokenMessageTrait;
+    use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
     };

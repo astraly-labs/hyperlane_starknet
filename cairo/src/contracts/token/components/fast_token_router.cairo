@@ -31,8 +31,8 @@ pub mod FastTokenRouter {
     use hyperlane_starknet::contracts::client::router_component::{
         RouterComponent, RouterComponent::RouterComponentInternalImpl, IRouter,
     };
-    use hyperlane_starknet::contracts::token::libs::token_message::TokenMessageTrait;
-    use hyperlane_starknet::contracts::token::libs::token_router::{
+    use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
+    use hyperlane_starknet::contracts::token::components::token_router::{
         TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl
     };
     use openzeppelin::access::ownable::{

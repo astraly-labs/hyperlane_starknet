@@ -53,7 +53,7 @@ mod contracts {
             pub mod ixerc20;
             pub mod ixerc20_lockbox;
         }
-        pub mod libs {
+        pub mod components {
             pub mod fast_token_router;
             pub mod token_message;
             pub mod token_router;

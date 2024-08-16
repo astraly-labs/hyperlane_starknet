@@ -10,11 +10,13 @@ pub mod HypErc20Component {
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
-    use hyperlane_starknet::contracts::token::components::token_router::TokenRouterComponent;
+    use hyperlane_starknet::contracts::token::components::token_router::{
+        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl
+    };
 
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::ERC20Component::{
-        InternalImpl as ERC20InternalImpl, InternalTrait as ERC20InternalTrait, ERC20HooksTrait
+        InternalImpl as ERC20InternalImpl, ERC20HooksTrait
     };
     use openzeppelin::token::erc20::ERC20Component;
 
@@ -41,7 +43,6 @@ pub mod HypErc20Component {
         fn decimals(self: @ComponentState<TContractState>) -> u8 {
             self.decimals.read()
         }
-    // removed balances_of in favor of erc20
     }
 
     #[generate_trait]
@@ -53,12 +54,16 @@ pub mod HypErc20Component {
         +RouterComponent::HasComponent<TContractState>,
         +OwnableComponent::HasComponent<TContractState>,
         +GasRouterComponent::HasComponent<TContractState>,
-        +TokenRouterComponent::HasComponent<TContractState>,
+        impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
         +ERC20HooksTrait<TContractState>,
         impl ERC20: ERC20Component::HasComponent<TContractState>
     > of InternalTrait<TContractState> {
-        fn initialize(ref self: ComponentState<TContractState>, decimals: u8) {
+        fn initialize(
+            ref self: ComponentState<TContractState>, decimals: u8, mailbox: ContractAddress
+        ) {
             self.decimals.write(decimals);
+            let mut token_router = get_dep_component_mut!(ref self, TokenRouter);
+            token_router.initialize(mailbox)
         }
 
         fn transfer_from_sender(ref self: ComponentState<TContractState>, amount: u256) {

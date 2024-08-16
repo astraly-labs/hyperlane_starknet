@@ -103,11 +103,10 @@ pub mod HypErc20 {
         interchain_security_module: ContractAddress,
         owner: ContractAddress
     ) {
-        self.decimals.write(decimals);
-        self.token_router.initialize(mailbox);
+        self.ownable.initializer(owner);
+        self.hyp_erc20.initialize(decimals, mailbox);
         self.erc20.initializer(name, symbol);
         self.erc20._mint(starknet::get_caller_address(), total_supply);
-        self.mailbox.initialize(mailbox);
         self.mailbox._MailboxClient_initialize(hook, interchain_security_module);
     }
 }

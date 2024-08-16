@@ -4,7 +4,9 @@ pub mod MailboxclientComponent {
     use hyperlane_starknet::interfaces::{
         IMailboxClient, IMailboxDispatcher, IMailboxDispatcherTrait
     };
-    use openzeppelin::access::ownable::{OwnableComponent, OwnableComponent::InternalImpl};
+    use openzeppelin::access::ownable::{
+        OwnableComponent, OwnableComponent::InternalImpl, OwnableComponent::OwnableImpl
+    };
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::{ContractAddress, contract_address_const};
 
@@ -24,6 +26,7 @@ pub mod MailboxclientComponent {
     pub impl MailboxClient<
         TContractState,
         +HasComponent<TContractState>,
+        +Drop<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>
     > of IMailboxClient<ComponentState<TContractState>> {
         /// Sets the address of the application's custom hook.
@@ -93,11 +96,15 @@ pub mod MailboxclientComponent {
             ref self: ComponentState<TContractState>,
             _hook: ContractAddress,
             _interchain_security_module: ContractAddress,
+            _owner: ContractAddress
         ) {
-            let ownable_comp = get_dep_component!(@self, Owner);
-            ownable_comp.assert_only_owner();
+            let ownable_comp_read = get_dep_component!(@self, Owner);
+            ownable_comp_read.assert_only_owner();
             self.set_hook(_hook);
             self.set_interchain_security_module(_interchain_security_module);
+
+            let mut ownable_comp_write = get_dep_component_mut!(ref self, Owner);
+            ownable_comp_write.transfer_ownership(_owner);
         }
 
         /// Determines if a message associated to a given id is the mailbox's latest dispatched

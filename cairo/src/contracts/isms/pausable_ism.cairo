@@ -92,7 +92,7 @@ pub mod pausable_ism {
         /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             self.ownable.assert_only_owner();
-            self.upgradeable._upgrade(new_class_hash);
+            self.upgradeable.upgrade(new_class_hash);
         }
     }
 
@@ -100,12 +100,12 @@ pub mod pausable_ism {
     impl IPausableIsmImpl of IPausableIsm<ContractState> {
         fn pause(ref self: ContractState) {
             self.ownable.assert_only_owner();
-            self.pausable._pause();
+            self.pausable.pause();
         }
 
         fn unpause(ref self: ContractState) {
             self.ownable.assert_only_owner();
-            self.pausable._unpause();
+            self.pausable.unpause();
         }
     }
 }

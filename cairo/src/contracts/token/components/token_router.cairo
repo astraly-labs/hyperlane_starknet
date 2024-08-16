@@ -62,10 +62,10 @@ pub mod TokenRouterComponent {
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
-        impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
-        impl Router: RouterComponent::HasComponent<TContractState>,
-        impl Owner: OwnableComponent::HasComponent<TContractState>,
-        impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
+        +MailboxclientComponent::HasComponent<TContractState>,
+        +RouterComponent::HasComponent<TContractState>,
+        +OwnableComponent::HasComponent<TContractState>,
+        +GasRouterComponent::HasComponent<TContractState>,
     > of super::ITokenRouter<ComponentState<TContractState>> {
         fn transfer_remote(
             ref self: ComponentState<TContractState>,
@@ -103,9 +103,9 @@ pub mod TokenRouterComponent {
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
+        +OwnableComponent::HasComponent<TContractState>,
         impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
         impl Router: RouterComponent::HasComponent<TContractState>,
-        impl Owner: OwnableComponent::HasComponent<TContractState>,
         impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
         fn initialize(ref self: ComponentState<TContractState>, mailbox: ContractAddress) {

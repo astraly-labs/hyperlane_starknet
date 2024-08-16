@@ -45,7 +45,7 @@ pub mod RouterComponent {
     impl Router<
         TContractState,
         +HasComponent<TContractState>,
-        impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
+        +MailboxclientComponent::HasComponent<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>,
         +Drop<TContractState>
     > of super::IRouter<ComponentState<TContractState>> {
@@ -151,8 +151,8 @@ pub mod RouterComponent {
     pub impl RouterComponentInternalImpl<
         TContractState,
         +HasComponent<TContractState>,
-        impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
-        +Drop<TContractState>
+        +Drop<TContractState>,
+        impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>
     > of InternalTrait<TContractState> {
         fn initialize(ref self: ComponentState<TContractState>, _mailbox: ContractAddress) {
             let mut mailbox_comp = get_dep_component_mut!(ref self, MailBoxClient);

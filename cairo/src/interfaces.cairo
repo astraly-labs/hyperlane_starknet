@@ -149,6 +149,7 @@ pub trait IMailboxClient<TContractState> {
         ref self: TContractState,
         _hook: ContractAddress,
         _interchain_security_module: ContractAddress,
+        _owner: ContractAddress
     );
 
     fn get_hook(self: @TContractState) -> ContractAddress;

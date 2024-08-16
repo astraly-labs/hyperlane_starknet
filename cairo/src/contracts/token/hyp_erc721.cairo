@@ -50,7 +50,8 @@ pub mod HypErc721 {
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
 
     #[abi(embed_v0)]
-    impl MailboxclientImpl = MailboxclientComponent::MailboxclientImpl<ContractState>;
+    impl MailboxclientImpl =
+        MailboxclientComponent::MailboxClientImpl<ContractState>;
 
 
     #[storage]

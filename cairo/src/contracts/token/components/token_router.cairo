@@ -38,7 +38,7 @@ pub mod TokenRouterComponent {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         SentTransferRemote: SentTransferRemote,
         ReceivedTransferRemote: ReceivedTransferRemote,
     }

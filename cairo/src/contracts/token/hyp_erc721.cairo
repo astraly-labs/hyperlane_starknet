@@ -46,6 +46,12 @@ pub mod HypErc721 {
     impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
 
+    #[abi(embed_v0)]
+    impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl MailboxclientImpl = MailboxclientComponent::MailboxclientImpl<ContractState>;
+
 
     #[storage]
     struct Storage {

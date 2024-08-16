@@ -19,7 +19,7 @@ pub trait IFastTokenRouter<TState> {
 }
 
 #[starknet::component]
-pub mod FastTokenRouter {
+pub mod FastTokenRouterComponent {
     use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::client::gas_router_component::{
         GasRouterComponent, GasRouterComponent::GasRouterInternalImpl

@@ -5,7 +5,7 @@ pub mod MailboxclientComponent {
         IMailboxClient, IMailboxDispatcher, IMailboxDispatcherTrait
     };
     use openzeppelin::access::ownable::{
-        OwnableComponent, OwnableComponent::InternalImpl, OwnableComponent::Ownable
+        OwnableComponent, OwnableComponent::InternalImpl, OwnableComponent::OwnableImpl
     };
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::{ContractAddress, contract_address_const};

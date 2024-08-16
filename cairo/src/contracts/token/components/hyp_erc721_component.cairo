@@ -15,18 +15,6 @@ pub trait IHypErc721<TState> {
 
 #[starknet::component]
 pub mod HypErc721 {
-    use hyperlane_starknet::contracts::client::gas_router_component::{
-        GasRouterComponent, GasRouterComponent::GasRouterInternalImpl
-    };
-    use hyperlane_starknet::contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
-        MailboxclientComponent::MailboxClient
-    };
-    use hyperlane_starknet::contracts::client::router_component::{
-        RouterComponent, RouterComponent::RouterComponentInternalImpl, IRouter,
-    };
-    use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
-    use hyperlane_starknet::contracts::token::components::token_router::TokenRouterComponent;
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
     };
@@ -34,10 +22,8 @@ pub mod HypErc721 {
         SRC5Component, SRC5Component::SRC5Impl, SRC5Component::InternalTrait as SRC5InternalTrait
     };
     use openzeppelin::token::erc721::{
-        ERC721Component, ERC721Component::ERC721,
-        ERC721Component::InternalImpl as ERC721InternalImpl,
-        ERC721Component::InternalTrait as ERC721InternalTrait,
-        ERC721Component::ERC721HooksTrait,
+        ERC721Component, ERC721Component::ERC721Impl,
+        ERC721Component::InternalTrait as ERC721InternalTrait, ERC721Component::ERC721HooksTrait,
     };
 
     use starknet::{ContractAddress, ClassHash};
@@ -54,7 +40,6 @@ pub mod HypErc721 {
         +OwnableComponent::HasComponent<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
         +ERC721Component::ERC721HooksTrait<TContractState>,
-        impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
         impl ERC721: ERC721Component::HasComponent<TContractState>,
     > of super::IHypErc721<ComponentState<TContractState>> {
         fn initialize(
@@ -66,9 +51,6 @@ pub mod HypErc721 {
             interchain_security_module: ContractAddress,
             owner: ContractAddress
         ) {
-            let mut mailbox_comp = get_dep_component_mut!(ref self, MailBoxClient);
-            mailbox_comp._MailboxClient_initialize(hook, interchain_security_module, owner);
-
             let mut erc721_comp = get_dep_component_mut!(ref self, ERC721);
             erc721_comp.initializer(name, symbol, "");
 
@@ -88,9 +70,8 @@ pub mod HypErc721 {
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
-        impl ERC721: ERC721Component::HasComponent<TContractState>,
         +ERC721Component::ERC721HooksTrait<TContractState>,
-        
+        impl ERC721: ERC721Component::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
         fn transfer_from_sender(ref self: ComponentState<TContractState>, token_id: u256) {
             let erc721_comp_read = get_dep_component!(@self, ERC721);
@@ -103,10 +84,11 @@ pub mod HypErc721 {
             erc721_comp_write.burn(token_id);
         }
 
-        fn transfer_to(ref self: ComponentState<TContractState>, recipient: u256, token_id: u256) {
+        fn transfer_to(
+            ref self: ComponentState<TContractState>, recipient: ContractAddress, token_id: u256
+        ) {
             let mut erc721_comp_write = get_dep_component_mut!(ref self, ERC721);
             erc721_comp_write.mint(recipient, token_id);
         }
     }
 }
-

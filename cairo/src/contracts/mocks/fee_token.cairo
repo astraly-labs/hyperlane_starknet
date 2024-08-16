@@ -24,6 +24,6 @@ pub mod mock_fee_token {
     #[constructor]
     fn constructor(ref self: ContractState, initial_supply: u256, recipient: ContractAddress) {
         self.erc20.initializer("FeeToken", "FT");
-        self.erc20._mint(recipient, initial_supply);
+        self.erc20.mint(recipient, initial_supply);
     }
 }

@@ -14,7 +14,7 @@ pub trait IHypErc721<TState> {
 }
 
 #[starknet::component]
-pub mod HypErc721 {
+pub mod HypErc721Component {
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
     };

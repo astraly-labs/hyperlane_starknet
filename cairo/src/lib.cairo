@@ -55,6 +55,7 @@ mod contracts {
         }
         pub mod components {
             pub mod fast_token_router;
+            pub mod hyp_erc721_collateral_component;
             pub mod hyp_erc721_component;
             pub mod token_message;
             pub mod token_router;

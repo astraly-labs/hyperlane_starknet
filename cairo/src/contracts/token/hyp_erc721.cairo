@@ -14,7 +14,7 @@ pub mod HypErc721 {
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
-    use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
+    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::ContractAddress;
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -26,8 +26,6 @@ pub mod HypErc721 {
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
     component!(path: RouterComponent, storage: router, event: RouterEvent);
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
-    // Ownable
-    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     // ERC721 Mixin
     #[abi(embed_v0)]
@@ -46,6 +44,18 @@ pub mod HypErc721 {
     impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
 
+    // GasRouter
+    #[abi(embed_v0)]
+    impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
+
+    // Router
+    #[abi(embed_v0)]
+    impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
+
+    // MailboxClient
+    #[abi(embed_v0)]
+    impl MailboxClientImpl =
+        MailboxclientComponent::MailboxClientImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -94,6 +104,13 @@ pub mod HypErc721 {
 
     fn constructor(ref self: ContractState, mailbox: ContractAddress) {
         self.token_router.initialize(mailbox);
+    }
+
+    #[abi(embed_v0)]
+    impl HypErc721Upgradeable of IUpgradeable<ContractState> {
+        fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
+            self.upgradeable.upgrade(new_class_hash);
+        }
     }
 }
 

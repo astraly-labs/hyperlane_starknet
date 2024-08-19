@@ -142,14 +142,12 @@ pub mod FastHypERC20 {
             self.fast_token_router._handle(origin, message);
         }
 
-        fn fast_transfer_to(ref self: ContractState, recipient: u256, amount: u256) {
-            let recipient: felt252 = recipient.try_into().unwrap();
-            self.erc20.mint(recipient.try_into().unwrap(), amount);
+        fn fast_transfer_to(ref self: ContractState, recipient: ContractAddress, amount: u256) {
+            self.erc20.mint(recipient, amount);
         }
 
-        fn fast_receive_from(ref self: ContractState, sender: u256, amount: u256) {
-            let sender: felt252 = sender.try_into().unwrap();
-            self.erc20.burn(sender.try_into().unwrap(), amount);
+        fn fast_receive_from(ref self: ContractState, sender: ContractAddress, amount: u256) {
+            self.erc20.burn(sender, amount);
         }
     }
 }

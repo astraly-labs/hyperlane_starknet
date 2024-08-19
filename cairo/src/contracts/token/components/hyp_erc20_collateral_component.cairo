@@ -7,7 +7,6 @@ pub trait IHypErc20Collateral<TState> {
 
 #[starknet::component]
 pub mod HypErc20CollateralComponent {
-    use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::{
         MailboxclientComponent, MailboxclientComponent::MailboxClientImpl

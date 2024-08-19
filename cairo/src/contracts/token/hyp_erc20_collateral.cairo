@@ -1,5 +1,5 @@
 #[starknet::contract]
-pub mod HypErc20 {
+pub mod HypErc20Collateral {
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
@@ -41,6 +41,7 @@ pub mod HypErc20 {
     // TokenRouter
     #[abi(embed_v0)]
     impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
+    impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -84,6 +85,7 @@ pub mod HypErc20 {
         owner: ContractAddress
     ) {
         self.ownable.initializer(owner);
+        self.token_router.initialize(mailbox);
         self.collateral.initialize(wrapped_token, hook, interchain_security_module, owner);
     }
 }

@@ -19,12 +19,12 @@ pub mod EnumerableMapHolder {
     }
 
     #[abi(embed_v0)]
-    impl Holder of super::IEnumerableMapHolder<ContractState>{
+    impl Holder of super::IEnumerableMapHolder<ContractState> {
         fn do_get_len(self: @ContractState) -> u32 {
             let routers = self.routers.read();
             routers.len()
         }
-        fn do_set_key(ref self: ContractState, key: u32, value: u256){
+        fn do_set_key(ref self: ContractState, key: u32, value: u256) {
             let mut routers = self.routers.read();
             routers.set(@key, @value);
         }
@@ -32,15 +32,15 @@ pub mod EnumerableMapHolder {
             let routers = self.routers.read();
             routers.get(@key)
         }
-        fn do_contains(self: @ContractState, key: u32) -> bool { 
+        fn do_contains(self: @ContractState, key: u32) -> bool {
             let routers = self.routers.read();
             routers.contains(@key)
         }
-        fn do_remove(ref self: ContractState, key: u32) -> bool{
+        fn do_remove(ref self: ContractState, key: u32) -> bool {
             let mut routers = self.routers.read();
             routers.remove(@key)
         }
-        fn do_at(self: @ContractState, index: u32) -> (u32, u256){
+        fn do_at(self: @ContractState, index: u32) -> (u32, u256) {
             let routers = self.routers.read();
             routers.at(index)
         }

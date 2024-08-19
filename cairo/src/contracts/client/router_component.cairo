@@ -17,10 +17,10 @@ pub trait IRouter<TState> {
 #[starknet::component]
 pub mod RouterComponent {
     use alexandria_bytes::Bytes;
-    use hyperlane_starknet::contracts::libs::enumerable_map::{EnumarableMap, EnumerableMapTrait};
     use hyperlane_starknet::contracts::client::mailboxclient_component::{
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
     };
+    use hyperlane_starknet::contracts::libs::enumerable_map::{EnumarableMap, EnumerableMapTrait};
     use hyperlane_starknet::interfaces::{
         IMailboxClient, IMailboxDispatcher, IMailboxDispatcherTrait
     };

@@ -25,13 +25,13 @@ mod contracts {
         pub mod router_component;
     }
     pub mod mocks {
+        pub mod enumerable_map_holder;
         pub mod fee_hook;
         pub mod fee_token;
         pub mod hook;
         pub mod ism;
         pub mod message_recipient;
         pub mod mock_validator_announce;
-        pub mod enumerable_map_holder;
     }
     pub mod token {
         pub mod hyp_erc20;
@@ -57,9 +57,10 @@ mod contracts {
         }
         pub mod components {
             pub mod fast_token_router;
+            pub mod hyp_erc20_collateral_component;
+            pub mod hyp_erc20_component;
             pub mod hyp_erc721_collateral_component;
             pub mod hyp_erc721_component;
-            pub mod hyp_erc20_component;
             pub mod hyp_native_component;
             pub mod token_message;
             pub mod token_router;

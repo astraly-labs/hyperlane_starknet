@@ -1,37 +1,78 @@
-#[starknet::interface]
-pub trait IHypNative<TState> {
-    fn initialize(ref self: TState);
-    fn transfer_remote(ref self: TState, destination: u32, recipient: u256, amount: u256) -> u256;
-    fn balance_of(self: @TState, account: u256) -> u256;
-}
-
 #[starknet::contract]
 pub mod HypNative {
+    use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
+    use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
+    use hyperlane_starknet::contracts::client::router_component::RouterComponent;
+    use hyperlane_starknet::contracts::token::components::hyp_native_component::{
+        HypNativeComponent
+    };
+    use hyperlane_starknet::contracts::token::components::token_router::TokenRouterComponent;
+    use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::token::erc721::interface::IERC721Dispatcher;
+    use starknet::ContractAddress;
+
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: TokenRouterComponent, storage: token_router, event: TokenRouterEvent);
+    component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
+    component!(path: RouterComponent, storage: router, event: RouterEvent);
+    component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
+    component!(path: HypNativeComponent, storage: hyp_native, event: HypNativeEvent);
+
+    // HypERC721
+    #[abi(embed_v0)]
+    impl HypNativeImpl = HypNativeComponent::HypNativeImpl<ContractState>;
+
+    // TokenRouter
+    impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
+
+    // GasRouter
+    #[abi(embed_v0)]
+    impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
+
+    // Router
+    #[abi(embed_v0)]
+    impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
+
+    // MailboxClient
+    #[abi(embed_v0)]
+    impl MailboxClientImpl =
+        MailboxclientComponent::MailboxClientImpl<ContractState>;
+
     #[storage]
-    struct Storage {}
-
-    fn constructor() {}
-
-    impl HypNativeImpl of super::IHypNative<ContractState> {
-        fn initialize(ref self: ContractState) {}
-
-        fn transfer_remote(
-            ref self: ContractState, destination: u32, recipient: u256, amount: u256
-        ) -> u256 {
-            0
-        }
-
-        fn balance_of(self: @ContractState, account: u256) -> u256 {
-            0
-        }
+    struct Storage {
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        token_router: TokenRouterComponent::Storage,
+        #[substorage(v0)]
+        mailboxclient: MailboxclientComponent::Storage,
+        #[substorage(v0)]
+        router: RouterComponent::Storage,
+        #[substorage(v0)]
+        gas_router: GasRouterComponent::Storage,
+        #[substorage(v0)]
+        hyp_native: HypNativeComponent::Storage
     }
 
-    #[generate_trait]
-    impl InternalImpl of InternalTrait {
-        fn transfer_from_sender(ref self: ContractState, amount: u256) -> u256 {
-            0
-        }
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        TokenRouterEvent: TokenRouterComponent::Event,
+        #[flat]
+        MailboxclientEvent: MailboxclientComponent::Event,
+        #[flat]
+        RouterEvent: RouterComponent::Event,
+        #[flat]
+        GasRouterEvent: GasRouterComponent::Event,
+        #[flat]
+        HypNativeEvent: HypNativeComponent::Event
+    }
 
-        fn transfer_to_recipient(ref self: ContractState, recipient: u256, amount: u256) {}
+    #[constructor]
+    fn constructor(ref self: ContractState, mailbox: ContractAddress) {
+        self.token_router.initialize(mailbox);
     }
 }

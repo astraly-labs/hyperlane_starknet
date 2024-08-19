@@ -15,6 +15,10 @@ pub trait IHypErc721<TState> {
 
 #[starknet::component]
 pub mod HypErc721Component {
+    use hyperlane_starknet::contracts::client::mailboxclient_component::{
+        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
+        MailboxclientComponent::MailboxClient
+    };
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
     };
@@ -40,6 +44,7 @@ pub mod HypErc721Component {
         +OwnableComponent::HasComponent<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
         +ERC721Component::ERC721HooksTrait<TContractState>,
+        impl Mailboxclient: MailboxclientComponent::HasComponent<TContractState>,
         impl ERC721: ERC721Component::HasComponent<TContractState>,
     > of super::IHypErc721<ComponentState<TContractState>> {
         fn initialize(
@@ -51,6 +56,8 @@ pub mod HypErc721Component {
             interchain_security_module: ContractAddress,
             owner: ContractAddress
         ) {
+            let mut mailboxclient_comp = get_dep_component_mut!(ref self, Mailboxclient);
+            mailboxclient_comp._MailboxClient_initialize(hook, interchain_security_module, owner);
             let mut erc721_comp = get_dep_component_mut!(ref self, ERC721);
             erc721_comp.initializer(name, symbol, "");
 

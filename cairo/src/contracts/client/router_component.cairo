@@ -3,7 +3,7 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IRouter<TState> {
-    fn enroll_remote_router(ref self: TState, domain: u32, router: Option<u256>);
+    fn enroll_remote_router(ref self: TState, domain: u32, router: u256);
     fn enroll_remote_routers(ref self: TState, domains: Array<u32>, addresses: Array<u256>);
     fn unenroll_remote_router(ref self: TState, domain: u32);
     fn unenroll_remote_routers(
@@ -17,7 +17,7 @@ pub trait IRouter<TState> {
 #[starknet::component]
 pub mod RouterComponent {
     use alexandria_bytes::Bytes;
-    use alexandria_storage::{List, ListTrait};
+    use hyperlane_starknet::contracts::libs::enumerable_map::{EnumarableMap, EnumerableMapTrait};
     use hyperlane_starknet::contracts::client::mailboxclient_component::{
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
     };
@@ -31,7 +31,7 @@ pub mod RouterComponent {
 
     #[storage]
     struct Storage {
-        routers: List<u256>,
+        routers: EnumarableMap<u32, u256>,
         gas_router: ContractAddress,
     }
 
@@ -50,18 +50,11 @@ pub mod RouterComponent {
         +Drop<TContractState>
     > of super::IRouter<ComponentState<TContractState>> {
         fn enroll_remote_router(
-            ref self: ComponentState<TContractState>, domain: u32, router: Option<u256>
+            ref self: ComponentState<TContractState>, domain: u32, router: u256
         ) {
             let ownable_comp = get_dep_component!(@self, Owner);
             ownable_comp.assert_only_owner();
-
-            match router {
-                Option::Some(router) => { self._enroll_remote_router(domain, router); },
-                Option::None => {
-                    let router = self.routers.read().get(domain).expect('DOMAIN_NOT_FOUND');
-                    self._enroll_remote_router(domain, router.unwrap());
-                }
-            }
+            self._enroll_remote_router(domain, router);
         }
 
         fn enroll_remote_routers(
@@ -127,23 +120,11 @@ pub mod RouterComponent {
         // }
 
         fn domains(self: @ComponentState<TContractState>) -> Array<u32> {
-            let mut keys: Array<u32> = array![];
-            let routers = self.routers.read().array().expect('ROUTERS_EMPTY');
-
-            let mut i = 0;
-            let len = routers.len();
-            while i < len {
-                let element = *routers.at(i);
-                if element != 0 {
-                    keys.append(i);
-                }
-                i += 1;
-            };
-            keys
+            self.routers.read().keys()
         }
 
         fn routers(self: @ComponentState<TContractState>, domain: u32) -> u256 {
-            self.routers.read().get(domain).expect('DOMAIN_NOT_FOUND').unwrap()
+            self.routers.read().get(@domain) // handle if zero
         }
     }
 
@@ -173,34 +154,31 @@ pub mod RouterComponent {
             ref self: ComponentState<TContractState>, domain: u32, address: u256
         ) {
             let mut routers = self.routers.read();
-            let _ = routers.set(domain, address);
+            let _ = routers.set(@domain, @address);
         }
 
         fn _unenroll_remote_router(ref self: ComponentState<TContractState>, domain: u32) {
             let mut routers = self.routers.read();
-
-            let _ = routers.get(domain).expect('DOMAIN_NOT_FOUND');
-
-            let _ = routers.set(domain, 0);
+            routers.remove(@domain);
         }
 
         fn _is_remote_router(
             self: @ComponentState<TContractState>, domain: u32, address: u256
         ) -> bool {
             let routers = self.routers.read();
-            let router = routers.get(domain).expect('DOMAIN_NOT_FOUND');
-            router.unwrap() == address
+            let router = routers.get(@domain);
+            router == address
         }
 
         fn _must_have_remote_router(self: @ComponentState<TContractState>, domain: u32) -> u256 {
             let routers = self.routers.read();
-            let router = routers.get(domain).expect('DOMAIN_NOT_FOUND');
+            let router = routers.get(@domain);
 
-            if router.is_none() {
+            if router == 0 {
                 Err::domain_not_found(domain);
             }
 
-            router.unwrap()
+            router
         }
 
         fn _Router_dispatch(

@@ -4,6 +4,7 @@ mod contracts {
     pub mod libs {
         pub mod aggregation_ism_metadata;
         pub mod checkpoint_lib;
+        pub mod enumerable_map;
         pub mod message;
         pub mod multisig {
             pub mod merkleroot_ism_metadata;
@@ -30,6 +31,7 @@ mod contracts {
         pub mod ism;
         pub mod message_recipient;
         pub mod mock_validator_announce;
+        pub mod enumerable_map_holder;
     }
     pub mod token {
         pub mod hyp_erc20;
@@ -103,5 +105,8 @@ mod tests {
     pub mod routing {
         pub mod test_default_fallback_routing_ism;
         pub mod test_domain_routing_ism;
+    }
+    pub mod libs {
+        pub mod test_enumerable_map;
     }
 }

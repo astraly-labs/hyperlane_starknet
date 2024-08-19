@@ -68,12 +68,12 @@ pub mod HypErc20Component {
 
         fn transfer_from_sender(ref self: ComponentState<TContractState>, amount: u256) {
             let mut erc20 = get_dep_component_mut!(ref self, ERC20);
-            erc20._burn(starknet::get_caller_address(), amount);
+            erc20.burn(starknet::get_caller_address(), amount);
         }
 
         fn transfer_to_recipient(ref self: ComponentState<TContractState>, amount: u256) {
             let mut erc20 = get_dep_component_mut!(ref self, ERC20);
-            erc20._mint(starknet::get_caller_address(), amount);
+            erc20.mint(starknet::get_caller_address(), amount);
         }
     }
 }

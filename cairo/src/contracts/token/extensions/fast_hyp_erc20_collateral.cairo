@@ -7,7 +7,7 @@ pub trait IFastHypERC20<TState> {
 // Since this contract inherits form HyerErc20, to avoid having it as component,
 // we need to reimplement all the methods of the IHyerErc20 trait.
 #[starknet::contract]
-pub mod FastHypERC20 {
+pub mod FastHypERC20Collateral {
     #[storage]
     struct Storage {}
 

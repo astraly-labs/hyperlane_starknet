@@ -124,7 +124,7 @@ pub mod RouterComponent {
         }
 
         fn routers(self: @ComponentState<TContractState>, domain: u32) -> u256 {
-            self.routers.read().get(@domain) // handle if zero
+            self.routers.read().get(domain)
         }
     }
 
@@ -154,25 +154,25 @@ pub mod RouterComponent {
             ref self: ComponentState<TContractState>, domain: u32, address: u256
         ) {
             let mut routers = self.routers.read();
-            let _ = routers.set(@domain, @address);
+            let _ = routers.set(domain, address);
         }
 
         fn _unenroll_remote_router(ref self: ComponentState<TContractState>, domain: u32) {
             let mut routers = self.routers.read();
-            routers.remove(@domain);
+            routers.remove(domain);
         }
 
         fn _is_remote_router(
             self: @ComponentState<TContractState>, domain: u32, address: u256
         ) -> bool {
             let routers = self.routers.read();
-            let router = routers.get(@domain);
+            let router = routers.get(domain);
             router == address
         }
 
         fn _must_have_remote_router(self: @ComponentState<TContractState>, domain: u32) -> u256 {
             let routers = self.routers.read();
-            let router = routers.get(@domain);
+            let router = routers.get(domain);
 
             if router == 0 {
                 Err::domain_not_found(domain);

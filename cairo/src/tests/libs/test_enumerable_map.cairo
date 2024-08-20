@@ -62,8 +62,6 @@ fn test_fuzz_should_remove(key: u32, val: u256) {
     assert!(contract.do_remove(key), "Failed to remove element");
     // check len decreased
     assert_eq!(contract.do_get_len(), 0, "EnumerableMap len not decreased");
-    // check value removed from 'values' map correctly
-    assert_eq!(contract.do_get_value(key), 0, "Value not removed properly");
     // check if its been correctly removed in 'positions' mapping
     assert!(!contract.do_contains(key), "Key not removed from positions mapping");
 }

@@ -26,19 +26,19 @@ pub mod EnumerableMapHolder {
         }
         fn do_set_key(ref self: ContractState, key: u32, value: u256) {
             let mut routers = self.routers.read();
-            routers.set(@key, @value);
+            routers.set(key, value);
         }
         fn do_get_value(self: @ContractState, key: u32) -> u256 {
             let routers = self.routers.read();
-            routers.get(@key)
+            routers.get(key)
         }
         fn do_contains(self: @ContractState, key: u32) -> bool {
             let routers = self.routers.read();
-            routers.contains(@key)
+            routers.contains(key)
         }
         fn do_remove(ref self: ContractState, key: u32) -> bool {
             let mut routers = self.routers.read();
-            routers.remove(@key)
+            routers.remove(key)
         }
         fn do_at(self: @ContractState, index: u32) -> (u32, u256) {
             let routers = self.routers.read();

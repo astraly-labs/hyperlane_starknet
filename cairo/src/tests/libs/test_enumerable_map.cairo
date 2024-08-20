@@ -1,4 +1,4 @@
-use hyperlane_starknet::contracts::libs::enumerable_map::{EnumarableMap, EnumerableMapTrait};
+use hyperlane_starknet::contracts::libs::enumerable_map::{EnumerableMapTrait};
 use hyperlane_starknet::contracts::mocks::enumerable_map_holder::{
     IEnumerableMapHolderDispatcher, IEnumerableMapHolderDispatcherTrait
 };

@@ -20,7 +20,7 @@ pub mod RouterComponent {
     use hyperlane_starknet::contracts::client::mailboxclient_component::{
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
     };
-    use hyperlane_starknet::contracts::libs::enumerable_map::{EnumarableMap, EnumerableMapTrait};
+    use hyperlane_starknet::contracts::libs::enumerable_map::{EnumerableMap, EnumerableMapTrait};
     use hyperlane_starknet::interfaces::{
         IMailboxClient, IMailboxDispatcher, IMailboxDispatcherTrait
     };
@@ -31,7 +31,7 @@ pub mod RouterComponent {
 
     #[storage]
     struct Storage {
-        routers: EnumarableMap<u32, u256>,
+        routers: EnumerableMap<u32, u256>,
         gas_router: ContractAddress,
     }
 

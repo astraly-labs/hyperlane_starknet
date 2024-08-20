@@ -11,11 +11,11 @@ pub trait IEnumerableMapHolder<TContractState> {
 
 #[starknet::contract]
 pub mod EnumerableMapHolder {
-    use hyperlane_starknet::contracts::libs::enumerable_map::{EnumarableMap, EnumerableMapTrait};
+    use hyperlane_starknet::contracts::libs::enumerable_map::{EnumerableMap, EnumerableMapTrait};
 
     #[storage]
     struct Storage {
-        routers: EnumarableMap<u32, u256>
+        routers: EnumerableMap<u32, u256>
     }
 
     #[abi(embed_v0)]

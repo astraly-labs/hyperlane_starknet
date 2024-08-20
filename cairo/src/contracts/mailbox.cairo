@@ -1,5 +1,5 @@
 #[starknet::contract]
-pub mod Mailbox {
+pub mod mailbox {
     use alexandria_bytes::{Bytes, BytesTrait};
     use core::starknet::event::EventEmitter;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};

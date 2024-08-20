@@ -235,18 +235,9 @@ impl EnumerableMapInternalImpl<
 
     fn array_append(ref self: EnumarableMap<K, V>, key: @K) {
         let len = Store::<u32>::read(self.address_domain, self.base).unwrap_syscall();
-        let storage_base_felt: felt252 = storage_address_from_base(self.base).into();
-        let array_storage_address_felt = poseidon_hash_span(
-            array![storage_base_felt, len.into()].span()
-        );
-        Store::<
-            K
-        >::write(
-            self.address_domain, storage_base_address_from_felt252(array_storage_address_felt), *key
-        )
-            .unwrap_syscall();
-        self.positions_mapping_write(key, @(len + 1));
+        self.array_write(@len, *key);
         self.update_array_len(@(len + 1));
+        self.positions_mapping_write(key, @(len + 1));
     }
 
     fn array_remove(ref self: EnumarableMap<K, V>, index: @u32) -> bool {

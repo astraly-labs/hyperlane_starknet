@@ -1,16 +1,22 @@
+use alexandria_bytes::Bytes;
+use starknet::ContractAddress;
+
 #[starknet::interface]
 pub trait IHypErc721<TState> {
     fn initialize(ref self: TState);
     fn balance_of(self: @TState) -> u256;
+    fn handle(ref self: TState, origin: u32, sender: ContractAddress, message: Bytes);
 }
 
 #[starknet::contract]
 pub mod HypErc721 {
+    use alexandria_bytes::Bytes;
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::hyp_erc721_component::HypErc721Component;
     use hyperlane_starknet::contracts::token::components::token_router::TokenRouterComponent;
+    use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
@@ -105,6 +111,16 @@ pub mod HypErc721 {
     fn constructor(ref self: ContractState, mailbox: ContractAddress) {
         self.token_router.initialize(mailbox);
     }
+
+    #[abi(embed_v0)]
+    impl MessageRecipient of IMessageRecipient<ContractState> {
+        fn handle(
+            ref self: ContractState, origin: u32, sender: Option<ContractAddress>, message: Bytes
+        ) {
+            self.token_router._handle(origin, message)
+        }
+    }
+
 
     #[abi(embed_v0)]
     impl HypErc721Upgradeable of IUpgradeable<ContractState> {

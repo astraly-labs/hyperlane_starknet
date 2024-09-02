@@ -135,7 +135,11 @@ pub mod HypErc721 {
             hook_metadata: Option<Bytes>,
             hook: Option<ContractAddress>
         ) -> u256 {
+<<<<<<< HEAD
             self._transfer_remote(destination, recipient, amount_or_id, value, hook_metadata, hook)
+=======
+            0
+>>>>>>> 60f035683c58f5dd1ce629afbed7d457a4f05bc4
         }
     }
 

@@ -135,11 +135,7 @@ pub mod HypErc721 {
             hook_metadata: Option<Bytes>,
             hook: Option<ContractAddress>
         ) -> u256 {
-<<<<<<< HEAD
             self._transfer_remote(destination, recipient, amount_or_id, value, hook_metadata, hook)
-=======
-            0
->>>>>>> 60f035683c58f5dd1ce629afbed7d457a4f05bc4
         }
     }
 
@@ -197,6 +193,17 @@ pub mod HypErc721 {
                 );
 
             message_id
+        }
+
+        fn _handle(ref self: ContractState, origin: u32, message: Bytes) {
+            let recipient_felt: felt252 = message.recipient().try_into().expect('u256 to felt failed');
+            let recipient: ContractAddress = recipient_felt.try_into().unwrap();
+            let amount = message.amount();
+            let metadata = message.metadata();
+
+            self._transfer_to(recipient, amount, metadata);
+
+            self.token_router.emit(TokenRouterComponent::ReceivedTransferRemote { origin, recipient, amount, });
         }
 
         fn _transfer_from_sender(ref self: ContractState, amount_or_id: u256) -> Bytes {

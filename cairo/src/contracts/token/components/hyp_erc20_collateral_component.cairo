@@ -23,7 +23,7 @@ pub mod HypErc20CollateralComponent {
 
     #[storage]
     struct Storage {
-        wrapped_token: IERC20Dispatcher  
+        wrapped_token: IERC20Dispatcher
     }
 
     #[embeddable_as(HypErc20CollateralImpl)]

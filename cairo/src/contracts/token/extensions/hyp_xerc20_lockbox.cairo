@@ -105,7 +105,9 @@ pub mod HypXERC20Lockbox {
         interchain_security_module: ContractAddress
     ) {
         self.ownable.initializer(owner);
-        self.mailbox.initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
+        self
+            .mailbox
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         let lockbox_dispatcher = IXERC20LockboxDispatcher { contract_address: lockbox };
         self.collateral.initialize(lockbox_dispatcher.erc20());
         let xerc20 = lockbox_dispatcher.xerc20();

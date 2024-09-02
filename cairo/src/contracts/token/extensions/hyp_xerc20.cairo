@@ -23,7 +23,9 @@ pub mod HypXERC20 {
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: TokenRouterComponent, storage: token_router, event: TokenRouterEvent);
     component!(
-        path: HypErc20CollateralComponent, storage: hyp_erc20_collateral, event: HypErc20CollateralEvent
+        path: HypErc20CollateralComponent,
+        storage: hyp_erc20_collateral,
+        event: HypErc20CollateralEvent
     );
 
     // Ownable
@@ -96,14 +98,16 @@ pub mod HypXERC20 {
         interchain_security_module: ContractAddress
     ) {
         self.ownable.initializer(owner);
-        self.mailbox.initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
+        self
+            .mailbox
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         self.hyp_erc20_collateral.initialize(wrapped_token);
     }
-    /// These need to be overrides, turn them into Interface Implementation and achieve overrides behaviour with interfaces
+    /// overrides
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn transfer_from_sender(ref self: ContractState, amount_or_id: u256) -> Bytes {
-            let token : IERC20Dispatcher = self.hyp_erc20_collateral.wrapped_token.read();
+            let token: IERC20Dispatcher = self.hyp_erc20_collateral.wrapped_token.read();
             IXERC20Dispatcher { contract_address: token.contract_address }
                 .burn(starknet::get_caller_address(), amount_or_id);
             BytesTrait::new_empty()
@@ -112,8 +116,8 @@ pub mod HypXERC20 {
         fn transfer_to(
             ref self: ContractState, recipient: u256, amount_or_id: u256, metadata: u256
         ) {
-            let token : IERC20Dispatcher = self.hyp_erc20_collateral.wrapped_token.read();
-            IXERC20Dispatcher { contract_address:  token.contract_address}
+            let token: IERC20Dispatcher = self.hyp_erc20_collateral.wrapped_token.read();
+            IXERC20Dispatcher { contract_address: token.contract_address }
                 .mint(recipient.try_into().unwrap(), amount_or_id);
         }
     }

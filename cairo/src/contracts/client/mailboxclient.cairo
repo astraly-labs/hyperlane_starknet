@@ -39,7 +39,9 @@ mod mailboxClientProxy {
         _interchain_security_module: ContractAddress
     ) {
         self.ownable.initializer(_owner);
-        self.mailboxclient.initialize(_mailbox, Option::Some(_hook), Option::Some(_interchain_security_module));
+        self
+            .mailboxclient
+            .initialize(_mailbox, Option::Some(_hook), Option::Some(_interchain_security_module));
     }
 
     #[event]

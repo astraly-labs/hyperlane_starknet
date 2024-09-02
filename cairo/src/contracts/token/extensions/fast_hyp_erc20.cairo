@@ -120,7 +120,9 @@ pub mod FastHypERC20 {
     ) {
         self.ownable.initializer(owner);
         self.hyp_erc20.initialize(decimals);
-        self.mailbox.initialize(mailbox,  Option::Some(hook), Option::Some(interchain_security_module));
+        self
+            .mailbox
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         self.erc20.initializer(name, symbol);
         self.erc20.mint(starknet::get_caller_address(), total_supply);
     }

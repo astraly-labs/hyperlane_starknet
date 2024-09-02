@@ -3,7 +3,7 @@ use starknet::ContractAddress;
 #[starknet::interface]
 pub trait IHypNative<TState> {
     fn transfer_remote(
-        ref self: TState, destination: u32, recipient: u256, amount: u256, mgs_value: u256
+        ref self: TState, destination: u32, recipient: u256, amount: u256, msg_value: u256
     ) -> u256;
     fn balance_of(self: @TState, account: ContractAddress) -> u256;
     fn receive(ref self: TState, amount: u256);
@@ -64,10 +64,10 @@ pub mod HypNativeComponent {
             destination: u32,
             recipient: u256,
             amount: u256,
-            mgs_value: u256
+            msg_value: u256
         ) -> u256 {
-            assert!(mgs_value >= amount, "Native: amount exceeds msg.value");
-            let hook_payment = mgs_value - amount;
+            assert!(msg_value >= amount, "Native: amount exceeds msg.value");
+            let hook_payment = msg_value - amount;
 
             let mut token_router_comp = get_dep_component_mut!(ref self, TokenRouter);
             token_router_comp

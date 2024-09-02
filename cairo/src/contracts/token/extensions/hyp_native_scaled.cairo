@@ -1,6 +1,8 @@
 #[starknet::interface]
 pub trait IHypNativeScaled<TState> {
-    fn transfer_remote(self: @TState, destination: u32, recipient: u256, amount: u256) -> u256;
+    fn transfer_remote(
+        ref self: TState, destination: u32, recipient: u256, amount: u256, msg_value: u256
+    ) -> u256;
 }
 
 #[starknet::contract]
@@ -46,7 +48,8 @@ pub mod HypNativeScaled {
     #[abi(embed_v0)]
     impl MailboxClientImpl =
         MailboxclientComponent::MailboxClientImpl<ContractState>;
-    impl MailboxClientInternalImpl = MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
+    impl MailboxClientInternalImpl =
+        MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -83,31 +86,38 @@ pub mod HypNativeScaled {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress, scale: u256, mailbox: ContractAddress) {
+    fn constructor(
+        ref self: ContractState, owner: ContractAddress, scale: u256, mailbox: ContractAddress
+    ) {
         self.mailboxclient.initialize(mailbox, Option::None, Option::None);
         self.ownable.initializer(owner);
         self.scale.write(scale);
     }
     //override
     impl HypNativeScaledImpl of super::IHypNativeScaled<ContractState> {
-        // need a way to derive hook fee. 
         fn transfer_remote(
-            ref self: ComponentState<TContractState>,
+            ref self: ContractState,
             destination: u32,
             recipient: u256,
             amount: u256,
-            mgs_value: u256
+            msg_value: u256
         ) -> u256 {
-            assert!(mgs_value >= amount, "Native: amount exceeds msg.value");
-            let hook_payment = mgs_value - amount;
-            let scaled_amount = amount / scale;
-            self.token_router._transfer_remote(destination, recipient, scaled_amount, hook_payment, Option::None, Option::None);
+            assert!(msg_value >= amount, "Native: amount exceeds msg.value");
+            let hook_payment = msg_value - amount;
+            let scaled_amount = amount / self.scale.read();
+            self
+                .token_router
+                ._transfer_remote(
+                    destination, recipient, scaled_amount, hook_payment, Option::None, Option::None
+                )
         }
     }
     // override
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn transfer_to(ref self: ContractState, recipient: ContractAddress, amount: u256, metadata: u256) {
+        fn transfer_to(
+            ref self: ContractState, recipient: ContractAddress, amount: u256, metadata: u256
+        ) {
             let scaled_amount = amount * self.scale.read();
             self.hyp_native.transfer_to(recipient, scaled_amount);
         }

@@ -96,22 +96,23 @@ pub mod HypFiatToken {
         owner: ContractAddress
     ) {
         self.ownable.initializer(owner);
-        self.mailbox.initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
+        self
+            .mailbox
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         self.collateral.initialize(wrapped_token);
     }
-    /// These need to be overrides, turn them into Interface Implementation and achieve overrides behaviour with interfaces
+    /// overrides
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn transfer_from_sender(ref self: ContractState, amount: u256) -> Bytes {
             let metadata = self.collateral.transfer_from_sender(amount);
-            let token : IERC20Dispatcher = self.collateral.wrapped_token.read();
-            IFiatTokenDispatcher { contract_address: token.contract_address }
-                .burn(amount);
+            let token: IERC20Dispatcher = self.collateral.wrapped_token.read();
+            IFiatTokenDispatcher { contract_address: token.contract_address }.burn(amount);
             metadata
         }
 
         fn transfer_to(ref self: ContractState, recipient: u256, amount: u256, metadata: u256) {
-            let token : IERC20Dispatcher = self.collateral.wrapped_token.read();
+            let token: IERC20Dispatcher = self.collateral.wrapped_token.read();
             assert!(
                 IFiatTokenDispatcher { contract_address: token.contract_address }
                     .mint(recipient.try_into().unwrap(), amount),

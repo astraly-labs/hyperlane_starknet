@@ -211,7 +211,9 @@ pub mod HypErc721 {
 
             self._transfer_to(recipient, amount, metadata);
 
-            self.token_router.emit(TokenRouterComponent::ReceivedTransferRemote { origin, recipient, amount, });
+            self
+                .token_router
+                .emit(TokenRouterComponent::ReceivedTransferRemote { origin, recipient, amount, });
         }
 
         fn _transfer_from_sender(ref self: ContractState, amount_or_id: u256) -> Bytes {
@@ -223,9 +225,7 @@ pub mod HypErc721 {
             BytesTrait::new_empty()
         }
 
-        fn _transfer_to(
-            ref self: ContractState, recipient: u256, token_id: u256, calldata: Bytes
-        ) {
+        fn _transfer_to(ref self: ContractState, recipient: u256, token_id: u256, calldata: Bytes) {
             let recipient_felt: felt252 = recipient.try_into().expect('u256 to felt failed');
             let recipient: ContractAddress = recipient_felt.try_into().unwrap();
             self.erc721.mint(recipient, token_id);

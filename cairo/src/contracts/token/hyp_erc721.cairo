@@ -10,12 +10,15 @@ pub trait IHypErc721<TState> {
 
 #[starknet::contract]
 pub mod HypErc721 {
-    use alexandria_bytes::Bytes;
+    use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::hyp_erc721_component::HypErc721Component;
-    use hyperlane_starknet::contracts::token::components::token_router::TokenRouterComponent;
+    use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
+    use hyperlane_starknet::contracts::token::components::token_router::{
+        TokenRouterComponent, ITokenRouter
+    };
     use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
@@ -46,17 +49,17 @@ pub mod HypErc721 {
     impl HypErc721Impl = HypErc721Component::HypErc721Impl<ContractState>;
 
     // TokenRouter
-    #[abi(embed_v0)]
     impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
 
     // GasRouter
     #[abi(embed_v0)]
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
-
+    impl GasRouterInternalImpl = GasRouterComponent::GasRouterInternalImpl<ContractState>;
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
+    impl RouterInternalImpl = RouterComponent::RouterComponentInternalImpl<ContractState>;
 
     // MailboxClient
     #[abi(embed_v0)]
@@ -121,11 +124,90 @@ pub mod HypErc721 {
         }
     }
 
+    #[abi(embed_v0)]
+    impl TokenRouter of ITokenRouter<ContractState> {
+        fn transfer_remote(
+            ref self: ContractState,
+            destination: u32,
+            recipient: u256,
+            amount_or_id: u256,
+            value: u256,
+            hook_metadata: Option<Bytes>,
+            hook: Option<ContractAddress>
+        ) -> u256 {
+            self._transfer_remote(destination, recipient, amount_or_id, value, hook_metadata, hook)
+        }
+    }
+
 
     #[abi(embed_v0)]
     impl HypErc721Upgradeable of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.upgradeable.upgrade(new_class_hash);
+        }
+    }
+
+    #[generate_trait]
+    impl Private of PrivateTrait {
+        fn _transfer_remote(
+            ref self: ContractState,
+            destination: u32,
+            recipient: u256,
+            amount_or_id: u256,
+            value: u256,
+            hook_metadata: Option<Bytes>,
+            hook: Option<ContractAddress>
+        ) -> u256 {
+            let token_metadata = self._transfer_from_sender(amount_or_id);
+            let token_message = TokenMessageTrait::format(recipient, amount_or_id, token_metadata);
+
+            let mut message_id = 0;
+
+            match hook_metadata {
+                Option::Some(hook_metadata) => {
+                    if !hook.is_some() {
+                        panic!("Transfer remote invalid arguments, missing hook");
+                    }
+
+                    message_id = self
+                        .router
+                        ._Router_dispatch(
+                            destination, value, token_message, hook_metadata, hook.unwrap()
+                        );
+                },
+                Option::None => {
+                    let hook_metadata = self.gas_router._Gas_router_hook_metadata(destination);
+                    let hook = self.mailboxclient.get_hook();
+                    message_id = self
+                        .router
+                        ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
+                }
+            }
+
+            self
+                .token_router
+                .emit(
+                    TokenRouterComponent::SentTransferRemote {
+                        destination, recipient, amount: amount_or_id,
+                    }
+                );
+
+            message_id
+        }
+
+        fn _transfer_from_sender(ref self: ContractState, amount_or_id: u256) -> Bytes {
+            let token_owner = self.erc721.owner_of(amount_or_id);
+            assert!(token_owner == starknet::get_caller_address(), "Caller is not owner");
+
+            self.erc721.burn(amount_or_id);
+
+            BytesTrait::new_empty()
+        }
+
+        fn _transfer_to(
+            ref self: ContractState, recipient: ContractAddress, token_id: u256, calldata: Bytes
+        ) {
+            self.erc721.mint(recipient, token_id);
         }
     }
 }

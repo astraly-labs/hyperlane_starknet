@@ -53,7 +53,7 @@ pub mod TokenRouterComponent {
     #[derive(Drop, starknet::Event)]
     pub struct ReceivedTransferRemote {
         pub origin: u32,
-        pub recipient: ContractAddress,
+        pub recipient: u256,
         pub amount: u256,
     }
 
@@ -162,8 +162,7 @@ pub mod TokenRouterComponent {
         }
 
         fn _handle(ref self: ComponentState<TContractState>, origin: u32, message: Bytes) {
-            let recipient_felt: felt252 = message.recipient().try_into().expect('u256 to felt failed');
-            let recipient: ContractAddress = recipient_felt.try_into().unwrap();
+            let recipient = message.recipient();
             let amount = message.amount();
             let metadata = message.metadata();
 
@@ -174,7 +173,7 @@ pub mod TokenRouterComponent {
 
         fn _transfer_to(
             ref self: ComponentState<TContractState>,
-            recipient: ContractAddress,
+            recipient: u256,
             amount_or_id: u256,
             metadata: Bytes
         ) {}

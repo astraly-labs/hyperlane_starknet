@@ -196,10 +196,9 @@ pub mod HypErc721 {
         }
 
         fn _handle(ref self: ContractState, origin: u32, message: Bytes) {
-            let recipient_felt: felt252 = message.recipient().try_into().expect('u256 to felt failed');
-            let recipient: ContractAddress = recipient_felt.try_into().unwrap();
             let amount = message.amount();
             let metadata = message.metadata();
+            let recipient = message.recipient();
 
             self._transfer_to(recipient, amount, metadata);
 
@@ -216,8 +215,10 @@ pub mod HypErc721 {
         }
 
         fn _transfer_to(
-            ref self: ContractState, recipient: ContractAddress, token_id: u256, calldata: Bytes
+            ref self: ContractState, recipient: u256, token_id: u256, calldata: Bytes
         ) {
+            let recipient_felt: felt252 = recipient.try_into().expect('u256 to felt failed');
+            let recipient: ContractAddress = recipient_felt.try_into().unwrap();
             self.erc721.mint(recipient, token_id);
         }
     }

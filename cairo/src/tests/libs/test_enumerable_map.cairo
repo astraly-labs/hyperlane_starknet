@@ -67,10 +67,12 @@ fn test_fuzz_should_remove(key: u32, val: u256) {
 }
 
 #[test]
-fn test_fuzz_get_keys(mut key1: u32, mut key2: u32, mut key3: u32, val1: u256, val2: u256, val3: u256) {
+fn test_fuzz_get_keys(
+    mut key1: u32, mut key2: u32, mut key3: u32, val1: u256, val2: u256, val3: u256
+) {
     if key1 == key2 {
-        key2 +=1;
-    } 
+        key2 += 1;
+    }
     if key1 == key3 {
         key3 += 1;
     }

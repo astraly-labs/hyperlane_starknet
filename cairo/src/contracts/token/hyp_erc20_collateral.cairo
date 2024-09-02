@@ -27,6 +27,9 @@ pub mod HypErc20Collateral {
     #[abi(embed_v0)]
     impl MailboxClientImpl =
         MailboxclientComponent::MailboxClientImpl<ContractState>;
+    impl MailboxClientInternalImpl =
+        MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
+
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
@@ -76,16 +79,17 @@ pub mod HypErc20Collateral {
         TokenRouterEvent: TokenRouterComponent::Event,
     }
 
+    #[constructor]
     fn constructor(
         ref self: ContractState,
         mailbox: ContractAddress,
         wrapped_token: ContractAddress,
-        hook: ContractAddress,
-        interchain_security_module: ContractAddress,
-        owner: ContractAddress
+        owner: ContractAddress,
+        hook: Option<ContractAddress>,
+        interchain_security_module: Option<ContractAddress>
     ) {
         self.ownable.initializer(owner);
-        self.token_router.initialize(mailbox);
-        self.collateral.initialize(wrapped_token, hook, interchain_security_module, owner);
+        self.mailbox.initialize(mailbox, hook, interchain_security_module);
+        self.collateral.initialize(wrapped_token);
     }
 }

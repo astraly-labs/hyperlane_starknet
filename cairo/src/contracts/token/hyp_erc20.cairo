@@ -32,6 +32,8 @@ pub mod HypErc20 {
     #[abi(embed_v0)]
     impl MailboxClientImpl =
         MailboxclientComponent::MailboxClientImpl<ContractState>;
+    impl MailboxClientInternalImpl =
+        MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
@@ -106,10 +108,10 @@ pub mod HypErc20 {
         owner: ContractAddress
     ) {
         self.ownable.initializer(owner);
-        self.hyp_erc20.initialize(decimals, mailbox);
+        self.mailbox.initialize(mailbox,  Option::Some(hook),  Option::Some(interchain_security_module));
+        self.hyp_erc20.initialize(decimals);
         self.erc20.initializer(name, symbol);
         self.erc20.mint(starknet::get_caller_address(), total_supply);
-        self.mailbox._MailboxClient_initialize(hook, interchain_security_module, owner);
     }
 
     #[abi(embed_v0)]

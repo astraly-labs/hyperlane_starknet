@@ -6,9 +6,7 @@ pub trait IRouter<TState> {
     fn enroll_remote_router(ref self: TState, domain: u32, router: u256);
     fn enroll_remote_routers(ref self: TState, domains: Array<u32>, addresses: Array<u256>);
     fn unenroll_remote_router(ref self: TState, domain: u32);
-    fn unenroll_remote_routers(
-        ref self: TState, domains: Array<u32>, addresses: Option<Array<u256>>
-    );
+    fn unenroll_remote_routers(ref self: TState, domains: Array<u32>);
     // fn handle(ref self: TState, origin: u32, sender: u256, message: Bytes);
     fn domains(self: @TState) -> Array<u32>;
     fn routers(self: @TState, domain: u32) -> u256;
@@ -82,31 +80,12 @@ pub mod RouterComponent {
             self._unenroll_remote_router(domain);
         }
 
-        fn unenroll_remote_routers(
-            ref self: ComponentState<TContractState>,
-            domains: Array<u32>,
-            addresses: Option<Array<u256>>
-        ) {
+        fn unenroll_remote_routers(ref self: ComponentState<TContractState>, domains: Array<u32>,) {
             let domains_len = domains.len();
-            match addresses {
-                Option::Some(addresses) => {
-                    if addresses.len() != domains_len {
-                        panic!("Addresses array length must match domains array length");
-                    }
-
-                    let mut i = 0;
-                    while i < domains_len {
-                        self._unenroll_remote_router(*domains.at(i));
-                        i += 1;
-                    }
-                },
-                Option::None => {
-                    let mut i = 0;
-                    while i < domains_len {
-                        self._unenroll_remote_router(*domains.at(i));
-                        i += 1;
-                    }
-                }
+            let mut i = 0;
+            while i < domains_len {
+                self._unenroll_remote_router(*domains.at(i));
+                i += 1;
             }
         }
 
@@ -135,11 +114,6 @@ pub mod RouterComponent {
         +Drop<TContractState>,
         impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>
     > of InternalTrait<TContractState> {
-        fn initialize(ref self: ComponentState<TContractState>, _mailbox: ContractAddress) {
-            let mut mailbox_comp = get_dep_component_mut!(ref self, MailBoxClient);
-            mailbox_comp.initialize(_mailbox);
-        }
-
         // TODO: review later once we have a clear idea of how to handle virtual functions
         // fn _handle(
         //     ref self: ComponentState<TContractState>, origin: u32, sender: u256, message: Bytes

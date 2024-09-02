@@ -84,29 +84,6 @@ pub mod MailboxclientComponent {
             self.interchain_security_module.read()
         }
 
-
-        /// Initializes the mailbox client configuration.
-        /// Dev: callable only by the admin
-        /// 
-        /// # Arguments
-        /// 
-        /// * - `_hook` the hook contract address to set
-        /// * - `_interchain_security_module`- the ISM contract address
-        fn _MailboxClient_initialize(
-            ref self: ComponentState<TContractState>,
-            _hook: ContractAddress,
-            _interchain_security_module: ContractAddress,
-            _owner: ContractAddress
-        ) {
-            let ownable_comp_read = get_dep_component!(@self, Owner);
-            ownable_comp_read.assert_only_owner();
-            self.set_hook(_hook);
-            self.set_interchain_security_module(_interchain_security_module);
-
-            let mut ownable_comp_write = get_dep_component_mut!(ref self, Owner);
-            ownable_comp_write.transfer_ownership(_owner);
-        }
-
         /// Determines if a message associated to a given id is the mailbox's latest dispatched
         /// 
         /// # Arguments
@@ -219,10 +196,21 @@ pub mod MailboxclientComponent {
         /// # Arguments
         /// 
         /// * - `_mailbox` - mailbox contract address
-        fn initialize(ref self: ComponentState<TContractState>, _mailbox: ContractAddress) {
+        fn initialize(
+            ref self: ComponentState<TContractState>,
+            _mailbox: ContractAddress,
+            _hook: Option<ContractAddress>,
+            _interchain_security_module: Option<ContractAddress>,
+        ) {
             let mailbox = IMailboxDispatcher { contract_address: _mailbox };
             self.mailbox.write(mailbox);
             self.local_domain.write(mailbox.get_local_domain());
+            if let Option::Some(hook) = _hook {
+                self.hook.write(hook);
+            }
+            if let Option::Some(ism) = _interchain_security_module {
+                self.interchain_security_module.write(ism);
+            }
         }
     }
 }

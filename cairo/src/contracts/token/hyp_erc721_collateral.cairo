@@ -4,7 +4,7 @@ pub mod HypErc721Collateral {
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::hyp_erc721_collateral_component::{
-        HypErc721CollateralComponent, IHypErc721Collateral
+        HypErc721CollateralComponent
     };
     use hyperlane_starknet::contracts::token::components::token_router::TokenRouterComponent;
     use openzeppelin::access::ownable::OwnableComponent;
@@ -44,6 +44,8 @@ pub mod HypErc721Collateral {
     #[abi(embed_v0)]
     impl MailboxClientImpl =
         MailboxclientComponent::MailboxClientImpl<ContractState>;
+    impl MailboxClientInternalImpl =
+        MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -80,7 +82,7 @@ pub mod HypErc721Collateral {
 
     #[constructor]
     fn constructor(ref self: ContractState, erc721: ContractAddress, mailbox: ContractAddress) {
-        self.token_router.initialize(mailbox);
+        self.mailboxclient.initialize(mailbox, Option::None, Option::None);
 
         self
             .hyp_erc721_collateral

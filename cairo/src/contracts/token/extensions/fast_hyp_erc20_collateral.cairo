@@ -15,7 +15,7 @@ pub mod FastHypERC20Collateral {
         fast_token_router::FastTokenRouterComponent
     };
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::ERC20ABIDispatcherTrait;
+    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::ContractAddress;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -38,6 +38,7 @@ pub mod FastHypERC20Collateral {
     #[abi(embed_v0)]
     impl MailboxClientImpl =
         MailboxclientComponent::MailboxClientImpl<ContractState>;
+    impl MailboxClientInternalImpl = MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
@@ -106,8 +107,8 @@ pub mod FastHypERC20Collateral {
         owner: ContractAddress
     ) {
         self.ownable.initializer(owner);
-        self.fast_token_router.initialize(mailbox);
-        self.collateral.initialize(wrapped_token, hook, interchain_security_module, owner);
+        self.mailbox.initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
+        self.collateral.initialize(wrapped_token);
     }
 
     impl FastHypERC20Impl of super::IFastHypERC20<ContractState> {
@@ -115,10 +116,9 @@ pub mod FastHypERC20Collateral {
             self.collateral.balance_of(account)
         }
     }
-
+    // Overrides
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        /// does not works as expected solidity ones overrides the original implementation
         fn handle(ref self: ContractState, origin: u32, message: Bytes) {
             self.fast_token_router._handle(origin, message);
         }

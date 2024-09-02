@@ -127,11 +127,7 @@ pub mod FastTokenRouterComponent {
         impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
         impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
-        fn initialize(ref self: ComponentState<TContractState>, mailbox: ContractAddress) {
-            let mut token_router_comp = get_dep_component_mut!(ref self, TokenRouter);
-            token_router_comp.initialize(mailbox);
-        }
-
+        // all needs to support override
         fn _handle(ref self: ComponentState<TContractState>, origin: u32, message: Bytes) {
             let mut token_router_comp = get_dep_component_mut!(ref self, TokenRouter);
 
@@ -197,7 +193,7 @@ pub mod FastTokenRouterComponent {
             recipient: u256
         ) -> u256 {
             let data = BytesTrait::new(
-                9,
+                9, // do we need this?
                 array![
                     origin.into(),
                     fast_transfer_id.low,

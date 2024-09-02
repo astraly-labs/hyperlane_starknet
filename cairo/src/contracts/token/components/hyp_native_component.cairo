@@ -2,12 +2,6 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IHypNative<TState> {
-    fn initialize(
-        ref self: TState,
-        hook: ContractAddress,
-        interchain_security_module: ContractAddress,
-        owner: ContractAddress
-    );
     fn transfer_remote(
         ref self: TState, destination: u32, recipient: u256, amount: u256, mgs_value: u256
     ) -> u256;
@@ -65,16 +59,6 @@ pub mod HypNativeComponent {
         impl Mailboxclient: MailboxclientComponent::HasComponent<TContractState>,
         impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
     > of super::IHypNative<ComponentState<TContractState>> {
-        fn initialize(
-            ref self: ComponentState<TContractState>,
-            hook: ContractAddress,
-            interchain_security_module: ContractAddress,
-            owner: ContractAddress
-        ) {
-            let mut mailboxclient_comp = get_dep_component_mut!(ref self, Mailboxclient);
-            mailboxclient_comp._MailboxClient_initialize(hook, interchain_security_module, owner);
-        }
-
         fn transfer_remote(
             ref self: ComponentState<TContractState>,
             destination: u32,
@@ -103,9 +87,9 @@ pub mod HypNativeComponent {
         }
     }
 
-
+    // overridess 
     #[generate_trait]
-    impl HypNativeInternalImpl<
+    pub impl HypNativeInternalImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
     > of InternalTrait<TContractState> {
         fn transfer_from_sender(ref self: ComponentState<TContractState>, amount: u256) -> Bytes {

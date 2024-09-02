@@ -9,7 +9,7 @@ use starknet::{Store, SyscallResultTrait, SyscallResult};
 pub mod Err {
     pub const NOT_IMPLEMENTED: felt252 = 'Not implemented!';
     pub const INDEX_OUT_OF_BOUNDS: felt252 = 'Index out of bounds!';
-    pub const KEY_DOES_NOT_EXIST: felt252 = 'Key does not exist!'; 
+    pub const KEY_DOES_NOT_EXIST: felt252 = 'Key does not exist!';
 }
 
 // Enumerable map
@@ -88,9 +88,13 @@ pub impl EnumerableMapImpl<
     }
 
     fn set(ref self: EnumerableMap<K, V>, key: K, val: V) {
+        let is_exists = self.contains(key);
+
         EnumerableMapInternalTrait::<K, V>::values_mapping_write(ref self, key, val);
-        // appends 'key' to array and updates 'position' mapping
-        EnumerableMapInternalTrait::<K, V>::array_append(ref self, key);
+        if !is_exists {
+            // appends 'key' to array and updates 'position' mapping
+            EnumerableMapInternalTrait::<K, V>::array_append(ref self, key);
+        }
     }
 
     fn len(self: @EnumerableMap<K, V>) -> u32 {

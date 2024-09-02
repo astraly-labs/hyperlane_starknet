@@ -56,6 +56,8 @@ pub mod HypErc721 {
     #[abi(embed_v0)]
     impl MailboxClientImpl =
         MailboxclientComponent::MailboxClientImpl<ContractState>;
+    impl MailboxClientInternalImpl =
+        MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -102,8 +104,15 @@ pub mod HypErc721 {
         GasRouterEvent: GasRouterComponent::Event
     }
 
-    fn constructor(ref self: ContractState, mailbox: ContractAddress) {
-        self.token_router.initialize(mailbox);
+    fn constructor(
+        ref self: ContractState,
+        mailbox: ContractAddress,
+        name: ByteArray,
+        symbol: ByteArray,
+        mint_amount: u256
+    ) {
+        self.mailboxclient.initialize(mailbox, Option::None, Option::None);
+        self.hyp_erc721.initialize(mint_amount, name, symbol);
     }
 
     #[abi(embed_v0)]

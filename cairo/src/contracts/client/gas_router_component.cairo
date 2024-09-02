@@ -95,11 +95,6 @@ pub mod GasRouterComponent {
         impl Router: RouterComponent::HasComponent<TContractState>,
         +Drop<TContractState>
     > of InternalTrait<TContractState> {
-        fn initialize(ref self: ComponentState<TContractState>, mailbox: ContractAddress) {
-            let mut router_comp = get_dep_component_mut!(ref self, Router);
-            router_comp.initialize(mailbox);
-        }
-
         fn _Gas_router_hook_metadata(
             self: @ComponentState<TContractState>, destination: u32
         ) -> Bytes {

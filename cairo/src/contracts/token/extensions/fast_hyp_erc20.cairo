@@ -119,13 +119,10 @@ pub mod FastHypERC20 {
         owner: ContractAddress
     ) {
         self.ownable.initializer(owner);
-        self.hyp_erc20.initialize(decimals, mailbox);
-        self
-            .fast_token_router
-            .initialize(mailbox); // redundant since token router already initialized above
+        self.hyp_erc20.initialize(decimals);
+        self.mailbox.initialize(mailbox,  Option::Some(hook), Option::Some(interchain_security_module));
         self.erc20.initializer(name, symbol);
         self.erc20.mint(starknet::get_caller_address(), total_supply);
-        self.mailbox._MailboxClient_initialize(hook, interchain_security_module, owner);
     }
 
     #[abi(embed_v0)]
@@ -135,7 +132,7 @@ pub mod FastHypERC20 {
             self.upgradeable.upgrade(new_class_hash);
         }
     }
-
+    //overrides
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn handle(ref self: ContractState, origin: u32, message: Bytes) {

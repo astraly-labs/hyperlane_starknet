@@ -71,7 +71,7 @@ pub mod validator_announce {
 
     #[constructor]
     fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress) {
-        self.mailboxclient.initialize(_mailbox);
+        self.mailboxclient.initialize(_mailbox, Option::None, Option::None);
         self.ownable.initializer(_owner);
     }
 

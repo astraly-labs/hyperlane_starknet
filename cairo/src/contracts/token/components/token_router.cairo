@@ -108,11 +108,6 @@ pub mod TokenRouterComponent {
         impl Router: RouterComponent::HasComponent<TContractState>,
         impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
-        fn initialize(ref self: ComponentState<TContractState>, mailbox: ContractAddress) {
-            let mut gas_router_comp = get_dep_component_mut!(ref self, GasRouter);
-            gas_router_comp.initialize(mailbox);
-        }
-
         fn _transfer_remote(
             ref self: ComponentState<TContractState>,
             destination: u32,

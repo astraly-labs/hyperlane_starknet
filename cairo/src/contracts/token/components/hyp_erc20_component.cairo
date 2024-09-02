@@ -7,6 +7,7 @@ pub trait IHypErc20<TState> {
 
 #[starknet::component]
 pub mod HypErc20Component {
+    use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
@@ -58,17 +59,14 @@ pub mod HypErc20Component {
         +ERC20HooksTrait<TContractState>,
         impl ERC20: ERC20Component::HasComponent<TContractState>
     > of InternalTrait<TContractState> {
-        fn initialize(
-            ref self: ComponentState<TContractState>, decimals: u8, mailbox: ContractAddress
-        ) {
+        fn initialize(ref self: ComponentState<TContractState>, decimals: u8) {
             self.decimals.write(decimals);
-            let mut token_router = get_dep_component_mut!(ref self, TokenRouter);
-            token_router.initialize(mailbox)
         }
-
-        fn transfer_from_sender(ref self: ComponentState<TContractState>, amount: u256) {
+        // Overrides
+        fn transfer_from_sender(ref self: ComponentState<TContractState>, amount: u256) -> Bytes {
             let mut erc20 = get_dep_component_mut!(ref self, ERC20);
             erc20.burn(starknet::get_caller_address(), amount);
+            BytesTrait::new_empty()
         }
 
         fn transfer_to_recipient(ref self: ComponentState<TContractState>, amount: u256) {

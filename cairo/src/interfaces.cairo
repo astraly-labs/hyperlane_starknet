@@ -145,13 +145,6 @@ pub trait IMailboxClient<TContractState> {
 
     fn set_interchain_security_module(ref self: TContractState, _module: ContractAddress);
 
-    fn _MailboxClient_initialize(
-        ref self: TContractState,
-        _hook: ContractAddress,
-        _interchain_security_module: ContractAddress,
-        _owner: ContractAddress
-    );
-
     fn get_hook(self: @TContractState) -> ContractAddress;
 
     fn get_local_domain(self: @TContractState) -> u32;

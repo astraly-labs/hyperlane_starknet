@@ -7,6 +7,7 @@ pub trait IHypErc20Collateral<TState> {
 
 #[starknet::component]
 pub mod HypErc20CollateralComponent {
+    use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::{
         MailboxclientComponent, MailboxclientComponent::MailboxClientImpl
@@ -17,16 +18,16 @@ pub mod HypErc20CollateralComponent {
     };
 
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
+    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::ContractAddress;
 
     #[storage]
     struct Storage {
-        wrapped_token: ERC20ABIDispatcher
+        wrapped_token: IERC20Dispatcher  
     }
 
     #[embeddable_as(HypErc20CollateralImpl)]
-    pub impl HypeErc20CollateralComponentImpl<
+    impl HypeErc20CollateralComponentImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
@@ -52,25 +53,20 @@ pub mod HypErc20CollateralComponent {
         +GasRouterComponent::HasComponent<TContractState>,
         +TokenRouterComponent::HasComponent<TContractState>
     > of InternalTrait<TContractState> {
-        fn initialize(
-            ref self: ComponentState<TContractState>,
-            wrapped_token: ContractAddress,
-            hook: ContractAddress,
-            interchain_security_module: ContractAddress,
-            owner: ContractAddress
-        ) {
-            self.wrapped_token.write(ERC20ABIDispatcher { contract_address: wrapped_token });
-            let mut mailboxclient_comp = get_dep_component_mut!(ref self, Mailboxclient);
-            mailboxclient_comp._MailboxClient_initialize(hook, interchain_security_module, owner);
+        fn initialize(ref self: ComponentState<TContractState>, wrapped_token: ContractAddress,) {
+            self.wrapped_token.write(IERC20Dispatcher { contract_address: wrapped_token });
         }
 
-        fn transfer_from_sender(ref self: ComponentState<TContractState>, amount: u256) {
+        // overrides
+        fn transfer_from_sender(ref self: ComponentState<TContractState>, amount: u256) -> Bytes {
             self
                 .wrapped_token
                 .read()
                 .transfer_from(
                     starknet::get_caller_address(), starknet::get_contract_address(), amount
                 );
+
+            BytesTrait::new_empty()
         }
 
         fn transfer_to(

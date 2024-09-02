@@ -52,6 +52,7 @@ mod contracts {
         }
         pub mod interfaces {
             pub mod ifiat_token;
+            pub mod imessage_recipient;
             pub mod ixerc20;
             pub mod ixerc20_lockbox;
         }

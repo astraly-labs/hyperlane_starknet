@@ -125,7 +125,7 @@ pub mod HypErc721Collateral {
                     .expect('u128 to felt failed');
                 metadata_array_felt252.append(metadata_felt252);
                 i = i + 1;
-            }
+            };
 
             contract_state
                 .wrapped_token

@@ -2,13 +2,15 @@ use starknet::ContractAddress;
 
 #[starknet::contract]
 pub mod HypErc20 {
+    use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
         hyp_erc20_component::HypErc20Component, token_message::TokenMessageTrait,
-        token_router::TokenRouterComponent
+        token_router::{TokenRouterComponent, ITokenRouter}
     };
+    use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
     use openzeppelin::upgrades::interface::IUpgradeable;
@@ -47,10 +49,12 @@ pub mod HypErc20 {
     // HypERC20
     #[abi(embed_v0)]
     impl HypErc20Impl = HypErc20Component::HypeErc20Impl<ContractState>;
-    impl HypErc20InternalImpl = HypErc20Component::InternalImpl<ContractState>;
-    // TokenRouter
     #[abi(embed_v0)]
-    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
+    impl MessageRecipientImpl =
+        HypErc20Component::MessageRecipientImpl<ContractState>;
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = HypErc20Component::TokenRouterImpl<ContractState>;
+    impl HypErc20InternalImpl = HypErc20Component::InternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 

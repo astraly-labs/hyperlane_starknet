@@ -6,12 +6,12 @@ pub mod HypFiatToken {
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
         hyp_erc20_collateral_component::HypErc20CollateralComponent,
-        token_message::TokenMessageTrait, token_router::TokenRouterComponent,
-        fast_token_router::FastTokenRouterComponent
+        token_message::TokenMessageTrait, token_router::{TokenRouterComponent, ITokenRouter},
     };
     use hyperlane_starknet::contracts::token::interfaces::ifiat_token::{
         IFiatTokenDispatcher, IFiatTokenDispatcherTrait
     };
+    use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
@@ -40,18 +40,16 @@ pub mod HypFiatToken {
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
+    impl RouterInternalImpl = RouterComponent::RouterComponentInternalImpl<ContractState>;
     // GasRouter
     #[abi(embed_v0)]
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
+    impl GasRouterInternalImpl = GasRouterComponent::GasRouterInternalImpl<ContractState>;
     // HypERC20Collateral
     #[abi(embed_v0)]
     impl HypErc20CollateralImpl =
         HypErc20CollateralComponent::HypErc20CollateralImpl<ContractState>;
     impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
-    // TokenRouter
-    #[abi(embed_v0)]
-    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
-    impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -101,17 +99,82 @@ pub mod HypFiatToken {
             .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         self.collateral.initialize(wrapped_token);
     }
-    /// overrides
+
+    #[abi(embed_v0)]
+    impl MessageRecipient of IMessageRecipient<ContractState> {
+        fn handle(
+            ref self: ContractState, origin: u32, sender: Option<ContractAddress>, message: Bytes
+        ) {
+            let amount = message.amount();
+            let recipient = message.recipient();
+
+            self._transfer_to(recipient, amount);
+
+            self
+                .token_router
+                .emit(TokenRouterComponent::ReceivedTransferRemote { origin, recipient, amount, });
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl TokenRouter of ITokenRouter<ContractState> {
+        fn transfer_remote(
+            ref self: ContractState,
+            destination: u32,
+            recipient: u256,
+            amount_or_id: u256,
+            value: u256,
+            hook_metadata: Option<Bytes>,
+            hook: Option<ContractAddress>
+        ) -> u256 {
+            let token_metadata = self._transfer_from_sender(amount_or_id);
+            let token_message = TokenMessageTrait::format(recipient, amount_or_id, token_metadata);
+
+            let mut message_id = 0;
+
+            match hook_metadata {
+                Option::Some(hook_metadata) => {
+                    if !hook.is_some() {
+                        panic!("Transfer remote invalid arguments, missing hook");
+                    }
+
+                    message_id = self
+                        .router
+                        ._Router_dispatch(
+                            destination, value, token_message, hook_metadata, hook.unwrap()
+                        );
+                },
+                Option::None => {
+                    let hook_metadata = self.gas_router._Gas_router_hook_metadata(destination);
+                    let hook = self.mailbox.get_hook();
+                    message_id = self
+                        .router
+                        ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
+                }
+            }
+
+            self
+                .token_router
+                .emit(
+                    TokenRouterComponent::SentTransferRemote {
+                        destination, recipient, amount: amount_or_id,
+                    }
+                );
+
+            message_id
+        }
+    }
+
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn transfer_from_sender(ref self: ContractState, amount: u256) -> Bytes {
-            let metadata = self.collateral.transfer_from_sender(amount);
+        fn _transfer_from_sender(ref self: ContractState, amount: u256) -> Bytes {
+            let metadata = self.collateral._transfer_from_sender(amount);
             let token: IERC20Dispatcher = self.collateral.wrapped_token.read();
             IFiatTokenDispatcher { contract_address: token.contract_address }.burn(amount);
             metadata
         }
 
-        fn transfer_to(ref self: ContractState, recipient: u256, amount: u256, metadata: u256) {
+        fn _transfer_to(ref self: ContractState, recipient: u256, amount: u256) {
             let token: IERC20Dispatcher = self.collateral.wrapped_token.read();
             assert!(
                 IFiatTokenDispatcher { contract_address: token.contract_address }

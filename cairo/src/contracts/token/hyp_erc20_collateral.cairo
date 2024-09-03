@@ -40,11 +40,13 @@ pub mod HypErc20Collateral {
     #[abi(embed_v0)]
     impl HypErc20CollateralImpl =
         HypErc20CollateralComponent::HypErc20CollateralImpl<ContractState>;
-    impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
-    // TokenRouter
     #[abi(embed_v0)]
-    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
-    impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
+    impl MessageRecipientImpl =
+        HypErc20CollateralComponent::MessageRecipientImpl<ContractState>;
+    #[abi(embed_v0)]
+    impl TokenRouterImpl =
+        HypErc20CollateralComponent::TokenRouterImpl<ContractState>;
+    impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {

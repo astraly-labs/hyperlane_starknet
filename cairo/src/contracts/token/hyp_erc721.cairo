@@ -25,7 +25,7 @@ pub mod HypErc721 {
     use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::ContractAddress;
-
+    // also needs {https://github.com/OpenZeppelin/cairo-contracts/blob/main/packages/token/src/erc721/extensions/erc721_enumerable/erc721_enumerable.cairo}
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(path: HypErc721Component, storage: hyp_erc721, event: HypErc721Event);
@@ -129,7 +129,9 @@ pub mod HypErc721 {
         fn handle(
             ref self: ContractState, origin: u32, sender: Option<ContractAddress>, message: Bytes
         ) {
-            self.token_router._handle(origin, message)
+            self
+                .token_router
+                ._handle(origin, message) // this needs to be updated to use local `transfer_to`
         }
     }
 

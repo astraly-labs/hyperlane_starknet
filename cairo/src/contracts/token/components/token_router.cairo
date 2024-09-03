@@ -1,4 +1,4 @@
-use alexandria_bytes::Bytes;
+use alexandria_bytes::{Bytes, BytesTrait};
 use starknet::ContractAddress;
 
 #[starknet::interface]

@@ -18,9 +18,7 @@ pub mod HypERC721URICollateral {
         TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
     };
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc721::interface::{
-        ERC721ABIDispatcher, ERC721ABIDispatcherTrait,
-    };
+    use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait,};
     use starknet::ContractAddress;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -93,7 +91,15 @@ pub mod HypERC721URICollateral {
         HypErc721CollateralEvent: HypErc721CollateralComponent::Event
     }
 
-    fn constructor() {}
+    #[constructor]
+    fn constructor(ref self: ContractState, erc721: ContractAddress, mailbox: ContractAddress) {
+        self.token_router.initialize(mailbox);
+
+        self
+            .hyp_erc721_collateral
+            .wrapped_token
+            .write(ERC721ABIDispatcher { contract_address: erc721 });
+    }
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
         fn transfer_from_sender_hook(
@@ -102,8 +108,12 @@ pub mod HypERC721URICollateral {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             contract_state.token_router.transfer_from_sender_hook(amount_or_id);
 
-            let uri = contract_state.hyp_erc721_collateral.wrapped_token.read().token_uri(amount_or_id);
-            
+            let uri = contract_state
+                .hyp_erc721_collateral
+                .wrapped_token
+                .read()
+                .token_uri(amount_or_id);
+
             let mut metadata = BytesTrait::new_empty();
 
             let len = uri.len();

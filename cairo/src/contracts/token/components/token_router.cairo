@@ -45,16 +45,33 @@ pub mod TokenRouterComponent {
 
     #[derive(Drop, starknet::Event)]
     pub struct SentTransferRemote {
+        #[key]
         pub destination: u32,
+        #[key]
         pub recipient: u256,
         pub amount: u256,
     }
 
     #[derive(Drop, starknet::Event)]
     pub struct ReceivedTransferRemote {
+        #[key]
         pub origin: u32,
+        #[key]
         pub recipient: u256,
         pub amount: u256,
+    }
+
+    pub trait TokenRouterHooksTrait<TContractState> {
+        fn transfer_from_sender_hook(
+            ref self: ComponentState<TContractState>, amount_or_id: u256
+        ) -> Bytes;
+
+        fn transfer_to_hook(
+            ref self: ComponentState<TContractState>,
+            recipient: u256,
+            amount_or_id: u256,
+            metadata: Bytes
+        );
     }
 
     #[embeddable_as(TokenRouterImpl)]
@@ -66,6 +83,7 @@ pub mod TokenRouterComponent {
         +RouterComponent::HasComponent<TContractState>,
         +OwnableComponent::HasComponent<TContractState>,
         +GasRouterComponent::HasComponent<TContractState>,
+        +TokenRouterHooksTrait<TContractState>
     > of super::ITokenRouter<ComponentState<TContractState>> {
         fn transfer_remote(
             ref self: ComponentState<TContractState>,
@@ -107,6 +125,7 @@ pub mod TokenRouterComponent {
         impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
         impl Router: RouterComponent::HasComponent<TContractState>,
         impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
+        impl Hooks: TokenRouterHooksTrait<TContractState>
     > of InternalTrait<TContractState> {
         fn _transfer_remote(
             ref self: ComponentState<TContractState>,
@@ -153,7 +172,7 @@ pub mod TokenRouterComponent {
         fn _transfer_from_sender(
             ref self: ComponentState<TContractState>, amount_or_id: u256
         ) -> Bytes {
-            BytesTrait::new_empty()
+            Hooks::transfer_from_sender_hook(ref self, amount_or_id)
         }
 
         fn _handle(ref self: ComponentState<TContractState>, origin: u32, message: Bytes) {
@@ -171,7 +190,25 @@ pub mod TokenRouterComponent {
             recipient: u256,
             amount_or_id: u256,
             metadata: Bytes
-        ) {}
+        ) {
+            Hooks::transfer_to_hook(ref self, recipient, amount_or_id, metadata);
+        }
     }
 }
 
+pub impl TokenRouterHooksImpl<
+    TContractState
+> of TokenRouterComponent::TokenRouterHooksTrait<TContractState> {
+    fn transfer_from_sender_hook(
+        ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
+    ) -> Bytes {
+        alexandria_bytes::BytesTrait::new_empty()
+    }
+
+    fn transfer_to_hook(
+        ref self: TokenRouterComponent::ComponentState<TContractState>,
+        recipient: u256,
+        amount_or_id: u256,
+        metadata: Bytes
+    ) {}
+}

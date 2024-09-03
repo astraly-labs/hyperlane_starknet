@@ -1,14 +1,17 @@
 #[starknet::contract]
 pub mod HypErc721Collateral {
+    use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::hyp_erc721_collateral_component::{
         HypErc721CollateralComponent
     };
-    use hyperlane_starknet::contracts::token::components::token_router::TokenRouterComponent;
+    use hyperlane_starknet::contracts::token::components::token_router::{
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait
+    };
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc721::interface::IERC721Dispatcher;
+    use openzeppelin::token::erc721::interface::{IERC721Dispatcher, IERC721DispatcherTrait};
     use starknet::ContractAddress;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -49,6 +52,7 @@ pub mod HypErc721Collateral {
 
     #[storage]
     struct Storage {
+        wrapped_token: IERC721Dispatcher,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -84,9 +88,56 @@ pub mod HypErc721Collateral {
     fn constructor(ref self: ContractState, erc721: ContractAddress, mailbox: ContractAddress) {
         self.mailboxclient.initialize(mailbox, Option::None, Option::None);
 
-        self
-            .hyp_erc721_collateral
-            .wrapped_token
-            .write(IERC721Dispatcher { contract_address: erc721 });
+        self.wrapped_token.write(IERC721Dispatcher { contract_address: erc721 });
+    }
+
+    impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
+        fn transfer_from_sender_hook(
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+        ) -> Bytes {
+            let contract_state = TokenRouterComponent::HasComponent::get_contract(@self);
+            contract_state
+                .wrapped_token
+                .read()
+                .transfer_from(
+                    starknet::get_caller_address(), starknet::get_contract_address(), amount_or_id
+                );
+
+            BytesTrait::new_empty()
+        }
+
+        fn transfer_to_hook(
+            ref self: TokenRouterComponent::ComponentState<ContractState>,
+            recipient: u256,
+            amount_or_id: u256,
+            metadata: Bytes
+        ) {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let recipient_felt: felt252 = recipient.try_into().expect('u256 to felt failed');
+            let recipient: ContractAddress = recipient_felt.try_into().unwrap();
+
+            let metadata_array_u128 = metadata.data();
+            let mut metadata_array_felt252: Array<felt252> = array![];
+
+            let len = metadata_array_u128.len();
+            let mut i = 0;
+            while i < len {
+                let metadata_felt252: felt252 = (*metadata_array_u128.at(i))
+                    .try_into()
+                    .expect('u128 to felt failed');
+                metadata_array_felt252.append(metadata_felt252);
+                i = i + 1;
+            };
+
+            contract_state
+                .wrapped_token
+                .read()
+                .safe_transfer_from(
+                    starknet::get_contract_address(),
+                    recipient,
+                    amount_or_id,
+                    metadata_array_felt252.span()
+                );
+        }
     }
 }

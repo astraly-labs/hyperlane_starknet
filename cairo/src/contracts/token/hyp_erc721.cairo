@@ -17,7 +17,7 @@ pub mod HypErc721 {
     use hyperlane_starknet::contracts::token::components::hyp_erc721_component::HypErc721Component;
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
-        TokenRouterComponent, ITokenRouter
+        TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait
     };
     use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::OwnableComponent;
@@ -129,9 +129,7 @@ pub mod HypErc721 {
         fn handle(
             ref self: ContractState, origin: u32, sender: Option<ContractAddress>, message: Bytes
         ) {
-            self
-                .token_router
-                ._handle(origin, message) // this needs to be updated to use local `transfer_to`
+            self.token_router._handle(origin, message)
         }
     }
 
@@ -158,79 +156,31 @@ pub mod HypErc721 {
         }
     }
 
-    #[generate_trait]
-    impl Private of PrivateTrait {
-        fn _transfer_remote(
-            ref self: ContractState,
-            destination: u32,
-            recipient: u256,
-            amount_or_id: u256,
-            value: u256,
-            hook_metadata: Option<Bytes>,
-            hook: Option<ContractAddress>
-        ) -> u256 {
-            let token_metadata = self._transfer_from_sender(amount_or_id);
-            let token_message = TokenMessageTrait::format(recipient, amount_or_id, token_metadata);
-
-            let mut message_id = 0;
-
-            match hook_metadata {
-                Option::Some(hook_metadata) => {
-                    if !hook.is_some() {
-                        panic!("Transfer remote invalid arguments, missing hook");
-                    }
-
-                    message_id = self
-                        .router
-                        ._Router_dispatch(
-                            destination, value, token_message, hook_metadata, hook.unwrap()
-                        );
-                },
-                Option::None => {
-                    let hook_metadata = self.gas_router._Gas_router_hook_metadata(destination);
-                    let hook = self.mailboxclient.get_hook();
-                    message_id = self
-                        .router
-                        ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
-                }
-            }
-
-            self
-                .token_router
-                .emit(
-                    TokenRouterComponent::SentTransferRemote {
-                        destination, recipient, amount: amount_or_id,
-                    }
-                );
-
-            message_id
-        }
-
-        fn _handle(ref self: ContractState, origin: u32, message: Bytes) {
-            let amount = message.amount();
-            let metadata = message.metadata();
-            let recipient = message.recipient();
-
-            self._transfer_to(recipient, amount, metadata);
-
-            self
-                .token_router
-                .emit(TokenRouterComponent::ReceivedTransferRemote { origin, recipient, amount, });
-        }
-
-        fn _transfer_from_sender(ref self: ContractState, amount_or_id: u256) -> Bytes {
-            let token_owner = self.erc721.owner_of(amount_or_id);
+    impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
+        fn transfer_from_sender_hook(
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+        ) -> Bytes {
+            let contract_state = TokenRouterComponent::HasComponent::get_contract(@self);
+            let token_owner = contract_state.erc721.owner_of(amount_or_id);
             assert!(token_owner == starknet::get_caller_address(), "Caller is not owner");
 
-            self.erc721.burn(amount_or_id);
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            contract_state.erc721.burn(amount_or_id);
 
             BytesTrait::new_empty()
         }
 
-        fn _transfer_to(ref self: ContractState, recipient: u256, token_id: u256, calldata: Bytes) {
+        fn transfer_to_hook(
+            ref self: TokenRouterComponent::ComponentState<ContractState>,
+            recipient: u256,
+            amount_or_id: u256,
+            metadata: Bytes
+        ) {
             let recipient_felt: felt252 = recipient.try_into().expect('u256 to felt failed');
             let recipient: ContractAddress = recipient_felt.try_into().unwrap();
-            self.erc721.mint(recipient, token_id);
+
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            contract_state.erc721.mint(recipient, amount_or_id);
         }
     }
 }

@@ -40,34 +40,4 @@ pub mod HypErc721CollateralComponent {
             self.wrapped_token.read().balance_of(account)
         }
     }
-
-    #[generate_trait]
-    impl HypErc721CollateralInternalImpl<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
-    > of InternalTrait<TContractState> {
-        fn transfer_from_sender(ref self: ComponentState<TContractState>, token_id: u256) -> Bytes {
-            self
-                .wrapped_token
-                .read()
-                .transfer_from(
-                    starknet::get_caller_address(), starknet::get_contract_address(), token_id
-                );
-
-            BytesTrait::new_empty()
-        }
-
-        fn transfer_to(
-            ref self: ComponentState<TContractState>,
-            recipient: ContractAddress,
-            token_id: u256,
-            calldata: Array<felt252>
-        ) {
-            self
-                .wrapped_token
-                .read()
-                .safe_transfer_from(
-                    starknet::get_contract_address(), recipient, token_id, calldata.span()
-                );
-        }
-    }
 }

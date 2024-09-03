@@ -33,7 +33,8 @@ pub mod FastTokenRouter {
     };
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl
+        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl,
+        TokenRouterComponent::TokenRouterHooksTrait
     };
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
@@ -51,6 +52,7 @@ pub mod FastTokenRouter {
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
+        impl Hooks: TokenRouterHooksTrait<TContractState>,
         impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
         impl Router: RouterComponent::HasComponent<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>,
@@ -121,6 +123,7 @@ pub mod FastTokenRouter {
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
+        impl Hooks: TokenRouterHooksTrait<TContractState>,
         impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
         impl Router: RouterComponent::HasComponent<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>,

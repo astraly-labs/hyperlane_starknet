@@ -29,7 +29,11 @@ mod contracts {
         pub mod hook;
         pub mod ism;
         pub mod message_recipient;
+        pub mod mock_mailbox;
         pub mod mock_validator_announce;
+        pub mod test_ism;
+        pub mod test_post_dispatch_hook;
+        pub mod test_erc20;
     }
     pub mod token {
         pub mod hyp_erc20;
@@ -105,5 +109,16 @@ mod tests {
     pub mod routing {
         pub mod test_default_fallback_routing_ism;
         pub mod test_domain_routing_ism;
+    }
+    pub mod token {
+        pub mod hyp_erc20 {
+            pub mod common;
+            pub mod hyp_erc20_collateral_test;
+            pub mod hyp_erc20_lockbox_test;
+            pub mod hyp_erc20_test;
+            pub mod hyp_fiat_token_test;
+            pub mod hyp_native_test;
+            pub mod hyp_xerc20_test;
+        }
     }
 }

@@ -8,7 +8,9 @@ pub mod HypErc20 {
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
         hyp_erc20_component::HypErc20Component, token_message::TokenMessageTrait,
-        token_router::{TokenRouterComponent, ITokenRouter}
+        token_router::{
+            TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait
+        }
     };
     use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::OwnableComponent;
@@ -49,12 +51,10 @@ pub mod HypErc20 {
     // HypERC20
     #[abi(embed_v0)]
     impl HypErc20Impl = HypErc20Component::HypeErc20Impl<ContractState>;
-    #[abi(embed_v0)]
-    impl MessageRecipientImpl =
-        HypErc20Component::MessageRecipientImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl TokenRouterImpl = HypErc20Component::TokenRouterImpl<ContractState>;
     impl HypErc20InternalImpl = HypErc20Component::InternalImpl<ContractState>;
+    // TokenRouter
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
@@ -125,6 +125,25 @@ pub mod HypErc20 {
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);
+        }
+    }
+
+    impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
+        fn transfer_from_sender_hook(
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+        ) -> Bytes {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            contract_state.hyp_erc20._transfer_from_sender(amount_or_id)
+        }
+
+        fn transfer_to_hook(
+            ref self: TokenRouterComponent::ComponentState<ContractState>,
+            recipient: u256,
+            amount_or_id: u256,
+            metadata: Bytes
+        ) {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            contract_state.hyp_erc20._transfer_to(recipient, amount_or_id)
         }
     }
 }

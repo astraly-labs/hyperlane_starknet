@@ -2,15 +2,6 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IHypNative<TState> {
-    fn initialize(
-        ref self: TState,
-        hook: ContractAddress,
-        interchain_security_module: ContractAddress,
-        owner: ContractAddress
-    );
-    fn transfer_remote(
-        ref self: TState, destination: u32, recipient: u256, amount: u256, mgs_value: u256
-    ) -> u256;
     // fn balance_of(self: @TState, account: ContractAddress) -> u256;
     fn receive(ref self: TState, amount: u256);
 }
@@ -32,7 +23,7 @@ pub mod HypNativeComponent {
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
         TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl,
-        TokenRouterComponent::TokenRouterHooksTrait
+        TokenRouterComponent::TokenRouterHooksTrait, ITokenRouter
     };
     use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::{
@@ -74,37 +65,66 @@ pub mod HypNativeComponent {
         impl Mailboxclient: MailboxclientComponent::HasComponent<TContractState>,
         impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
     > of super::IHypNative<ComponentState<TContractState>> {
-        fn initialize(
-            ref self: ComponentState<TContractState>,
-            hook: ContractAddress,
-            interchain_security_module: ContractAddress,
-            owner: ContractAddress
-        ) {
-            let mut mailboxclient_comp = get_dep_component_mut!(ref self, Mailboxclient);
-            mailboxclient_comp._MailboxClient_initialize(hook, interchain_security_module, owner);
-        }
-
-        fn transfer_remote(
-            ref self: ComponentState<TContractState>,
-            destination: u32,
-            recipient: u256,
-            amount: u256,
-            mgs_value: u256
-        ) -> u256 {
-            assert!(mgs_value >= amount, "Native: amount exceeds msg.value");
-            let hook_payment = mgs_value - amount;
-
-            let mut token_router_comp = get_dep_component_mut!(ref self, TokenRouter);
-            token_router_comp
-                ._transfer_remote(
-                    destination, recipient, amount, hook_payment, Option::None, Option::None
-                )
-        }
-
         fn receive(ref self: ComponentState<TContractState>, amount: u256) {
             self.eth_token.read().transfer(starknet::get_contract_address(), amount);
 
             self.emit(Donation { sender: starknet::get_caller_address(), amount });
+        }
+    }
+    /// get the overrides for transfers again
+    #[embeddable_as(TokenRouterImpl)]
+    impl TokenRouter<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        impl MailboxClient: MailboxclientComponent::HasComponent<TContractState>,
+        impl Router: RouterComponent::HasComponent<TContractState>,
+        +OwnableComponent::HasComponent<TContractState>,
+        impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
+        impl TokenRouterComp: TokenRouterComponent::HasComponent<TContractState>,
+        impl ERC20: ERC20Component::HasComponent<TContractState>
+    > of ITokenRouter<ComponentState<TContractState>> {
+        fn transfer_remote(
+            ref self: ComponentState<TContractState>,
+            destination: u32,
+            recipient: u256,
+            amount_or_id: u256,
+            value: u256,
+            hook_metadata: Option<Bytes>,
+            hook: Option<ContractAddress>
+        ) -> u256 {
+            assert!(value >= amount_or_id, "Native: amount exceeds msg.value");
+            let hook_payment = value - amount_or_id;
+
+            let mut token_router_comp = get_dep_component_mut!(ref self, TokenRouterComp);
+            token_router_comp
+                .transfer_remote(
+                    destination, recipient, amount_or_id, hook_payment, Option::None, Option::None
+                )
+        }
+    }
+    #[generate_trait]
+    pub impl HypNativeInternalImpl<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        +OwnableComponent::HasComponent<TContractState>,
+        +RouterComponent::HasComponent<TContractState>,
+        +GasRouterComponent::HasComponent<TContractState>,
+        +ERC20Component::HasComponent<TContractState>,
+        impl Mailboxclient: MailboxclientComponent::HasComponent<TContractState>,
+        impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
+    > of InternalTrait<TContractState> {
+        fn _transfer_from_sender(ref self: ComponentState<TContractState>, amount: u256) -> Bytes {
+            BytesTrait::new_empty()
+        }
+
+        fn _transfer_to(ref self: ComponentState<TContractState>, recipient: u256, amount: u256) {
+            let contract_address = starknet::get_contract_address(); // this address or eth address
+            let erc20_dispatcher = IERC20Dispatcher { contract_address };
+            let recipient_felt: felt252 = recipient.try_into().expect('u256 to felt failed');
+            let recipient: ContractAddress = recipient_felt.try_into().unwrap();
+            erc20_dispatcher.transfer(recipient, amount);
         }
     }
 }

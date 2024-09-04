@@ -8,7 +8,7 @@ pub mod HypXERC20 {
 
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
-        TokenRouterComponent, ITokenRouter
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait
     };
     use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
 
@@ -18,6 +18,8 @@ pub mod HypXERC20 {
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::upgrades::interface::IUpgradeable;
+    use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -30,6 +32,8 @@ pub mod HypXERC20 {
         storage: hyp_erc20_collateral,
         event: HypErc20CollateralEvent
     );
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+
 
     // Ownable
     #[abi(embed_v0)]
@@ -54,6 +58,8 @@ pub mod HypXERC20 {
     impl HypErc20CollateralImpl =
         HypErc20CollateralComponent::HypErc20CollateralImpl<ContractState>;
     impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
+    // Upgradeable
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -68,7 +74,9 @@ pub mod HypXERC20 {
         #[substorage(v0)]
         router: RouterComponent::Storage,
         #[substorage(v0)]
-        ownable: OwnableComponent::Storage
+        ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage
     }
 
     #[event]
@@ -86,6 +94,8 @@ pub mod HypXERC20 {
         OwnableEvent: OwnableComponent::Event,
         #[flat]
         TokenRouterEvent: TokenRouterComponent::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event
     }
 
     #[constructor]
@@ -105,84 +115,32 @@ pub mod HypXERC20 {
     }
 
     #[abi(embed_v0)]
-    impl MessageRecipient of IMessageRecipient<ContractState> {
-        fn handle(
-            ref self: ContractState, origin: u32, sender: Option<ContractAddress>, message: Bytes
-        ) {
-            let amount = message.amount();
-            let metadata = message.metadata();
-            let recipient = message.recipient();
-
-            self._transfer_to(recipient, amount, metadata);
-
-            self
-                .token_router
-                .emit(TokenRouterComponent::ReceivedTransferRemote { origin, recipient, amount, });
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
+            self.ownable.assert_only_owner();
+            self.upgradeable.upgrade(new_class_hash);
         }
     }
 
-    #[abi(embed_v0)]
-    impl TokenRouter of ITokenRouter<ContractState> {
-        fn transfer_remote(
-            ref self: ContractState,
-            destination: u32,
-            recipient: u256,
-            amount_or_id: u256,
-            value: u256,
-            hook_metadata: Option<Bytes>,
-            hook: Option<ContractAddress>
-        ) -> u256 {
-            let token_metadata = self._transfer_from_sender(amount_or_id);
-            let token_message = TokenMessageTrait::format(recipient, amount_or_id, token_metadata);
-
-            let mut message_id = 0;
-
-            match hook_metadata {
-                Option::Some(hook_metadata) => {
-                    if !hook.is_some() {
-                        panic!("Transfer remote invalid arguments, missing hook");
-                    }
-
-                    message_id = self
-                        .router
-                        ._Router_dispatch(
-                            destination, value, token_message, hook_metadata, hook.unwrap()
-                        );
-                },
-                Option::None => {
-                    let hook_metadata = self.gas_router._Gas_router_hook_metadata(destination);
-                    let hook = self.mailbox.get_hook();
-                    message_id = self
-                        .router
-                        ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
-                }
-            }
-
-            self
-                .token_router
-                .emit(
-                    TokenRouterComponent::SentTransferRemote {
-                        destination, recipient, amount: amount_or_id,
-                    }
-                );
-
-            message_id
-        }
-    }
-
-    #[generate_trait]
-    impl InternalImpl of InternalTrait {
-        fn _transfer_from_sender(ref self: ContractState, amount_or_id: u256) -> Bytes {
-            let token: IERC20Dispatcher = self.hyp_erc20_collateral.wrapped_token.read();
+    impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
+        fn transfer_from_sender_hook(
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+        ) -> Bytes {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let token: IERC20Dispatcher = contract_state.hyp_erc20_collateral.wrapped_token.read();
             IXERC20Dispatcher { contract_address: token.contract_address }
                 .burn(starknet::get_caller_address(), amount_or_id);
             BytesTrait::new_empty()
         }
 
-        fn _transfer_to(
-            ref self: ContractState, recipient: u256, amount_or_id: u256, metadata: Bytes
+        fn transfer_to_hook(
+            ref self: TokenRouterComponent::ComponentState<ContractState>,
+            recipient: u256,
+            amount_or_id: u256,
+            metadata: Bytes
         ) {
-            let token: IERC20Dispatcher = self.hyp_erc20_collateral.wrapped_token.read();
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let token: IERC20Dispatcher = contract_state.hyp_erc20_collateral.wrapped_token.read();
             IXERC20Dispatcher { contract_address: token.contract_address }
                 .mint(recipient.try_into().unwrap(), amount_or_id);
         }

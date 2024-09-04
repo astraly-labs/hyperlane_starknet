@@ -134,22 +134,6 @@ pub mod HypErc721 {
     }
 
     #[abi(embed_v0)]
-    impl TokenRouter of ITokenRouter<ContractState> {
-        fn transfer_remote(
-            ref self: ContractState,
-            destination: u32,
-            recipient: u256,
-            amount_or_id: u256,
-            value: u256,
-            hook_metadata: Option<Bytes>,
-            hook: Option<ContractAddress>
-        ) -> u256 {
-            self._transfer_remote(destination, recipient, amount_or_id, value, hook_metadata, hook)
-        }
-    }
-
-
-    #[abi(embed_v0)]
     impl HypErc721Upgradeable of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.upgradeable.upgrade(new_class_hash);

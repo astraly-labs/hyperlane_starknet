@@ -25,9 +25,13 @@ pub mod HypNative {
     component!(path: HypNativeComponent, storage: hyp_native, event: HypNativeEvent);
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
 
-    // HypERC721
+
     #[abi(embed_v0)]
     impl HypNativeImpl = HypNativeComponent::HypNativeImpl<ContractState>;
+    #[abi(embed_v0)]
+    impl HypNativeTokenRouterImpl =
+        HypNativeComponent::TokenRouterImpl<ContractState>;
+    impl HypNativeInternalImpl = HypNativeComponent::HypNativeInternalImpl<ContractState>;
 
     // TokenRouter
     impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
@@ -99,7 +103,8 @@ pub mod HypNative {
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
-            BytesTrait::new_empty()
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            contract_state.hyp_native._transfer_from_sender(amount_or_id)
         }
 
         fn transfer_to_hook(
@@ -108,11 +113,8 @@ pub mod HypNative {
             amount_or_id: u256,
             metadata: Bytes
         ) {
-            let contract_address = starknet::get_contract_address();
-            let erc20_dispatcher = IERC20Dispatcher { contract_address };
-            let recipient_felt: felt252 = recipient.try_into().expect('u256 to felt failed');
-            let recipient: ContractAddress = recipient_felt.try_into().unwrap();
-            erc20_dispatcher.transfer(recipient, amount_or_id);
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            contract_state.hyp_native._transfer_to(recipient, amount_or_id);
         }
     }
 }

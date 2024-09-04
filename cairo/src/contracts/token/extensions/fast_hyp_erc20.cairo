@@ -192,7 +192,7 @@ pub mod FastHypERC20 {
     // TODO: turn thtis into implementation of messagereceivertrait
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn handle(ref self: ContractState, origin: u32, message: Bytes) {
+        fn _handle(ref self: ContractState, origin: u32, message: Bytes) {
             self.fast_token_router._handle(origin, message);
         }
     }

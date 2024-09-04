@@ -27,12 +27,12 @@ pub mod HypErc20CollateralComponent {
     use hyperlane_starknet::utils::utils::{U256TryIntoContractAddress};
 
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::token::erc20::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use starknet::ContractAddress;
 
     #[storage]
     struct Storage {
-        wrapped_token: IERC20Dispatcher
+        wrapped_token: ERC20ABIDispatcher
     }
 
     #[embeddable_as(HypErc20CollateralImpl)]
@@ -63,7 +63,7 @@ pub mod HypErc20CollateralComponent {
         +TokenRouterComponent::HasComponent<TContractState>
     > of InternalTrait<TContractState> {
         fn initialize(ref self: ComponentState<TContractState>, wrapped_token: ContractAddress,) {
-            self.wrapped_token.write(IERC20Dispatcher { contract_address: wrapped_token });
+            self.wrapped_token.write(ERC20ABIDispatcher { contract_address: wrapped_token });
         }
 
         fn _transfer_from_sender(ref self: ComponentState<TContractState>, amount: u256) -> Bytes {

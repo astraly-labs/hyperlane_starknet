@@ -1,10 +1,3 @@
-// #[starknet::interface]
-// pub trait IHypNativeScaled<TState> {
-//     fn initialize(ref self: TState);
-//     fn transfer_remote(self: @TState, destination: u32, recipient: u256, amount: u256) -> u256;
-//     fn balance_of(self: @TState, account: u256) -> u256;
-// }
-
 #[starknet::contract]
 pub mod HypNativeScaled {
     use alexandria_bytes::{Bytes, BytesTrait};
@@ -21,7 +14,8 @@ pub mod HypNativeScaled {
     use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{
-        interface::{IERC20Dispatcher, IERC20DispatcherTrait}, ERC20Component, ERC20HooksEmptyImpl
+        interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait}, ERC20Component,
+        ERC20HooksEmptyImpl
     };
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
@@ -65,7 +59,7 @@ pub mod HypNativeScaled {
     impl MailboxClientInternalImpl =
         MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
     // TokenRouter
-    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
@@ -128,19 +122,9 @@ pub mod HypNativeScaled {
         }
     }
     #[embeddable_as(TokenRouterImpl)]
-    impl TokenRouter<
-        TContractState,
-        +HasComponent<TContractState>,
-        +Drop<TContractState>,
-        impl MailboxClient: MailboxclientComponent::HasComponent<TContractState>,
-        impl Router: RouterComponent::HasComponent<TContractState>,
-        +OwnableComponent::HasComponent<TContractState>,
-        impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
-        impl TokenRouterComp: TokenRouterComponent::HasComponent<TContractState>,
-        impl ERC20: ERC20Component::HasComponent<TContractState>
-    > of ITokenRouter<ComponentState<TContractState>> {
+    impl TokenRouter of ITokenRouter<ContractState> {
         fn transfer_remote(
-            ref self: ComponentState<TContractState>,
+            ref self: ContractState,
             destination: u32,
             recipient: u256,
             amount_or_id: u256,
@@ -148,8 +132,8 @@ pub mod HypNativeScaled {
             hook_metadata: Option<Bytes>,
             hook: Option<ContractAddress>
         ) -> u256 {
-            let hook_payment = value - amount;
-            let scaled_amount = amount / self.scale.read();
+            let hook_payment = value - amount_or_id;
+            let scaled_amount = amount_or_id / self.scale.read();
             self
                 .token_router
                 ._transfer_remote(

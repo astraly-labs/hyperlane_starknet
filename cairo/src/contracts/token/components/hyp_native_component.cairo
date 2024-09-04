@@ -30,14 +30,14 @@ pub mod HypNativeComponent {
         OwnableComponent, OwnableComponent::InternalImpl, OwnableComponent::OwnableImpl
     };
     use openzeppelin::token::erc20::{
-        interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait}, ERC20Component
+        interface::{IERC20, ERC20ABIDispatcher, ERC20ABIDispatcherTrait}, ERC20Component
     };
     use starknet::ContractAddress;
 
 
     #[storage]
     struct Storage {
-        eth_token: IERC20Dispatcher,
+        eth_token: ERC20ABIDispatcher,
     }
 
     #[event]
@@ -121,7 +121,7 @@ pub mod HypNativeComponent {
 
         fn _transfer_to(ref self: ComponentState<TContractState>, recipient: u256, amount: u256) {
             let contract_address = starknet::get_contract_address(); // this address or eth address
-            let erc20_dispatcher = IERC20Dispatcher { contract_address };
+            let erc20_dispatcher = ERC20ABIDispatcher { contract_address };
             let recipient_felt: felt252 = recipient.try_into().expect('u256 to felt failed');
             let recipient: ContractAddress = recipient_felt.try_into().unwrap();
             erc20_dispatcher.transfer(recipient, amount);

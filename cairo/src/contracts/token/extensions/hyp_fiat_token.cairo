@@ -15,7 +15,7 @@ pub mod HypFiatToken {
     use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
@@ -125,7 +125,7 @@ pub mod HypFiatToken {
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let metadata = contract_state.collateral._transfer_from_sender(amount_or_id);
-            let token: IERC20Dispatcher = contract_state.collateral.wrapped_token.read();
+            let token: ERC20ABIDispatcher = contract_state.collateral.wrapped_token.read();
             IFiatTokenDispatcher { contract_address: token.contract_address }.burn(amount_or_id);
             metadata
         }
@@ -137,7 +137,7 @@ pub mod HypFiatToken {
             metadata: Bytes
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            let token: IERC20Dispatcher = contract_state.collateral.wrapped_token.read();
+            let token: ERC20ABIDispatcher = contract_state.collateral.wrapped_token.read();
             assert!(
                 IFiatTokenDispatcher { contract_address: token.contract_address }
                     .mint(

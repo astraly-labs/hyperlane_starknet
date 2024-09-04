@@ -24,7 +24,9 @@ pub mod HypXERC20Lockbox {
     };
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::token::erc20::interface::{
+        IERC20, ERC20ABIDispatcher, ERC20ABIDispatcherTrait
+    };
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
@@ -134,7 +136,7 @@ pub mod HypXERC20Lockbox {
                 "erc20 lockbox approve failed"
             );
             assert!(
-                IERC20Dispatcher { contract_address: self.xerc20.read().contract_address }
+                ERC20ABIDispatcher { contract_address: self.xerc20.read().contract_address }
                     .approve(lockbox_address, BoundedInt::max()),
                 "xerc20 lockbox approve failed"
             );

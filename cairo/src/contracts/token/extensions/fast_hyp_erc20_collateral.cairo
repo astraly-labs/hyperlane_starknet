@@ -19,7 +19,7 @@ pub mod FastHypERC20Collateral {
     };
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
@@ -147,7 +147,7 @@ pub mod FastHypERC20Collateral {
             contract_state.collateral._transfer_from_sender(amount_or_id)
         }
 
-        // should this override this interface or be seperate function. has extra origin parameter
+        // should this override this interface or be seperate function. has extra origin parameter 
         fn transfer_to_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
@@ -198,7 +198,7 @@ pub mod FastHypERC20Collateral {
     // TODO: This should override the _handle at Router
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn handle(ref self: ContractState, origin: u32, message: Bytes) {
+        fn _handle(ref self: ContractState, origin: u32, message: Bytes) {
             self.fast_token_router._handle(origin, message);
         }
     }

@@ -21,7 +21,7 @@ pub mod HypErc20Component {
     };
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl, ITokenRouter
+        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl
     };
     use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use hyperlane_starknet::interfaces::IMailboxClient;

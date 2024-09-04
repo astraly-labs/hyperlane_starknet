@@ -17,7 +17,9 @@ pub mod HypXERC20 {
     };
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::token::erc20::interface::{
+        IERC20, ERC20ABIDispatcher, ERC20ABIDispatcherTrait
+    };
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
@@ -127,7 +129,10 @@ pub mod HypXERC20 {
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            let token: IERC20Dispatcher = contract_state.hyp_erc20_collateral.wrapped_token.read();
+            let token: ERC20ABIDispatcher = contract_state
+                .hyp_erc20_collateral
+                .wrapped_token
+                .read();
             IXERC20Dispatcher { contract_address: token.contract_address }
                 .burn(starknet::get_caller_address(), amount_or_id);
             BytesTrait::new_empty()
@@ -140,7 +145,10 @@ pub mod HypXERC20 {
             metadata: Bytes
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            let token: IERC20Dispatcher = contract_state.hyp_erc20_collateral.wrapped_token.read();
+            let token: ERC20ABIDispatcher = contract_state
+                .hyp_erc20_collateral
+                .wrapped_token
+                .read();
             IXERC20Dispatcher { contract_address: token.contract_address }
                 .mint(recipient.try_into().unwrap(), amount_or_id);
         }

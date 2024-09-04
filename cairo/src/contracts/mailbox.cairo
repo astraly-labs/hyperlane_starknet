@@ -29,9 +29,9 @@ pub mod mailbox {
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
     #[derive(Drop, Serde, starknet::Store)]
-    struct Delivery {
-        processor: ContractAddress,
-        block_number: u64,
+    pub struct Delivery {
+        pub processor: ContractAddress,
+        pub block_number: u64,
     }
 
 
@@ -114,7 +114,7 @@ pub mod mailbox {
     }
 
 
-    mod Errors {
+    pub mod Errors {
         pub const WRONG_HYPERLANE_VERSION: felt252 = 'Wrong hyperlane version';
         pub const UNEXPECTED_DESTINATION: felt252 = 'Unexpected destination';
         pub const ALREADY_DELIVERED: felt252 = 'Mailbox: already delivered';

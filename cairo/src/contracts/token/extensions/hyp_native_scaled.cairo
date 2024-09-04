@@ -1,9 +1,9 @@
-#[starknet::interface]
-pub trait IHypNativeScaled<TState> {
-    fn transfer_remote(
-        ref self: TState, destination: u32, recipient: u256, amount: u256, msg_value: u256
-    ) -> u256;
-}
+// #[starknet::interface]
+// pub trait IHypNativeScaled<TState> {
+//     fn initialize(ref self: TState);
+//     fn transfer_remote(self: @TState, destination: u32, recipient: u256, amount: u256) -> u256;
+//     fn balance_of(self: @TState, account: u256) -> u256;
+// }
 
 #[starknet::contract]
 pub mod HypNativeScaled {
@@ -127,7 +127,36 @@ pub mod HypNativeScaled {
             self.upgradeable.upgrade(new_class_hash);
         }
     }
-
+    #[embeddable_as(TokenRouterImpl)]
+    impl TokenRouter<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        impl MailboxClient: MailboxclientComponent::HasComponent<TContractState>,
+        impl Router: RouterComponent::HasComponent<TContractState>,
+        +OwnableComponent::HasComponent<TContractState>,
+        impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
+        impl TokenRouterComp: TokenRouterComponent::HasComponent<TContractState>,
+        impl ERC20: ERC20Component::HasComponent<TContractState>
+    > of ITokenRouter<ComponentState<TContractState>> {
+        fn transfer_remote(
+            ref self: ComponentState<TContractState>,
+            destination: u32,
+            recipient: u256,
+            amount_or_id: u256,
+            value: u256,
+            hook_metadata: Option<Bytes>,
+            hook: Option<ContractAddress>
+        ) -> u256 {
+            let hook_payment = value - amount;
+            let scaled_amount = amount / self.scale.read();
+            self
+                .token_router
+                ._transfer_remote(
+                    destination, recipient, scaled_amount, hook_payment, Option::None, Option::None
+                )
+        }
+    }
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256

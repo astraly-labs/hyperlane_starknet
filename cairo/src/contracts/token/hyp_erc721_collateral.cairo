@@ -11,7 +11,7 @@ pub mod HypErc721Collateral {
         TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait
     };
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc721::interface::{IERC721Dispatcher, IERC721DispatcherTrait};
+    use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait,};
     use starknet::ContractAddress;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -52,7 +52,7 @@ pub mod HypErc721Collateral {
 
     #[storage]
     struct Storage {
-        wrapped_token: IERC721Dispatcher,
+        wrapped_token: ERC721ABIDispatcher,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -88,7 +88,7 @@ pub mod HypErc721Collateral {
     fn constructor(ref self: ContractState, erc721: ContractAddress, mailbox: ContractAddress) {
         self.mailboxclient.initialize(mailbox, Option::None, Option::None);
 
-        self.wrapped_token.write(IERC721Dispatcher { contract_address: erc721 });
+        self.wrapped_token.write(ERC721ABIDispatcher { contract_address: erc721 });
     }
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {

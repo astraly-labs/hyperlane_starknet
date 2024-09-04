@@ -16,12 +16,12 @@ pub mod HypErc721CollateralComponent {
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalImpl, OwnableComponent::OwnableImpl
     };
-    use openzeppelin::token::erc721::interface::{IERC721Dispatcher, IERC721DispatcherTrait};
+    use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait};
     use starknet::ContractAddress;
 
     #[storage]
     struct Storage {
-        wrapped_token: IERC721Dispatcher,
+        wrapped_token: ERC721ABIDispatcher,
     }
 
     #[embeddable_as(HypErc721CollateralImpl)]

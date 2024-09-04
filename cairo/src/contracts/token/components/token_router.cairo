@@ -196,7 +196,7 @@ pub mod TokenRouterComponent {
     }
 }
 
-pub impl TokenRouterHooksImpl<
+pub impl TokenRouterEmptyHooksImpl<
     TContractState
 > of TokenRouterComponent::TokenRouterHooksTrait<TContractState> {
     fn transfer_from_sender_hook(

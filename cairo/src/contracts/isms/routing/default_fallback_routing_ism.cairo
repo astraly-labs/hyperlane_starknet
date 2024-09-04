@@ -61,7 +61,7 @@ pub mod default_fallback_routing_ism {
     #[constructor]
     fn constructor(ref self: ContractState, _owner: ContractAddress, _mailbox: ContractAddress) {
         self.ownable.initializer(_owner);
-        self.mailboxclient.initialize(_mailbox);
+        self.mailboxclient.initialize(_mailbox, Option::None, Option::None);
     }
 
     #[abi(embed_v0)]

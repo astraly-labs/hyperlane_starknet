@@ -54,6 +54,11 @@ pub mod HypERC721URICollateral {
     #[abi(embed_v0)]
     impl MailboxClientImpl =
         MailboxclientComponent::MailboxClientImpl<ContractState>;
+    impl MailboxClientInternalImpl =
+        MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
+    // Ownable
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
 
     #[storage]
@@ -92,8 +97,14 @@ pub mod HypERC721URICollateral {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, erc721: ContractAddress, mailbox: ContractAddress) {
-        self.token_router.initialize(mailbox);
+    fn constructor(
+        ref self: ContractState,
+        erc721: ContractAddress,
+        mailbox: ContractAddress,
+        owner: ContractAddress
+    ) {
+        self.ownable.initializer(owner);
+        self.mailboxclient.initialize(mailbox, Option::None, Option::None);
 
         self
             .hyp_erc721_collateral

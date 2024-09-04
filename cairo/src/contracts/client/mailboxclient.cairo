@@ -16,6 +16,10 @@ mod mailboxClientProxy {
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
+    #[abi(embed_v0)]
+    impl MailboxclientImpl =
+        MailboxclientComponent::MailboxClientImpl<ContractState>;
+
     #[storage]
     struct Storage {
         #[substorage(v0)]
@@ -27,11 +31,18 @@ mod mailboxClientProxy {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _mailbox: ContractAddress, _owner: ContractAddress,) {
-        self.mailboxclient.initialize(_mailbox);
+    fn constructor(
+        ref self: ContractState,
+        _mailbox: ContractAddress,
+        _owner: ContractAddress,
+        _hook: ContractAddress,
+        _interchain_security_module: ContractAddress
+    ) {
         self.ownable.initializer(_owner);
+        self
+            .mailboxclient
+            .initialize(_mailbox, Option::Some(_hook), Option::Some(_interchain_security_module));
     }
-
 
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -56,7 +67,4 @@ mod mailboxClientProxy {
             self.upgradeable.upgrade(new_class_hash);
         }
     }
-    #[abi(embed_v0)]
-    impl MailboxclientImpl =
-        MailboxclientComponent::MailboxClientImpl<ContractState>;
 }

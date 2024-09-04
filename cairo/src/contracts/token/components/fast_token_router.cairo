@@ -17,9 +17,9 @@ pub trait IFastTokenRouter<TState> {
         value: u256
     ) -> u256;
 }
-
+// TODO: Implement hooks logic to have virtual functions 
 #[starknet::component]
-pub mod FastTokenRouter {
+pub mod FastTokenRouterComponent {
     use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::client::gas_router_component::{
         GasRouterComponent, GasRouterComponent::GasRouterInternalImpl
@@ -36,6 +36,7 @@ pub mod FastTokenRouter {
         TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl,
         TokenRouterComponent::TokenRouterHooksTrait
     };
+    use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
     };
@@ -47,12 +48,22 @@ pub mod FastTokenRouter {
         filled_fast_transfers: LegacyMap<u256, ContractAddress>,
     }
 
+    pub trait FastTokenRouterHooksTrait<TContractState> {
+        fn fast_transfer_to_hook(
+            ref self: ComponentState<TContractState>, recipient: u256, amount: u256
+        );
+        fn fast_receive_from_hook(
+            ref self: ComponentState<TContractState>, sender: ContractAddress, amount: u256
+        );
+    }
+
     #[embeddable_as(FastTokenRouterImpl)]
     impl FastTokenRouter<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         +TokenRouterHooksTrait<TContractState>,
+        impl FTRHooks: FastTokenRouterHooksTrait<TContractState>,
         impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
         impl Router: RouterComponent::HasComponent<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>,
@@ -80,8 +91,8 @@ pub mod FastTokenRouter {
             let caller = starknet::get_caller_address();
             self.filled_fast_transfers.write(filled_fast_transfer_key, caller);
 
-            self._fast_recieve_from(caller, amount - fast_fee);
-            self._fast_transfer_to(recipient, amount - fast_fee);
+            FTRHooks::fast_receive_from_hook(ref self, caller, amount - fast_fee);
+            FTRHooks::fast_transfer_to_hook(ref self, recipient, amount - fast_fee);
         }
 
         fn fast_transfer_remote(
@@ -119,22 +130,19 @@ pub mod FastTokenRouter {
     }
 
     #[generate_trait]
-    impl InternalImpl<
+    pub impl InternalImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         +TokenRouterHooksTrait<TContractState>,
+        impl FTRHooks: FastTokenRouterHooksTrait<TContractState>,
         impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
         impl Router: RouterComponent::HasComponent<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>,
         impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
         impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
-        fn initialize(ref self: ComponentState<TContractState>, mailbox: ContractAddress) {
-            let mut token_router_comp = get_dep_component_mut!(ref self, TokenRouter);
-            token_router_comp.initialize(mailbox);
-        }
-
+        // all needs to support override
         fn _handle(ref self: ComponentState<TContractState>, origin: u32, message: Bytes) {
             let mut token_router_comp = get_dep_component_mut!(ref self, TokenRouter);
 
@@ -157,16 +165,8 @@ pub mod FastTokenRouter {
         ) {
             let token_recipient = self._get_token_recipient(recipient, amount, origin, metadata);
 
-            self._fast_transfer_to(token_recipient, amount);
+            FTRHooks::fast_transfer_to_hook(ref self, token_recipient, amount);
         }
-
-        fn _fast_transfer_to(
-            ref self: ComponentState<TContractState>, recipient: u256, amount: u256
-        ) {}
-
-        fn _fast_recieve_from(
-            ref self: ComponentState<TContractState>, sender: ContractAddress, amount: u256
-        ) {}
 
         fn _get_token_recipient(
             self: @ComponentState<TContractState>,
@@ -222,10 +222,26 @@ pub mod FastTokenRouter {
             fast_fee: u256,
             fast_transfer_id: u256
         ) -> Bytes {
-            self._fast_recieve_from(starknet::get_caller_address(), amount);
+            FTRHooks::fast_receive_from_hook(ref self, starknet::get_caller_address(), amount);
             BytesTrait::new(
                 4, array![fast_fee.low, fast_fee.high, fast_transfer_id.low, fast_transfer_id.high]
             )
         }
     }
+}
+
+
+pub impl FastTokenRouterHooksImpl<
+    TContractState
+> of FastTokenRouterComponent::FastTokenRouterHooksTrait<TContractState> {
+    fn fast_transfer_to_hook(
+        ref self: FastTokenRouterComponent::ComponentState<TContractState>,
+        recipient: u256,
+        amount: u256
+    ) {}
+    fn fast_receive_from_hook(
+        ref self: FastTokenRouterComponent::ComponentState<TContractState>,
+        sender: starknet::ContractAddress,
+        amount: u256
+    ) {}
 }

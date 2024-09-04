@@ -2,15 +2,7 @@ use starknet::{ContractAddress, ClassHash};
 
 #[starknet::interface]
 pub trait IHypErc721<TState> {
-    fn initialize(
-        ref self: TState,
-        mint_amount: u256,
-        name: ByteArray,
-        symbol: ByteArray,
-        hook: ContractAddress,
-        interchain_security_module: ContractAddress,
-        owner: ContractAddress
-    );
+    fn initialize(ref self: TState, mint_amount: u256, name: ByteArray, symbol: ByteArray,);
 }
 
 #[starknet::component]
@@ -52,12 +44,7 @@ pub mod HypErc721Component {
             mint_amount: u256,
             name: ByteArray,
             symbol: ByteArray,
-            hook: ContractAddress,
-            interchain_security_module: ContractAddress,
-            owner: ContractAddress
         ) {
-            let mut mailboxclient_comp = get_dep_component_mut!(ref self, Mailboxclient);
-            mailboxclient_comp._MailboxClient_initialize(hook, interchain_security_module, owner);
             let mut erc721_comp = get_dep_component_mut!(ref self, ERC721);
             erc721_comp.initializer(name, symbol, "");
 

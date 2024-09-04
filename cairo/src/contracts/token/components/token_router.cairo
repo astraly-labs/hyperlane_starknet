@@ -1,4 +1,4 @@
-use alexandria_bytes::Bytes;
+use alexandria_bytes::{Bytes, BytesTrait};
 use starknet::ContractAddress;
 
 #[starknet::interface]
@@ -127,11 +127,6 @@ pub mod TokenRouterComponent {
         impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
         impl Hooks: TokenRouterHooksTrait<TContractState>
     > of InternalTrait<TContractState> {
-        fn initialize(ref self: ComponentState<TContractState>, mailbox: ContractAddress) {
-            let mut gas_router_comp = get_dep_component_mut!(ref self, GasRouter);
-            gas_router_comp.initialize(mailbox);
-        }
-
         fn _transfer_remote(
             ref self: ComponentState<TContractState>,
             destination: u32,

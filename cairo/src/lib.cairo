@@ -4,6 +4,7 @@ mod contracts {
     pub mod libs {
         pub mod aggregation_ism_metadata;
         pub mod checkpoint_lib;
+        pub mod enumerable_map;
         pub mod message;
         pub mod multisig {
             pub mod merkleroot_ism_metadata;
@@ -24,6 +25,7 @@ mod contracts {
         pub mod router_component;
     }
     pub mod mocks {
+        pub mod enumerable_map_holder;
         pub mod fee_hook;
         pub mod fee_token;
         pub mod hook;
@@ -60,6 +62,8 @@ mod contracts {
         }
         pub mod components {
             pub mod fast_token_router;
+            pub mod hyp_erc20_collateral_component;
+            pub mod hyp_erc20_component;
             pub mod hyp_erc721_collateral_component;
             pub mod hyp_erc721_component;
             pub mod hyp_native_component;
@@ -120,5 +124,8 @@ mod tests {
             pub mod hyp_native_test;
             pub mod hyp_xerc20_test;
         }
+    }
+    pub mod libs {
+        pub mod test_enumerable_map;
     }
 }

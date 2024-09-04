@@ -25,7 +25,7 @@ pub mod HypErc721 {
     use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::ContractAddress;
-
+    // also needs {https://github.com/OpenZeppelin/cairo-contracts/blob/main/packages/token/src/erc721/extensions/erc721_enumerable/erc721_enumerable.cairo}
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(path: HypErc721Component, storage: hyp_erc721, event: HypErc721Event);
@@ -65,6 +65,8 @@ pub mod HypErc721 {
     #[abi(embed_v0)]
     impl MailboxClientImpl =
         MailboxclientComponent::MailboxClientImpl<ContractState>;
+    impl MailboxClientInternalImpl =
+        MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -111,8 +113,15 @@ pub mod HypErc721 {
         GasRouterEvent: GasRouterComponent::Event
     }
 
-    fn constructor(ref self: ContractState, mailbox: ContractAddress) {
-        self.token_router.initialize(mailbox);
+    fn constructor(
+        ref self: ContractState,
+        mailbox: ContractAddress,
+        name: ByteArray,
+        symbol: ByteArray,
+        mint_amount: u256
+    ) {
+        self.mailboxclient.initialize(mailbox, Option::None, Option::None);
+        self.hyp_erc721.initialize(mint_amount, name, symbol);
     }
 
     #[abi(embed_v0)]

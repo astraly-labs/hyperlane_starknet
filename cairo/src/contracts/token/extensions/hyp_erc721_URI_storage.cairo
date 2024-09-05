@@ -8,18 +8,97 @@ pub trait IHypERC721URIStorage<TState> {
 
 #[starknet::contract]
 pub mod HypERC721URIStorage {
+    use openzeppelin::access::ownable::OwnableComponent;
+    use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
+    use hyperlane_starknet::contracts::client::router_component::RouterComponent;
+    use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
+    use hyperlane_starknet::contracts::token::components::token_router::TokenRouterComponent;
+    use hyperlane_starknet::contracts::token::components::hyp_erc721_component::HypErc721Component;
+    use openzeppelin::token::erc721::{ERC721Component. ERC721HooksEmptyImpl};
+    use starknet::ContractAddress;
+
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
+    component!(path: RouterComponent, storage: router, event: RouterEvent);
+    component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
+    component!(path: TokenRouterComponent, storage: token_router, event: TokenRouterComponent);
+    component!(path: HypErc721Component, storage: hyp_erc721, event: HypErc721Event);
+
+    // Ownable
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
+    // MailboxClient
+    #[abi(embed_v0)]
+    impl MailboxClientImpl = MailboxclientComponent::MailboxClientImpl<ContractState>;
+    impl MailboxClientInternalImpl = MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
+
+    //Router
+    #[abi(embed_v0)]
+    impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
+
+    // GasRouter
+    #[abi(embed_v0)]
+    impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
+
+    // TokenRouter
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
+    impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
+
+    //HypERC721
+
+    impl HypErc721Impl = HypErc721Component::HypErc721Impl<ContractState>;
+    impl HypErc721InternalImpl = HypErc721Component::HypErc721Impl
+
     #[storage]
     struct Storage {
-        mailbox: u256,
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        mailboxclient: MailboxclientComponent::Storage,
+        #[substorage(v0)]
+        router: RouterComponent::Storage,
+        #[substorage(v0)]
+        gas_router: GasRouterComponent::Storage,
+        #[substorage(v0)]
+        token_router: TokenRouterComponent::Storage,
+        #[substorage(v0)]
+        hyp_erc721: HypErc721Component::Storage
     }
 
-    fn constructor() {}
+    #[constructor]
+    fn constructor(
+        ref self: COntractState,
+        owner: COntractAddress
+    ) {
+        self.ownable._transfer_ownership(owner)
+        self.mailboxclient.initialize(maiblox, Option::None, Option::None);
+    }
 
     impl HypERC721URIStorageImpl of super::IHypERC721URIStorage<ContractState> {
-        fn initialize(ref self: ContractState) {}
+        fn initialize(
+            ref self: ContractState,
+            _mint_amount: u256,
+            _name: ByteArray,
+            _symbol: ByteArray,
+            _hook: ContractAddress,
+            _interchainSecurityModule: ContractAddress,
+            owner: ContractAddress
+        ) {
+            self.ownable.initializer(owner);
+            let mailbox = self.mailboxclient.mailbox.read();
+            self.mailboxclient.initialize(mailbox, Option::<_hook>, Option::<_interchainSecurityModule>);
+            self.hyp_erc721.initialize(
+                _mint_amount,
+                _name,
+                _symbol
+            );
+        }
 
-        fn balance_of(self: @ContractState, account: u256) -> u256 {
-            0
+        fn balance_of(self: @ContractState, account: ContractAddress) -> u256 {
+            
         }
 
         fn token_uri(self: @ContractState, token_id: u256) -> u256 {

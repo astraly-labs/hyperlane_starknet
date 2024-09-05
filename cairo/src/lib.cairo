@@ -33,9 +33,9 @@ mod contracts {
         pub mod message_recipient;
         pub mod mock_mailbox;
         pub mod mock_validator_announce;
+        pub mod test_erc20;
         pub mod test_ism;
         pub mod test_post_dispatch_hook;
-        pub mod test_erc20;
     }
     pub mod token {
         pub mod hyp_erc20;

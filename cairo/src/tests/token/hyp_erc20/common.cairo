@@ -43,11 +43,13 @@ pub fn setup() {
         .unwrap();
 
     let contract = declare("TestERC20").unwrap();
-    let calldata: Array<felt252> = array![TOTAL_SUPPLY.low.into(), TOTAL_SUPPLY.high.into(), DECIMALS.into(),];
+    let calldata: Array<felt252> = array![
+        TOTAL_SUPPLY.low.into(), TOTAL_SUPPLY.high.into(), DECIMALS.into(),
+    ];
     let (primary_token, _) = contract.deploy(@calldata).unwrap();
 
     let contract = declare("TestPostDispatchHook").unwrap();
-    // let (post_dispatch_hook, _) = contract.deploy(@array![]).unwrap();
+// let (post_dispatch_hook, _) = contract.deploy(@array![]).unwrap();
 }
 
 #[test]

@@ -48,10 +48,8 @@ pub mod TestInterchainGasPayment {
     #[generate_trait]
     impl Private of PrivateTrait {
         fn initialize(
-            ref self: ContractState,
-            owner: ContractAddress,
-            beneficiary: ContractAddress,
-        )  {
+            ref self: ContractState, owner: ContractAddress, beneficiary: ContractAddress,
+        ) {
             self.gas_price.write(10);
             self.beneficiary.write(beneficiary);
             self.ownable.initializer(owner);

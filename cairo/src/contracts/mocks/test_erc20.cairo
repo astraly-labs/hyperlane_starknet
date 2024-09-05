@@ -4,6 +4,7 @@ pub trait ITestERC20<TContractState> {
     fn _mint(ref self: TContractState, amount: u256);
     fn mint_to(ref self: TContractState, to: starknet::ContractAddress, amount: u256);
     fn burn_from(ref self: TContractState, from: starknet::ContractAddress, amount: u256);
+    fn approve(ref self: TContractState, spender: starknet::ContractAddress, amount: u256);
 }
 
 #[starknet::contract]
@@ -12,6 +13,7 @@ pub mod TestERC20 {
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
 
+    impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
     impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
 
     #[storage]
@@ -50,6 +52,10 @@ pub mod TestERC20 {
 
         fn burn_from(ref self: ContractState, from: starknet::ContractAddress, amount: u256) {
             self.erc20.burn(from, amount);
+        }
+
+        fn approve(ref self: ContractState, spender: starknet::ContractAddress, amount: u256) {
+            self.erc20.approve(spender, amount);
         }
     }
 }

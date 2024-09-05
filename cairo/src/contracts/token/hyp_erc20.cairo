@@ -55,6 +55,7 @@ pub mod HypErc20 {
     // TokenRouter
     #[abi(embed_v0)]
     impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
+    impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
@@ -118,6 +119,15 @@ pub mod HypErc20 {
         self.hyp_erc20.initialize(decimals);
         self.erc20.initializer(name, symbol);
         self.erc20.mint(starknet::get_caller_address(), total_supply);
+    }
+
+    #[abi(embed_v0)]
+    impl MessageRecipient of IMessageRecipient<ContractState> {
+        fn handle(
+            ref self: ContractState, origin: u32, sender: Option<ContractAddress>, message: Bytes
+        ) {
+            self.token_router._handle(origin, message)
+        }
     }
 
     #[abi(embed_v0)]

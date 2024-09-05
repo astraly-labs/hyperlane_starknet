@@ -16,6 +16,9 @@ pub trait IMockMailbox<TContractState> {
     ) -> u256;
     fn add_inbound_message(ref self: TContractState, message: Message);
     fn process_next_inbound_message(ref self: TContractState);
+    fn get_local_domain(self: @TContractState) -> u32;
+    fn set_default_hook(ref self: TContractState, _hook: ContractAddress);
+    fn set_required_hook(ref self: TContractState, _hook: ContractAddress);
 }
 
 #[starknet::contract]
@@ -23,7 +26,7 @@ pub mod MockMailbox {
     use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use hyperlane_starknet::contracts::mailbox::mailbox::{Errors, Delivery,};
-    use hyperlane_starknet::contracts::mocks::test_post_dispatch_hook::IPostDispatchHookMockDispatcher;
+    use hyperlane_starknet::contracts::mocks::test_post_dispatch_hook::ITestPostDispatchHookDispatcher;
     use hyperlane_starknet::interfaces::{
         IMailboxDispatcher, IMailboxDispatcherTrait, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, IPostDispatchHookDispatcher,
@@ -156,6 +159,22 @@ pub mod MockMailbox {
             IMailboxDispatcher { contract_address: starknet::get_contract_address() }
                 .process(BytesTrait::new_empty(), message);
             self.inbound_processed_nonce.write(self.inbound_processed_nonce.read() + 1);
+        }
+
+        fn get_local_domain(self: @ContractState) -> u32 {
+            self.local_domain.read()
+        }
+
+        fn set_default_hook(ref self: ContractState, _hook: ContractAddress) {
+            self.ownable.assert_only_owner();
+            self.default_hook.write(_hook);
+            // self.emit(DefaultHookSet { hook: _hook });
+        }
+
+        fn set_required_hook(ref self: ContractState, _hook: ContractAddress) {
+            self.ownable.assert_only_owner();
+            self.required_hook.write(_hook);
+            // self.emit(RequiredHookSet { hook: _hook });
         }
     }
 

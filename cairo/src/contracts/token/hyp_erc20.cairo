@@ -102,9 +102,9 @@ pub mod HypErc20 {
     #[constructor]
     fn constructor(
         ref self: ContractState,
+        total_supply: u256,
         decimals: u8,
         mailbox: ContractAddress,
-        total_supply: u256,
         name: ByteArray,
         symbol: ByteArray,
         hook: ContractAddress,

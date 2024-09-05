@@ -1,7 +1,7 @@
 use alexandria_bytes::Bytes;
 
 #[starknet::interface]
-pub trait IPostDispatchHookMock<TContractState> {
+pub trait ITestPostDispatchHook<TContractState> {
     fn hook_type(self: @TContractState) -> u8;
     fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
     fn set_fee(ref self: TContractState, fee: u256);
@@ -19,11 +19,8 @@ pub mod TestPostDispatchHook {
         message_dispatched: LegacyMap<u256, bool>,
     }
 
-    #[constructor]
-    fn constructor(ref self: ContractState) {}
-
     #[abi(embed_v0)]
-    impl TestPostDispatchHookImpl of super::IPostDispatchHookMock<ContractState> {
+    impl TestPostDispatchHookImpl of super::ITestPostDispatchHook<ContractState> {
         fn hook_type(self: @ContractState) -> u8 {
             0
         }

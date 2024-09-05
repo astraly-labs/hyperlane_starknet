@@ -5,8 +5,12 @@ pub mod HypErc20Collateral {
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
-        token_router::{TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait},
-        hyp_erc20_collateral_component::HypErc20CollateralComponent
+        token_router::{
+            TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl
+        },
+        hyp_erc20_collateral_component::{
+            HypErc20CollateralComponent, HypErc20CollateralComponent::TokenRouterHooksImpl
+        },
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
@@ -22,7 +26,6 @@ pub mod HypErc20Collateral {
         path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent
     );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
-
 
     // Ownable
     #[abi(embed_v0)]
@@ -90,14 +93,14 @@ pub mod HypErc20Collateral {
     fn constructor(
         ref self: ContractState,
         mailbox: ContractAddress,
-        wrapped_token: ContractAddress,
+        erc20: ContractAddress,
         owner: ContractAddress,
         hook: Option<ContractAddress>,
         interchain_security_module: Option<ContractAddress>
     ) {
         self.ownable.initializer(owner);
         self.mailbox.initialize(mailbox, hook, interchain_security_module);
-        self.collateral.initialize(wrapped_token);
+        self.collateral.initialize(erc20);
     }
 
     #[abi(embed_v0)]
@@ -105,25 +108,6 @@ pub mod HypErc20Collateral {
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);
-        }
-    }
-
-    impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
-        fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
-        ) -> Bytes {
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.collateral._transfer_from_sender(amount_or_id)
-        }
-
-        fn transfer_to_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>,
-            recipient: u256,
-            amount_or_id: u256,
-            metadata: Bytes
-        ) {
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.collateral._transfer_to(recipient, amount_or_id)
         }
     }
 }

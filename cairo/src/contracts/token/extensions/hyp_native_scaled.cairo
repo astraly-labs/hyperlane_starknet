@@ -9,9 +9,9 @@ pub mod HypNativeScaled {
     };
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
-        TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait
+        TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait,
+        TokenRouterComponent::MessageRecipientInternalHookImpl
     };
-    use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{
         interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait}, ERC20Component,
@@ -29,10 +29,10 @@ pub mod HypNativeScaled {
     component!(path: HypNativeComponent, storage: hyp_native, event: HypNativeEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
+
     // ERC20
     #[abi(embed_v0)]
     impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
-
     // Ownable
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
@@ -47,11 +47,9 @@ pub mod HypNativeScaled {
     // GasRouter
     #[abi(embed_v0)]
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
-    impl GasRouterInternalImpl = GasRouterComponent::GasRouterInternalImpl<ContractState>;
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
-    impl RouterInternalImpl = RouterComponent::RouterComponentInternalImpl<ContractState>;
     // MailboxClient
     #[abi(embed_v0)]
     impl MailboxClientImpl =
@@ -121,6 +119,7 @@ pub mod HypNativeScaled {
             self.upgradeable.upgrade(new_class_hash);
         }
     }
+
     #[embeddable_as(TokenRouterImpl)]
     impl TokenRouter of ITokenRouter<ContractState> {
         fn transfer_remote(
@@ -141,6 +140,7 @@ pub mod HypNativeScaled {
                 )
         }
     }
+
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
@@ -155,7 +155,6 @@ pub mod HypNativeScaled {
             metadata: Bytes
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-
             let scaled_amount = amount_or_id * contract_state.scale.read();
             contract_state.hyp_native._transfer_to(recipient, scaled_amount);
         }

@@ -5,16 +5,14 @@ pub mod HypNative {
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::hyp_native_component::{
-        HypNativeComponent
+        HypNativeComponent, HypNativeComponent::TokenRouterHooksImpl
     };
     use hyperlane_starknet::contracts::token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
+        TokenRouterComponent::MessageRecipientInternalHookImpl
     };
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::{
-        interface::{IERC20Dispatcher, IERC20DispatcherTrait}, ERC20Component, ERC20HooksEmptyImpl
-    };
-    use openzeppelin::token::erc721::{interface::IERC721Dispatcher, ERC721Component};
+    use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
     use starknet::ContractAddress;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -25,7 +23,7 @@ pub mod HypNative {
     component!(path: HypNativeComponent, storage: hyp_native, event: HypNativeEvent);
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
 
-
+    // HypNative
     #[abi(embed_v0)]
     impl HypNativeImpl = HypNativeComponent::HypNativeImpl<ContractState>;
     #[abi(embed_v0)]
@@ -33,12 +31,14 @@ pub mod HypNative {
         HypNativeComponent::TokenRouterImpl<ContractState>;
     impl HypNativeInternalImpl = HypNativeComponent::HypNativeInternalImpl<ContractState>;
 
-    // TokenRouter
-    impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
-
     // GasRouter
     #[abi(embed_v0)]
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
+
+    //  Ownable
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     // Router
     #[abi(embed_v0)]
@@ -53,7 +53,6 @@ pub mod HypNative {
     // ERC20
     #[abi(embed_v0)]
     impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
-
 
     #[storage]
     struct Storage {
@@ -71,8 +70,6 @@ pub mod HypNative {
         hyp_native: HypNativeComponent::Storage,
         #[substorage(v0)]
         erc20: ERC20Component::Storage,
-        #[substorage(v0)]
-        erc721: ERC721Component::Storage
     }
 
     #[event]
@@ -95,26 +92,8 @@ pub mod HypNative {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, mailbox: ContractAddress) {
+    fn constructor(ref self: ContractState, mailbox: ContractAddress, owner: ContractAddress) {
+        self.ownable.initializer(owner);
         self.mailboxclient.initialize(mailbox, Option::None, Option::None);
-    }
-
-    impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
-        fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
-        ) -> Bytes {
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.hyp_native._transfer_from_sender(amount_or_id)
-        }
-
-        fn transfer_to_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>,
-            recipient: u256,
-            amount_or_id: u256,
-            metadata: Bytes
-        ) {
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.hyp_native._transfer_to(recipient, amount_or_id);
-        }
     }
 }

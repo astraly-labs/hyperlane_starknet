@@ -6,13 +6,14 @@ pub mod HypFiatToken {
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
         hyp_erc20_collateral_component::HypErc20CollateralComponent,
-        token_message::TokenMessageTrait,
-        token_router::{TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait},
+        token_router::{
+            TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
+            TokenRouterComponent::MessageRecipientInternalHookImpl
+        },
     };
     use hyperlane_starknet::contracts::token::interfaces::ifiat_token::{
         IFiatTokenDispatcher, IFiatTokenDispatcherTrait
     };
-    use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
@@ -30,7 +31,6 @@ pub mod HypFiatToken {
     );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
-
     // Ownable
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
@@ -41,15 +41,12 @@ pub mod HypFiatToken {
         MailboxclientComponent::MailboxClientImpl<ContractState>;
     impl MailboxClientInternalImpl =
         MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
-
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
-    impl RouterInternalImpl = RouterComponent::RouterComponentInternalImpl<ContractState>;
     // GasRouter
     #[abi(embed_v0)]
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
-    impl GasRouterInternalImpl = GasRouterComponent::GasRouterInternalImpl<ContractState>;
     // HypERC20Collateral
     #[abi(embed_v0)]
     impl HypErc20CollateralImpl =

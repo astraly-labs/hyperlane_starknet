@@ -10,11 +10,13 @@ pub mod FastHypERC20Collateral {
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
-        hyp_erc20_collateral_component::HypErc20CollateralComponent,
-        token_message::TokenMessageTrait,
-        token_router::{TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait},
+        hyp_erc20_collateral_component::{
+            HypErc20CollateralComponent, HypErc20CollateralComponent::TokenRouterHooksImpl
+        },
+        token_message::TokenMessageTrait, token_router::TokenRouterComponent,
         fast_token_router::{
-            FastTokenRouterComponent, FastTokenRouterComponent::FastTokenRouterHooksTrait
+            FastTokenRouterComponent, FastTokenRouterComponent::FastTokenRouterHooksTrait,
+            FastTokenRouterComponent::MessageRecipientInternalHookImpl
         }
     };
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
@@ -139,32 +141,6 @@ pub mod FastHypERC20Collateral {
         }
     }
 
-    pub impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
-        fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
-        ) -> Bytes {
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.collateral._transfer_from_sender(amount_or_id)
-        }
-
-        // should this override this interface or be seperate function. has extra origin parameter 
-        fn transfer_to_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>,
-            recipient: u256,
-            amount_or_id: u256,
-            metadata: Bytes,
-        //origin: u32 
-        ) {
-            let origin = 0; //Dummy origin
-            let contract_state = TokenRouterComponent::HasComponent::get_contract(@self);
-            let token_recipient = contract_state
-                .fast_token_router
-                ._get_token_recipient(recipient, amount_or_id, origin, metadata);
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.fast_token_router.fast_transfer_to_hook(token_recipient, amount_or_id);
-        }
-    }
-
     pub impl FastTokenRouterHooksImpl of FastTokenRouterHooksTrait<ContractState> {
         fn fast_transfer_to_hook(
             ref self: FastTokenRouterComponent::ComponentState<ContractState>,
@@ -193,13 +169,6 @@ pub mod FastHypERC20Collateral {
                 .wrapped_token
                 .read()
                 .transfer_from(sender, starknet::get_contract_address(), amount);
-        }
-    }
-    // TODO: This should override the _handle at Router
-    #[generate_trait]
-    impl InternalImpl of InternalTrait {
-        fn _handle(ref self: ContractState, origin: u32, message: Bytes) {
-            self.fast_token_router._handle(origin, message);
         }
     }
 }

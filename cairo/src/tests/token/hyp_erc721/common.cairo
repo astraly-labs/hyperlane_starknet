@@ -35,6 +35,14 @@ use snforge_std::{
 };
 use starknet::ContractAddress;
 
+const ZERO_SUPPLY: u256 = 0;
+fn ZERO_ADDRESS() -> ContractAddress {
+    starknet::contract_address_const::<'0x0'>()
+}
+fn EMPTY_STRING() -> ByteArray {
+    ""
+}
+
 const INITIAL_SUPPLY: u32 = 10;
 fn NAME() -> ByteArray {
     "Hyperlane Hedgehogs"
@@ -66,7 +74,8 @@ struct Setup {
     noop_hook: ITestPostDispatchHookDispatcher,
     local_mailbox: IMockMailboxDispatcher,
     remote_mailbox: IMockMailboxDispatcher,
-    hyp_erc721_collateral: IHypErc721CollateralDispatcher,
+    remote_token: IHypErc721CollateralDispatcher,
+    local_token: IHypErc721Dispatcher,
 }
 
 fn setup() -> Setup {
@@ -99,16 +108,24 @@ fn setup() -> Setup {
     local_mailbox.set_required_hook(noop_hook.contract_address);
 
     let contract = declare("HypErc721Collateral").unwrap();
-    let (hyp_erc721_collateral, _) = contract
+    let (remote_token, _) = contract
         .deploy(
             @array![
-                remote_primary_token.contract_address.into(), remote_mailbox.contract_address.into(),
+                remote_primary_token.contract_address.into(),
+                remote_mailbox.contract_address.into(),
             ]
         )
         .unwrap();
-    let hyp_erc721_collateral = IHypErc721CollateralDispatcher {
-        contract_address: hyp_erc721_collateral
-    };
+    let remote_token = IHypErc721CollateralDispatcher { contract_address: remote_token };
+
+    let contract = declare("HypErc721").unwrap();
+    let mut calldata: Array<felt252> = array![];
+    local_mailbox.contract_address.serialize(ref calldata);
+    EMPTY_STRING().serialize(ref calldata);
+    EMPTY_STRING().serialize(ref calldata);
+    ZERO_SUPPLY.serialize(ref calldata);
+    let (local_token, _) = contract.deploy(@calldata).unwrap();
+    let local_token = IHypErc721Dispatcher { contract_address: local_token };
 
     Setup {
         primary_token,
@@ -116,8 +133,83 @@ fn setup() -> Setup {
         noop_hook,
         local_mailbox,
         remote_mailbox,
-        hyp_erc721_collateral,
+        remote_token,
+        local_token
     }
+}
+
+pub fn deploy_remote_token(
+    setup: @Setup, is_collateral: bool
+) -> (ContractAddress, ContractAddress) {
+    if is_collateral {
+        let contract = declare("HypErc721Collateral").unwrap();
+        let (implementation, _) = contract
+            .deploy(
+                @array![
+                    (*setup).remote_primary_token.contract_address.into(),
+                    (*setup).remote_mailbox.contract_address.into(),
+                ]
+            )
+            .unwrap();
+        let implementation = IHypErc721CollateralDispatcher { contract_address: implementation };
+
+        let (remote_token, _) = contract.deploy(@array![ZERO_ADDRESS().into(), ZERO_ADDRESS().into()]).unwrap();
+        let remote_token = IHypErc721CollateralDispatcher { contract_address: remote_token };
+
+        (*setup)
+            .remote_primary_token
+            .transfer_from(starknet::get_contract_address(), remote_token.contract_address, 0);
+
+        (implementation.contract_address, remote_token.contract_address)
+    } else {
+        let contract = declare("HypErc721").unwrap();
+        let mut calldata: Array<felt252> = array![];
+        (*setup).remote_mailbox.contract_address.serialize(ref calldata);
+        EMPTY_STRING().serialize(ref calldata);
+        EMPTY_STRING().serialize(ref calldata);
+        ZERO_SUPPLY.serialize(ref calldata);
+        let (implementation, _) = contract.deploy(@calldata).unwrap();
+        let implementation = IHypErc721Dispatcher { contract_address: implementation };
+
+        let mut calldata: Array<felt252> = array![];
+        ZERO_ADDRESS().serialize(ref calldata);
+        NAME().serialize(ref calldata);
+        SYMBOL().serialize(ref calldata);
+        ZERO_SUPPLY.serialize(ref calldata);
+        let (remote_token, _) = contract.deploy(@calldata).unwrap();
+        let remote_token = IHypErc721Dispatcher { contract_address: remote_token };
+
+        let token_router = IRouterDispatcher { contract_address: remote_token.contract_address };
+        let local_token_address: felt252 = (*setup).local_token.contract_address.into();
+        token_router.enroll_remote_router(ORIGIN, local_token_address.into());
+        (implementation.contract_address, remote_token.contract_address)
+    }
+}
+
+pub fn process_transfer(setup: @Setup, recipient: ContractAddress, token_id: u256) {
+    start_prank(
+        CheatTarget::One((*setup).remote_token.contract_address),
+        (*setup).remote_mailbox.contract_address
+    );
+    let message_recipient = IMessageRecipientDispatcher {
+        contract_address: (*setup).remote_token.contract_address
+    };
+    let mut message = BytesTrait::new_empty();
+    message.append_address(recipient);
+    message.append_u256(token_id);
+    let local_token_address: felt252 = (*setup).local_token.contract_address.into();
+    message_recipient.handle(ORIGIN, local_token_address.into(), message);
+}
+
+pub fn perform_remote_transfer(setup: @Setup, msg_value: u256, token_id: u256) {
+    let token_router = ITokenRouterDispatcher {
+        contract_address: (*setup).local_token.contract_address
+    };
+    let alice_address: felt252 = ALICE().into();
+    token_router
+        .transfer_remote(
+            DESTINATION, alice_address.into(), token_id, msg_value, Option::None, Option::None
+        );
 }
 
 #[test]

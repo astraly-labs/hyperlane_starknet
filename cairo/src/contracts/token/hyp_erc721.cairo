@@ -49,6 +49,7 @@ pub mod HypErc721 {
     impl HypErc721Impl = HypErc721Component::HypErc721Impl<ContractState>;
 
     // TokenRouter
+    #[abi(embed_v0)]
     impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
 
@@ -113,6 +114,7 @@ pub mod HypErc721 {
         GasRouterEvent: GasRouterComponent::Event
     }
 
+    #[constructor]
     fn constructor(
         ref self: ContractState,
         mailbox: ContractAddress,

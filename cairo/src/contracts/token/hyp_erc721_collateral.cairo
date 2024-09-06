@@ -10,6 +10,7 @@ pub mod HypErc721Collateral {
     use hyperlane_starknet::contracts::token::components::token_router::{
         TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait
     };
+    use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait,};
     use starknet::ContractAddress;
@@ -89,6 +90,15 @@ pub mod HypErc721Collateral {
         self.mailboxclient.initialize(mailbox, Option::None, Option::None);
 
         self.wrapped_token.write(ERC721ABIDispatcher { contract_address: erc721 });
+    }
+
+    #[abi(embed_v0)]
+    impl MessageRecipient of IMessageRecipient<ContractState> {
+        fn handle(
+            ref self: ContractState, origin: u32, sender: Option<ContractAddress>, message: Bytes
+        ) {
+            self.token_router._handle(origin, message)
+        }
     }
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {

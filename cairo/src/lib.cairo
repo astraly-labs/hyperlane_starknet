@@ -34,6 +34,8 @@ mod contracts {
         pub mod mock_mailbox;
         pub mod mock_validator_announce;
         pub mod test_erc20;
+        pub mod test_erc721;
+        pub mod test_interchain_gas_payment;
         pub mod test_ism;
         pub mod test_post_dispatch_hook;
     }
@@ -123,6 +125,9 @@ mod tests {
             pub mod hyp_fiat_token_test;
             pub mod hyp_native_test;
             pub mod hyp_xerc20_test;
+        }
+        pub mod hyp_erc721 {
+            pub mod common;
         }
     }
     pub mod libs {

@@ -29,8 +29,8 @@ pub mod GasRouterComponent {
 
     #[derive(Copy, Drop, Serde)]
     pub struct GasRouterConfig {
-        domain: u32,
-        gas: u256,
+        pub domain: u32,
+        pub gas: u256,
     }
 
     #[storage]

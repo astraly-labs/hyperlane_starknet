@@ -53,8 +53,8 @@ pub mod FastHypERC20 {
     impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
     impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
     // HypERC20
-    #[abi(embed_v0)]
-    impl HypErc20Impl = HypErc20Component::HypeErc20Impl<ContractState>;
+    //#[abi(embed_v0)]
+    //impl HypErc20Impl = HypErc20Component::HypeErc20Impl<ContractState>;
     impl HypErc20InternalImpl = HypErc20Component::InternalImpl<ContractState>;
     // TokenRouter
     #[abi(embed_v0)]

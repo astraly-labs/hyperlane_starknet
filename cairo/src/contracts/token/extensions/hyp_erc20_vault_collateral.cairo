@@ -1,28 +1,38 @@
+#[starknet::interface]
+trait IHypErc20VaultCollateral<TContractState> {
+    fn rebase(ref self: TContractState, destination_domain: u32);
+}
+
 #[starknet::contract]
-pub mod HypErc20 {
+mod HypErc20VaultCollateral {
     use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
-        hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl},
         token_router::{
-            TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
-        }
+            TokenRouterComponent, 
+            TokenRouterComponent::MessageRecipientInternalHookImpl,
+            TokenRouterComponent::TokenRouterHooksTrait
+        },
+        hyp_erc20_collateral_component::HypErc20CollateralComponent,
     };
+    use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
+    use hyperlane_starknet::contracts::token::interfaces::ierc4626::{ERC4626ABIDispatcher, ERC4626ABIDispatcherTrait};
+    use openzeppelin::token::erc20::{ERC20ABIDispatcherTrait};
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
 
-    component!(path: ERC20Component, storage: erc20, event: ERC20Event);
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: MailboxclientComponent, storage: mailbox, event: MailBoxClientEvent);
     component!(path: RouterComponent, storage: router, event: RouterEvent);
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: TokenRouterComponent, storage: token_router, event: TokenRouterEvent);
-    component!(path: HypErc20Component, storage: hyp_erc20, event: HypErc20Event);
+    component!(
+        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent
+    );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
     // Ownable
@@ -41,26 +51,22 @@ pub mod HypErc20 {
     // GasRouter
     #[abi(embed_v0)]
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
-    // ERC20
+    // HypERC20Collateral
     #[abi(embed_v0)]
-    impl ERC20Impl = ERC20Component::ERC20MixinImpl<ContractState>;
-    impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
-    // HypERC20
-    //#[abi(embed_v0)]
-    //impl HypErc20Impl = HypErc20Component::HypeErc20Impl<ContractState>;
-    impl HypErc20InternalImpl = HypErc20Component::InternalImpl<ContractState>;
-    // TokenRouter
-    #[abi(embed_v0)]
-    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
+    impl HypErc20CollateralImpl =
+        HypErc20CollateralComponent::HypErc20CollateralImpl<ContractState>;
+    impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+    // E10
+    const PRECISION: u256 = 10_000_000_000;
+    const NULL_RECIPIENT: u256 = 1;
 
     #[storage]
     struct Storage {
+        vault: ERC4626ABIDispatcher,
         #[substorage(v0)]
-        hyp_erc20: HypErc20Component::Storage,
-        #[substorage(v0)]
-        erc20: ERC20Component::Storage,
+        collateral: HypErc20CollateralComponent::Storage,
         #[substorage(v0)]
         mailbox: MailboxclientComponent::Storage,
         #[substorage(v0)]
@@ -79,9 +85,7 @@ pub mod HypErc20 {
     #[derive(Drop, starknet::Event)]
     enum Event {
         #[flat]
-        HypErc20Event: HypErc20Component::Event,
-        #[flat]
-        ERC20Event: ERC20Component::Event,
+        HypErc20CollateralEvent: HypErc20CollateralComponent::Event,
         #[flat]
         MailBoxClientEvent: MailboxclientComponent::Event,
         #[flat]
@@ -99,22 +103,47 @@ pub mod HypErc20 {
     #[constructor]
     fn constructor(
         ref self: ContractState,
-        decimals: u8,
         mailbox: ContractAddress,
-        total_supply: u256,
-        name: ByteArray,
-        symbol: ByteArray,
-        hook: ContractAddress,
-        interchain_security_module: ContractAddress,
-        owner: ContractAddress
+        vault: ContractAddress,
+        owner: ContractAddress,
+        hook: Option<ContractAddress>,
+        interchain_security_module: Option<ContractAddress>
     ) {
         self.ownable.initializer(owner);
-        self
-            .mailbox
-            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
-        self.hyp_erc20.initialize(decimals);
-        self.erc20.initializer(name, symbol);
-        self.erc20.mint(starknet::get_caller_address(), total_supply);
+        self.mailbox.initialize(mailbox, hook, interchain_security_module);
+        let vault_dispatcher = ERC4626ABIDispatcher{contract_address: vault};
+        let erc20 = vault_dispatcher.asset();
+        self.collateral.initialize(erc20);
+        self.vault.write(vault_dispatcher);
+    }
+
+    // _transfer_remote override
+
+    impl TokenRouterHooksTraitImpl of TokenRouterHooksTrait<ContractState> {
+        fn transfer_from_sender_hook(
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+        ) -> Bytes {
+            HypErc20CollateralComponent::TokenRouterHooksImpl::transfer_from_sender_hook(ref self, amount_or_id)
+        }
+
+        fn transfer_to_hook(
+            ref self: TokenRouterComponent::ComponentState<ContractState>,
+            recipient: u256,
+            amount_or_id: u256,
+            metadata: Bytes
+        ) {
+            let recipient: ContractAddress = recipient.try_into().unwrap();
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            // withdraw with the specified amount of shares
+            contract_state.vault.read().redeem(amount_or_id, recipient.try_into().expect('u256 to ContractAddress failed'), starknet::get_contract_address());
+        }
+    }
+
+    impl HypeErc20VaultCollateral of super::IHypErc20VaultCollateral<ContractState> {
+        // payable in sol handle this
+        fn rebase(ref self: ContractState, destination_domain: u32) {
+            // _transfer_remote required
+        }
     }
 
     #[abi(embed_v0)]
@@ -122,6 +151,15 @@ pub mod HypErc20 {
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);
+        }
+    }
+
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        fn _deposit_into_vault(ref self: ContractState, amount: u256) -> u256 {
+            let vault = self.vault.read();
+            self.collateral.wrapped_token.read().approve(vault.contract_address, amount);
+            vault.deposit(amount, starknet::get_contract_address())
         }
     }
 }

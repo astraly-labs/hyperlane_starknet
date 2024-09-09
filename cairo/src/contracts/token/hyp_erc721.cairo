@@ -71,6 +71,11 @@ pub mod HypErc721 {
     impl MailboxClientInternalImpl =
         MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
 
+    // Ownable
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
     #[storage]
     struct Storage {
         #[substorage(v0)]
@@ -122,9 +127,13 @@ pub mod HypErc721 {
         mailbox: ContractAddress,
         name: ByteArray,
         symbol: ByteArray,
-        mint_amount: u256
-    ) {
-        self.mailboxclient.initialize(mailbox, Option::None, Option::None);
+        mint_amount: u256,
+        hook: ContractAddress,
+        interchain_security_module: ContractAddress,
+        owner: ContractAddress
+    ) { 
+        self.ownable.initializer(owner);
+        self.mailboxclient.initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         self.hyp_erc721.initialize(mint_amount, name, symbol);
     }
 

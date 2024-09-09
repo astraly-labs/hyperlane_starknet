@@ -17,7 +17,7 @@ pub mod HypXERC20Lockbox {
         hyp_erc20_collateral_component::HypErc20CollateralComponent,
         token_router::{
             TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-            TokenRouterComponent::MessageRecipientInternalHookImpl
+            TokenRouterComponent::MessageRecipientInternalHookImpl, TokenRouterTransferRemoteHookDefaultImpl
         },
     };
     use hyperlane_starknet::contracts::token::interfaces::ixerc20::{
@@ -66,6 +66,9 @@ pub mod HypXERC20Lockbox {
     impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+    // Token Router
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
 
     #[storage]
     struct Storage {

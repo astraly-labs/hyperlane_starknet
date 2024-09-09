@@ -7,7 +7,7 @@ pub mod HypXERC20 {
     use hyperlane_starknet::contracts::token::components::hyp_erc20_collateral_component::HypErc20CollateralComponent;
     use hyperlane_starknet::contracts::token::components::token_router::{
         TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-        TokenRouterComponent::MessageRecipientInternalHookImpl
+        TokenRouterComponent::MessageRecipientInternalHookImpl, TokenRouterTransferRemoteHookDefaultImpl
     };
     use hyperlane_starknet::contracts::token::interfaces::ixerc20::{
         IXERC20Dispatcher, IXERC20DispatcherTrait
@@ -54,6 +54,9 @@ pub mod HypXERC20 {
     impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+    // Token Router
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
 
     #[storage]
     struct Storage {

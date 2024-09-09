@@ -142,10 +142,10 @@ mod HypErc20VaultCollateral {
             TokenRouterHooksTraitImpl::transfer_from_sender_hook(ref self, amount_or_id);
             let shares = contract_state._deposit_into_vault(amount_or_id);
             let vault = contract_state.vault.read();
-            let exchange_rate = math::mul_div( /// need roundup round down
+            let exchange_rate = math::mul_div( /// TODO: need roundup round down
                 PRECISION, vault.total_assets(), vault.total_supply(),
             );
-            let token_metadata: Bytes = BytesTrait::new_empty(); //exchange_rate // abi.encode ? 
+            let token_metadata: Bytes = BytesTrait::new_empty(); // TODO: exchange_rate // abi.encode ? should it be big endian?
             let token_message = TokenMessageTrait::format(recipient, shares, token_metadata);
             let message_id = contract_state
                 .router
@@ -193,14 +193,14 @@ mod HypErc20VaultCollateral {
 
     impl HypeErc20VaultCollateral of super::IHypErc20VaultCollateral<ContractState> {
         fn rebase(ref self: ContractState, destination_domain: u32, value: u256) {
-            self
-                ._transfer_remote(
+            TokenRouterTransferRemoteHookImpl::_transfer_remote(
+                    ref self.token_router,
                     destination_domain,
                     NULL_RECIPIENT,
                     0,
                     value,
-                    BytesTrait::new_empty(),
-                    starknet::contract_address_const::<0>()
+                    Option::None,
+                    Option::None,
                 );
         }
 

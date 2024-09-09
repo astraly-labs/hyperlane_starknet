@@ -3,6 +3,10 @@ trait IHypErc20Vault<TContractState> {
     fn assets_to_shares(self: @TContractState, amount: u256) -> u256;
     fn shares_to_assets(self: @TContractState, shares: u256) -> u256;
     fn share_balance_of(self: @TContractState, account: starknet::ContractAddress) -> u256;
+    // getters
+    fn get_precision(self: @TContractState) -> u256;
+    fn get_collateral_domain(self: @TContractState) -> u32;
+    fn get_exchange_rate(self: @TContractState) -> u256;
 }
 
 #[starknet::contract]
@@ -215,6 +219,18 @@ mod HypErc20Vault {
 
         fn share_balance_of(self: @ContractState, account: ContractAddress) -> u256 {
             self.erc20.balance_of(account)
+        }
+
+        fn get_precision(self: @ContractState) -> u256 {
+            PRECISION
+        }
+
+        fn get_collateral_domain(self: @ContractState) -> u32 {
+            self.collateral_domain.read()
+        }
+
+        fn get_exchange_rate(self: @ContractState) -> u256 {
+            self.exchange_rate.read()
         }
     }
 

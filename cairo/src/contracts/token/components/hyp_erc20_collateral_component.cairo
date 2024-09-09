@@ -3,6 +3,7 @@ use starknet::ContractAddress;
 #[starknet::interface]
 pub trait IHypErc20Collateral<TState> {
     fn balance_of(self: @TState, account: ContractAddress) -> u256;
+    fn get_wrapped_token(self: @TState) -> ContractAddress;
 }
 
 #[starknet::component]
@@ -80,6 +81,11 @@ pub mod HypErc20CollateralComponent {
         fn balance_of(self: @ComponentState<TContractState>, account: ContractAddress) -> u256 {
             self.wrapped_token.read().balance_of(account)
         }
+
+        fn get_wrapped_token(self: @ComponentState<TContractState>) -> ContractAddress {
+            let wrapped_token: ERC20ABIDispatcher = self.wrapped_token.read();
+            wrapped_token.contract_address
+        }
     }
 
     #[generate_trait]
@@ -93,7 +99,7 @@ pub mod HypErc20CollateralComponent {
         +GasRouterComponent::HasComponent<TContractState>,
         +TokenRouterComponent::HasComponent<TContractState>
     > of InternalTrait<TContractState> {
-        fn initialize(ref self: ComponentState<TContractState>, wrapped_token: ContractAddress,) {
+        fn initialize(ref self: ComponentState<TContractState>, wrapped_token: ContractAddress) {
             self.wrapped_token.write(ERC20ABIDispatcher { contract_address: wrapped_token });
         }
 

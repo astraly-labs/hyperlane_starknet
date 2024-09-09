@@ -1,3 +1,8 @@
+#[starknet::interface]
+trait IHypNativeScaled<TState> {
+    fn get_scale(self: @TState) -> u256;
+}
+
 #[starknet::contract]
 pub mod HypNativeScaled {
     use alexandria_bytes::{Bytes, BytesTrait};
@@ -111,6 +116,12 @@ pub mod HypNativeScaled {
         self.mailboxclient.initialize(mailbox, Option::None, Option::None);
         self.ownable.initializer(owner);
         self.scale.write(scale);
+    }
+
+    impl HypNativeScaled of super::IHypNativeScaled<ContractState> {
+        fn get_scale(self: @ContractState) -> u256 {
+            self.scale.read()
+        }
     }
 
     #[abi(embed_v0)]

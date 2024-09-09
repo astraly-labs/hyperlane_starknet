@@ -1,6 +1,9 @@
 #[starknet::interface]
 pub trait IHypERC20CollateralVaultDeposit<TState> {
     fn sweep(ref self: TState);
+    // getters
+    fn get_vault(self: @TState) -> starknet::ContractAddress;
+    fn get_asset_deposited(self: @TState) -> u256;
 }
 
 #[starknet::contract]
@@ -142,6 +145,14 @@ pub mod HypERC20CollateralVaultDeposit {
                 .emit(
                     ExcessSharesSwept { amount: excess_shares, assets_redeemed: assets_redeemed }
                 );
+        }
+
+        fn get_vault(self: @ContractState) -> ContractAddress {
+            self.vault.read().contract_address
+        }
+
+        fn get_asset_deposited(self: @ContractState) -> u256 {
+            self.asset_deposited.read()
         }
     }
 

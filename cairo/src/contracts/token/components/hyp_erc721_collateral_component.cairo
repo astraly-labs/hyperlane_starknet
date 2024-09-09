@@ -4,6 +4,7 @@ use starknet::ContractAddress;
 pub trait IHypErc721Collateral<TState> {
     fn owner_of(self: @TState, token_id: u256) -> ContractAddress;
     fn balance_of(self: @TState, account: ContractAddress) -> u256;
+    fn get_wrapped_token(self: @TState) -> ContractAddress;
 }
 
 #[starknet::component]
@@ -38,6 +39,11 @@ pub mod HypErc721CollateralComponent {
 
         fn balance_of(self: @ComponentState<TContractState>, account: ContractAddress) -> u256 {
             self.wrapped_token.read().balance_of(account)
+        }
+
+        fn get_wrapped_token(self: @ComponentState<TContractState>) -> ContractAddress {
+            let wrapped_token: ERC721ABIDispatcher = self.wrapped_token.read();
+            wrapped_token.contract_address
         }
     }
 }

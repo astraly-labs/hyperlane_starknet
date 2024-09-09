@@ -1,6 +1,9 @@
 #[starknet::interface]
 pub trait IHypXERC20Lockbox<TState> {
     fn approve_lockbox(ref self: TState);
+    // getters
+    fn get_lockbox(self: @TState) -> starknet::ContractAddress;
+    fn get_xerc20(self: @TState) -> starknet::ContractAddress;
 }
 
 #[starknet::contract]
@@ -135,6 +138,14 @@ pub mod HypXERC20Lockbox {
                     .approve(lockbox_address, BoundedInt::max()),
                 "xerc20 lockbox approve failed"
             );
+        }
+
+        fn get_lockbox(self: @ContractState) -> ContractAddress {
+            self.lockbox.read().contract_address
+        }
+
+        fn get_xerc20(self: @ContractState) -> ContractAddress {
+            self.xerc20.read().contract_address
         }
     }
 

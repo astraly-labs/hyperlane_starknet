@@ -94,9 +94,7 @@ pub mod HypErc721Collateral {
 
     #[abi(embed_v0)]
     impl MessageRecipient of IMessageRecipient<ContractState> {
-        fn handle(
-            ref self: ContractState, origin: u32, sender: Option<ContractAddress>, message: Bytes
-        ) {
+        fn handle(ref self: ContractState, origin: u32, sender: u256, message: Bytes) {
             self.token_router._handle(origin, message)
         }
     }

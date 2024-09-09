@@ -145,6 +145,9 @@ pub mod RouterComponent {
         }
 
         fn _must_have_remote_router(self: @ComponentState<TContractState>, domain: u32) -> u256 {
+            println!("router must_have_remote_router");
+            println!("domain: {}", domain);
+            println!("This Contract Address: {:?}", starknet::get_contract_address());
             let routers = self.routers.read();
             let router = routers.get(domain);
 
@@ -164,9 +167,9 @@ pub mod RouterComponent {
             hook: ContractAddress
         ) -> u256 {
             let router = self._must_have_remote_router(destination_domain);
-
+            println!("after must_have_remote_router");
             let mut mailbox_comp = get_dep_component!(self, MailBoxClient);
-            mailbox_comp
+            let value = mailbox_comp
                 .mailbox
                 .read()
                 .dispatch(
@@ -175,8 +178,10 @@ pub mod RouterComponent {
                     message_body,
                     value,
                     Option::Some(hook_metadata),
-                    Option::Some(hook)
-                )
+                    Option::Some(hook),
+                );
+            println!("after dispatch");
+            value
         }
 
         fn _Router_quote_dispatch(

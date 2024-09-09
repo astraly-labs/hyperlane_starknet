@@ -143,6 +143,7 @@ pub mod MailboxclientComponent {
             _hook_metadata: Option<Bytes>,
             _hook: Option<ContractAddress>
         ) -> u256 {
+            println!("MailboxClient_dispatch");
             self
                 .mailbox
                 .read()

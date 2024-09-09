@@ -123,10 +123,22 @@ pub mod HypErc20 {
 
     #[abi(embed_v0)]
     impl MessageRecipient of IMessageRecipient<ContractState> {
-        fn handle(
-            ref self: ContractState, origin: u32, sender: Option<ContractAddress>, message: Bytes
-        ) {
-            self.token_router._handle(origin, message)
+        fn handle(ref self: ContractState, origin: u32, sender: u256, message: Bytes) {
+            println!("handle");
+            let recipient = message.recipient();
+            let amount = message.amount();
+
+            let recipient_address: felt252 = recipient
+                .try_into()
+                .expect('Invalid recipient address');
+
+            self
+                .erc20
+                .mint(recipient_address.try_into().expect('Invalid recipient address'), amount);
+
+            self
+                .token_router
+                .emit(TokenRouterComponent::ReceivedTransferRemote { origin, recipient, amount, });
         }
     }
 
@@ -142,6 +154,7 @@ pub mod HypErc20 {
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
+            println!("transfer_from_sender_hook");
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             contract_state.hyp_erc20._transfer_from_sender(amount_or_id)
         }

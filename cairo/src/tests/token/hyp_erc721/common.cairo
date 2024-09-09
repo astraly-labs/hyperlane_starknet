@@ -153,7 +153,9 @@ pub fn deploy_remote_token(
             .unwrap();
         let implementation = IHypErc721CollateralDispatcher { contract_address: implementation };
 
-        let (remote_token, _) = contract.deploy(@array![ZERO_ADDRESS().into(), ZERO_ADDRESS().into()]).unwrap();
+        let (remote_token, _) = contract
+            .deploy(@array![ZERO_ADDRESS().into(), ZERO_ADDRESS().into()])
+            .unwrap();
         let remote_token = IHypErc721CollateralDispatcher { contract_address: remote_token };
 
         (*setup)

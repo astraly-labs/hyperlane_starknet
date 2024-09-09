@@ -1,6 +1,6 @@
 #[starknet::interface]
 trait IHypErc20VaultCollateral<TContractState> {
-    fn rebase(ref self: TContractState, destination_domain: u32);
+    fn rebase(ref self: TContractState, destination_domain: u32, value: u256);
     // getters 
     fn get_vault(self: @TContractState) -> starknet::ContractAddress;
     fn get_precision(self: @TContractState) -> u256;
@@ -192,8 +192,16 @@ mod HypErc20VaultCollateral {
     }
 
     impl HypeErc20VaultCollateral of super::IHypErc20VaultCollateral<ContractState> {
-        // payable in sol handle this
-        fn rebase(ref self: ContractState, destination_domain: u32) { // _transfer_remote required
+        fn rebase(ref self: ContractState, destination_domain: u32, value: u256) {
+            self
+                ._transfer_remote(
+                    destination_domain,
+                    NULL_RECIPIENT,
+                    0,
+                    value,
+                    BytesTrait::new_empty(),
+                    starknet::contract_address_const::<0>()
+                );
         }
 
         fn get_vault(self: @ContractState) -> ContractAddress {

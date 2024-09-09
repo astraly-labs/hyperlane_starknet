@@ -160,11 +160,8 @@ pub mod TokenRouterComponent {
             hook_metadata: Option<Bytes>,
             hook: Option<ContractAddress>
         ) -> u256 {
-            println!("transfer_remote");
             let token_metadata = self._transfer_from_sender(amount_or_id);
-            println!("after transfer_from_sender");
             let token_message = TokenMessageTrait::format(recipient, amount_or_id, token_metadata);
-            println!("token_routerafter format");
             let mut router_comp = get_dep_component!(@self, Router);
             let mailbox_comp = get_dep_component!(@self, MailBoxClient);
             let gas_router_comp = get_dep_component!(@self, GasRouter);
@@ -174,23 +171,19 @@ pub mod TokenRouterComponent {
             match hook_metadata {
                 Option::Some(hook_metadata) => {
                     if !hook.is_some() {
-                        panic!("Transfer remote invalid arguments, missing hook");
+                        panic!("TokenRouter Transfer remote invalid arguments, missing hook");
                     }
 
                     message_id = router_comp
                         ._Router_dispatch(
                             destination, value, token_message, hook_metadata, hook.unwrap()
                         );
-                    println!("token_router after dispatch");
                 },
                 Option::None => {
-                    println!("token_router before hook_metadata");
                     let hook_metadata = gas_router_comp._Gas_router_hook_metadata(destination);
-                    println!("token_router after hook_metadata");
                     let hook = mailbox_comp.get_hook();
                     message_id = router_comp
                         ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
-                    println!("after dispatch");
                 }
             }
 

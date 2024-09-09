@@ -45,12 +45,14 @@ pub mod MockMailbox {
     use alexandria_bytes::{Bytes, BytesTrait};
     use core::starknet::event::EventEmitter;
     use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
+    use hyperlane_starknet::contracts::mocks::test_post_dispatch_hook::{
+        ITestPostDispatchHookDispatcher, ITestPostDispatchHookDispatcherTrait
+    };
     use hyperlane_starknet::interfaces::{
         IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait, IPostDispatchHookDispatcher,
-        ISpecifiesInterchainSecurityModuleDispatcher,
-        ISpecifiesInterchainSecurityModuleDispatcherTrait, IPostDispatchHookDispatcherTrait,
-        IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait, ETH_ADDRESS,
+        IInterchainSecurityModuleDispatcherTrait, ISpecifiesInterchainSecurityModuleDispatcher,
+        ISpecifiesInterchainSecurityModuleDispatcherTrait, IMessageRecipientDispatcher,
+        IMessageRecipientDispatcherTrait, ETH_ADDRESS,
     };
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
@@ -212,9 +214,6 @@ pub mod MockMailbox {
     #[abi(embed_v0)]
     impl IMailboxImpl of super::IMockMailbox<ContractState> {
         fn add_remote_mail_box(ref self: ContractState, domain: u32, mailbox: ContractAddress) {
-            println!("MockMailbox_add_remote_mail_box");
-            println!("Domain: {}", domain);
-            println!("Mailbox: {:?}", mailbox);
             self.remote_mailboxes.write(domain, mailbox);
         }
         fn dispatch(
@@ -226,40 +225,38 @@ pub mod MockMailbox {
             metadata: Option<Bytes>,
             hook: Option<ContractAddress>
         ) -> u256 {
-            println!("MockMailbox_dispatch");
             let hook = match hook {
-                Option::Some(hook) => {
-                    hook
-                },
-                Option::None(()) => {
-                    self.default_hook.read()
-                }
+                Option::Some(hook) => { hook },
+                Option::None(()) => { self.default_hook.read() }
             };
             let (id, message) = build_message(
                 @self, destination_domain, recipient_address, message_body.clone()
             );
-
             self.latest_dispatched_id.write(id);
             let curr_nonce = self.nonce.read();
             self.nonce.write(curr_nonce + 1);
             let caller_address: felt252 = starknet::get_caller_address().into();
-            self.emit(Dispatch {
-                sender: caller_address.into(),
-                destination_domain,
-                recipient_address,
-                message: message.clone()
-            });
+            self
+                .emit(
+                    Dispatch {
+                        sender: caller_address.into(),
+                        destination_domain,
+                        recipient_address,
+                        message: message.clone()
+                    }
+                );
             self.emit(DispatchId { id });
 
             let metadata = match metadata {
                 Option::Some(metadata) => metadata,
                 Option::None(()) => BytesTrait::new_empty()
             };
-            let required_hook = IPostDispatchHookDispatcher { contract_address: self.required_hook.read() };
-            required_hook.post_dispatch(metadata.clone(), message.clone(), fee_amount);
-
-            let hook = IPostDispatchHookDispatcher { contract_address: hook };
-            hook.post_dispatch(metadata, message, fee_amount);
+            let required_hook = ITestPostDispatchHookDispatcher {
+                contract_address: self.required_hook.read()
+            };
+            required_hook.post_dispatch(metadata.clone(), message.clone());
+            let hook = ITestPostDispatchHookDispatcher { contract_address: hook };
+            hook.post_dispatch(metadata, message);
             id
         }
 
@@ -430,10 +427,10 @@ pub mod MockMailbox {
                 self, _destination_domain, _recipient_address, _message_body.clone()
             );
             let required_hook_address = self.required_hook.read();
-            let required_hook = IPostDispatchHookDispatcher {
+            let required_hook = ITestPostDispatchHookDispatcher {
                 contract_address: required_hook_address
             };
-            let hook = IPostDispatchHookDispatcher { contract_address: hook_address };
+            let hook = ITestPostDispatchHookDispatcher { contract_address: hook_address };
             required_hook.quote_dispatch(hook_metadata.clone(), message.clone())
                 + hook.quote_dispatch(hook_metadata, message)
         }
@@ -529,7 +526,6 @@ pub mod MockMailbox {
             _custom_hook_metadata: Option<Bytes>,
             _custom_hook: Option<ContractAddress>
         ) -> u256 {
-            println!("MockMailbox_dispatch");
             let hook = match _custom_hook {
                 Option::Some(hook) => hook,
                 Option::None(()) => self.default_hook.read(),
@@ -538,7 +534,6 @@ pub mod MockMailbox {
                 Option::Some(hook_metadata) => { hook_metadata },
                 Option::None(()) => BytesTrait::new_empty()
             };
-            println!("after build_message");
             let (id, message) = build_message(
                 @self, _destination_domain, _recipient_address, _message_body
             );
@@ -560,16 +555,14 @@ pub mod MockMailbox {
             // HOOKS
 
             let required_hook_address = self.required_hook.read();
-            let required_hook = IPostDispatchHookDispatcher {
+            let required_hook = ITestPostDispatchHookDispatcher {
                 contract_address: required_hook_address
             };
             let mut required_fee = required_hook
                 .quote_dispatch(hook_metadata.clone(), message.clone());
-            println!("after required_hook");
-            let hook_dispatcher = IPostDispatchHookDispatcher { contract_address: hook };
+            let hook_dispatcher = ITestPostDispatchHookDispatcher { contract_address: hook };
             let default_fee = hook_dispatcher
                 .quote_dispatch(hook_metadata.clone(), message.clone());
-            println!("after default_fee");
 
             assert(_fee_amount >= required_fee + default_fee, Errors::NOT_ENOUGH_FEE_PROVIDED);
 
@@ -578,7 +571,6 @@ pub mod MockMailbox {
 
             let token_dispatcher = ERC20ABIDispatcher { contract_address: self.eth_address.read() };
             let user_balance = token_dispatcher.balanceOf(caller_address);
-            println!("after user_balance");
             assert(user_balance >= required_fee + default_fee, Errors::INSUFFICIENT_BALANCE);
 
             assert(
@@ -589,14 +581,11 @@ pub mod MockMailbox {
             if (required_fee > 0) {
                 token_dispatcher.transferFrom(caller_address, required_hook_address, required_fee);
             }
-            println!("after required_fee");
-            required_hook.post_dispatch(hook_metadata.clone(), message.clone(), required_fee);
-            println!("after required_hook.post_dispatch");
+            required_hook.post_dispatch(hook_metadata.clone(), message.clone());
             if (default_fee > 0) {
                 token_dispatcher.transferFrom(caller_address, hook, default_fee);
             }
-            hook_dispatcher.post_dispatch(hook_metadata, message.clone(), default_fee);
-            println!("after hook_dispatcher.post_dispatch");
+            hook_dispatcher.post_dispatch(hook_metadata, message.clone());
             id
         }
     }

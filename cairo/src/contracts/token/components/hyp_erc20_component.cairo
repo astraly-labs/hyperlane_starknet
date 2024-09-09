@@ -109,11 +109,8 @@ pub mod HypErc20Component {
         }
 
         fn _transfer_from_sender(ref self: ComponentState<TContractState>, amount: u256) -> Bytes {
-            println!("transfer_from_sender");
-            println!("caller: {:?}", starknet::get_caller_address());
             let mut erc20 = get_dep_component_mut!(ref self, ERC20);
             erc20.burn(starknet::get_caller_address(), amount);
-            println!("after burn");
             BytesTrait::new_empty()
         }
 

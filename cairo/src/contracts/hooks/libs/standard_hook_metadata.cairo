@@ -128,7 +128,6 @@ pub mod standard_hook_metadata {
         ) -> Bytes {
             // NOTE: sence ContractAddress might not fit into u128, we need to convert it to u256
             // and then split it into low and high parts
-            println!("standard_hook_metadata format_metadata");
             let refund_address_felt: felt252 = refund_address.into();
             let refund_address_u256: u256 = refund_address_felt.into();
             let mut data: Array<u128> = array![
@@ -147,7 +146,6 @@ pub mod standard_hook_metadata {
         }
 
         fn override_gas_limits(gas_limit: u256) -> Bytes {
-            println!("standard_hook_metadata override_gas_limits");
             StandardHookMetadata::format_metadata(
                 0, gas_limit, starknet::get_caller_address(), BytesTrait::new_empty()
             )

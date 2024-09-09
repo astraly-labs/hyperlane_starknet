@@ -1,11 +1,18 @@
+use alexandria_bytes::Bytes;
+use hyperlane_starknet::contracts::libs::message::Message;
+
 #[starknet::interface]
 pub trait ITestInterchainGasPayment<TContractState> {
     fn quote_gas_payment(self: @TContractState, gas_amount: u256) -> u256;
     fn get_default_gas_usage(self: @TContractState) -> u256;
+    fn gas_price(self: @TContractState) -> u256;
+    fn post_dispatch(ref self: TContractState, metadata: Bytes, message: Message);
 }
 
 #[starknet::contract]
 pub mod TestInterchainGasPayment {
+    use alexandria_bytes::Bytes;
+    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
     use openzeppelin::access::ownable::OwnableComponent;
     use starknet::ContractAddress;
 
@@ -43,6 +50,11 @@ pub mod TestInterchainGasPayment {
         fn get_default_gas_usage(self: @ContractState) -> u256 {
             50_000
         }
+
+        fn gas_price(self: @ContractState) -> u256 {
+            self.gas_price.read()
+        }
+        fn post_dispatch(ref self: ContractState, metadata: Bytes, message: Message) {}
     }
 
     #[generate_trait]

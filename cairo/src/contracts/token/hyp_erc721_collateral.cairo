@@ -100,9 +100,18 @@ pub mod HypErc721Collateral {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, erc721: ContractAddress, mailbox: ContractAddress, hook: ContractAddress, interchain_security_module: ContractAddress, owner: ContractAddress) {
+    fn constructor(
+        ref self: ContractState,
+        erc721: ContractAddress,
+        mailbox: ContractAddress,
+        hook: ContractAddress,
+        interchain_security_module: ContractAddress,
+        owner: ContractAddress
+    ) {
         self.ownable.initializer(owner);
-        self.mailboxclient.initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
+        self
+            .mailboxclient
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         self.wrapped_token.write(ERC721ABIDispatcher { contract_address: erc721 });
     }
 
@@ -158,6 +167,11 @@ pub mod HypErc721Collateral {
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);

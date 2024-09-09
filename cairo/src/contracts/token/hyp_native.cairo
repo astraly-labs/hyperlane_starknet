@@ -101,13 +101,26 @@ pub mod HypNative {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, mailbox: ContractAddress, hook: ContractAddress, interchain_security_module: ContractAddress, owner: ContractAddress) {
+    fn constructor(
+        ref self: ContractState,
+        mailbox: ContractAddress,
+        hook: ContractAddress,
+        interchain_security_module: ContractAddress,
+        owner: ContractAddress
+    ) {
         self.ownable.initializer(owner);
-        self.mailboxclient.initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
+        self
+            .mailboxclient
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
     }
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);

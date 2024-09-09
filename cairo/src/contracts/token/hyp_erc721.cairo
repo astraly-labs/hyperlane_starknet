@@ -131,14 +131,21 @@ pub mod HypErc721 {
         hook: ContractAddress,
         interchain_security_module: ContractAddress,
         owner: ContractAddress
-    ) { 
+    ) {
         self.ownable.initializer(owner);
-        self.mailboxclient.initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
+        self
+            .mailboxclient
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         self.hyp_erc721.initialize(mint_amount, name, symbol);
     }
 
     #[abi(embed_v0)]
     impl HypErc721Upgradeable of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.upgradeable.upgrade(new_class_hash);
         }

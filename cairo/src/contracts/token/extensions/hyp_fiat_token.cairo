@@ -8,7 +8,8 @@ pub mod HypFiatToken {
         hyp_erc20_collateral_component::HypErc20CollateralComponent,
         token_router::{
             TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-            TokenRouterComponent::MessageRecipientInternalHookImpl, TokenRouterTransferRemoteHookDefaultImpl
+            TokenRouterComponent::MessageRecipientInternalHookImpl,
+            TokenRouterTransferRemoteHookDefaultImpl
         },
     };
     use hyperlane_starknet::contracts::token::interfaces::ifiat_token::{
@@ -113,6 +114,11 @@ pub mod HypFiatToken {
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);

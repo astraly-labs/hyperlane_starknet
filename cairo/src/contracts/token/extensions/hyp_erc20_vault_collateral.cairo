@@ -145,7 +145,8 @@ mod HypErc20VaultCollateral {
             let exchange_rate = math::mul_div( /// TODO: need roundup round down
                 PRECISION, vault.total_assets(), vault.total_supply(),
             );
-            let token_metadata: Bytes = BytesTrait::new_empty(); // TODO: exchange_rate // abi.encode ? should it be big endian?
+            let token_metadata: Bytes =
+                BytesTrait::new_empty(); // TODO: exchange_rate // abi.encode ? should it be big endian?
             let token_message = TokenMessageTrait::format(recipient, shares, token_metadata);
             let message_id = contract_state
                 .router
@@ -194,14 +195,14 @@ mod HypErc20VaultCollateral {
     impl HypeErc20VaultCollateral of super::IHypErc20VaultCollateral<ContractState> {
         fn rebase(ref self: ContractState, destination_domain: u32, value: u256) {
             TokenRouterTransferRemoteHookImpl::_transfer_remote(
-                    ref self.token_router,
-                    destination_domain,
-                    NULL_RECIPIENT,
-                    0,
-                    value,
-                    Option::None,
-                    Option::None,
-                );
+                ref self.token_router,
+                destination_domain,
+                NULL_RECIPIENT,
+                0,
+                value,
+                Option::None,
+                Option::None,
+            );
         }
 
         fn get_vault(self: @ContractState) -> ContractAddress {
@@ -219,6 +220,11 @@ mod HypErc20VaultCollateral {
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);

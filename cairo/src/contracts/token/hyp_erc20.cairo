@@ -8,6 +8,7 @@ pub mod HypErc20 {
         hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl},
         token_router::{
             TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+            TokenRouterTransferRemoteHookDefaultImpl
         }
     };
     use openzeppelin::access::ownable::OwnableComponent;
@@ -43,11 +44,14 @@ pub mod HypErc20 {
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
     // ERC20
     #[abi(embed_v0)]
-    impl ERC20Impl = ERC20Component::ERC20MixinImpl<ContractState>;
+    impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
+    #[abi(embed_v0)]
+    impl ERC20CamelOnlyImpl = ERC20Component::ERC20CamelOnlyImpl<ContractState>;
     impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
     // HypERC20
-    //#[abi(embed_v0)]
-    //impl HypErc20Impl = HypErc20Component::HypeErc20Impl<ContractState>;
+    #[abi(embed_v0)]
+    impl HypErc20MetadataImpl =
+        HypErc20Component::HypErc20MetadataImpl<ContractState>;
     impl HypErc20InternalImpl = HypErc20Component::InternalImpl<ContractState>;
     // TokenRouter
     #[abi(embed_v0)]

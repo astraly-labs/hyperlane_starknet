@@ -9,18 +9,21 @@ mod HypErc20VaultCollateral {
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
+    use hyperlane_starknet::contracts::libs::math;
+    use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::{
         token_router::{
-            TokenRouterComponent, 
-            TokenRouterComponent::MessageRecipientInternalHookImpl,
-            TokenRouterComponent::TokenRouterHooksTrait
+            TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+            TokenRouterComponent::{TokenRouterHooksTrait, TokenRouterTransferRemoteHookTrait}
         },
         hyp_erc20_collateral_component::HypErc20CollateralComponent,
     };
+    use hyperlane_starknet::contracts::token::interfaces::ierc4626::{
+        ERC4626ABIDispatcher, ERC4626ABIDispatcherTrait
+    };
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
-    use hyperlane_starknet::contracts::token::interfaces::ierc4626::{ERC4626ABIDispatcher, ERC4626ABIDispatcherTrait};
-    use openzeppelin::token::erc20::{ERC20ABIDispatcherTrait};
     use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::token::erc20::{ERC20ABIDispatcherTrait};
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
@@ -48,9 +51,13 @@ mod HypErc20VaultCollateral {
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
+    impl RouterInternalImpl = RouterComponent::RouterComponentInternalImpl<ContractState>;
     // GasRouter
     #[abi(embed_v0)]
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
+    impl GasRouterInternalImpl = GasRouterComponent::GasRouterInternalImpl<ContractState>;
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     // HypERC20Collateral
     #[abi(embed_v0)]
     impl HypErc20CollateralImpl =
@@ -111,19 +118,53 @@ mod HypErc20VaultCollateral {
     ) {
         self.ownable.initializer(owner);
         self.mailbox.initialize(mailbox, hook, interchain_security_module);
-        let vault_dispatcher = ERC4626ABIDispatcher{contract_address: vault};
+        let vault_dispatcher = ERC4626ABIDispatcher { contract_address: vault };
         let erc20 = vault_dispatcher.asset();
         self.collateral.initialize(erc20);
         self.vault.write(vault_dispatcher);
     }
 
-    // _transfer_remote override
+    impl TokenRouterTransferRemoteHookImpl of TokenRouterTransferRemoteHookTrait<ContractState> {
+        fn _transfer_remote( // this overrides specific internal _transfer_remote check parameters ensure any additional thing is needed
+            ref self: TokenRouterComponent::ComponentState<ContractState>,
+            destination: u32,
+            recipient: u256,
+            amount_or_id: u256,
+            value: u256,
+            hook_metadata: Option<Bytes>,
+            hook: Option<ContractAddress>
+        ) -> u256 {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            TokenRouterHooksTraitImpl::transfer_from_sender_hook(ref self, amount_or_id);
+            let shares = contract_state._deposit_into_vault(amount_or_id);
+            let vault = contract_state.vault.read();
+            let exchange_rate = math::mul_div( /// need roundup round down
+                PRECISION, vault.total_assets(), vault.total_supply(),
+            );
+            let token_metadata: Bytes = BytesTrait::new_empty(); //exchange_rate // abi.encode ? 
+            let token_message = TokenMessageTrait::format(recipient, shares, token_metadata);
+            let message_id = contract_state
+                .router
+                ._Router_dispatch(
+                    destination, value, token_message, hook_metadata.unwrap(), hook.unwrap()
+                );
+            self
+                .emit(
+                    TokenRouterComponent::SentTransferRemote {
+                        destination, recipient, amount: amount_or_id,
+                    }
+                );
+            message_id
+        }
+    }
 
     impl TokenRouterHooksTraitImpl of TokenRouterHooksTrait<ContractState> {
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
-            HypErc20CollateralComponent::TokenRouterHooksImpl::transfer_from_sender_hook(ref self, amount_or_id)
+            HypErc20CollateralComponent::TokenRouterHooksImpl::transfer_from_sender_hook(
+                ref self, amount_or_id
+            )
         }
 
         fn transfer_to_hook(
@@ -135,14 +176,20 @@ mod HypErc20VaultCollateral {
             let recipient: ContractAddress = recipient.try_into().unwrap();
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             // withdraw with the specified amount of shares
-            contract_state.vault.read().redeem(amount_or_id, recipient.try_into().expect('u256 to ContractAddress failed'), starknet::get_contract_address());
+            contract_state
+                .vault
+                .read()
+                .redeem(
+                    amount_or_id,
+                    recipient.try_into().expect('u256 to ContractAddress failed'),
+                    starknet::get_contract_address()
+                );
         }
     }
 
     impl HypeErc20VaultCollateral of super::IHypErc20VaultCollateral<ContractState> {
         // payable in sol handle this
-        fn rebase(ref self: ContractState, destination_domain: u32) {
-            // _transfer_remote required
+        fn rebase(ref self: ContractState, destination_domain: u32) { // _transfer_remote required
         }
     }
 

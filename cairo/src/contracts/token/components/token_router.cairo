@@ -1,4 +1,14 @@
 use alexandria_bytes::{Bytes, BytesTrait};
+use hyperlane_starknet::contracts::client::gas_router_component::{
+    GasRouterComponent, GasRouterComponent::InternalTrait as GasRouterComponentInternalTrait
+};
+use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
+use hyperlane_starknet::contracts::client::router_component::{
+    RouterComponent, RouterComponent::InternalTrait as RouterComponentInternalTrait
+};
+use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
+use hyperlane_starknet::interfaces::IMailboxClient;
+use openzeppelin::access::ownable::OwnableComponent;
 use starknet::ContractAddress;
 
 #[starknet::interface]
@@ -75,6 +85,18 @@ pub mod TokenRouterComponent {
         );
     }
 
+    pub trait TokenRouterTransferRemoteHookTrait<TContractState> {
+        fn _transfer_remote(
+            ref self: ComponentState<TContractState>,
+            destination: u32,
+            recipient: u256,
+            amount_or_id: u256,
+            value: u256,
+            hook_metadata: Option<Bytes>,
+            hook: Option<ContractAddress>
+        ) -> u256;
+    }
+
     pub impl MessageRecipientInternalHookImpl<
         TContractState,
         +HasComponent<TContractState>,
@@ -107,7 +129,8 @@ pub mod TokenRouterComponent {
         +RouterComponent::HasComponent<TContractState>,
         +OwnableComponent::HasComponent<TContractState>,
         +GasRouterComponent::HasComponent<TContractState>,
-        +TokenRouterHooksTrait<TContractState>
+        +TokenRouterHooksTrait<TContractState>,
+        impl TransferRemoteHook: TokenRouterTransferRemoteHookTrait<TContractState>
     > of super::ITokenRouter<ComponentState<TContractState>> {
         fn transfer_remote(
             ref self: ComponentState<TContractState>,
@@ -120,21 +143,26 @@ pub mod TokenRouterComponent {
         ) -> u256 {
             match hook_metadata {
                 Option::Some(hook_metadata) => {
-                    self
-                        ._transfer_remote(
-                            destination,
-                            recipient,
-                            amount_or_id,
-                            value,
-                            Option::Some(hook_metadata),
-                            hook
-                        )
+                    TransferRemoteHook::_transfer_remote(
+                        ref self,
+                        destination,
+                        recipient,
+                        amount_or_id,
+                        value,
+                        Option::Some(hook_metadata),
+                        hook
+                    )
                 },
                 Option::None => {
-                    self
-                        ._transfer_remote(
-                            destination, recipient, amount_or_id, value, Option::None, Option::None
-                        )
+                    TransferRemoteHook::_transfer_remote(
+                        ref self,
+                        destination,
+                        recipient,
+                        amount_or_id,
+                        value,
+                        Option::None,
+                        Option::None
+                    )
                 }
             }
         }
@@ -151,48 +179,6 @@ pub mod TokenRouterComponent {
         impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
         impl Hooks: TokenRouterHooksTrait<TContractState>
     > of InternalTrait<TContractState> {
-        fn _transfer_remote(
-            ref self: ComponentState<TContractState>,
-            destination: u32,
-            recipient: u256,
-            amount_or_id: u256,
-            value: u256,
-            hook_metadata: Option<Bytes>,
-            hook: Option<ContractAddress>
-        ) -> u256 {
-            let token_metadata = self._transfer_from_sender(amount_or_id);
-            let token_message = TokenMessageTrait::format(recipient, amount_or_id, token_metadata);
-
-            let mut router_comp = get_dep_component!(@self, Router);
-            let mailbox_comp = get_dep_component!(@self, MailBoxClient);
-            let gas_router_comp = get_dep_component!(@self, GasRouter);
-
-            let mut message_id = 0;
-
-            match hook_metadata {
-                Option::Some(hook_metadata) => {
-                    if !hook.is_some() {
-                        panic!("Transfer remote invalid arguments, missing hook");
-                    }
-
-                    message_id = router_comp
-                        ._Router_dispatch(
-                            destination, value, token_message, hook_metadata, hook.unwrap()
-                        );
-                },
-                Option::None => {
-                    let hook_metadata = gas_router_comp._Gas_router_hook_metadata(destination);
-                    let hook = mailbox_comp.get_hook();
-                    message_id = router_comp
-                        ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
-                }
-            }
-
-            self.emit(SentTransferRemote { destination, recipient, amount: amount_or_id, });
-
-            message_id
-        }
-
         fn _transfer_from_sender(
             ref self: ComponentState<TContractState>, amount_or_id: u256
         ) -> Bytes {
@@ -225,4 +211,63 @@ pub impl TokenRouterEmptyHooksImpl<
         amount_or_id: u256,
         metadata: Bytes
     ) {}
+}
+
+pub impl TokenRouterTransferRemoteHookDefaultImpl<
+    TContractState,
+    +Drop<TContractState>,
+    +TokenRouterComponent::HasComponent<TContractState>,
+    +MailboxclientComponent::HasComponent<TContractState>,
+    +RouterComponent::HasComponent<TContractState>,
+    +GasRouterComponent::HasComponent<TContractState>,
+    +OwnableComponent::HasComponent<TContractState>,
+> of TokenRouterComponent::TokenRouterTransferRemoteHookTrait<TContractState> {
+    fn _transfer_remote(
+        ref self: TokenRouterComponent::ComponentState<TContractState>,
+        destination: u32,
+        recipient: u256,
+        amount_or_id: u256,
+        value: u256,
+        hook_metadata: Option<Bytes>,
+        hook: Option<ContractAddress>
+    ) -> u256 {
+        let token_metadata = TokenRouterComponent::TokenRouterInternalImpl::_transfer_from_sender(
+            ref self, amount_or_id
+        );
+        let token_message = TokenMessageTrait::format(recipient, amount_or_id, token_metadata);
+        let contract_state = TokenRouterComponent::HasComponent::get_contract(@self);
+        let router_comp = RouterComponent::HasComponent::get_component(contract_state);
+        let mailbox_comp = MailboxclientComponent::HasComponent::get_component(contract_state);
+        let gas_router_comp = GasRouterComponent::HasComponent::get_component(contract_state);
+
+        let mut message_id = 0;
+
+        match hook_metadata {
+            Option::Some(hook_metadata) => {
+                if !hook.is_some() {
+                    panic!("Transfer remote invalid arguments, missing hook");
+                }
+
+                message_id = router_comp
+                    ._Router_dispatch(
+                        destination, value, token_message, hook_metadata, hook.unwrap()
+                    );
+            },
+            Option::None => {
+                let hook_metadata = gas_router_comp._Gas_router_hook_metadata(destination);
+                let hook = mailbox_comp.get_hook();
+                message_id = router_comp
+                    ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
+            }
+        }
+
+        self
+            .emit(
+                TokenRouterComponent::SentTransferRemote {
+                    destination, recipient, amount: amount_or_id,
+                }
+            );
+
+        message_id
+    }
 }

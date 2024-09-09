@@ -8,27 +8,26 @@ trait IHypErc20Vault<TContractState> {
 #[starknet::contract]
 mod HypErc20Vault {
     use alexandria_bytes::{Bytes, BytesTrait};
-    use core::integer::{u256_wide_mul, u512_safe_div_rem_by_u256};
     use core::option::OptionTrait;
     use core::traits::TryInto;
     use core::zeroable::NonZero;
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
-    use hyperlane_starknet::contracts::client::router_component::{RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait};
+    use hyperlane_starknet::contracts::client::router_component::{
+        RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait
+    };
+    use hyperlane_starknet::contracts::libs::math;
+    use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::{
-        hyp_erc20_component::{
-            HypErc20Component, 
-            HypErc20Component::TokenRouterHooksImpl, },
+        hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl,},
         token_router::{
-            TokenRouterComponent, 
-            TokenRouterComponent::TokenRouterHooksTrait
+            TokenRouterComponent,
+            TokenRouterComponent::{TokenRouterHooksTrait, TokenRouterTransferRemoteHookTrait}
         }
     };
-    use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{
-        ERC20Component, ERC20HooksEmptyImpl, 
-        interface::{IERC20Metadata, ERC20ABI} 
+        ERC20Component, ERC20HooksEmptyImpl, interface::{IERC20Metadata, ERC20ABI}
     };
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
@@ -56,17 +55,18 @@ mod HypErc20Vault {
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
+    impl RouterInternalImpl = RouterComponent::RouterComponentInternalImpl<ContractState>;
     // GasRouter
     #[abi(embed_v0)]
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
+    impl GasRouterInternalImpl = GasRouterComponent::GasRouterInternalImpl<ContractState>;
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     // ERC20
     impl ERC20MixinImpl = ERC20Component::ERC20MixinImpl<ContractState>;
     impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
     // HypERC20
     impl HypErc20InternalImpl = HypErc20Component::InternalImpl<ContractState>;
-    // TokenRouter
-    #[abi(embed_v0)]
-    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
@@ -142,7 +142,58 @@ mod HypErc20Vault {
         self.exchange_rate.write(E10);
     }
 
-    // _transfer_remote override
+    impl TokenRouterTransferRemoteHookImpl of TokenRouterTransferRemoteHookTrait<ContractState> {
+        fn _transfer_remote(
+            ref self: TokenRouterComponent::ComponentState<ContractState>,
+            destination: u32,
+            recipient: u256,
+            amount_or_id: u256,
+            value: u256,
+            hook_metadata: Option<Bytes>,
+            hook: Option<ContractAddress>
+        ) -> u256 {
+            let contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let shares = contract_state.assets_to_shares(amount_or_id);
+            TokenRouterHooksImpl::transfer_from_sender_hook(ref self, shares);
+            let token_message = TokenMessageTrait::format(
+                recipient, shares, BytesTrait::new_empty()
+            );
+            let mut message_id = 0;
+
+            match hook_metadata {
+                Option::Some(hook_metadata) => {
+                    if !hook.is_some() {
+                        panic!("Transfer remote invalid arguments, missing hook");
+                    }
+
+                    message_id = contract_state
+                        .router
+                        ._Router_dispatch(
+                            destination, value, token_message, hook_metadata, hook.unwrap()
+                        );
+                },
+                Option::None => {
+                    let hook_metadata = contract_state
+                        .gas_router
+                        ._Gas_router_hook_metadata(destination);
+                    let hook = contract_state.mailbox.get_hook();
+                    message_id = contract_state
+                        .router
+                        ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
+                }
+            }
+
+            self
+                .emit(
+                    TokenRouterComponent::SentTransferRemote {
+                        destination, recipient, amount: amount_or_id,
+                    }
+                );
+
+            message_id
+        }
+    }
+
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
@@ -155,11 +206,11 @@ mod HypErc20Vault {
     #[abi(embed_v0)]
     impl HypeErc20Vault of super::IHypErc20Vault<ContractState> {
         fn assets_to_shares(self: @ContractState, amount: u256) -> u256 {
-            mul_div(amount, PRECISION, self.exchange_rate.read())
+            math::mul_div(amount, PRECISION, self.exchange_rate.read())
         }
 
         fn shares_to_assets(self: @ContractState, shares: u256) -> u256 {
-            mul_div(shares, self.exchange_rate.read(), PRECISION)
+            math::mul_div(shares, self.exchange_rate.read(), PRECISION)
         }
 
         fn share_balance_of(self: @ContractState, account: ContractAddress) -> u256 {
@@ -168,16 +219,23 @@ mod HypErc20Vault {
     }
 
     impl MessageRecipientInternalHookImpl of IMessageRecipientInternalHookTrait<ContractState> {
-        fn _handle(ref self: RouterComponent::ComponentState<ContractState>, origin: u32, sender: u256, message: Bytes) {
+        fn _handle(
+            ref self: RouterComponent::ComponentState<ContractState>,
+            origin: u32,
+            sender: u256,
+            message: Bytes
+        ) {
             let mut contract_state = RouterComponent::HasComponent::get_contract_mut(ref self);
             if origin == contract_state.collateral_domain.read() {
                 let (_, exchange_rate) = message.metadata().read_u256(0);
                 contract_state.exchange_rate.write(exchange_rate);
-            }   
-            TokenRouterComponent::MessageRecipientInternalHookImpl::_handle(ref self, origin, sender, message);
-        }     
+            }
+            TokenRouterComponent::MessageRecipientInternalHookImpl::_handle(
+                ref self, origin, sender, message
+            );
+        }
     }
-    
+
     #[abi(embed_v0)]
     impl ERC20ABIImpl of ERC20ABI<ContractState> {
         fn total_supply(self: @ContractState) -> u256 {
@@ -195,9 +253,7 @@ mod HypErc20Vault {
             ERC20MixinImpl::allowance(self, owner, spender)
         }
         // Overrides ERC20.transfer()
-        fn transfer(
-            ref self: ContractState, recipient: ContractAddress, amount: u256
-        ) -> bool {
+        fn transfer(ref self: ContractState, recipient: ContractAddress, amount: u256) -> bool {
             ERC20MixinImpl::transfer(ref self, recipient, self.assets_to_shares(amount));
             true
         }
@@ -211,9 +267,7 @@ mod HypErc20Vault {
             ERC20MixinImpl::transfer_from(ref self, sender, recipient, amount)
         }
 
-        fn approve(
-            ref self: ContractState, spender: ContractAddress, amount: u256
-        ) -> bool {
+        fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {
             ERC20MixinImpl::approve(ref self, spender, amount)
         }
 
@@ -247,28 +301,5 @@ mod HypErc20Vault {
         ) -> bool {
             ERC20MixinImpl::transferFrom(ref self, sender, recipient, amount)
         }
-    }
-
-    /// Multiplies two `u256` values and then divides by a third `u256` value.
-    ///
-    /// # Parameters
-    ///
-    /// - `a`: The first multiplicand, a `u256` value.
-    /// - `b`: The second multiplicand, a `u256` value.
-    /// - `c`: The divisor, a `u256` value. Must not be zero.
-    ///
-    /// # Returns
-    ///
-    /// - The result of the operation `(a * b) / c`, as a `u256` value.
-    ///
-    /// # Panics
-    ///
-    /// - Panics if `c` is zero, as division by zero is undefined.
-    pub fn mul_div(a: u256, b: u256, c: u256) -> u256 {
-        if c == 0 {
-            panic!("mul_div division by zero");
-        }
-        let (q, _) = u512_safe_div_rem_by_u256(u256_wide_mul(a, b), c.try_into().unwrap());
-        q.try_into().expect('mul_div result gt u256')
     }
 }

@@ -5,6 +5,7 @@ mod contracts {
         pub mod aggregation_ism_metadata;
         pub mod checkpoint_lib;
         pub mod enumerable_map;
+        pub mod math;
         pub mod message;
         pub mod multisig {
             pub mod merkleroot_ism_metadata;
@@ -49,8 +50,8 @@ mod contracts {
             pub mod fast_hyp_erc20;
             pub mod fast_hyp_erc20_collateral;
             pub mod hyp_erc20_collateral_vault_deposit;
-            pub mod hyp_erc20_vault_collateral;
             pub mod hyp_erc20_vault;
+            pub mod hyp_erc20_vault_collateral;
             pub mod hyp_erc721_URI_collateral;
             pub mod hyp_erc721_URI_storage;
             pub mod hyp_fiat_token;
@@ -59,11 +60,11 @@ mod contracts {
             pub mod hyp_xerc20_lockbox;
         }
         pub mod interfaces {
+            pub mod ierc4626;
             pub mod ifiat_token;
             pub mod imessage_recipient;
             pub mod ixerc20;
             pub mod ixerc20_lockbox;
-            pub mod ierc4626;
         }
         pub mod components {
             pub mod fast_token_router;

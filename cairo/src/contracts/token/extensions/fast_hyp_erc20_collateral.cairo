@@ -13,7 +13,8 @@ pub mod FastHypERC20Collateral {
         hyp_erc20_collateral_component::{
             HypErc20CollateralComponent, HypErc20CollateralComponent::TokenRouterHooksImpl
         },
-        token_message::TokenMessageTrait, token_router::TokenRouterComponent,
+        token_message::TokenMessageTrait,
+        token_router::{TokenRouterComponent, TokenRouterTransferRemoteHookDefaultImpl},
         fast_token_router::{
             FastTokenRouterComponent, FastTokenRouterComponent::FastTokenRouterHooksTrait,
             FastTokenRouterComponent::MessageRecipientInternalHookImpl
@@ -61,6 +62,8 @@ pub mod FastHypERC20Collateral {
         HypErc20CollateralComponent::HypErc20CollateralImpl<ContractState>;
     impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
     // TokenRouter
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
     // FastTokenRouter
     #[abi(embed_v0)]
@@ -156,6 +159,7 @@ pub mod FastHypERC20Collateral {
                 .read()
                 .transfer(recipient.try_into().expect('u256 to ContractAddress failed'), amount);
         }
+
         fn fast_receive_from_hook(
             ref self: FastTokenRouterComponent::ComponentState<ContractState>,
             sender: ContractAddress,

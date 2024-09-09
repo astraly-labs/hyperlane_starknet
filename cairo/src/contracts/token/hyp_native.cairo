@@ -52,7 +52,7 @@ pub mod HypNative {
         MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
     // ERC20
     #[abi(embed_v0)]
-    impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
+    impl ERC20MixinImpl = ERC20Component::ERC20MixinImpl<ContractState>;
 
     #[storage]
     struct Storage {

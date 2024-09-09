@@ -30,17 +30,11 @@ pub trait IERC4626<TState> {
     fn preview_redeem(self: @TState, shares: u256) -> u256;
     fn preview_withdraw(self: @TState, assets: u256) -> u256;
     fn redeem(
-        ref self: TState,
-        shares: u256,
-        receiver: ContractAddress,
-        owner: ContractAddress
+        ref self: TState, shares: u256, receiver: ContractAddress, owner: ContractAddress
     ) -> u256;
     fn total_assets(self: @TState) -> u256;
     fn withdraw(
-        ref self: TState,
-        assets: u256,
-        receiver: ContractAddress,
-        owner: ContractAddress
+        ref self: TState, assets: u256, receiver: ContractAddress, owner: ContractAddress
     ) -> u256;
     fn max_deposit(self: @TState, receiver: ContractAddress) -> u256;
     fn max_mint(self: @TState, receiver: ContractAddress) -> u256;
@@ -96,17 +90,12 @@ pub trait ERC4626ABI<TState> {
     fn preview_redeem(self: @TState, shares: u256) -> u256;
     fn preview_withdraw(self: @TState, assets: u256) -> u256;
     fn redeem(
-        ref self: TState,
-        shares: u256,
-        receiver: ContractAddress,
-        owner: ContractAddress
+        ref self: TState, shares: u256, receiver: ContractAddress, owner: ContractAddress
     ) -> u256;
+    fn total_supply(self: @TState) -> u256;
     fn total_assets(self: @TState) -> u256;
     fn withdraw(
-        ref self: TState,
-        assets: u256,
-        receiver: ContractAddress,
-        owner: ContractAddress
+        ref self: TState, assets: u256, receiver: ContractAddress, owner: ContractAddress
     ) -> u256;
     fn max_deposit(self: @TState, receiver: ContractAddress) -> u256;
     fn max_mint(self: @TState, receiver: ContractAddress) -> u256;

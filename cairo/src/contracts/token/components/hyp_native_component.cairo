@@ -60,7 +60,6 @@ pub mod HypNativeComponent {
         +OwnableComponent::HasComponent<TContractState>,
         +RouterComponent::HasComponent<TContractState>,
         +GasRouterComponent::HasComponent<TContractState>,
-        +TokenRouterHooksTrait<TContractState>,
         +ERC20Component::HasComponent<TContractState>,
         impl Mailboxclient: MailboxclientComponent::HasComponent<TContractState>,
         impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
@@ -71,7 +70,38 @@ pub mod HypNativeComponent {
             self.emit(Donation { sender: starknet::get_caller_address(), amount });
         }
     }
-    /// get the overrides for transfers again
+
+    pub impl TokenRouterHooksImpl<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        +MailboxclientComponent::HasComponent<TContractState>,
+        +RouterComponent::HasComponent<TContractState>,
+        +OwnableComponent::HasComponent<TContractState>,
+        +GasRouterComponent::HasComponent<TContractState>,
+        +TokenRouterComponent::HasComponent<TContractState>,
+        +ERC20Component::HasComponent<TContractState>
+    > of TokenRouterHooksTrait<TContractState> {
+        fn transfer_from_sender_hook(
+            ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
+        ) -> Bytes {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut component_state = HasComponent::get_component_mut(ref contract_state);
+            component_state._transfer_from_sender(amount_or_id)
+        }
+
+        fn transfer_to_hook(
+            ref self: TokenRouterComponent::ComponentState<TContractState>,
+            recipient: u256,
+            amount_or_id: u256,
+            metadata: Bytes
+        ) {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut component_state = HasComponent::get_component_mut(ref contract_state);
+            component_state._transfer_to(recipient, amount_or_id);
+        }
+    }
+
     #[embeddable_as(TokenRouterImpl)]
     impl TokenRouter<
         TContractState,
@@ -98,11 +128,12 @@ pub mod HypNativeComponent {
 
             let mut token_router_comp = get_dep_component_mut!(ref self, TokenRouterComp);
             token_router_comp
-                .transfer_remote(
+                ._transfer_remote(
                     destination, recipient, amount_or_id, hook_payment, Option::None, Option::None
                 )
         }
     }
+
     #[generate_trait]
     pub impl HypNativeInternalImpl<
         TContractState,

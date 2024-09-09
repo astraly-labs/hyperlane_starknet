@@ -21,7 +21,8 @@ pub mod HypErc20Component {
     };
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl
+        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl,
+        TokenRouterComponent::TokenRouterHooksTrait
     };
     use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use hyperlane_starknet::interfaces::IMailboxClient;
@@ -38,6 +39,39 @@ pub mod HypErc20Component {
     struct Storage {
         decimals: u8,
     }
+
+    pub impl TokenRouterHooksImpl<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        +MailboxclientComponent::HasComponent<TContractState>,
+        +RouterComponent::HasComponent<TContractState>,
+        +OwnableComponent::HasComponent<TContractState>,
+        +GasRouterComponent::HasComponent<TContractState>,
+        +TokenRouterComponent::HasComponent<TContractState>,
+        +ERC20HooksTrait<TContractState>,
+        +ERC20Component::HasComponent<TContractState>
+    > of TokenRouterHooksTrait<TContractState> {
+        fn transfer_from_sender_hook(
+            ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
+        ) -> Bytes {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut component_state = HasComponent::get_component_mut(ref contract_state);
+            component_state._transfer_from_sender(amount_or_id)
+        }
+
+        fn transfer_to_hook(
+            ref self: TokenRouterComponent::ComponentState<TContractState>,
+            recipient: u256,
+            amount_or_id: u256,
+            metadata: Bytes
+        ) {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut component_state = HasComponent::get_component_mut(ref contract_state);
+            component_state._transfer_to(recipient, amount_or_id);
+        }
+    }
+
 
     #[embeddable_as(HypeErc20Impl)]
     impl HypErc20Impl<
@@ -85,7 +119,6 @@ pub mod HypErc20Component {
 
         fn _transfer_to(ref self: ComponentState<TContractState>, recipient: u256, amount: u256) {
             let mut erc20 = get_dep_component_mut!(ref self, ERC20);
-
             erc20.mint(recipient.try_into().expect('u256 to ContractAddress failed'), amount);
         }
     }

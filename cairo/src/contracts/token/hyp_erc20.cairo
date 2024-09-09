@@ -1,5 +1,3 @@
-use starknet::ContractAddress;
-
 #[starknet::contract]
 pub mod HypErc20 {
     use alexandria_bytes::{Bytes, BytesTrait};
@@ -7,12 +5,11 @@ pub mod HypErc20 {
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
-        hyp_erc20_component::HypErc20Component, token_message::TokenMessageTrait,
+        hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl},
         token_router::{
-            TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait
+            TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
         }
     };
-    use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
     use openzeppelin::upgrades::interface::IUpgradeable;
@@ -55,7 +52,6 @@ pub mod HypErc20 {
     // TokenRouter
     #[abi(embed_v0)]
     impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
-    impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
@@ -103,9 +99,9 @@ pub mod HypErc20 {
     #[constructor]
     fn constructor(
         ref self: ContractState,
-        total_supply: u256,
         decimals: u8,
         mailbox: ContractAddress,
+        total_supply: u256,
         name: ByteArray,
         symbol: ByteArray,
         hook: ContractAddress,
@@ -122,51 +118,10 @@ pub mod HypErc20 {
     }
 
     #[abi(embed_v0)]
-    impl MessageRecipient of IMessageRecipient<ContractState> {
-        fn handle(ref self: ContractState, origin: u32, sender: u256, message: Bytes) {
-            println!("handle");
-            let recipient = message.recipient();
-            let amount = message.amount();
-
-            let recipient_address: felt252 = recipient
-                .try_into()
-                .expect('Invalid recipient address');
-
-            self
-                .erc20
-                .mint(recipient_address.try_into().expect('Invalid recipient address'), amount);
-
-            self
-                .token_router
-                .emit(TokenRouterComponent::ReceivedTransferRemote { origin, recipient, amount, });
-        }
-    }
-
-    #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);
-        }
-    }
-
-    impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
-        fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
-        ) -> Bytes {
-            println!("transfer_from_sender_hook");
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.hyp_erc20._transfer_from_sender(amount_or_id)
-        }
-
-        fn transfer_to_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>,
-            recipient: u256,
-            amount_or_id: u256,
-            metadata: Bytes
-        ) {
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.hyp_erc20._transfer_to(recipient, amount_or_id)
         }
     }
 }

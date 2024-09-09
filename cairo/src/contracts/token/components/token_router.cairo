@@ -25,7 +25,8 @@ pub mod TokenRouterComponent {
         MailboxclientComponent::MailboxClient
     };
     use hyperlane_starknet::contracts::client::router_component::{
-        RouterComponent, RouterComponent::RouterComponentInternalImpl, IRouter,
+        RouterComponent, RouterComponent::RouterComponentInternalImpl,
+        RouterComponent::IMessageRecipientInternalHookTrait,
     };
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use openzeppelin::access::ownable::{
@@ -72,6 +73,29 @@ pub mod TokenRouterComponent {
             amount_or_id: u256,
             metadata: Bytes
         );
+    }
+
+    pub impl MessageRecipientInternalHookImpl<
+        TContractState,
+        +HasComponent<TContractState>,
+        +RouterComponent::HasComponent<TContractState>,
+        impl Hooks: TokenRouterHooksTrait<TContractState>,
+        +Drop<TContractState>,
+    > of IMessageRecipientInternalHookTrait<TContractState> {
+        fn _handle(
+            ref self: RouterComponent::ComponentState<TContractState>,
+            origin: u32,
+            sender: u256,
+            message: Bytes
+        ) {
+            let recipient = message.recipient();
+            let amount = message.amount();
+            let metadata = message.metadata();
+            let mut contract_state = RouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut component_state = HasComponent::get_component_mut(ref contract_state);
+            Hooks::transfer_to_hook(ref component_state, recipient, amount, metadata);
+            component_state.emit(ReceivedTransferRemote { origin, recipient, amount });
+        }
     }
 
     #[embeddable_as(TokenRouterImpl)]
@@ -179,16 +203,6 @@ pub mod TokenRouterComponent {
             ref self: ComponentState<TContractState>, amount_or_id: u256
         ) -> Bytes {
             Hooks::transfer_from_sender_hook(ref self, amount_or_id)
-        }
-
-        fn _handle(ref self: ComponentState<TContractState>, origin: u32, message: Bytes) {
-            let recipient = message.recipient();
-            let amount = message.amount();
-            let metadata = message.metadata();
-
-            self._transfer_to(recipient, amount, metadata);
-
-            self.emit(ReceivedTransferRemote { origin, recipient, amount, });
         }
 
         fn _transfer_to(

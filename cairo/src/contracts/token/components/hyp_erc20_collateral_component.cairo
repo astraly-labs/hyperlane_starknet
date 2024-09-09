@@ -21,7 +21,8 @@ pub mod HypErc20CollateralComponent {
     };
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl
+        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl,
+        TokenRouterComponent::TokenRouterHooksTrait
     };
     use hyperlane_starknet::interfaces::IMailboxClient;
     use hyperlane_starknet::utils::utils::{U256TryIntoContractAddress};
@@ -33,6 +34,36 @@ pub mod HypErc20CollateralComponent {
     #[storage]
     struct Storage {
         wrapped_token: ERC20ABIDispatcher
+    }
+
+    pub impl TokenRouterHooksImpl<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        +MailboxclientComponent::HasComponent<TContractState>,
+        +RouterComponent::HasComponent<TContractState>,
+        +OwnableComponent::HasComponent<TContractState>,
+        +GasRouterComponent::HasComponent<TContractState>,
+        +TokenRouterComponent::HasComponent<TContractState>,
+    > of TokenRouterHooksTrait<TContractState> {
+        fn transfer_from_sender_hook(
+            ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
+        ) -> Bytes {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut component_state = HasComponent::get_component_mut(ref contract_state);
+            component_state._transfer_from_sender(amount_or_id)
+        }
+
+        fn transfer_to_hook(
+            ref self: TokenRouterComponent::ComponentState<TContractState>,
+            recipient: u256,
+            amount_or_id: u256,
+            metadata: Bytes
+        ) {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut component_state = HasComponent::get_component_mut(ref contract_state);
+            component_state._transfer_to(recipient, amount_or_id);
+        }
     }
 
     #[embeddable_as(HypErc20CollateralImpl)]

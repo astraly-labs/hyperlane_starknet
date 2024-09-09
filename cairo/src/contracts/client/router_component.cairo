@@ -7,7 +7,7 @@ pub trait IRouter<TState> {
     fn enroll_remote_routers(ref self: TState, domains: Array<u32>, addresses: Array<u256>);
     fn unenroll_remote_router(ref self: TState, domain: u32);
     fn unenroll_remote_routers(ref self: TState, domains: Array<u32>);
-    // fn handle(ref self: TState, origin: u32, sender: u256, message: Bytes);
+    fn handle(ref self: TState, origin: u32, sender: u256, message: Bytes);
     fn domains(self: @TState) -> Array<u32>;
     fn routers(self: @TState, domain: u32) -> u256;
 }
@@ -39,13 +39,20 @@ pub mod RouterComponent {
         }
     }
 
+    pub trait IMessageRecipientInternalHookTrait<TContractState> {
+        fn _handle(
+            ref self: ComponentState<TContractState>, origin: u32, sender: u256, message: Bytes
+        );
+    }
+
     #[embeddable_as(RouterImpl)]
     impl Router<
         TContractState,
         +HasComponent<TContractState>,
         +MailboxclientComponent::HasComponent<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>,
-        +Drop<TContractState>
+        +Drop<TContractState>,
+        impl Hook: IMessageRecipientInternalHookTrait<TContractState>
     > of super::IRouter<ComponentState<TContractState>> {
         fn enroll_remote_router(
             ref self: ComponentState<TContractState>, domain: u32, router: u256
@@ -89,14 +96,14 @@ pub mod RouterComponent {
             }
         }
 
-        // fn handle(
-        //     ref self: ComponentState<TContractState>, origin: u32, sender: u256, message: Bytes
-        // ) {
-        //     let router = self._must_have_remote_router(origin);
-        //     assert!(router == sender, "Enrolled router does not match sender");
+        fn handle(
+            ref self: ComponentState<TContractState>, origin: u32, sender: u256, message: Bytes
+        ) {
+            let router = self._must_have_remote_router(origin);
+            assert!(router == sender, "Enrolled router does not match sender");
 
-        //     self._handle(origin, sender, message);
-        // }
+            Hook::_handle(ref self, origin, sender, message);
+        }
 
         fn domains(self: @ComponentState<TContractState>) -> Array<u32> {
             self.routers.read().keys()
@@ -114,16 +121,6 @@ pub mod RouterComponent {
         +Drop<TContractState>,
         impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>
     > of InternalTrait<TContractState> {
-        // TODO: review later once we have a clear idea of how to handle virtual functions
-        // fn _handle(
-        //     ref self: ComponentState<TContractState>, origin: u32, sender: u256, message: Bytes
-        // ) {
-        //     let router = self._must_have_remote_router(origin);
-        //     assert!(router == sender, "Enrolled router does not match sender");
-
-        //     self._handle(origin, sender, message);
-        // }
-
         fn _enroll_remote_router(
             ref self: ComponentState<TContractState>, domain: u32, address: u256
         ) {

@@ -129,7 +129,7 @@ mod HypErc20VaultCollateral {
     }
 
     impl TokenRouterTransferRemoteHookImpl of TokenRouterTransferRemoteHookTrait<ContractState> {
-        fn _transfer_remote( // this overrides specific internal _transfer_remote check parameters ensure any additional thing is needed
+        fn _transfer_remote(
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             destination: u32,
             recipient: u256,
@@ -145,8 +145,8 @@ mod HypErc20VaultCollateral {
             let exchange_rate = math::mul_div(
                 PRECISION, vault.total_assets(), vault.total_supply(),
             );
-            let token_metadata: Bytes =
-                BytesTrait::new_empty(); // TODO: exchange_rate // abi.encode ? should it be big endian?
+            let mut token_metadata: Bytes = BytesTrait::new_empty();
+            token_metadata.append_u256(exchange_rate);
             let token_message = TokenMessageTrait::format(recipient, shares, token_metadata);
             let message_id = contract_state
                 .router

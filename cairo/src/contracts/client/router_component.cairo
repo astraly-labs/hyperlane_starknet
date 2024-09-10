@@ -161,9 +161,8 @@ pub mod RouterComponent {
             hook: ContractAddress
         ) -> u256 {
             let router = self._must_have_remote_router(destination_domain);
-
             let mut mailbox_comp = get_dep_component!(self, MailBoxClient);
-            mailbox_comp
+            let value = mailbox_comp
                 .mailbox
                 .read()
                 .dispatch(
@@ -172,8 +171,9 @@ pub mod RouterComponent {
                     message_body,
                     value,
                     Option::Some(hook_metadata),
-                    Option::Some(hook)
-                )
+                    Option::Some(hook),
+                );
+            value
         }
 
         fn _Router_quote_dispatch(

@@ -19,7 +19,6 @@ pub mod HypErc20Component {
         TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl,
         TokenRouterComponent::TokenRouterHooksTrait
     };
-    use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use hyperlane_starknet::interfaces::IMailboxClient;
     use hyperlane_starknet::utils::utils::{U256TryIntoContractAddress};
     use openzeppelin::access::ownable::OwnableComponent;
@@ -67,7 +66,6 @@ pub mod HypErc20Component {
             component_state._transfer_to(recipient, amount_or_id);
         }
     }
-
 
     #[embeddable_as(HypErc20MetadataImpl)]
     impl HypErc20Metadata<

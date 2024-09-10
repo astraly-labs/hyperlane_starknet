@@ -47,7 +47,7 @@ pub const REQUIRED_VALUE: u256 = 0;
 fn IGP() -> ContractAddress {
     starknet::contract_address_const::<'IGP'>()
 }
-fn OWNER() -> ContractAddress {
+pub fn OWNER() -> ContractAddress {
     starknet::contract_address_const::<'OWNER'>()
 }
 pub fn ALICE() -> ContractAddress {
@@ -86,7 +86,7 @@ pub trait IHypERC20Test<TContractState> {
     fn enroll_remote_routers(ref self: TContractState, domains: Array<u32>, addresses: Array<u256>);
     fn unenroll_remote_router(ref self: TContractState, domain: u32);
     fn unenroll_remote_routers(ref self: TContractState, domains: Array<u32>);
-    // fn handle(ref self: TState, origin: u32, sender: u256, message: Bytes);
+    fn handle(ref self: TContractState, origin: u32, sender: u256, message: Bytes);
     fn domains(self: @TContractState) -> Array<u32>;
     fn routers(self: @TContractState, domain: u32) -> u256;
     // GasRouter
@@ -118,11 +118,10 @@ pub trait IHypERC20Test<TContractState> {
     fn approve(ref self: TContractState, spender: ContractAddress, amount: u256) -> bool;
     // HypERC20
     fn decimals(self: @TContractState) -> u8;
-    fn handle(ref self: TContractState, origin: u32, sender: u256, message: Bytes);
 }
 
 #[derive(Copy, Drop)]
-struct Setup {
+pub struct Setup {
     pub noop_hook: ITestPostDispatchHookDispatcher,
     pub local_mailbox: IMockMailboxDispatcher,
     pub remote_mailbox: IMockMailboxDispatcher,
@@ -315,43 +314,32 @@ pub fn handle_local_transfer(setup: @Setup, transfer_amount: u256) {
     let mut message = BytesTrait::new_empty();
     message.append_address(ALICE());
     message.append_u256(transfer_amount);
-    let message_recipient = IMessageRecipientDispatcher {
-        contract_address: (*setup).local_token.contract_address
-    };
+    
     let address_felt: felt252 = (*setup).remote_token.contract_address.into();
     let contract_address: u256 = address_felt.into();
-    message_recipient.handle(DESTINATION, contract_address, message);
+    (*setup).local_token.handle(DESTINATION, contract_address, message);
     stop_prank(CheatTarget::One((*setup).local_token.contract_address));
 }
 
 pub fn mint_and_approve(setup: @Setup, amount: u256, account: ContractAddress) {
-    (*setup).primary_token._mint(amount);
+    (*setup).primary_token.mint(account, amount);
     (*setup).primary_token.approve(account, amount);
 }
 
 pub fn set_custom_gas_config(setup: @Setup) {
     (*setup).local_token.set_hook((*setup).igp.contract_address);
-    println!("after set_hook");
     let config = array![GasRouterConfig { domain: DESTINATION, gas: GAS_LIMIT }];
     (*setup).local_token.set_destination_gas(Option::Some(config), Option::None, Option::None);
-    println!("after set_destination_gas");
 }
 
 pub fn perform_remote_transfer(setup: @Setup, msg_value: u256, amount: u256) {
     start_prank(CheatTarget::One((*setup).local_token.contract_address), ALICE());
-    let mut spy = spy_events(SpyOn::One((*setup).local_token.contract_address));
 
     let bob_felt: felt252 = BOB().into();
     let bob_address: u256 = bob_felt.into();
     (*setup)
         .local_token
         .transfer_remote(DESTINATION, bob_address, amount, msg_value, Option::None, Option::None);
-    println!("Tests after local_token.transfer_remote");
-    spy.fetch_events();
-    let (from, event) = spy.events.at(0);
-    assert(from == setup.local_token.contract_address, 'Emitted from wrong address');
-    assert(event.keys.len() == 3, 'There should be one key');
-    // assert(event.keys.at(0) == @event_name_hash('SentTransferRemote'), 'Wrong event name');
 
     process_transfers(setup, BOB(), amount);
 

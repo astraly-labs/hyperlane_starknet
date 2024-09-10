@@ -1,10 +1,19 @@
 #[starknet::interface]
 pub trait ITestERC20<TContractState> {
     fn decimals(self: @TContractState) -> u8;
-    fn _mint(ref self: TContractState, amount: u256);
+    fn mint(ref self: TContractState, to: starknet::ContractAddress, amount: u256) -> bool;
     fn mint_to(ref self: TContractState, to: starknet::ContractAddress, amount: u256);
     fn burn_from(ref self: TContractState, from: starknet::ContractAddress, amount: u256);
     fn approve(ref self: TContractState, spender: starknet::ContractAddress, amount: u256);
+    fn burn(ref self: TContractState, amount: u256);
+    fn transfer(ref self: TContractState, to: starknet::ContractAddress, amount: u256);
+    fn balance_of(self: @TContractState, account: starknet::ContractAddress) -> u256;
+    fn transfer_from(
+        ref self: TContractState,
+        from: starknet::ContractAddress,
+        to: starknet::ContractAddress,
+        amount: u256
+    ) -> bool;
 }
 
 #[starknet::contract]
@@ -42,8 +51,9 @@ pub mod TestERC20 {
             self.decimals.read()
         }
 
-        fn _mint(ref self: ContractState, amount: u256) {
-            self.erc20.mint(starknet::get_caller_address(), amount);
+        fn mint(ref self: ContractState, to: starknet::ContractAddress, amount: u256) -> bool {
+            self.erc20.mint(to, amount);
+            true
         }
 
         fn mint_to(ref self: ContractState, to: starknet::ContractAddress, amount: u256) {
@@ -56,6 +66,27 @@ pub mod TestERC20 {
 
         fn approve(ref self: ContractState, spender: starknet::ContractAddress, amount: u256) {
             self.erc20.approve(spender, amount);
+        }
+
+        fn burn(ref self: ContractState, amount: u256) {
+            self.erc20.burn(starknet::get_caller_address(), amount);
+        }
+
+        fn transfer(ref self: ContractState, to: starknet::ContractAddress, amount: u256) {
+            self.erc20.transfer(to, amount);
+        }
+
+        fn balance_of(self: @ContractState, account: starknet::ContractAddress) -> u256 {
+            self.erc20.balance_of(account)
+        }
+
+        fn transfer_from(
+            ref self: ContractState,
+            from: starknet::ContractAddress,
+            to: starknet::ContractAddress,
+            amount: u256
+        ) -> bool {
+            self.erc20.transfer_from(from, to, amount)
         }
     }
 }

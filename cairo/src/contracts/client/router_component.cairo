@@ -184,7 +184,6 @@ pub mod RouterComponent {
             hook: ContractAddress
         ) -> u256 {
             let router = self._must_have_remote_router(destination_domain);
-
             let mut mailbox_comp = get_dep_component!(self, MailBoxClient);
             mailbox_comp
                 .mailbox

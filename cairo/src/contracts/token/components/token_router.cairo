@@ -167,7 +167,6 @@ pub mod TokenRouterComponent {
             let gas_router_comp = get_dep_component!(@self, GasRouter);
 
             let mut message_id = 0;
-
             match hook_metadata {
                 Option::Some(hook_metadata) => {
                     if !hook.is_some() {

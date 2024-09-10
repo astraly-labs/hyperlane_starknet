@@ -1,3 +1,8 @@
+#[starknet::interface]
+trait IHypNativeScaled<TState> {
+    fn get_scale(self: @TState) -> u256;
+}
+
 #[starknet::contract]
 pub mod HypNativeScaled {
     use alexandria_bytes::{Bytes, BytesTrait};
@@ -10,7 +15,8 @@ pub mod HypNativeScaled {
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
         TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait,
-        TokenRouterComponent::MessageRecipientInternalHookImpl
+        TokenRouterComponent::MessageRecipientInternalHookImpl,
+        TokenRouterTransferRemoteHookDefaultImpl
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{
@@ -32,7 +38,7 @@ pub mod HypNativeScaled {
 
     // ERC20
     #[abi(embed_v0)]
-    impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
+    impl ERC20Impl = ERC20Component::ERC20MixinImpl<ContractState>;
     // Ownable
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
@@ -112,8 +118,19 @@ pub mod HypNativeScaled {
         self.scale.write(scale);
     }
 
+    impl HypNativeScaled of super::IHypNativeScaled<ContractState> {
+        fn get_scale(self: @ContractState) -> u256 {
+            self.scale.read()
+        }
+    }
+
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);
@@ -133,11 +150,15 @@ pub mod HypNativeScaled {
         ) -> u256 {
             let hook_payment = value - amount_or_id;
             let scaled_amount = amount_or_id / self.scale.read();
-            self
-                .token_router
-                ._transfer_remote(
-                    destination, recipient, scaled_amount, hook_payment, Option::None, Option::None
-                )
+            TokenRouterTransferRemoteHookDefaultImpl::_transfer_remote(
+                ref self.token_router,
+                destination,
+                recipient,
+                scaled_amount,
+                hook_payment,
+                Option::None,
+                Option::None
+            )
         }
     }
 

@@ -93,14 +93,35 @@ fn setup() -> Setup {
     let contract = declare("TestISM").unwrap();
     let (default_ism, _) = contract.deploy(@array![]).unwrap();
 
+    let contract = declare("Ether").unwrap();
+    let mut calldata: Array<felt252> = array![];
+    starknet::get_contract_address().serialize(ref calldata);
+    let (eth_address, _) = contract.deploy(@calldata).unwrap();
+    println!("ETH: {:?}", eth_address);
+    //let eth = MockEthDispatcher { contract_address: eth_address };
+
     let contract = declare("MockMailbox").unwrap();
     let (local_mailbox, _) = contract
-        .deploy(@array![ORIGIN.into(), default_ism.into(), noop_hook.contract_address.into(),])
+        .deploy(
+            @array![
+                ORIGIN.into(),
+                default_ism.into(),
+                noop_hook.contract_address.into(),
+                eth_address.into()
+            ]
+        )
         .unwrap();
     let local_mailbox = IMockMailboxDispatcher { contract_address: local_mailbox };
 
     let (remote_mailbox, _) = contract
-        .deploy(@array![DESTINATION.into(), default_ism.into(), noop_hook.contract_address.into(),])
+        .deploy(
+            @array![
+                DESTINATION.into(),
+                default_ism.into(),
+                noop_hook.contract_address.into(),
+                eth_address.into()
+            ]
+        )
         .unwrap();
     let remote_mailbox = IMockMailboxDispatcher { contract_address: remote_mailbox };
 
@@ -113,6 +134,9 @@ fn setup() -> Setup {
             @array![
                 remote_primary_token.contract_address.into(),
                 remote_mailbox.contract_address.into(),
+                noop_hook.contract_address.into(),
+                default_ism.into(),
+                starknet::get_contract_address().into()
             ]
         )
         .unwrap();
@@ -124,6 +148,9 @@ fn setup() -> Setup {
     EMPTY_STRING().serialize(ref calldata);
     EMPTY_STRING().serialize(ref calldata);
     ZERO_SUPPLY.serialize(ref calldata);
+    calldata.append(noop_hook.contract_address.into());
+    calldata.append(default_ism.into());
+    calldata.append(starknet::get_contract_address().into());
     let (local_token, _) = contract.deploy(@calldata).unwrap();
     let local_token = IHypErc721Dispatcher { contract_address: local_token };
 

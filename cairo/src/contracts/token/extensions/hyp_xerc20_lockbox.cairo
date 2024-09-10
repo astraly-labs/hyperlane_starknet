@@ -1,6 +1,9 @@
 #[starknet::interface]
 pub trait IHypXERC20Lockbox<TState> {
     fn approve_lockbox(ref self: TState);
+    // getters
+    fn get_lockbox(self: @TState) -> starknet::ContractAddress;
+    fn get_xerc20(self: @TState) -> starknet::ContractAddress;
 }
 
 #[starknet::contract]
@@ -14,7 +17,8 @@ pub mod HypXERC20Lockbox {
         hyp_erc20_collateral_component::HypErc20CollateralComponent,
         token_router::{
             TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-            TokenRouterComponent::MessageRecipientInternalHookImpl
+            TokenRouterComponent::MessageRecipientInternalHookImpl,
+            TokenRouterTransferRemoteHookDefaultImpl
         },
     };
     use hyperlane_starknet::contracts::token::interfaces::ixerc20::{
@@ -63,6 +67,9 @@ pub mod HypXERC20Lockbox {
     impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+    // Token Router
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -136,10 +143,23 @@ pub mod HypXERC20Lockbox {
                 "xerc20 lockbox approve failed"
             );
         }
+
+        fn get_lockbox(self: @ContractState) -> ContractAddress {
+            self.lockbox.read().contract_address
+        }
+
+        fn get_xerc20(self: @ContractState) -> ContractAddress {
+            self.xerc20.read().contract_address
+        }
     }
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);

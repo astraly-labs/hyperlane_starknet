@@ -37,7 +37,6 @@ pub mod HypErc20Collateral {
         MailboxclientComponent::MailboxClientImpl<ContractState>;
     impl MailboxClientInternalImpl =
         MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
-
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
@@ -95,16 +94,23 @@ pub mod HypErc20Collateral {
         mailbox: ContractAddress,
         erc20: ContractAddress,
         owner: ContractAddress,
-        hook: Option<ContractAddress>,
-        interchain_security_module: Option<ContractAddress>
+        hook: ContractAddress,
+        interchain_security_module: ContractAddress
     ) {
         self.ownable.initializer(owner);
-        self.mailbox.initialize(mailbox, hook, interchain_security_module);
+        self
+            .mailbox
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         self.collateral.initialize(erc20);
     }
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);

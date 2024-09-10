@@ -7,7 +7,10 @@ pub mod FastHypERC20 {
     use hyperlane_starknet::contracts::token::components::{
         hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl},
         token_message::TokenMessageTrait,
-        token_router::{TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait},
+        token_router::{
+            TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
+            TokenRouterTransferRemoteHookDefaultImpl
+        },
         fast_token_router::{
             FastTokenRouterComponent, FastTokenRouterComponent::FastTokenRouterHooksTrait,
             FastTokenRouterComponent::MessageRecipientInternalHookImpl
@@ -51,10 +54,13 @@ pub mod FastHypERC20 {
     // ERC20
     #[abi(embed_v0)]
     impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
+    #[abi(embed_v0)]
+    impl ERC20CamelOnlyImpl = ERC20Component::ERC20CamelOnlyImpl<ContractState>;
     impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
     // HypERC20
     #[abi(embed_v0)]
-    impl HypErc20Impl = HypErc20Component::HypeErc20Impl<ContractState>;
+    impl HypErc20MetadataImpl =
+        HypErc20Component::HypErc20MetadataImpl<ContractState>;
     impl HypErc20InternalImpl = HypErc20Component::InternalImpl<ContractState>;
     // TokenRouter
     #[abi(embed_v0)]
@@ -135,6 +141,11 @@ pub mod FastHypERC20 {
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: core::starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);

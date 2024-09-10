@@ -31,7 +31,7 @@ mod HypErc20Vault {
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{
-        ERC20Component, ERC20HooksEmptyImpl, interface::{IERC20Metadata, ERC20ABI}
+        ERC20Component, ERC20HooksEmptyImpl, interface::{IERC20, IERC20CamelOnly}
     };
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
@@ -67,9 +67,13 @@ mod HypErc20Vault {
     #[abi(embed_v0)]
     impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     // ERC20
-    impl ERC20MixinImpl = ERC20Component::ERC20MixinImpl<ContractState>;
+    impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
+    impl ERC20CamelOnlyImpl = ERC20Component::ERC20CamelOnlyImpl<ContractState>;
     impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
     // HypERC20
+    #[abi(embed_v0)]
+    impl HypErc20MetadataImpl =
+        HypErc20Component::HypErc20MetadataImpl<ContractState>;
     impl HypErc20InternalImpl = HypErc20Component::InternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
@@ -258,24 +262,25 @@ mod HypErc20Vault {
     }
 
     #[abi(embed_v0)]
-    impl ERC20ABIImpl of ERC20ABI<ContractState> {
+    impl ERC20VaultImpl of IERC20<ContractState> {
         fn total_supply(self: @ContractState) -> u256 {
-            ERC20MixinImpl::total_supply(self)
+            self.erc20.total_supply()
         }
+
         // Overrides ERC20.balance_of()
         fn balance_of(self: @ContractState, account: ContractAddress) -> u256 {
-            let balance = ERC20MixinImpl::balance_of(self, account);
+            let balance = self.erc20.balance_of(account);
             self.shares_to_assets(balance)
         }
 
         fn allowance(
             self: @ContractState, owner: ContractAddress, spender: ContractAddress
         ) -> u256 {
-            ERC20MixinImpl::allowance(self, owner, spender)
+            self.erc20.allowance(owner, spender)
         }
         // Overrides ERC20.transfer()
         fn transfer(ref self: ContractState, recipient: ContractAddress, amount: u256) -> bool {
-            ERC20MixinImpl::transfer(ref self, recipient, self.assets_to_shares(amount));
+            self.erc20.transfer(recipient, self.assets_to_shares(amount));
             true
         }
 
@@ -285,32 +290,23 @@ mod HypErc20Vault {
             recipient: ContractAddress,
             amount: u256
         ) -> bool {
-            ERC20MixinImpl::transfer_from(ref self, sender, recipient, amount)
+            self.erc20.transfer_from(sender, recipient, amount)
         }
 
         fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {
-            ERC20MixinImpl::approve(ref self, spender, amount)
+            self.erc20.approve(spender, amount)
         }
+    }
 
-        // IERC20Metadata
-        fn name(self: @ContractState) -> ByteArray {
-            ERC20MixinImpl::name(self)
-        }
-
-        fn symbol(self: @ContractState) -> ByteArray {
-            ERC20MixinImpl::symbol(self)
-        }
-        // Overrides ERC20.decimals
-        fn decimals(self: @ContractState) -> u8 {
-            self.hyp_erc20.decimals.read()
-        }
-
+    #[abi(embed_v0)]
+    impl ERC20VaultCamelOnlyImpl of IERC20CamelOnly<ContractState> {
         fn totalSupply(self: @ContractState) -> u256 {
-            ERC20MixinImpl::totalSupply(self)
+            self.erc20.totalSupply()
         }
+
         // Overrides ERC20.balanceOf()
         fn balanceOf(self: @ContractState, account: ContractAddress) -> u256 {
-            let balance = ERC20MixinImpl::balance_of(self, account);
+            let balance = self.erc20.balance_of(account);
             self.shares_to_assets(balance)
         }
 
@@ -320,7 +316,7 @@ mod HypErc20Vault {
             recipient: ContractAddress,
             amount: u256
         ) -> bool {
-            ERC20MixinImpl::transferFrom(ref self, sender, recipient, amount)
+            self.erc20.transferFrom(sender, recipient, amount)
         }
     }
 }

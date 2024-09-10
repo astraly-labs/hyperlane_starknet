@@ -142,7 +142,7 @@ mod HypErc20VaultCollateral {
             TokenRouterHooksTraitImpl::transfer_from_sender_hook(ref self, amount_or_id);
             let shares = contract_state._deposit_into_vault(amount_or_id);
             let vault = contract_state.vault.read();
-            let exchange_rate = math::mul_div( /// TODO: need roundup round down
+            let exchange_rate = math::mul_div(
                 PRECISION, vault.total_assets(), vault.total_supply(),
             );
             let token_metadata: Bytes =

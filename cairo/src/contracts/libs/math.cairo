@@ -16,7 +16,7 @@ use core::traits::TryInto;
 /// # Panics
 ///
 /// - Panics if `c` is zero, as division by zero is undefined.
-pub fn mul_div(a: u256, b: u256, c: u256) -> u256 { /// TODO: need round up rounddown
+pub fn mul_div(a: u256, b: u256, c: u256) -> u256 {
     if c == 0 {
         panic!("mul_div division by zero");
     }

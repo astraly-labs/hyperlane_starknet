@@ -310,7 +310,7 @@ pub fn handle_local_transfer(setup: @Setup, transfer_amount: u256) {
     let mut message = BytesTrait::new_empty();
     message.append_address(ALICE());
     message.append_u256(transfer_amount);
-
+    
     let address_felt: felt252 = (*setup).remote_token.contract_address.into();
     let contract_address: u256 = address_felt.into();
     (*setup).local_token.handle(DESTINATION, contract_address, message);

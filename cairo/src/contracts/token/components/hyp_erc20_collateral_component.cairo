@@ -110,7 +110,6 @@ pub mod HypErc20CollateralComponent {
                 .transfer_from(
                     starknet::get_caller_address(), starknet::get_contract_address(), amount
                 );
-
             BytesTrait::new_empty()
         }
 

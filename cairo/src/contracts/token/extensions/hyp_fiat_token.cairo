@@ -48,6 +48,11 @@ pub mod HypFiatToken {
     // GasRouter
     #[abi(embed_v0)]
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
+    // TokenRouter
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
+    impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
+
     // HypERC20Collateral
     #[abi(embed_v0)]
     impl HypErc20CollateralImpl =
@@ -55,10 +60,7 @@ pub mod HypFiatToken {
     impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
-    // Token Router
-    #[abi(embed_v0)]
-    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
-
+    
     #[storage]
     struct Storage {
         #[substorage(v0)]
@@ -99,8 +101,8 @@ pub mod HypFiatToken {
     #[constructor]
     fn constructor(
         ref self: ContractState,
+        fiat_token: ContractAddress,
         mailbox: ContractAddress,
-        wrapped_token: ContractAddress,
         hook: ContractAddress,
         interchain_security_module: ContractAddress,
         owner: ContractAddress
@@ -109,7 +111,7 @@ pub mod HypFiatToken {
         self
             .mailbox
             .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
-        self.collateral.initialize(wrapped_token);
+        self.collateral.initialize(fiat_token);
     }
 
     #[abi(embed_v0)]

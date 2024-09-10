@@ -196,23 +196,23 @@ pub mod TokenRouterComponent {
     }
 }
 
-pub impl TokenRouterEmptyHooksImpl<
-    TContractState
-> of TokenRouterComponent::TokenRouterHooksTrait<TContractState> {
-    fn transfer_from_sender_hook(
-        ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
-    ) -> Bytes {
-        alexandria_bytes::BytesTrait::new_empty()
-    }
-
-    fn transfer_to_hook(
-        ref self: TokenRouterComponent::ComponentState<TContractState>,
-        recipient: u256,
-        amount_or_id: u256,
-        metadata: Bytes
-    ) {}
-}
-
+//pub impl TokenRouterEmptyHooksImpl<
+//    TContractState
+//> of TokenRouterComponent::TokenRouterHooksTrait<TContractState> {
+//    fn transfer_from_sender_hook(
+//        ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
+//    ) -> Bytes {
+//        alexandria_bytes::BytesTrait::new_empty()
+//    }
+//
+//    fn transfer_to_hook(
+//        ref self: TokenRouterComponent::ComponentState<TContractState>,
+//        recipient: u256,
+//        amount_or_id: u256,
+//        metadata: Bytes
+//    ) {}
+//}
+ 
 pub impl TokenRouterTransferRemoteHookDefaultImpl<
     TContractState,
     +Drop<TContractState>,
@@ -221,6 +221,7 @@ pub impl TokenRouterTransferRemoteHookDefaultImpl<
     +RouterComponent::HasComponent<TContractState>,
     +GasRouterComponent::HasComponent<TContractState>,
     +OwnableComponent::HasComponent<TContractState>,
+    +TokenRouterComponent::TokenRouterHooksTrait<TContractState>
 > of TokenRouterComponent::TokenRouterTransferRemoteHookTrait<TContractState> {
     fn _transfer_remote(
         ref self: TokenRouterComponent::ComponentState<TContractState>,
@@ -236,7 +237,7 @@ pub impl TokenRouterTransferRemoteHookDefaultImpl<
         );
         let token_message = TokenMessageTrait::format(recipient, amount_or_id, token_metadata);
         let contract_state = TokenRouterComponent::HasComponent::get_contract(@self);
-        let router_comp = RouterComponent::HasComponent::get_component(contract_state);
+        let mut router_comp = RouterComponent::HasComponent::get_component(contract_state);
         let mailbox_comp = MailboxclientComponent::HasComponent::get_component(contract_state);
         let gas_router_comp = GasRouterComponent::HasComponent::get_component(contract_state);
 

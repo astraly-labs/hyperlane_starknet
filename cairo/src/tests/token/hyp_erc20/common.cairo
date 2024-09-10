@@ -16,10 +16,6 @@ use hyperlane_starknet::contracts::mocks::{
     },
     mock_eth::{MockEthDispatcher, MockEthDispatcherTrait}
 };
-
-use hyperlane_starknet::contracts::token::components::hyp_erc20_component::{
-    IHypErc20Dispatcher, IHypErc20DispatcherTrait
-};
 use hyperlane_starknet::contracts::token::components::token_router::{
     ITokenRouterDispatcher, ITokenRouterDispatcherTrait
 };
@@ -350,6 +346,7 @@ pub fn perform_remote_transfer(setup: @Setup, msg_value: u256, amount: u256) {
     spy.fetch_events();
     let (from, event) = spy.events.at(0);
     assert(from == setup.local_token.contract_address, 'Emitted from wrong address');
+    println!("key size {}", event.keys.len());
     assert(event.keys.len() == 3, 'There should be one key');
     // assert(event.keys.at(0) == @event_name_hash('SentTransferRemote'), 'Wrong event name');
 

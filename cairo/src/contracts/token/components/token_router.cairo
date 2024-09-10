@@ -212,7 +212,7 @@ pub mod TokenRouterComponent {
 //        metadata: Bytes
 //    ) {}
 //}
- 
+
 pub impl TokenRouterTransferRemoteHookDefaultImpl<
     TContractState,
     +Drop<TContractState>,

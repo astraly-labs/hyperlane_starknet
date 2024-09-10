@@ -60,7 +60,7 @@ pub mod HypFiatToken {
     impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
-    
+
     #[storage]
     struct Storage {
         #[substorage(v0)]

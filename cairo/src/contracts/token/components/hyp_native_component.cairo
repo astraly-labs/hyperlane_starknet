@@ -23,7 +23,8 @@ pub mod HypNativeComponent {
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
         TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl,
-        TokenRouterComponent::TokenRouterHooksTrait, ITokenRouter
+        TokenRouterComponent::TokenRouterHooksTrait, ITokenRouter,
+        TokenRouterTransferRemoteHookDefaultImpl
     };
     use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::{
@@ -127,10 +128,15 @@ pub mod HypNativeComponent {
             let hook_payment = value - amount_or_id;
 
             let mut token_router_comp = get_dep_component_mut!(ref self, TokenRouterComp);
-            token_router_comp
-                ._transfer_remote(
-                    destination, recipient, amount_or_id, hook_payment, Option::None, Option::None
-                )
+            TokenRouterTransferRemoteHookDefaultImpl::_transfer_remote(
+                ref token_router_comp,
+                destination,
+                recipient,
+                amount_or_id,
+                hook_payment,
+                Option::None,
+                Option::None
+            )
         }
     }
 

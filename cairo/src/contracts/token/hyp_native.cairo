@@ -13,6 +13,8 @@ pub mod HypNative {
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
+    use openzeppelin::upgrades::interface::IUpgradeable;
+    use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -22,6 +24,7 @@ pub mod HypNative {
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: HypNativeComponent, storage: hyp_native, event: HypNativeEvent);
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
     // HypNative
     #[abi(embed_v0)]
@@ -52,7 +55,9 @@ pub mod HypNative {
         MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
     // ERC20
     #[abi(embed_v0)]
-    impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
+    impl ERC20MixinImpl = ERC20Component::ERC20MixinImpl<ContractState>;
+    // Upgradeable
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -70,6 +75,8 @@ pub mod HypNative {
         hyp_native: HypNativeComponent::Storage,
         #[substorage(v0)]
         erc20: ERC20Component::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage
     }
 
     #[event]
@@ -89,11 +96,34 @@ pub mod HypNative {
         HypNativeEvent: HypNativeComponent::Event,
         #[flat]
         ERC20Event: ERC20Component::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, mailbox: ContractAddress, owner: ContractAddress) {
+    fn constructor(
+        ref self: ContractState,
+        mailbox: ContractAddress,
+        hook: ContractAddress,
+        interchain_security_module: ContractAddress,
+        owner: ContractAddress
+    ) {
         self.ownable.initializer(owner);
-        self.mailboxclient.initialize(mailbox, Option::None, Option::None);
+        self
+            .mailboxclient
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
+    }
+
+    #[abi(embed_v0)]
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
+        fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
+            self.ownable.assert_only_owner();
+            self.upgradeable.upgrade(new_class_hash);
+        }
     }
 }

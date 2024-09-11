@@ -16,10 +16,6 @@ use hyperlane_starknet::contracts::mocks::{
     },
     mock_eth::{MockEthDispatcher, MockEthDispatcherTrait}
 };
-
-use hyperlane_starknet::contracts::token::components::hyp_erc20_component::{
-    IHypErc20Dispatcher, IHypErc20DispatcherTrait
-};
 use hyperlane_starknet::contracts::token::components::token_router::{
     ITokenRouterDispatcher, ITokenRouterDispatcherTrait
 };

@@ -250,7 +250,7 @@ pub mod FastTokenRouterComponent {
 }
 
 
-pub impl FastTokenRouterHooksImpl<
+pub impl FastTokenRouterHooksEmptyImpl<
     TContractState
 > of FastTokenRouterComponent::FastTokenRouterHooksTrait<TContractState> {
     fn fast_transfer_to_hook(

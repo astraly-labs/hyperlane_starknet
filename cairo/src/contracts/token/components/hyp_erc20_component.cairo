@@ -1,10 +1,5 @@
 use starknet::ContractAddress;
 
-#[starknet::interface]
-pub trait IHypErc20<TState> {
-    fn decimals(self: @TState) -> u8;
-}
-
 #[starknet::component]
 pub mod HypErc20Component {
     use alexandria_bytes::{Bytes, BytesTrait};
@@ -24,14 +19,14 @@ pub mod HypErc20Component {
         TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl,
         TokenRouterComponent::TokenRouterHooksTrait
     };
-    use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use hyperlane_starknet::interfaces::IMailboxClient;
     use hyperlane_starknet::utils::utils::{U256TryIntoContractAddress};
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::ERC20Component::{
-        InternalImpl as ERC20InternalImpl, ERC20HooksTrait
-    };
     use openzeppelin::token::erc20::ERC20Component;
+    use openzeppelin::token::erc20::{
+        ERC20Component::{InternalImpl as ERC20InternalImpl, ERC20HooksTrait},
+        interface::IERC20Metadata,
+    };
 
     use starknet::ContractAddress;
 
@@ -72,9 +67,8 @@ pub mod HypErc20Component {
         }
     }
 
-
-    #[embeddable_as(HypeErc20Impl)]
-    impl HypErc20Impl<
+    #[embeddable_as(HypErc20MetadataImpl)]
+    impl HypErc20Metadata<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
@@ -85,7 +79,20 @@ pub mod HypErc20Component {
         +TokenRouterComponent::HasComponent<TContractState>,
         +ERC20HooksTrait<TContractState>,
         impl ERC20: ERC20Component::HasComponent<TContractState>
-    > of super::IHypErc20<ComponentState<TContractState>> {
+    > of IERC20Metadata<ComponentState<TContractState>> {
+        /// Returns the name of the token.
+        fn name(self: @ComponentState<TContractState>) -> ByteArray {
+            let erc20 = get_dep_component!(self, ERC20);
+            erc20.ERC20_name.read()
+        }
+
+        /// Returns the ticker symbol of the token, usually a shorter version of the name.
+        fn symbol(self: @ComponentState<TContractState>) -> ByteArray {
+            let erc20 = get_dep_component!(self, ERC20);
+            erc20.ERC20_symbol.read()
+        }
+
+        /// Returns the number of decimals used to get its user representation.
         fn decimals(self: @ComponentState<TContractState>) -> u8 {
             self.decimals.read()
         }

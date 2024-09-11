@@ -7,7 +7,8 @@ pub mod HypXERC20 {
     use hyperlane_starknet::contracts::token::components::hyp_erc20_collateral_component::HypErc20CollateralComponent;
     use hyperlane_starknet::contracts::token::components::token_router::{
         TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-        TokenRouterComponent::MessageRecipientInternalHookImpl
+        TokenRouterComponent::MessageRecipientInternalHookImpl,
+        TokenRouterTransferRemoteHookDefaultImpl
     };
     use hyperlane_starknet::contracts::token::interfaces::ixerc20::{
         IXERC20Dispatcher, IXERC20DispatcherTrait
@@ -55,6 +56,9 @@ pub mod HypXERC20 {
         HypErc20CollateralComponent::HypErc20CollateralInternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+    // Token Router
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -111,6 +115,11 @@ pub mod HypXERC20 {
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);

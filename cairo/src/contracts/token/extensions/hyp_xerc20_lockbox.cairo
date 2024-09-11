@@ -16,7 +16,8 @@ pub mod HypXERC20Lockbox {
         hyp_erc20_collateral_component::HypErc20CollateralComponent,
         token_router::{
             TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-            TokenRouterComponent::MessageRecipientInternalHookImpl
+            TokenRouterComponent::MessageRecipientInternalHookImpl,
+            TokenRouterTransferRemoteHookDefaultImpl
         },
     };
     use hyperlane_starknet::contracts::token::interfaces::ixerc20::{
@@ -70,6 +71,9 @@ pub mod HypXERC20Lockbox {
         HypErc20CollateralComponent::HypErc20CollateralInternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+    // Token Router
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -156,6 +160,11 @@ pub mod HypXERC20Lockbox {
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);

@@ -13,7 +13,8 @@ pub mod FastHypERC20Collateral {
         hyp_erc20_collateral_component::{
             HypErc20CollateralComponent, HypErc20CollateralComponent::TokenRouterHooksImpl
         },
-        token_message::TokenMessageTrait, token_router::TokenRouterComponent,
+        token_message::TokenMessageTrait,
+        token_router::{TokenRouterComponent, TokenRouterTransferRemoteHookDefaultImpl},
         fast_token_router::{
             FastTokenRouterComponent, FastTokenRouterComponent::FastTokenRouterHooksTrait,
             FastTokenRouterComponent::MessageRecipientInternalHookImpl
@@ -62,6 +63,8 @@ pub mod FastHypERC20Collateral {
     impl HypErc20CollateralInternalImpl =
         HypErc20CollateralComponent::HypErc20CollateralInternalImpl<ContractState>;
     // TokenRouter
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
     // FastTokenRouter
     #[abi(embed_v0)]
@@ -136,6 +139,11 @@ pub mod FastHypERC20Collateral {
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: core::starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);
@@ -157,6 +165,7 @@ pub mod FastHypERC20Collateral {
                 .read()
                 .transfer(recipient.try_into().expect('u256 to ContractAddress failed'), amount);
         }
+
         fn fast_receive_from_hook(
             ref self: FastTokenRouterComponent::ComponentState<ContractState>,
             sender: ContractAddress,

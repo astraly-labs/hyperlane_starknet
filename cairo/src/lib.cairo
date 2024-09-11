@@ -39,6 +39,8 @@ mod contracts {
         pub mod test_interchain_gas_payment;
         pub mod test_ism;
         pub mod test_post_dispatch_hook;
+        pub mod xerc20_lockbox_test;
+        pub mod xerc20_test;
     }
     pub mod token {
         pub mod hyp_erc20;

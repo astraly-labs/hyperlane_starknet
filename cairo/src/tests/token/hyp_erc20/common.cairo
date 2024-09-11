@@ -42,6 +42,7 @@ pub const TOTAL_SUPPLY: u256 = 1_000_000 * E18;
 pub const GAS_LIMIT: u256 = 10_000;
 pub const TRANSFER_AMT: u256 = 100 * E18;
 pub const REQUIRED_VALUE: u256 = 0;
+pub const ZERO_SUPPLY: u256 = 0;
 // const NAME: ByteArray = "HyperlaneInu";
 // const SYMBOL: ByteArray = "HYP";
 fn IGP() -> ContractAddress {
@@ -130,7 +131,7 @@ pub struct Setup {
     pub remote_token: IHypERC20TestDispatcher,
     pub local_token: IHypERC20TestDispatcher,
     pub igp: ITestInterchainGasPaymentDispatcher,
-// pub erc20_token: IHypERC20TestDispatcher,
+    pub erc20_token: ITestERC20Dispatcher,
 }
 
 pub fn setup() -> Setup {
@@ -194,6 +195,10 @@ pub fn setup() -> Setup {
     println!("PRIMARY_TOKEN: {:?}", primary_token);
     let primary_token = ITestERC20Dispatcher { contract_address: primary_token };
 
+    let (erc20_token, _) = contract.deploy(@calldata).unwrap();
+    let erc20_token = ITestERC20Dispatcher { contract_address: erc20_token };
+    println!("ERC20_TOKEN: {:?}", erc20_token.contract_address);
+
     let hyp_erc20_contract = declare("HypErc20").unwrap();
     let mut calldata: Array<felt252> = array![];
     DECIMALS.serialize(ref calldata);
@@ -230,9 +235,6 @@ pub fn setup() -> Setup {
     println!("LOCAL_TOKEN: {:?}", local_token);
     let local_token = IHypERC20TestDispatcher { contract_address: local_token };
 
-    // let (erc20_token, _) = hyp_erc20_contract.deploy(@calldata).unwrap();
-    // let erc20_token = IHypERC20TestDispatcher { contract_address: erc20_token };
-
     let local_token_address: felt252 = local_token.contract_address.into();
     remote_token.enroll_remote_router(ORIGIN, local_token_address.into());
 
@@ -247,7 +249,7 @@ pub fn setup() -> Setup {
         remote_token,
         local_token,
         igp,
-    // erc20_token,
+        erc20_token,
     }
 }
 
@@ -314,7 +316,7 @@ pub fn handle_local_transfer(setup: @Setup, transfer_amount: u256) {
     let mut message = BytesTrait::new_empty();
     message.append_address(ALICE());
     message.append_u256(transfer_amount);
-    
+
     let address_felt: felt252 = (*setup).remote_token.contract_address.into();
     let contract_address: u256 = address_felt.into();
     (*setup).local_token.handle(DESTINATION, contract_address, message);

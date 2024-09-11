@@ -32,6 +32,7 @@ mod contracts {
         pub mod hook;
         pub mod ism;
         pub mod message_recipient;
+        pub mod mock_account;
         pub mod mock_eth;
         pub mod mock_mailbox;
         pub mod mock_validator_announce;

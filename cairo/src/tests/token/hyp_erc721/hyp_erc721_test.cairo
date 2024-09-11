@@ -8,7 +8,7 @@ use hyperlane_starknet::contracts::token::components::token_router::{
 use starknet::ContractAddress;
 use super::common::{
     setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
-    IHypErc721TestDispatcherTrait, ALICE, deploy_remote_token, perform_remote_transfer
+    IHypErc721TestDispatcherTrait, ALICE, BOB, deploy_remote_token, perform_remote_transfer
 };
 
 fn hyp_erc721_setup() -> Setup {
@@ -56,13 +56,36 @@ fn test_erc721_local_transfer_invalid_token_id() {
 }
 
 #[test]
-fn test_remote_transfer() {
+fn test_erc721_remote_transfer(is_collateral: u8) {
     let mut setup = hyp_erc721_setup();
 
-    // let is_collateral = if is_collateral % 2 == 0 { true } else { false };
+    let is_collateral = if is_collateral % 2 == 0 {
+        true
+    } else {
+        false
+    };
 
-    let (implementation, remote_token) = deploy_remote_token(@setup, true);
-    setup.remote_token = IHypErc721TestDispatcher { contract_address: remote_token };
-    setup.implementation = IHypErc721TestDispatcher { contract_address: implementation };
+    let setup = deploy_remote_token(setup, is_collateral);
     perform_remote_transfer(@setup, 2500, 0);
+    assert_eq!(setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY - 1);
+}
+
+#[test]
+#[should_panic]
+fn test_erc721_remote_transfer_revert_unowned() {
+    let setup = hyp_erc721_setup();
+
+    setup.local_token.transfer_from(starknet::get_contract_address(), BOB(), 1);
+
+    let setup = deploy_remote_token(setup, false);
+    perform_remote_transfer(@setup, 2500, 1);
+}
+
+#[test]
+#[should_panic]
+fn test_erc721_remote_transfer_revert_invalid_token_id() {
+    let setup = hyp_erc721_setup();
+
+    let setup = deploy_remote_token(setup, true);
+    perform_remote_transfer(@setup, 2500, INITIAL_SUPPLY);
 }

@@ -12,7 +12,6 @@ use super::common::{
     perform_remote_transfer_and_gas, enroll_remote_router, enroll_local_router,
     perform_remote_transfer, handle_local_transfer
 };
-use super::common;
 
 fn setup_xerc20() -> Setup {
     let mut setup = setup();
@@ -75,7 +74,7 @@ fn test_handle() {
     handle_local_transfer(@setup, TRANSFER_AMT);
     let balance_after = xerc20.balance_of(ALICE());
     let total_supply_after = setup.primary_token.total_supply();
-    
+
     assert_eq!(total_supply_after, total_supply_before + TRANSFER_AMT);
     assert_eq!(balance_after, balance_before + TRANSFER_AMT);
 }

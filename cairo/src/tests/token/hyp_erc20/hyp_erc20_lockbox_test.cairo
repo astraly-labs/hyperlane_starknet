@@ -149,10 +149,11 @@ fn test_erc20_lockbox_handle() {
     assert_eq!(local_token.balance_of(ALICE()), balance_before + TRANSFER_AMT);
 }
 
-pub fn handle_local_transfer(setup: @Setup, local_token: IHypERC20LockboxTestDispatcher, transfer_amount: u256) {
+pub fn handle_local_transfer(
+    setup: @Setup, local_token: IHypERC20LockboxTestDispatcher, transfer_amount: u256
+) {
     start_prank(
-        CheatTarget::One(local_token.contract_address),
-        (*setup).local_mailbox.contract_address
+        CheatTarget::One(local_token.contract_address), (*setup).local_mailbox.contract_address
     );
     let mut message = BytesTrait::new_empty();
     message.append_address(ALICE());
@@ -200,7 +201,10 @@ pub fn perform_remote_transfer_and_gas(
 }
 
 pub fn process_transfers(
-    setup: @Setup, local_token: IHypERC20LockboxTestDispatcher, recipient: ContractAddress, amount: u256
+    setup: @Setup,
+    local_token: IHypERC20LockboxTestDispatcher,
+    recipient: ContractAddress,
+    amount: u256
 ) {
     start_prank(
         CheatTarget::One((*setup).remote_token.contract_address),

@@ -72,6 +72,7 @@ pub mod HypXERC20Lockbox {
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
+
     #[storage]
     struct Storage {
         #[substorage(v0)]

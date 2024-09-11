@@ -33,11 +33,11 @@ mod TestERC721 {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, mint_amount: usize) {
+    fn constructor(ref self: ContractState, mint_amount: u256) {
         self.erc721.initializer("Hyperlane Hedgehogs", "HHH", "http://bit.ly/3reJLpx");
-        let mut i = 0;
+        let mut i: u256 = 0;
         while i < mint_amount {
-            self.erc721.mint(starknet::get_caller_address(), i.into());
+            self.erc721.mint(starknet::get_caller_address(), i);
             i += 1;
         }
     }

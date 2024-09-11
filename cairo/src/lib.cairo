@@ -135,6 +135,10 @@ mod tests {
         }
         pub mod hyp_erc721 {
             pub mod common;
+            pub mod hyp_erc721_collateral_test;
+            pub mod hyp_erc721_collateral_uri_storage_test;
+            pub mod hyp_erc721_test;
+            pub mod hyp_erc721_uri_storage_test;
         }
     }
     pub mod libs {

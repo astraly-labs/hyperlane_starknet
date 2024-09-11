@@ -89,15 +89,15 @@ pub mod HypErc20CollateralComponent {
     }
 
     #[generate_trait]
-    pub impl InternalImpl<
+    pub impl HypErc20CollateralInternalImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
-        impl Mailboxclient: MailboxclientComponent::HasComponent<TContractState>,
         +RouterComponent::HasComponent<TContractState>,
         +OwnableComponent::HasComponent<TContractState>,
         +GasRouterComponent::HasComponent<TContractState>,
-        +TokenRouterComponent::HasComponent<TContractState>
+        +TokenRouterComponent::HasComponent<TContractState>,
+        impl Mailboxclient: MailboxclientComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
         fn initialize(ref self: ComponentState<TContractState>, wrapped_token: ContractAddress) {
             self.wrapped_token.write(ERC20ABIDispatcher { contract_address: wrapped_token });

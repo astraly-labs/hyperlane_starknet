@@ -1,9 +1,8 @@
 #[starknet::interface]
 pub trait IHypXERC20Lockbox<TState> {
     fn approve_lockbox(ref self: TState);
-    // getters
-    fn get_lockbox(self: @TState) -> starknet::ContractAddress;
-    fn get_xerc20(self: @TState) -> starknet::ContractAddress;
+    fn lockbox(ref self: TState) -> starknet::ContractAddress;
+    fn xERC20(ref self: TState) -> starknet::ContractAddress;
 }
 
 #[starknet::contract]
@@ -60,16 +59,18 @@ pub mod HypXERC20Lockbox {
     // GasRouter
     #[abi(embed_v0)]
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
+    // TokenRouter
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
+    impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
     // HypERC20Collateral
     #[abi(embed_v0)]
     impl HypErc20CollateralImpl =
         HypErc20CollateralComponent::HypErc20CollateralImpl<ContractState>;
-    impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
+    impl HypErc20CollateralInternalImpl =
+        HypErc20CollateralComponent::HypErc20CollateralInternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
-    // Token Router
-    #[abi(embed_v0)]
-    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -124,12 +125,15 @@ pub mod HypXERC20Lockbox {
             .mailbox
             .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         let lockbox_dispatcher = IXERC20LockboxDispatcher { contract_address: lockbox };
-        self.collateral.initialize(lockbox_dispatcher.erc20());
+        let erc20 = lockbox_dispatcher.erc20();
+        self.collateral.initialize(erc20);
         let xerc20 = lockbox_dispatcher.xerc20();
         self.xerc20.write(IXERC20Dispatcher { contract_address: xerc20 });
+        self.lockbox.write(lockbox_dispatcher);
         self.approve_lockbox();
     }
 
+    #[abi(embed_v0)]
     impl HypXERC20LockboxImpl of super::IHypXERC20Lockbox<ContractState> {
         fn approve_lockbox(ref self: ContractState) {
             let lockbox_address = self.lockbox.read().contract_address;
@@ -143,12 +147,10 @@ pub mod HypXERC20Lockbox {
                 "xerc20 lockbox approve failed"
             );
         }
-
-        fn get_lockbox(self: @ContractState) -> ContractAddress {
+        fn lockbox(ref self: ContractState) -> ContractAddress {
             self.lockbox.read().contract_address
         }
-
-        fn get_xerc20(self: @ContractState) -> ContractAddress {
+        fn xERC20(ref self: ContractState) -> ContractAddress {
             self.xerc20.read().contract_address
         }
     }

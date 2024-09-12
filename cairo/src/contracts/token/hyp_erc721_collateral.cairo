@@ -8,10 +8,14 @@ pub mod HypErc721Collateral {
         HypErc721CollateralComponent
     };
     use hyperlane_starknet::contracts::token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
+        TokenRouterComponent::MessageRecipientInternalHookImpl,
+        TokenRouterTransferRemoteHookDefaultImpl
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait,};
+    use openzeppelin::upgrades::interface::IUpgradeable;
+    use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -24,6 +28,7 @@ pub mod HypErc721Collateral {
         storage: hyp_erc721_collateral,
         event: HypErc721CollateralEvent
     );
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
     // HypERC721
     #[abi(embed_v0)]
@@ -49,6 +54,12 @@ pub mod HypErc721Collateral {
         MailboxclientComponent::MailboxClientImpl<ContractState>;
     impl MailboxClientInternalImpl =
         MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
+    // Ownable
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+    // Upgradeable
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -64,7 +75,9 @@ pub mod HypErc721Collateral {
         #[substorage(v0)]
         gas_router: GasRouterComponent::Storage,
         #[substorage(v0)]
-        hyp_erc721_collateral: HypErc721CollateralComponent::Storage
+        hyp_erc721_collateral: HypErc721CollateralComponent::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage
     }
 
     #[event]
@@ -81,13 +94,24 @@ pub mod HypErc721Collateral {
         #[flat]
         GasRouterEvent: GasRouterComponent::Event,
         #[flat]
-        HypErc721CollateralEvent: HypErc721CollateralComponent::Event
+        HypErc721CollateralEvent: HypErc721CollateralComponent::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, erc721: ContractAddress, mailbox: ContractAddress) {
-        self.mailboxclient.initialize(mailbox, Option::None, Option::None);
-
+    fn constructor(
+        ref self: ContractState,
+        erc721: ContractAddress,
+        mailbox: ContractAddress,
+        hook: ContractAddress,
+        interchain_security_module: ContractAddress,
+        owner: ContractAddress
+    ) {
+        self.ownable.initializer(owner);
+        self
+            .mailboxclient
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         self.wrapped_token.write(ERC721ABIDispatcher { contract_address: erc721 });
     }
 
@@ -138,6 +162,19 @@ pub mod HypErc721Collateral {
                     amount_or_id,
                     metadata_array_felt252.span()
                 );
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
+        fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
+            self.ownable.assert_only_owner();
+            self.upgradeable.upgrade(new_class_hash);
         }
     }
 }

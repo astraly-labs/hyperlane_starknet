@@ -5,10 +5,15 @@ pub mod FastHypERC20 {
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
-        hyp_erc20_component::HypErc20Component, token_message::TokenMessageTrait,
-        token_router::{TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait},
+        hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl},
+        token_message::TokenMessageTrait,
+        token_router::{
+            TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
+            TokenRouterTransferRemoteHookDefaultImpl
+        },
         fast_token_router::{
-            FastTokenRouterComponent, FastTokenRouterComponent::FastTokenRouterHooksTrait
+            FastTokenRouterComponent, FastTokenRouterComponent::FastTokenRouterHooksTrait,
+            FastTokenRouterComponent::MessageRecipientInternalHookImpl
         }
     };
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
@@ -49,10 +54,13 @@ pub mod FastHypERC20 {
     // ERC20
     #[abi(embed_v0)]
     impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
+    #[abi(embed_v0)]
+    impl ERC20CamelOnlyImpl = ERC20Component::ERC20CamelOnlyImpl<ContractState>;
     impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
     // HypERC20
     #[abi(embed_v0)]
-    impl HypErc20Impl = HypErc20Component::HypeErc20Impl<ContractState>;
+    impl HypErc20MetadataImpl =
+        HypErc20Component::HypErc20MetadataImpl<ContractState>;
     impl HypErc20InternalImpl = HypErc20Component::InternalImpl<ContractState>;
     // TokenRouter
     #[abi(embed_v0)]
@@ -133,35 +141,14 @@ pub mod FastHypERC20 {
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: core::starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);
-        }
-    }
-
-    pub impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
-        fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
-        ) -> Bytes {
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.hyp_erc20._transfer_from_sender(amount_or_id)
-        }
-        // need to get aroun with extra parameter origin custom handle calls this
-        // should this override this interface or be seperate function
-        fn transfer_to_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>,
-            recipient: u256,
-            amount_or_id: u256,
-            metadata: Bytes,
-        //origin: u32 
-        ) {
-            let origin = 0; //Dummy origin
-            let contract_state = TokenRouterComponent::HasComponent::get_contract(@self);
-            let token_recipient = contract_state
-                .fast_token_router
-                ._get_token_recipient(recipient, amount_or_id, origin, metadata);
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.fast_token_router.fast_transfer_to_hook(token_recipient, amount_or_id);
         }
     }
 
@@ -187,13 +174,6 @@ pub mod FastHypERC20 {
                 ref self
             );
             contract_state.erc20.burn(sender, amount);
-        }
-    }
-    // TODO: turn thtis into implementation of messagereceivertrait
-    #[generate_trait]
-    impl InternalImpl of InternalTrait {
-        fn _handle(ref self: ContractState, origin: u32, message: Bytes) {
-            self.fast_token_router._handle(origin, message);
         }
     }
 }

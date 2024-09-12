@@ -1,5 +1,3 @@
-use starknet::ContractAddress;
-
 #[starknet::contract]
 pub mod HypErc20 {
     use alexandria_bytes::{Bytes, BytesTrait};
@@ -7,12 +5,12 @@ pub mod HypErc20 {
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
-        hyp_erc20_component::HypErc20Component, token_message::TokenMessageTrait,
+        hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl},
         token_router::{
-            TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait
+            TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+            TokenRouterTransferRemoteHookDefaultImpl
         }
     };
-    use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
     use openzeppelin::upgrades::interface::IUpgradeable;
@@ -47,10 +45,13 @@ pub mod HypErc20 {
     // ERC20
     #[abi(embed_v0)]
     impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
+    #[abi(embed_v0)]
+    impl ERC20CamelOnlyImpl = ERC20Component::ERC20CamelOnlyImpl<ContractState>;
     impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
     // HypERC20
     #[abi(embed_v0)]
-    impl HypErc20Impl = HypErc20Component::HypeErc20Impl<ContractState>;
+    impl HypErc20MetadataImpl =
+        HypErc20Component::HypErc20MetadataImpl<ContractState>;
     impl HypErc20InternalImpl = HypErc20Component::InternalImpl<ContractState>;
     // TokenRouter
     #[abi(embed_v0)]
@@ -102,9 +103,9 @@ pub mod HypErc20 {
     #[constructor]
     fn constructor(
         ref self: ContractState,
-        total_supply: u256,
         decimals: u8,
         mailbox: ContractAddress,
+        total_supply: u256,
         name: ByteArray,
         symbol: ByteArray,
         hook: ContractAddress,
@@ -122,28 +123,14 @@ pub mod HypErc20 {
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);
-        }
-    }
-
-    impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
-        fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
-        ) -> Bytes {
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.hyp_erc20._transfer_from_sender(amount_or_id)
-        }
-
-        fn transfer_to_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>,
-            recipient: u256,
-            amount_or_id: u256,
-            metadata: Bytes
-        ) {
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.hyp_erc20._transfer_to(recipient, amount_or_id)
         }
     }
 }

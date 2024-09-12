@@ -16,6 +16,8 @@ pub mod HypERC721URICollateral {
     };
     use hyperlane_starknet::contracts::token::components::token_router::{
         TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
+        TokenRouterComponent::MessageRecipientInternalHookImpl,
+        TokenRouterTransferRemoteHookDefaultImpl
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait,};

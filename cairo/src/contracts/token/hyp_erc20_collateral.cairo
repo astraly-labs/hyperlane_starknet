@@ -5,8 +5,12 @@ pub mod HypErc20Collateral {
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
-        token_router::{TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait},
-        hyp_erc20_collateral_component::HypErc20CollateralComponent
+        token_router::{
+            TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl
+        },
+        hyp_erc20_collateral_component::{
+            HypErc20CollateralComponent, HypErc20CollateralComponent::TokenRouterHooksImpl
+        },
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
@@ -23,7 +27,6 @@ pub mod HypErc20Collateral {
     );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
-
     // Ownable
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
@@ -34,7 +37,6 @@ pub mod HypErc20Collateral {
         MailboxclientComponent::MailboxClientImpl<ContractState>;
     impl MailboxClientInternalImpl =
         MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
-
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
@@ -45,7 +47,8 @@ pub mod HypErc20Collateral {
     #[abi(embed_v0)]
     impl HypErc20CollateralImpl =
         HypErc20CollateralComponent::HypErc20CollateralImpl<ContractState>;
-    impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
+    impl HypErc20CollateralInternalImpl =
+        HypErc20CollateralComponent::HypErc20CollateralInternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
@@ -90,40 +93,28 @@ pub mod HypErc20Collateral {
     fn constructor(
         ref self: ContractState,
         mailbox: ContractAddress,
-        wrapped_token: ContractAddress,
+        erc20: ContractAddress,
         owner: ContractAddress,
-        hook: Option<ContractAddress>,
-        interchain_security_module: Option<ContractAddress>
+        hook: ContractAddress,
+        interchain_security_module: ContractAddress
     ) {
         self.ownable.initializer(owner);
-        self.mailbox.initialize(mailbox, hook, interchain_security_module);
-        self.collateral.initialize(wrapped_token);
+        self
+            .mailbox
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
+        self.collateral.initialize(erc20);
     }
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);
-        }
-    }
-
-    impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
-        fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
-        ) -> Bytes {
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.collateral._transfer_from_sender(amount_or_id)
-        }
-
-        fn transfer_to_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>,
-            recipient: u256,
-            amount_or_id: u256,
-            metadata: Bytes
-        ) {
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.collateral._transfer_to(recipient, amount_or_id)
         }
     }
 }

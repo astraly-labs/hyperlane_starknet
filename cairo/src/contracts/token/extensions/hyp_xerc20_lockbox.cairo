@@ -1,6 +1,8 @@
 #[starknet::interface]
 pub trait IHypXERC20Lockbox<TState> {
     fn approve_lockbox(ref self: TState);
+    fn lockbox(ref self: TState) -> starknet::ContractAddress;
+    fn xERC20(ref self: TState) -> starknet::ContractAddress;
 }
 
 #[starknet::contract]
@@ -12,10 +14,12 @@ pub mod HypXERC20Lockbox {
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
         hyp_erc20_collateral_component::HypErc20CollateralComponent,
-        token_message::TokenMessageTrait,
-        token_router::{TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait},
+        token_router::{
+            TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
+            TokenRouterComponent::MessageRecipientInternalHookImpl,
+            TokenRouterTransferRemoteHookDefaultImpl
+        },
     };
-    use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use hyperlane_starknet::contracts::token::interfaces::ixerc20::{
         IXERC20Dispatcher, IXERC20DispatcherTrait
     };
@@ -24,9 +28,7 @@ pub mod HypXERC20Lockbox {
     };
     use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{
-        IERC20, ERC20ABIDispatcher, ERC20ABIDispatcherTrait
-    };
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
@@ -41,7 +43,6 @@ pub mod HypXERC20Lockbox {
     );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
-
     // Ownable
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
@@ -55,16 +56,19 @@ pub mod HypXERC20Lockbox {
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
-    impl RouterInternalImpl = RouterComponent::RouterComponentInternalImpl<ContractState>;
     // GasRouter
     #[abi(embed_v0)]
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
-    impl GasRouterInternalImpl = GasRouterComponent::GasRouterInternalImpl<ContractState>;
+    // TokenRouter
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
+    impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
     // HypERC20Collateral
     #[abi(embed_v0)]
     impl HypErc20CollateralImpl =
         HypErc20CollateralComponent::HypErc20CollateralImpl<ContractState>;
-    impl HypErc20CollateralInternalImpl = HypErc20CollateralComponent::InternalImpl<ContractState>;
+    impl HypErc20CollateralInternalImpl =
+        HypErc20CollateralComponent::HypErc20CollateralInternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
@@ -122,12 +126,15 @@ pub mod HypXERC20Lockbox {
             .mailbox
             .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         let lockbox_dispatcher = IXERC20LockboxDispatcher { contract_address: lockbox };
-        self.collateral.initialize(lockbox_dispatcher.erc20());
+        let erc20 = lockbox_dispatcher.erc20();
+        self.collateral.initialize(erc20);
         let xerc20 = lockbox_dispatcher.xerc20();
         self.xerc20.write(IXERC20Dispatcher { contract_address: xerc20 });
+        self.lockbox.write(lockbox_dispatcher);
         self.approve_lockbox();
     }
 
+    #[abi(embed_v0)]
     impl HypXERC20LockboxImpl of super::IHypXERC20Lockbox<ContractState> {
         fn approve_lockbox(ref self: ContractState) {
             let lockbox_address = self.lockbox.read().contract_address;
@@ -141,10 +148,21 @@ pub mod HypXERC20Lockbox {
                 "xerc20 lockbox approve failed"
             );
         }
+        fn lockbox(ref self: ContractState) -> ContractAddress {
+            self.lockbox.read().contract_address
+        }
+        fn xERC20(ref self: ContractState) -> ContractAddress {
+            self.xerc20.read().contract_address
+        }
     }
 
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);

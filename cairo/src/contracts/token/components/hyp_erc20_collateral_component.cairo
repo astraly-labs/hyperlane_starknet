@@ -3,6 +3,7 @@ use starknet::ContractAddress;
 #[starknet::interface]
 pub trait IHypErc20Collateral<TState> {
     fn balance_of(self: @TState, account: ContractAddress) -> u256;
+    fn get_wrapped_token(self: @TState) -> ContractAddress;
 }
 
 #[starknet::component]
@@ -21,7 +22,8 @@ pub mod HypErc20CollateralComponent {
     };
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl
+        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl,
+        TokenRouterComponent::TokenRouterHooksTrait
     };
     use hyperlane_starknet::interfaces::IMailboxClient;
     use hyperlane_starknet::utils::utils::{U256TryIntoContractAddress};
@@ -33,6 +35,36 @@ pub mod HypErc20CollateralComponent {
     #[storage]
     struct Storage {
         wrapped_token: ERC20ABIDispatcher
+    }
+
+    pub impl TokenRouterHooksImpl<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        +MailboxclientComponent::HasComponent<TContractState>,
+        +RouterComponent::HasComponent<TContractState>,
+        +OwnableComponent::HasComponent<TContractState>,
+        +GasRouterComponent::HasComponent<TContractState>,
+        +TokenRouterComponent::HasComponent<TContractState>,
+    > of TokenRouterHooksTrait<TContractState> {
+        fn transfer_from_sender_hook(
+            ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
+        ) -> Bytes {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut component_state = HasComponent::get_component_mut(ref contract_state);
+            component_state._transfer_from_sender(amount_or_id)
+        }
+
+        fn transfer_to_hook(
+            ref self: TokenRouterComponent::ComponentState<TContractState>,
+            recipient: u256,
+            amount_or_id: u256,
+            metadata: Bytes
+        ) {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut component_state = HasComponent::get_component_mut(ref contract_state);
+            component_state._transfer_to(recipient, amount_or_id);
+        }
     }
 
     #[embeddable_as(HypErc20CollateralImpl)]
@@ -49,20 +81,25 @@ pub mod HypErc20CollateralComponent {
         fn balance_of(self: @ComponentState<TContractState>, account: ContractAddress) -> u256 {
             self.wrapped_token.read().balance_of(account)
         }
+
+        fn get_wrapped_token(self: @ComponentState<TContractState>) -> ContractAddress {
+            let wrapped_token: ERC20ABIDispatcher = self.wrapped_token.read();
+            wrapped_token.contract_address
+        }
     }
 
     #[generate_trait]
-    pub impl InternalImpl<
+    pub impl HypErc20CollateralInternalImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
-        impl Mailboxclient: MailboxclientComponent::HasComponent<TContractState>,
         +RouterComponent::HasComponent<TContractState>,
         +OwnableComponent::HasComponent<TContractState>,
         +GasRouterComponent::HasComponent<TContractState>,
-        +TokenRouterComponent::HasComponent<TContractState>
+        +TokenRouterComponent::HasComponent<TContractState>,
+        impl Mailboxclient: MailboxclientComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
-        fn initialize(ref self: ComponentState<TContractState>, wrapped_token: ContractAddress,) {
+        fn initialize(ref self: ComponentState<TContractState>, wrapped_token: ContractAddress) {
             self.wrapped_token.write(ERC20ABIDispatcher { contract_address: wrapped_token });
         }
 
@@ -73,7 +110,6 @@ pub mod HypErc20CollateralComponent {
                 .transfer_from(
                     starknet::get_caller_address(), starknet::get_contract_address(), amount
                 );
-
             BytesTrait::new_empty()
         }
 

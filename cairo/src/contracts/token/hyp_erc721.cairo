@@ -17,7 +17,9 @@ pub mod HypErc721 {
     use hyperlane_starknet::contracts::token::components::hyp_erc721_component::HypErc721Component;
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
-        TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait
+        TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait,
+        TokenRouterComponent::MessageRecipientInternalHookImpl,
+        TokenRouterTransferRemoteHookDefaultImpl
     };
     use hyperlane_starknet::contracts::token::interfaces::imessage_recipient::IMessageRecipient;
     use openzeppelin::access::ownable::OwnableComponent;
@@ -49,6 +51,7 @@ pub mod HypErc721 {
     impl HypErc721Impl = HypErc721Component::HypErc721Impl<ContractState>;
 
     // TokenRouter
+    #[abi(embed_v0)]
     impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     impl TokenRouterInternalImpl = TokenRouterComponent::TokenRouterInternalImpl<ContractState>;
 
@@ -67,6 +70,11 @@ pub mod HypErc721 {
         MailboxclientComponent::MailboxClientImpl<ContractState>;
     impl MailboxClientInternalImpl =
         MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
+
+    // Ownable
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
@@ -113,28 +121,31 @@ pub mod HypErc721 {
         GasRouterEvent: GasRouterComponent::Event
     }
 
+    #[constructor]
     fn constructor(
         ref self: ContractState,
         mailbox: ContractAddress,
         name: ByteArray,
         symbol: ByteArray,
-        mint_amount: u256
+        mint_amount: u256,
+        hook: ContractAddress,
+        interchain_security_module: ContractAddress,
+        owner: ContractAddress
     ) {
-        self.mailboxclient.initialize(mailbox, Option::None, Option::None);
+        self.ownable.initializer(owner);
+        self
+            .mailboxclient
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         self.hyp_erc721.initialize(mint_amount, name, symbol);
     }
 
     #[abi(embed_v0)]
-    impl MessageRecipient of IMessageRecipient<ContractState> {
-        fn handle(
-            ref self: ContractState, origin: u32, sender: Option<ContractAddress>, message: Bytes
-        ) {
-            self.token_router._handle(origin, message)
-        }
-    }
-
-    #[abi(embed_v0)]
     impl HypErc721Upgradeable of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
             self.upgradeable.upgrade(new_class_hash);
         }

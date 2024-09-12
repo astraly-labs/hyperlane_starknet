@@ -17,7 +17,7 @@ pub trait IFastTokenRouter<TState> {
         value: u256
     ) -> u256;
 }
-// TODO: Implement hooks logic to have virtual functions 
+
 #[starknet::component]
 pub mod FastTokenRouterComponent {
     use alexandria_bytes::{Bytes, BytesTrait};
@@ -29,7 +29,8 @@ pub mod FastTokenRouterComponent {
         MailboxclientComponent::MailboxClient
     };
     use hyperlane_starknet::contracts::client::router_component::{
-        RouterComponent, RouterComponent::RouterComponentInternalImpl, IRouter,
+        RouterComponent, RouterComponent::RouterComponentInternalImpl,
+        RouterComponent::IMessageRecipientInternalHookTrait, IRouter
     };
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
@@ -55,6 +56,39 @@ pub mod FastTokenRouterComponent {
         fn fast_receive_from_hook(
             ref self: ComponentState<TContractState>, sender: ContractAddress, amount: u256
         );
+    }
+
+    pub impl MessageRecipientInternalHookImpl<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        +TokenRouterHooksTrait<TContractState>,
+        +FastTokenRouterHooksTrait<TContractState>,
+        +MailboxclientComponent::HasComponent<TContractState>,
+        +RouterComponent::HasComponent<TContractState>,
+        +OwnableComponent::HasComponent<TContractState>,
+        +GasRouterComponent::HasComponent<TContractState>,
+        impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
+    > of IMessageRecipientInternalHookTrait<TContractState> {
+        fn _handle(
+            ref self: RouterComponent::ComponentState<TContractState>,
+            origin: u32,
+            sender: u256,
+            message: Bytes
+        ) {
+            let recipient = message.recipient();
+            let amount = message.amount();
+            let metadata = message.metadata();
+
+            let mut contract_state = RouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut component_state = HasComponent::get_component_mut(ref contract_state);
+            component_state._transfer_to(recipient, amount, origin, metadata);
+            let mut component_state = TokenRouterComponent::HasComponent::get_component_mut(
+                ref contract_state
+            );
+            component_state
+                .emit(TokenRouterComponent::ReceivedTransferRemote { origin, recipient, amount });
+        }
     }
 
     #[embeddable_as(FastTokenRouterImpl)]
@@ -124,7 +158,6 @@ pub mod FastTokenRouterComponent {
                         destination, recipient, amount: amount_or_id,
                     }
                 );
-
             message_id
         }
     }
@@ -142,20 +175,6 @@ pub mod FastTokenRouterComponent {
         impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
         impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
-        // all needs to support override
-        fn _handle(ref self: ComponentState<TContractState>, origin: u32, message: Bytes) {
-            let mut token_router_comp = get_dep_component_mut!(ref self, TokenRouter);
-
-            let recipient = message.recipient();
-            let amount = message.amount();
-            let metadata = message.metadata();
-
-            self._transfer_to(recipient, amount, origin, metadata);
-
-            token_router_comp
-                .emit(TokenRouterComponent::ReceivedTransferRemote { origin, recipient, amount, });
-        }
-
         fn _transfer_to(
             ref self: ComponentState<TContractState>,
             recipient: u256,
@@ -231,7 +250,7 @@ pub mod FastTokenRouterComponent {
 }
 
 
-pub impl FastTokenRouterHooksImpl<
+pub impl FastTokenRouterHooksEmptyImpl<
     TContractState
 > of FastTokenRouterComponent::FastTokenRouterHooksTrait<TContractState> {
     fn fast_transfer_to_hook(

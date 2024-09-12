@@ -1,22 +1,24 @@
 #[starknet::interface]
-pub trait IHypERC20CollateralVaultDeposit<TState> {
-    fn sweep(ref self: TState);
-    // getters
-    fn get_vault(self: @TState) -> starknet::ContractAddress;
-    fn get_asset_deposited(self: @TState) -> u256;
+trait IHypErc20VaultCollateral<TContractState> {
+    fn rebase(ref self: TContractState, destination_domain: u32, value: u256);
+    // getters 
+    fn get_vault(self: @TContractState) -> starknet::ContractAddress;
+    fn get_precision(self: @TContractState) -> u256;
+    fn get_null_recipient(self: @TContractState) -> u256;
 }
 
 #[starknet::contract]
-pub mod HypERC20CollateralVaultDeposit {
+mod HypErc20VaultCollateral {
     use alexandria_bytes::{Bytes, BytesTrait};
-    use core::integer::BoundedInt;
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
+    use hyperlane_starknet::contracts::libs::math;
+    use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::{
         token_router::{
             TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
-            TokenRouterComponent::TokenRouterHooksTrait, TokenRouterTransferRemoteHookDefaultImpl
+            TokenRouterComponent::{TokenRouterHooksTrait, TokenRouterTransferRemoteHookTrait}
         },
         hyp_erc20_collateral_component::HypErc20CollateralComponent,
     };
@@ -53,9 +55,11 @@ pub mod HypERC20CollateralVaultDeposit {
     // Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
+    impl RouterInternalImpl = RouterComponent::RouterComponentInternalImpl<ContractState>;
     // GasRouter
     #[abi(embed_v0)]
     impl GasRouterImpl = GasRouterComponent::GasRouterImpl<ContractState>;
+    impl GasRouterInternalImpl = GasRouterComponent::GasRouterInternalImpl<ContractState>;
     #[abi(embed_v0)]
     impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
     // HypERC20Collateral
@@ -66,11 +70,13 @@ pub mod HypERC20CollateralVaultDeposit {
         HypErc20CollateralComponent::HypErc20CollateralInternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+    // E10
+    const PRECISION: u256 = 10_000_000_000;
+    const NULL_RECIPIENT: u256 = 1;
 
     #[storage]
     struct Storage {
         vault: ERC4626ABIDispatcher,
-        asset_deposited: u256,
         #[substorage(v0)]
         collateral: HypErc20CollateralComponent::Storage,
         #[substorage(v0)]
@@ -103,14 +109,7 @@ pub mod HypERC20CollateralVaultDeposit {
         #[flat]
         TokenRouterEvent: TokenRouterComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event,
-        ExcessSharesSwept: ExcessSharesSwept
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct ExcessSharesSwept {
-        amount: u256,
-        assets_redeemed: u256
+        UpgradeableEvent: UpgradeableComponent::Event
     }
 
     #[constructor]
@@ -128,32 +127,40 @@ pub mod HypERC20CollateralVaultDeposit {
         let erc20 = vault_dispatcher.asset();
         self.collateral.initialize(erc20);
         self.vault.write(vault_dispatcher);
-        self.collateral.wrapped_token.read().approve(vault, BoundedInt::max());
     }
 
-    impl HypERC20CollateralVaultDepositImpl of super::IHypERC20CollateralVaultDeposit<
-        ContractState
-    > {
-        fn sweep(ref self: ContractState) {
-            self.ownable.assert_only_owner();
-            let this_address = starknet::get_contract_address();
-            let vault = self.vault.read();
-            let excess_shares = vault.max_redeem(this_address)
-                - vault.convert_to_shares(self.asset_deposited.read());
-            let assets_redeemed = vault
-                .redeem(excess_shares, self.ownable.Ownable_owner.read(), this_address);
+    impl TokenRouterTransferRemoteHookImpl of TokenRouterTransferRemoteHookTrait<ContractState> {
+        fn _transfer_remote(
+            ref self: TokenRouterComponent::ComponentState<ContractState>,
+            destination: u32,
+            recipient: u256,
+            amount_or_id: u256,
+            value: u256,
+            hook_metadata: Option<Bytes>,
+            hook: Option<ContractAddress>
+        ) -> u256 {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            TokenRouterHooksTraitImpl::transfer_from_sender_hook(ref self, amount_or_id);
+            let shares = contract_state._deposit_into_vault(amount_or_id);
+            let vault = contract_state.vault.read();
+            let exchange_rate = math::mul_div(
+                PRECISION, vault.total_assets(), vault.total_supply(),
+            );
+            let mut token_metadata: Bytes = BytesTrait::new_empty();
+            token_metadata.append_u256(exchange_rate);
+            let token_message = TokenMessageTrait::format(recipient, shares, token_metadata);
+            let message_id = contract_state
+                .router
+                ._Router_dispatch(
+                    destination, value, token_message, hook_metadata.unwrap(), hook.unwrap()
+                );
             self
                 .emit(
-                    ExcessSharesSwept { amount: excess_shares, assets_redeemed: assets_redeemed }
+                    TokenRouterComponent::SentTransferRemote {
+                        destination, recipient, amount: amount_or_id,
+                    }
                 );
-        }
-
-        fn get_vault(self: @ContractState) -> ContractAddress {
-            self.vault.read().contract_address
-        }
-
-        fn get_asset_deposited(self: @ContractState) -> u256 {
-            self.asset_deposited.read()
+            message_id
         }
     }
 
@@ -161,13 +168,9 @@ pub mod HypERC20CollateralVaultDeposit {
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
-            let metadata =
-                HypErc20CollateralComponent::TokenRouterHooksImpl::transfer_from_sender_hook(
+            HypErc20CollateralComponent::TokenRouterHooksImpl::transfer_from_sender_hook(
                 ref self, amount_or_id
-            );
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state._deposit_into_vault(amount_or_id);
-            metadata
+            )
         }
 
         fn transfer_to_hook(
@@ -176,26 +179,65 @@ pub mod HypERC20CollateralVaultDeposit {
             amount_or_id: u256,
             metadata: Bytes
         ) {
+            let recipient: ContractAddress = recipient.try_into().unwrap();
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            // withdraw with the specified amount of shares
             contract_state
-                ._withdraw_from_vault(
-                    amount_or_id, recipient.try_into().expect('u256 to ContractAddress failed')
+                .vault
+                .read()
+                .redeem(
+                    amount_or_id,
+                    recipient.try_into().expect('u256 to ContractAddress failed'),
+                    starknet::get_contract_address()
                 );
+        }
+    }
+
+    impl HypeErc20VaultCollateral of super::IHypErc20VaultCollateral<ContractState> {
+        fn rebase(ref self: ContractState, destination_domain: u32, value: u256) {
+            TokenRouterTransferRemoteHookImpl::_transfer_remote(
+                ref self.token_router,
+                destination_domain,
+                NULL_RECIPIENT,
+                0,
+                value,
+                Option::None,
+                Option::None,
+            );
+        }
+
+        fn get_vault(self: @ContractState) -> ContractAddress {
+            self.vault.read().contract_address
+        }
+
+        fn get_precision(self: @ContractState) -> u256 {
+            PRECISION
+        }
+
+        fn get_null_recipient(self: @ContractState) -> u256 {
+            NULL_RECIPIENT
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
+        fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
+            self.ownable.assert_only_owner();
+            self.upgradeable.upgrade(new_class_hash);
         }
     }
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn _deposit_into_vault(ref self: ContractState, amount: u256) {
-            let asset_deposited = self.asset_deposited.read();
-            self.asset_deposited.write(asset_deposited + amount);
-            self.vault.read().deposit(amount, starknet::get_contract_address());
-        }
-
-        fn _withdraw_from_vault(ref self: ContractState, amount: u256, recipient: ContractAddress) {
-            let asset_deposited = self.asset_deposited.read();
-            self.asset_deposited.write(asset_deposited - amount);
-            self.vault.read().withdraw(amount, recipient, starknet::get_caller_address());
+        fn _deposit_into_vault(ref self: ContractState, amount: u256) -> u256 {
+            let vault = self.vault.read();
+            self.collateral.wrapped_token.read().approve(vault.contract_address, amount);
+            vault.deposit(amount, starknet::get_contract_address())
         }
     }
 }

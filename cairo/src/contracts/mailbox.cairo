@@ -323,7 +323,7 @@ pub mod mailbox {
             if (default_fee > 0) {
                 token_dispatcher.transferFrom(caller_address, hook, default_fee);
             }
-            hook_dispatcher.post_dispatch(hook_metadata, message.clone(), default_fee);
+            hook_dispatcher.post_dispatch(hook_metadata, message, default_fee);
 
             id
         }

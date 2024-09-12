@@ -14,6 +14,7 @@ use hyperlane_starknet::contracts::mocks::{
     test_interchain_gas_payment::{
         ITestInterchainGasPaymentDispatcher, ITestInterchainGasPaymentDispatcherTrait
     },
+    test_erc721::{ITestERC721Dispatcher, ITestERC721DispatcherTrait}
 };
 use hyperlane_starknet::contracts::token::components::hyp_erc721_collateral_component::{
     IHypErc721CollateralDispatcher, IHypErc721CollateralDispatcherTrait
@@ -38,7 +39,7 @@ use starknet::ContractAddress;
 
 const PUB_KEY: felt252 = 0x1;
 const ZERO_SUPPLY: u256 = 0;
-fn ZERO_ADDRESS() -> ContractAddress {
+pub fn ZERO_ADDRESS() -> ContractAddress {
     starknet::contract_address_const::<'0x0'>()
 }
 fn EMPTY_STRING() -> ByteArray {
@@ -128,15 +129,17 @@ pub trait IHypErc721Test<TContractState> {
 
 #[derive(Copy, Drop)]
 pub struct Setup {
-    pub primary_token: IERC721Dispatcher,
-    pub remote_primary_token: IERC721Dispatcher,
+    pub local_primary_token: ITestERC721Dispatcher,
+    pub remote_primary_token: ITestERC721Dispatcher,
     pub noop_hook: ITestPostDispatchHookDispatcher,
+    pub default_ism: ContractAddress,
     pub local_mailbox: IMockMailboxDispatcher,
     pub remote_mailbox: IMockMailboxDispatcher,
     pub remote_token: IHypErc721TestDispatcher,
     pub local_token: IHypErc721TestDispatcher,
     pub hyp_erc721_contract: ContractClass,
     pub hyp_erc721_collateral_contract: ContractClass,
+    pub alice: ContractAddress,
     pub bob: ContractAddress,
 }
 
@@ -146,11 +149,11 @@ pub fn setup() -> Setup {
     (INITIAL_SUPPLY * 2).serialize(ref calldata);
     let (primary_token, _) = contract.deploy(@calldata).unwrap();
     println!("PRIMARY TOKEN: {:?}", primary_token);
-    let primary_token = IERC721Dispatcher { contract_address: primary_token };
+    let local_primary_token = ITestERC721Dispatcher { contract_address: primary_token };
 
     let (remote_primary_token, _) = contract.deploy(@calldata).unwrap();
     println!("REMOTE PRIMARY TOKEN: {:?}", remote_primary_token);
-    let remote_primary_token = IERC721Dispatcher { contract_address: remote_primary_token };
+    let remote_primary_token = ITestERC721Dispatcher { contract_address: remote_primary_token };
 
     let contract = declare("TestPostDispatchHook").unwrap();
     let (noop_hook, _) = contract.deploy(@array![]).unwrap();
@@ -227,19 +230,23 @@ pub fn setup() -> Setup {
     let local_token = IHypErc721TestDispatcher { contract_address: local_token };
 
     let contract = declare("MockAccount").unwrap();
+    let (alice, _) = contract.deploy(@array![PUB_KEY]).unwrap();
+    println!("ALICE: {:?}", alice);
     let (bob, _) = contract.deploy(@array![PUB_KEY]).unwrap();
     println!("BOB: {:?}", bob);
 
     Setup {
-        primary_token,
+        local_primary_token,
         remote_primary_token,
         noop_hook,
+        default_ism,
         local_mailbox,
         remote_mailbox,
         remote_token,
         local_token,
         hyp_erc721_contract,
         hyp_erc721_collateral_contract,
+        alice,
         bob,
     }
 }
@@ -292,7 +299,8 @@ pub fn process_transfer(setup: @Setup, recipient: ContractAddress, token_id: u25
 }
 
 pub fn perform_remote_transfer(setup: @Setup, msg_value: u256, token_id: u256) {
-    let alice_address: felt252 = ALICE().into();
+    println!("INSIDE PERFORM REMOTE TRANSFER");
+    let alice_address: felt252 = (*setup).alice.into();
     (*setup)
         .local_token
         .transfer_remote(

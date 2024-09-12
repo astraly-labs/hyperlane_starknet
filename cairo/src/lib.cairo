@@ -71,6 +71,7 @@ mod contracts {
             pub mod ixerc20_lockbox;
         }
         pub mod components {
+            pub mod erc721_enumerable;
             pub mod fast_token_router;
             pub mod hyp_erc20_collateral_component;
             pub mod hyp_erc20_component;

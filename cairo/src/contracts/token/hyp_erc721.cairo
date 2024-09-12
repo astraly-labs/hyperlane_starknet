@@ -27,6 +27,7 @@ pub mod HypErc721 {
     use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::ContractAddress;
+    use hyperlane_starknet::contracts::token::components::erc721_enumerable::ERC721EnumerableComponent;
     // also needs {https://github.com/OpenZeppelin/cairo-contracts/blob/main/packages/token/src/erc721/extensions/erc721_enumerable/erc721_enumerable.cairo}
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -37,11 +38,16 @@ pub mod HypErc721 {
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
     component!(path: RouterComponent, storage: router, event: RouterEvent);
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
-
+    component!(path: ERC721EnumerableComponent, storage: erc721_enumerable, event: ERC721EnumerableEvent);
     // ERC721 Mixin
     #[abi(embed_v0)]
     impl ERC721MixinImpl = ERC721Component::ERC721MixinImpl<ContractState>;
     impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
+
+    // ERC721Enumerable
+    #[abi(embed_v0)]
+    impl ERC721EnumerableImpl = ERC721EnumerableComponent::ERC721EnumerableImpl<ContractState>;
+    // impl ERC721EnumerableInternalImpl = ERC721EnumerableComponent::InternalImpl<ContractState>;
 
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
@@ -95,7 +101,9 @@ pub mod HypErc721 {
         #[substorage(v0)]
         router: RouterComponent::Storage,
         #[substorage(v0)]
-        gas_router: GasRouterComponent::Storage
+        gas_router: GasRouterComponent::Storage,
+        #[substorage(v0)]
+        erc721_enumerable: ERC721EnumerableComponent::Storage
     }
 
     #[event]
@@ -118,7 +126,9 @@ pub mod HypErc721 {
         #[flat]
         RouterEvent: RouterComponent::Event,
         #[flat]
-        GasRouterEvent: GasRouterComponent::Event
+        GasRouterEvent: GasRouterComponent::Event,
+        #[flat]
+        ERC721EnumerableEvent: ERC721EnumerableComponent::Event
     }
 
     #[constructor]
@@ -147,6 +157,7 @@ pub mod HypErc721 {
         ///
         /// * `new_class_hash` - The class hash of the new implementation.
         fn upgrade(ref self: ContractState, new_class_hash: starknet::ClassHash) {
+            self.ownable.assert_only_owner();
             self.upgradeable.upgrade(new_class_hash);
         }
     }

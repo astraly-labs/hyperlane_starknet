@@ -33,11 +33,11 @@ pub trait IERC721Enumerable<TState> {
 #[starknet::component]
 pub mod ERC721EnumerableComponent {
     use core::num::traits::Zero;
+    use openzeppelin::introspection::src5::SRC5Component::InternalTrait as SRC5InternalTrait;
+    use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::ERC721Component::ERC721Impl;
     use openzeppelin::token::erc721::ERC721Component::InternalImpl as ERC721InternalImpl;
     use openzeppelin::token::erc721::ERC721Component;
-    use openzeppelin::introspection::src5::SRC5Component::InternalTrait as SRC5InternalTrait;
-    use openzeppelin::introspection::src5::SRC5Component;
     use starknet::ContractAddress;
 
     #[storage]

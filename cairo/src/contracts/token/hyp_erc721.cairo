@@ -14,6 +14,7 @@ pub mod HypErc721 {
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
+    use hyperlane_starknet::contracts::token::components::erc721_enumerable::ERC721EnumerableComponent;
     use hyperlane_starknet::contracts::token::components::hyp_erc721_component::HypErc721Component;
     use hyperlane_starknet::contracts::token::components::token_message::TokenMessageTrait;
     use hyperlane_starknet::contracts::token::components::token_router::{
@@ -27,7 +28,6 @@ pub mod HypErc721 {
     use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::ContractAddress;
-    use hyperlane_starknet::contracts::token::components::erc721_enumerable::ERC721EnumerableComponent;
     // also needs {https://github.com/OpenZeppelin/cairo-contracts/blob/main/packages/token/src/erc721/extensions/erc721_enumerable/erc721_enumerable.cairo}
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -38,7 +38,9 @@ pub mod HypErc721 {
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
     component!(path: RouterComponent, storage: router, event: RouterEvent);
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
-    component!(path: ERC721EnumerableComponent, storage: erc721_enumerable, event: ERC721EnumerableEvent);
+    component!(
+        path: ERC721EnumerableComponent, storage: erc721_enumerable, event: ERC721EnumerableEvent
+    );
     // ERC721 Mixin
     #[abi(embed_v0)]
     impl ERC721MixinImpl = ERC721Component::ERC721MixinImpl<ContractState>;
@@ -46,7 +48,8 @@ pub mod HypErc721 {
 
     // ERC721Enumerable
     #[abi(embed_v0)]
-    impl ERC721EnumerableImpl = ERC721EnumerableComponent::ERC721EnumerableImpl<ContractState>;
+    impl ERC721EnumerableImpl =
+        ERC721EnumerableComponent::ERC721EnumerableImpl<ContractState>;
     // impl ERC721EnumerableInternalImpl = ERC721EnumerableComponent::InternalImpl<ContractState>;
 
     // Upgradeable

@@ -27,6 +27,9 @@ mod contracts {
     }
     pub mod mocks {
         pub mod enumerable_map_holder;
+        pub mod erc4626_component;
+        pub mod erc4626_mock;
+        pub mod erc4626_yield_sharing_mock;
         pub mod fee_hook;
         pub mod fee_token;
         pub mod hook;

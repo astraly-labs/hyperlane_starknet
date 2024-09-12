@@ -35,6 +35,7 @@ mod contracts {
         pub mod hook;
         pub mod ism;
         pub mod message_recipient;
+        pub mod mock_account;
         pub mod mock_eth;
         pub mod mock_mailbox;
         pub mod mock_validator_announce;
@@ -73,6 +74,8 @@ mod contracts {
             pub mod ixerc20_lockbox;
         }
         pub mod components {
+            pub mod erc721_enumerable;
+            pub mod erc721_uri_storage;
             pub mod fast_token_router;
             pub mod hyp_erc20_collateral_component;
             pub mod hyp_erc20_component;
@@ -138,6 +141,10 @@ mod tests {
         }
         pub mod hyp_erc721 {
             pub mod common;
+            pub mod hyp_erc721_collateral_test;
+            pub mod hyp_erc721_collateral_uri_storage_test;
+            pub mod hyp_erc721_test;
+            pub mod hyp_erc721_uri_storage_test;
         }
 
         pub mod vault_extensions {

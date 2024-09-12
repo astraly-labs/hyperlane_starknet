@@ -242,7 +242,7 @@ pub mod ERC4626Component {
 
         fn total_assets(self: @ComponentState<TContractState>) -> u256 {
             let dispatcher = ERC20ABIDispatcher { contract_address: self.ERC4626_asset.read() };
-            dispatcher.balanceOf(get_contract_address())
+            dispatcher.balance_of(get_contract_address())
         }
 
         fn withdraw(
@@ -403,7 +403,7 @@ pub mod ERC4626Component {
             Hooks::before_deposit(ref self, caller, receiver, assets, shares);
 
             let dispatcher = ERC20ABIDispatcher { contract_address: self.ERC4626_asset.read() };
-            dispatcher.transferFrom(caller, get_contract_address(), assets);
+            dispatcher.transfer_from(caller, get_contract_address(), assets);
             let mut erc20_comp_mut = get_dep_component_mut!(ref self, ERC20);
             erc20_comp_mut.mint(receiver, shares);
             self.emit(Deposit { sender: caller, owner: receiver, assets, shares });

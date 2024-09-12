@@ -139,6 +139,10 @@ mod tests {
         pub mod hyp_erc721 {
             pub mod common;
         }
+
+        pub mod vault_extensions {
+            pub mod hyp_erc20_collateral_vault_deposit_test;
+        }
     }
     pub mod libs {
         pub mod test_enumerable_map;

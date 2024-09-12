@@ -72,6 +72,7 @@ mod contracts {
         }
         pub mod components {
             pub mod erc721_enumerable;
+            pub mod erc721_uri_storage;
             pub mod fast_token_router;
             pub mod hyp_erc20_collateral_component;
             pub mod hyp_erc20_component;

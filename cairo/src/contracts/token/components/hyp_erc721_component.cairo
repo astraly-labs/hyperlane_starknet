@@ -11,6 +11,7 @@ pub mod HypErc721Component {
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
         MailboxclientComponent::MailboxClient
     };
+    use hyperlane_starknet::contracts::token::components::token_router::{ TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait as TokenRouterHooksTraits };
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
     };
@@ -59,7 +60,7 @@ pub mod HypErc721Component {
     }
 
     #[generate_trait]
-    impl HypErc721InternalImpl<
+    pub impl HypErc721InternalImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,

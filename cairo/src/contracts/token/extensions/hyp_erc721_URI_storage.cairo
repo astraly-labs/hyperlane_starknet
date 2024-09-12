@@ -22,9 +22,13 @@ pub mod HypERC721URIStorage {
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
-    use hyperlane_starknet::contracts::token::components::token_router::{ TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait };
+    use hyperlane_starknet::contracts::token::components::token_router::{
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
+        TokenRouterComponent::MessageRecipientInternalHookImpl,
+        TokenRouterTransferRemoteHookDefaultImpl
+    };
     use hyperlane_starknet::contracts::token::components::hyp_erc721_component::HypErc721Component;
-    use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
+    use openzeppelin::token::erc721::{ERC721Component, ERC721Component::ERC721HooksTrait};
     use openzeppelin::introspection::src5::SRC5Component;
     use starknet::{ ContractAddress, get_caller_address };
     use core::num::traits::Zero;
@@ -54,6 +58,7 @@ pub mod HypERC721URIStorage {
     //Router
     #[abi(embed_v0)]
     impl RouterImpl = RouterComponent::RouterImpl<ContractState>;
+    impl RouterInternalImpl = RouterComponent::RouterComponentInternalImpl<ContractState>;
 
     // GasRouter
     #[abi(embed_v0)]
@@ -125,32 +130,22 @@ pub mod HypERC721URIStorage {
     fn constructor(
         ref self: ContractState,
         owner: ContractAddress,
-        mailbox: ContractAddress
+        mailbox: ContractAddress,
+        _mint_amount: u256,
+        _name: ByteArray,
+        _symbol: ByteArray,
+        _base_uri: ByteArray,
+        _hook: ContractAddress,
+        _interchainSecurityModule: ContractAddress,
     ) {
-        self.ownable._transfer_ownership(owner);
-        self.mailboxclient.initialize(mailbox, Option::None, Option::None);
-    }
-
-    #[abi(embed_v0)]
-    impl HypERC721URIStorageImpl of super::IHypERC721URIStorage<ContractState> {
-        fn initialize(
-            ref self: ContractState,
-            _mint_amount: u256,
-            _name: ByteArray,
-            _symbol: ByteArray,
-            _hook: ContractAddress,
-            _interchainSecurityModule: ContractAddress,
-            owner: ContractAddress
-        ) {
-            self.ownable.initializer(owner);
-            let mailbox = self.mailboxclient.mailbox.read();
-            self.mailboxclient.initialize(mailbox.contract_address, Option::Some(_hook), Option::Some(_interchainSecurityModule));
-            self.hyp_erc721.initialize(
-                _mint_amount,
-                _name,
-                _symbol
-            );
-        }
+        self.ownable.initializer(owner);
+        self.mailboxclient.initialize(mailbox, Option::Some(_hook), Option::Some(_interchainSecurityModule));
+        self.hyp_erc721.initialize(
+            _mint_amount,
+            _name,
+            _symbol,
+            _base_uri
+        )
     }
 
     #[abi(embed_v0)]
@@ -161,23 +156,41 @@ pub mod HypERC721URIStorage {
         }
     }
 
-    #[generate_trait]
-    impl InternalImpl of InternalTrait {
-        fn transfer_from_sender(ref self: ContractState, token_id: u256) -> u256 {
-            self.hyp_erc721.transfer_from_sender(token_id);
-            token_id
-        }
+    // #[generate_trait]
+    // impl InternalImpl of InternalTrait {
+    //     fn transfer_from_sender(ref self: ContractState, token_id: u256) -> u256 {
+    //         self.hyp_erc721.transfer_from_sender(token_id);
+    //         token_id
+    //     }
 
-        fn transfer_to(ref self: ContractState, recipient: ContractAddress, token_id: u256, token_uri: u256) {
-            self.hyp_erc721.transfer_to(recipient, token_id);
-        }
+    //     fn transfer_to(ref self: ContractState, recipient: ContractAddress, token_id: u256, token_uri: u256) {
+    //         self.hyp_erc721.transfer_to(recipient, token_id);
+    //     }
 
-        fn before_token_transfer(
-            ref self: ContractState, from: u256, to: ContractAddress, token_id: u256, batch_size: u256
-        ) {
-            self.erc721.before_update(to, token_id, Zero::zero());
-        }
+    //     fn before_token_transfer(
+    //         ref self: ContractState, from: u256, to: ContractAddress, token_id: u256, batch_size: u256
+    //     ) {
+    //         self.erc721.before_update(to, token_id, Zero::zero());
+    //     }
+    // }
+
+    // would be extended when erc721_enumerable is imported
+    impl ERC721HooksImpl of ERC721HooksTrait<ContractState> {
+        fn before_update(
+            ref self: ERC721Component::ComponentState<ContractState>,
+            to: ContractAddress,
+            token_id: u256,
+            auth: ContractAddress
+        ) {}
+
+        fn after_update(
+            ref self: ERC721Component::ComponentState<ContractState>,
+            to: ContractAddress,
+            token_id: u256,
+            auth: ContractAddress
+        ) {}
     }
+
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
         fn transfer_from_sender_hook(

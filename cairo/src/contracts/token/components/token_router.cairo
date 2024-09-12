@@ -121,7 +121,7 @@ pub mod TokenRouterComponent {
     }
 
     #[embeddable_as(TokenRouterImpl)]
-    impl TokenRouter<
+    pub impl TokenRouter<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,

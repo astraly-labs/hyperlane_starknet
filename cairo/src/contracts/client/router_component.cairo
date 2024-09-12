@@ -46,7 +46,7 @@ pub mod RouterComponent {
     }
 
     #[embeddable_as(RouterImpl)]
-    impl Router<
+    pub impl Router<
         TContractState,
         +HasComponent<TContractState>,
         +MailboxclientComponent::HasComponent<TContractState>,

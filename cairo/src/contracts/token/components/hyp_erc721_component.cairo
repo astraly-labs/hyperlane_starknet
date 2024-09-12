@@ -2,7 +2,7 @@ use starknet::{ContractAddress, ClassHash};
 
 #[starknet::interface]
 pub trait IHypErc721<TState> {
-    fn initialize(ref self: TState, mint_amount: u256, name: ByteArray, symbol: ByteArray,);
+    fn initialize(ref self: TState, mint_amount: u256, name: ByteArray, symbol: ByteArray, base_uri: ByteArray);
 }
 
 #[starknet::component]
@@ -30,7 +30,7 @@ pub mod HypErc721Component {
     struct Storage {}
 
     #[embeddable_as(HypErc721Impl)]
-    impl HypErc721<
+    pub impl HypErc721<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
@@ -45,9 +45,10 @@ pub mod HypErc721Component {
             mint_amount: u256,
             name: ByteArray,
             symbol: ByteArray,
+            base_uri: ByteArray
         ) {
             let mut erc721_comp = get_dep_component_mut!(ref self, ERC721);
-            erc721_comp.initializer(name, symbol, "");
+            erc721_comp.initializer(name, symbol, base_uri);
 
             let caller = starknet::get_caller_address();
 

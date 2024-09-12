@@ -119,18 +119,20 @@ pub mod HypERC20CollateralVaultDeposit {
         mailbox: ContractAddress,
         vault: ContractAddress,
         owner: ContractAddress,
-        hook: Option<ContractAddress>,
-        interchain_security_module: Option<ContractAddress>
+        hook: ContractAddress,
+        interchain_security_module: ContractAddress
     ) {
         self.ownable.initializer(owner);
-        self.mailbox.initialize(mailbox, hook, interchain_security_module);
+        self
+            .mailbox
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         let vault_dispatcher = ERC4626ABIDispatcher { contract_address: vault };
         let erc20 = vault_dispatcher.asset();
         self.collateral.initialize(erc20);
         self.vault.write(vault_dispatcher);
         self.collateral.wrapped_token.read().approve(vault, BoundedInt::max());
     }
-
+    #[abi(embed_v0)]
     impl HypERC20CollateralVaultDepositImpl of super::IHypERC20CollateralVaultDeposit<
         ContractState
     > {
@@ -195,7 +197,7 @@ pub mod HypERC20CollateralVaultDeposit {
         fn _withdraw_from_vault(ref self: ContractState, amount: u256, recipient: ContractAddress) {
             let asset_deposited = self.asset_deposited.read();
             self.asset_deposited.write(asset_deposited - amount);
-            self.vault.read().withdraw(amount, recipient, starknet::get_caller_address());
+            self.vault.read().withdraw(amount, recipient, starknet::get_contract_address());
         }
     }
 }

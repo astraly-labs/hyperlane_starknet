@@ -1,10 +1,13 @@
 #[starknet::interface]
 pub trait IERC721URIStorage<TContractState> {
+    fn name(self: @TContractState) -> ByteArray;
+    fn symbol(self: @TContractState) -> ByteArray;
     fn token_uri(self: @TContractState, token_id: u256) -> ByteArray;
 }
 
 #[starknet::component]
 pub mod ERC721URIStorageComponent {
+    use openzeppelin::token::erc721::interface::IERC721Metadata;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::{
         ERC721Component, ERC721Component::InternalTrait as ERC721InternalTrait,
@@ -18,7 +21,7 @@ pub mod ERC721URIStorageComponent {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         MetadataUpdate: MetadataUpdate,
     }
 
@@ -28,7 +31,7 @@ pub mod ERC721URIStorageComponent {
     }
 
     #[embeddable_as(ERC721URIStorageImpl)]
-    impl ERC721URIStorage<
+    pub impl ERC721URIStorage<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
@@ -36,6 +39,18 @@ pub mod ERC721URIStorageComponent {
         +ERC721HooksTrait<TContractState>,
         impl ERC721: ERC721Component::HasComponent<TContractState>,
     > of super::IERC721URIStorage<ComponentState<TContractState>> {
+        // returns the NFT name
+        fn name(self: @ComponentState<TContractState>) -> ByteArray {
+            let erc721_component = get_dep_component!(self, ERC721);
+            erc721_component.name()
+        }
+
+        // returns the NFT symbol
+        fn symbol(self: @ComponentState<TContractState>) -> ByteArray {
+            let erc721_component = get_dep_component!(self, ERC721);
+            erc721_component.symbol()
+        }
+
         /// Returns the URI associated with a given `token_id`.
         ///
         /// This function retrieves the URI for an ERC721 token based on its `token_id`. 
@@ -71,7 +86,7 @@ pub mod ERC721URIStorageComponent {
     }
 
     #[generate_trait]
-    impl ERC721URIStorageInternalImpl<
+    pub impl ERC721URIStorageInternalImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,

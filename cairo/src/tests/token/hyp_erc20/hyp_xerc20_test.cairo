@@ -40,11 +40,20 @@ fn setup_xerc20() -> Setup {
     setup.local_token = IHypERC20TestDispatcher { contract_address: local_token };
     println!("HypXERC20: {:?}", local_token);
 
-    enroll_local_router(@setup);
-    enroll_remote_router(@setup);
-
+    setup
+        .local_token
+        .enroll_remote_router(
+            DESTINATION,
+            Into::<ContractAddress, felt252>::into(setup.remote_token.contract_address).into()
+        );
     setup.primary_token.transfer(local_token, 1000 * E18);
     setup.primary_token.transfer(ALICE(), 1000 * E18);
+    setup
+        .remote_token
+        .enroll_remote_router(
+            ORIGIN,
+            Into::<ContractAddress, felt252>::into(setup.local_token.contract_address).into()
+        );
     setup
 }
 

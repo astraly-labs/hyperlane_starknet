@@ -319,9 +319,11 @@ pub fn handle_local_transfer(setup: @Setup, transfer_amount: u256) {
     stop_prank(CheatTarget::One((*setup).local_token.contract_address));
 }
 
-pub fn mint_and_approve(setup: @Setup, amount: u256, account: ContractAddress) {
-    (*setup).primary_token.mint(account, amount);
-    (*setup).primary_token.approve(account, amount);
+pub fn mint_and_approve(
+    setup: @Setup, amount: u256, mint_to: ContractAddress, approve_to: ContractAddress
+) {
+    (*setup).primary_token.mint(mint_to, amount);
+    (*setup).primary_token.approve(approve_to, amount);
 }
 
 pub fn set_custom_gas_config(setup: @Setup) {

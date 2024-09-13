@@ -6,7 +6,7 @@ use starknet::ContractAddress;
 #[starknet::interface]
 pub trait IERC4626<TState> {
     // ************************************
-    // * IERC4626
+    // * IERC20
     // ************************************
     fn total_supply(self: @TState) -> u256;
     fn balance_of(self: @TState, account: ContractAddress) -> u256;
@@ -16,7 +16,12 @@ pub trait IERC4626<TState> {
         ref self: TState, sender: ContractAddress, recipient: ContractAddress, amount: u256
     ) -> bool;
     fn approve(ref self: TState, spender: ContractAddress, amount: u256) -> bool;
-
+    // ************************************
+    // * IERC20 metadata
+    // ************************************
+    fn name(self: @TState) -> ByteArray;
+    fn symbol(self: @TState) -> ByteArray;
+    fn decimals(self: @TState) -> u8;
     // ************************************
     // * IERC4626
     // ************************************

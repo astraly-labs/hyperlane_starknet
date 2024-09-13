@@ -27,6 +27,9 @@ mod contracts {
     }
     pub mod mocks {
         pub mod enumerable_map_holder;
+        pub mod erc4626_component;
+        pub mod erc4626_mock;
+        pub mod erc4626_yield_sharing_mock;
         pub mod fee_hook;
         pub mod fee_token;
         pub mod hook;
@@ -71,6 +74,8 @@ mod contracts {
             pub mod ixerc20_lockbox;
         }
         pub mod components {
+            pub mod erc721_enumerable;
+            pub mod erc721_uri_storage;
             pub mod fast_token_router;
             pub mod hyp_erc20_collateral_component;
             pub mod hyp_erc20_component;
@@ -140,6 +145,10 @@ mod tests {
             pub mod hyp_erc721_collateral_uri_storage_test;
             pub mod hyp_erc721_test;
             pub mod hyp_erc721_uri_storage_test;
+        }
+
+        pub mod vault_extensions {
+            pub mod hyp_erc20_collateral_vault_deposit_test;
         }
     }
     pub mod libs {

@@ -130,6 +130,24 @@ mod HypErc20VaultCollateral {
     }
 
     impl TokenRouterTransferRemoteHookImpl of TokenRouterTransferRemoteHookTrait<ContractState> {
+        /// Initiates a remote token transfer with optional hooks and metadata.
+        ///
+        /// This function handles the process of transferring tokens to a recipient on a remote domain.
+        /// It deposits the token amount into the vault, calculates the exchange rate, and appends it to the token metadata.
+        /// The transfer is then dispatched to the specified destination domain using the provided hook and metadata.
+        ///
+        /// # Arguments
+        ///
+        /// * `destination` - A `u32` representing the destination domain.
+        /// * `recipient` - A `u256` representing the recipient's address on the remote domain.
+        /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
+        /// * `value` - A `u256` representing the value associated with the transfer.
+        /// * `hook_metadata` - An optional `Bytes` object containing metadata for the hook.
+        /// * `hook` - An optional `ContractAddress` representing the hook for additional processing.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the message ID of the dispatched transfer.
         fn _transfer_remote(
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             destination: u32,
@@ -165,6 +183,19 @@ mod HypErc20VaultCollateral {
     }
 
     impl TokenRouterHooksTraitImpl of TokenRouterHooksTrait<ContractState> {
+        /// Transfers tokens from the sender and generates metadata.
+        ///
+        /// This hook is invoked during the transfer of tokens from the sender as part of the token router process.
+        /// It generates metadata for the token transfer based on the amount or token ID provided and processes the
+        /// transfer by depositing the amount into the vault.
+        ///
+        /// # Arguments
+        ///
+        /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
+        ///
+        /// # Returns
+        ///
+        /// A `Bytes` object representing the metadata associated with the token transfer.
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
@@ -173,6 +204,17 @@ mod HypErc20VaultCollateral {
             )
         }
 
+        /// Processes a token transfer to a recipient.
+        ///
+        /// This hook handles the transfer of tokens to the recipient as part of the token router process. It withdraws
+        /// the specified amount from the vault and transfers it to the recipient's address. The hook also processes any
+        /// associated metadata.
+        ///
+        /// # Arguments
+        ///
+        /// * `recipient` - A `u256` representing the recipient's address.
+        /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
+        /// * `metadata` - A `Bytes` object containing metadata associated with the transfer.
         fn transfer_to_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
@@ -194,6 +236,16 @@ mod HypErc20VaultCollateral {
     }
 
     impl HypeErc20VaultCollateral of super::IHypErc20VaultCollateral<ContractState> {
+        /// Rebases the vault collateral and sends a message to a remote domain.
+        ///
+        /// This function handles rebalancing the vault collateral by sending a rebase operation
+        /// to the specified remote domain. It sends a message indicating the amount of the rebase
+        /// without specifying a recipient (null recipient).
+        ///
+        /// # Arguments
+        ///
+        /// * `destination_domain` - A `u32` representing the destination domain to which the rebase message is sent.
+        /// * `value` - A `u256` representing the value to be used for the rebase operation.
         fn rebase(ref self: ContractState, destination_domain: u32, value: u256) {
             TokenRouterTransferRemoteHookImpl::_transfer_remote(
                 ref self.token_router,
@@ -206,14 +258,37 @@ mod HypErc20VaultCollateral {
             );
         }
 
+        /// Returns the contract address of the vault.
+        ///
+        /// This function retrieves the vault's contract address where the ERC20 collateral is stored.
+        ///
+        /// # Returns
+        ///
+        /// A `ContractAddress` representing the vault's contract address.
         fn get_vault(self: @ContractState) -> ContractAddress {
             self.vault.read().contract_address
         }
 
+        // Returns the precision value used for calculations in the vault.
+        ///
+        /// This function returns the precision value that is applied to the vault's calculations,
+        /// which is a constant value.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the precision used in the vault.
         fn get_precision(self: @ContractState) -> u256 {
             PRECISION
         }
 
+        /// Returns the null recipient used in rebase operations.
+        ///
+        /// This function retrieves the null recipient, which is a constant used in certain vault operations,
+        /// particularly during rebase operations.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the null recipient.
         fn get_null_recipient(self: @ContractState) -> u256 {
             NULL_RECIPIENT
         }

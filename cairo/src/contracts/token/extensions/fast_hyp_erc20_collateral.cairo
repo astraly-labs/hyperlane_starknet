@@ -132,6 +132,18 @@ pub mod FastHypERC20Collateral {
     }
 
     impl FastHypERC20Impl of super::IFastHypERC20<ContractState> {
+        /// Returns the balance of the specified account for the wrapped ERC20 token.
+        ///
+        /// This function retrieves the balance of the wrapped ERC20 token for a given account by calling
+        /// the `balance_of` function on the `HypErc20CollateralComponent`.
+        ///
+        /// # Arguments
+        ///
+        /// * `account` - A `ContractAddress` representing the account whose token balance is being queried.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the balance of the specified account.
         fn balance_of(self: @ContractState, account: ContractAddress) -> u256 {
             self.collateral.balance_of(account)
         }
@@ -151,6 +163,15 @@ pub mod FastHypERC20Collateral {
     }
 
     pub impl FastTokenRouterHooksImpl of FastTokenRouterHooksTrait<ContractState> {
+        /// Transfers tokens to the recipient as part of the fast token router process.
+        ///
+        /// This function handles the fast token transfer process by invoking the `transfer` method of the
+        /// wrapped token from the `HypErc20CollateralComponent`. The recipient receives the transferred amount.
+        ///
+        /// # Arguments
+        ///
+        /// * `recipient` - A `u256` representing the recipient's address.
+        /// * `amount` - A `u256` representing the amount of tokens to transfer.
         fn fast_transfer_to_hook(
             ref self: FastTokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
@@ -166,6 +187,15 @@ pub mod FastHypERC20Collateral {
                 .transfer(recipient.try_into().expect('u256 to ContractAddress failed'), amount);
         }
 
+        /// Receives tokens from the sender as part of the fast token router process.
+        ///
+        /// This function handles the receipt of tokens from the sender by calling the `transfer_from` method
+        /// of the wrapped token within the `HypErc20CollateralComponent`.
+        ///
+        /// # Arguments
+        ///
+        /// * `sender` - A `ContractAddress` representing the sender's address.
+        /// * `amount` - A `u256` representing the amount of tokens to receive.
         fn fast_receive_from_hook(
             ref self: FastTokenRouterComponent::ComponentState<ContractState>,
             sender: ContractAddress,

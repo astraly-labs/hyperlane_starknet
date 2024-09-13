@@ -153,6 +153,15 @@ pub mod FastHypERC20 {
     }
 
     pub impl FastTokenRouterHooksImpl of FastTokenRouterHooksTrait<ContractState> {
+        /// Transfers tokens to the recipient as part of the fast token router process.
+        ///
+        /// This function mints tokens to the recipient as part of the fast token router process by calling
+        /// the `mint` function of the ERC20 component.
+        ///
+        /// # Arguments
+        ///
+        /// * `recipient` - A `u256` representing the recipient's address.
+        /// * `amount` - A `u256` representing the amount of tokens to mint.
         fn fast_transfer_to_hook(
             ref self: FastTokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
@@ -165,6 +174,16 @@ pub mod FastHypERC20 {
                 .erc20
                 .mint(recipient.try_into().expect('u256 to ContractAddress failed'), amount);
         }
+
+        /// Receives tokens from the sender as part of the fast token router process.
+        ///
+        /// This function burns tokens from the sender as part of the fast token router process by calling
+        /// the `burn` function of the ERC20 component.
+        ///
+        /// # Arguments
+        ///
+        /// * `sender` - A `ContractAddress` representing the sender's address.
+        /// * `amount` - A `u256` representing the amount of tokens to burn.
         fn fast_receive_from_hook(
             ref self: FastTokenRouterComponent::ComponentState<ContractState>,
             sender: ContractAddress,

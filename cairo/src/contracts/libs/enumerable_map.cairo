@@ -24,14 +24,45 @@ pub struct EnumerableMap<K, V> {
     base: StorageBaseAddress
 }
 
+/// A storage interface for an `EnumerableMap` that allows reading and writing
+/// to a system store. This trait defines how to read, write, and handle storage
+/// for `EnumerableMap` structures. It also provides methods to handle reading 
+/// and writing at specific offsets in storage.
+///
+/// # Parameters:
+/// - `K`: The key type.
+/// - `V`: The value type.
+///
+/// # Example:
+/// ```rust
+/// let map = EnumerableMapStore::<K, V>::read(domain, address);
+/// ```
 pub impl EnumerableMapStore<
     K, V, +Store<K>, +Drop<K>, +Store<V>, +Drop<V>
 > of Store<EnumerableMap<K, V>> {
+    /// Reads the `EnumerableMap` from storage at the given `base` address
+    /// within the specified `address_domain`.
+    ///
+    /// # Arguments:
+    /// - `address_domain`: The domain in which the map is stored.
+    /// - `base`: The base storage address for the map.
+    ///
+    /// # Returns:
+    /// - `SyscallResult<EnumerableMap<K, V>>`: The map read from storage.
     #[inline(always)]
     fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult<EnumerableMap<K, V>> {
         SyscallResult::Ok(EnumerableMap::<K, V> { address_domain, base })
     }
 
+    /// Attempts to write the `EnumerableMap` to storage. Currently not implemented.
+    ///
+    /// # Arguments:
+    /// - `address_domain`: The domain in which to write the map.
+    /// - `base`: The base storage address for the map.
+    /// - `value`: The `EnumerableMap` to write.
+    ///
+    /// # Returns:
+    /// - `SyscallResult<()>`: Error indicating not implemented.
     #[inline(always)]
     fn write(
         address_domain: u32, base: StorageBaseAddress, value: EnumerableMap<K, V>
@@ -39,18 +70,45 @@ pub impl EnumerableMapStore<
         SyscallResult::Err(array![Err::NOT_IMPLEMENTED])
     }
 
+    /// Attempts to read the `EnumerableMap` from storage at a specific offset.
+    ///
+    /// # Arguments:
+    /// - `address_domain`: The domain in which the map is stored.
+    /// - `base`: The base storage address for the map.
+    /// - `offset`: The offset in storage where the map is read from.
+    ///
+    /// # Returns:
+    /// - `SyscallResult<EnumerableMap<K, V>>`: Error indicating not implemented.
     #[inline(always)]
     fn read_at_offset(
         address_domain: u32, base: StorageBaseAddress, offset: u8
     ) -> SyscallResult<EnumerableMap<K, V>> {
         SyscallResult::Err(array![Err::NOT_IMPLEMENTED])
     }
+
+
+    /// Attempts to write the `EnumerableMap` to storage at a specific offset.
+    ///
+    /// # Arguments:
+    /// - `address_domain`: The domain in which to write the map.
+    /// - `base`: The base storage address for the map.
+    /// - `offset`: The offset in storage where the map is written to.
+    /// - `value`: The `EnumerableMap` to write.
+    ///
+    /// # Returns:
+    /// - `SyscallResult<()>`: Error indicating not implemented.
     #[inline(always)]
     fn write_at_offset(
         address_domain: u32, base: StorageBaseAddress, offset: u8, value: EnumerableMap<K, V>
     ) -> SyscallResult<()> {
         SyscallResult::Err(array![Err::NOT_IMPLEMENTED])
     }
+
+
+    /// Returns the size of the `EnumerableMap` in bytes. Currently set to `0`.
+    ///
+    /// # Returns:
+    /// - `u8`: The size of the map in bytes.
     #[inline(always)]
     fn size() -> u8 {
         // 0 was selected because the read method doesn't actually read from storage
@@ -58,13 +116,74 @@ pub impl EnumerableMapStore<
     }
 }
 
+/// Trait defining basic operations for a key-value map where the keys are stored
+/// in an enumerable way. This provides functionality to get, set, check for keys, 
+/// and retrieve values.
+///
+/// # Parameters:
+/// - `K`: The key type.
+/// - `V`: The value type.
+///
+/// # Example:
+/// ```rust
+/// let value = map.get(key);
+/// map.set(key, value);
+/// ```
 pub trait EnumerableMapTrait<K, V> {
+    /// Retrieves the value associated with the specified `key`.
+    ///
+    /// # Arguments:
+    /// - `key`: The key for which to retrieve the value.
+    ///
+    /// # Returns:
+    /// - `V`: The value associated with the `key`
     fn get(self: @EnumerableMap<K, V>, key: K) -> V;
+
+    /// Associates the specified `key` with the provided `val` and adds it to
+    /// the map if it does not already exist.
+    ///
+    /// # Arguments:
+    /// - `key`: The key to associate with the value.
+    /// - `val`: The value to associate with the key.
     fn set(ref self: EnumerableMap<K, V>, key: K, val: V) -> ();
+
+    /// Returns the number of key-value pairs stored in the map.
+    ///
+    /// # Returns:
+    /// - `u32`: The number of elements in the map.
     fn len(self: @EnumerableMap<K, V>) -> u32;
+
+    /// Checks if the map contains the specified `key`.
+    ///
+    /// # Arguments:
+    /// - `key`: The key to check.
+    ///
+    /// # Returns:
+    /// - `bool`: `true` if the key exists, `false` otherwise.
     fn contains(self: @EnumerableMap<K, V>, key: K) -> bool;
+
+    /// Removes the key-value pair associated with the specified `key` from the map.
+    ///
+    /// # Arguments:
+    /// - `key`: The key to remove.
+    ///
+    /// # Returns:
+    /// - `bool`: `true` if the removal was successful, `false` if the key does not exist.
     fn remove(ref self: EnumerableMap<K, V>, key: K) -> bool;
+
+    /// Retrieves the key-value pair stored at the specified `index` in the map.
+    ///
+    /// # Arguments:
+    /// - `index`: The index at which to retrieve the key-value pair.
+    ///
+    /// # Returns:
+    /// - `(K, V)`: The key-value pair at the specified index.
     fn at(self: @EnumerableMap<K, V>, index: u32) -> (K, V);
+
+    /// Returns an array of all keys stored in the map.
+    ///
+    /// # Returns:
+    /// - `Array<K>`: An array of all keys in the map.
     fn keys(self: @EnumerableMap<K, V>) -> Array<K>;
 }
 
@@ -136,17 +255,89 @@ pub impl EnumerableMapImpl<
     }
 }
 
+/// Internal trait for managing the internal structures of an `EnumerableMap`.
+/// This trait handles reading and writing key-value pairs and their positions, 
+/// as well as managing the array of keys for enumeration.
+///
+/// # Parameters:
+/// - `K`: The key type.
+/// - `V`: The value type.
+///
+/// # Example:
+/// ```rust
+/// EnumerableMapInternalTrait::<K, V>::values_mapping_write(map, key, value);
+/// ```
 trait EnumerableMapInternalTrait<K, V> {
+    /// Writes the specified `val` associated with the `key` into the `values` mapping.
+    ///
+    /// # Arguments:
+    /// - `key`: The key to associate with the value.
+    /// - `val`: The value to store.
     fn values_mapping_write(ref self: EnumerableMap<K, V>, key: K, val: V);
+
+    /// Reads the value associated with the `key` from the `values` mapping.
+    ///
+    /// # Arguments:
+    /// - `key`: The key for which to read the value.
+    ///
+    /// # Returns:
+    /// - `V`: The value associated with the `key`.
     fn values_mapping_read(self: @EnumerableMap<K, V>, key: K) -> V;
+
+    /// Writes the position of the `key` in the `positions` mapping.
+    ///
+    /// # Arguments:
+    /// - `key`: The key for which to store the position.
+    /// - `val`: The position to store.
     fn positions_mapping_write(ref self: EnumerableMap<K, V>, key: K, val: u32);
+
+    /// Reads the position of the `key` from the `positions` mapping.
+    ///
+    /// # Arguments:
+    /// - `key`: The key for which to retrieve the position.
+    ///
+    /// # Returns:
+    /// - `u32`: The position associated with the `key`.
     fn positions_mapping_read(self: @EnumerableMap<K, V>, key: K) -> u32;
+
+    /// Updates the length of the key array in storage.
+    ///
+    /// # Arguments:
+    /// - `new_len`: The new length of the array.
     fn update_array_len(ref self: EnumerableMap<K, V>, new_len: u32);
+
+    /// Appends the `key` to the array of keys.
+    ///
+    /// # Arguments:
+    /// - `key`: The key to append to the array.
     fn array_append(ref self: EnumerableMap<K, V>, key: K);
+
+    /// Removes the key-value pair at the specified `index` from the array.
+    ///
+    /// # Arguments:
+    /// - `index`: The index of the key-value pair to remove.
+    ///
+    /// # Returns:
+    /// - `bool`: `true` if the removal was successful, `false` otherwise.
     fn array_remove(ref self: EnumerableMap<K, V>, index: u32) -> bool;
+
+    /// Reads the key at the specified `index` from the array of keys.
+    ///
+    /// # Arguments:
+    /// - `index`: The index at which to read the key.
+    ///
+    /// # Returns:
+    /// - `K`: The key at the specified index.
     fn array_read(self: @EnumerableMap<K, V>, index: u32) -> K;
+
+    /// Writes the specified `key` at the given `index` in the array of keys.
+    ///
+    /// # Arguments:
+    /// - `index`: The index at which to write the key.
+    /// - `val`: The key to write.
     fn array_write(ref self: EnumerableMap<K, V>, index: u32, val: K);
 }
+
 
 impl EnumerableMapInternalImpl<
     K,

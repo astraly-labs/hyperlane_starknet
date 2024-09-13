@@ -6,7 +6,8 @@ pub mod HypErc20Collateral {
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
     use hyperlane_starknet::contracts::token::components::{
         token_router::{
-            TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl
+            TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+            TokenRouterTransferRemoteHookDefaultImpl
         },
         hyp_erc20_collateral_component::{
             HypErc20CollateralComponent, HypErc20CollateralComponent::TokenRouterHooksImpl
@@ -51,6 +52,9 @@ pub mod HypErc20Collateral {
         HypErc20CollateralComponent::HypErc20CollateralInternalImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+    // TokenRouter
+    #[abi(embed_v0)]
+    impl TokenRouterImpl = TokenRouterComponent::TokenRouterImpl<ContractState>;
 
     #[storage]
     struct Storage {

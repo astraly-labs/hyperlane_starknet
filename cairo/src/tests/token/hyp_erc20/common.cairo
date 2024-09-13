@@ -72,6 +72,12 @@ pub fn SYMBOL() -> ByteArray {
 
 #[starknet::interface]
 pub trait IHypERC20Test<TContractState> {
+    // Collateral
+    fn transfer_from_sender_hook(ref self: TContractState, amount_or_id: u256) -> Bytes;
+    fn transfer_to_hook(
+        ref self: TContractState, recipient: ContractAddress, amount: u256, metadata: Bytes
+    ) -> bool;
+    fn get_wrapped_token(self: @TContractState) -> ContractAddress;
     // MailboxClient
     fn set_hook(ref self: TContractState, _hook: ContractAddress);
     fn set_interchain_security_module(ref self: TContractState, _module: ContractAddress);
@@ -319,9 +325,11 @@ pub fn handle_local_transfer(setup: @Setup, transfer_amount: u256) {
     stop_prank(CheatTarget::One((*setup).local_token.contract_address));
 }
 
-pub fn mint_and_approve(setup: @Setup, amount: u256, account: ContractAddress) {
-    (*setup).primary_token.mint(account, amount);
-    (*setup).primary_token.approve(account, amount);
+pub fn mint_and_approve(
+    setup: @Setup, amount: u256, mint_to: ContractAddress, approve_to: ContractAddress
+) {
+    (*setup).primary_token.mint(mint_to, amount);
+    (*setup).primary_token.approve(approve_to, amount);
 }
 
 pub fn set_custom_gas_config(setup: @Setup) {

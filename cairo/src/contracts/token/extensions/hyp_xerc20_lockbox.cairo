@@ -136,6 +136,10 @@ pub mod HypXERC20Lockbox {
 
     #[abi(embed_v0)]
     impl HypXERC20LockboxImpl of super::IHypXERC20Lockbox<ContractState> {
+        /// Approves the lockbox for both the ERC20 and xERC20 tokens.
+        ///
+        /// This function approves the lockbox contract to handle the maximum allowed amount of both the ERC20 and xERC20 tokens.
+        /// It ensures that both the ERC20 and xERC20 tokens are authorized for transfer to the lockbox.
         fn approve_lockbox(ref self: ContractState) {
             let lockbox_address = self.lockbox.read().contract_address;
             assert!(
@@ -148,9 +152,25 @@ pub mod HypXERC20Lockbox {
                 "xerc20 lockbox approve failed"
             );
         }
+
+        /// Retrieves the contract address of the lockbox.
+        ///
+        /// This function returns the `ContractAddress` of the lockbox that has been approved for the ERC20 and xERC20 tokens.
+        ///
+        /// # Returns
+        ///
+        /// The `ContractAddress` of the lockbox.
         fn lockbox(ref self: ContractState) -> ContractAddress {
             self.lockbox.read().contract_address
         }
+
+        /// Retrieves the contract address of the xERC20 token.
+        ///
+        /// This function returns the `ContractAddress` of the xERC20 token that is used in conjunction with the lockbox.
+        ///
+        /// # Returns
+        ///
+        /// The `ContractAddress` of the xERC20 token.
         fn xERC20(ref self: ContractState) -> ContractAddress {
             self.xerc20.read().contract_address
         }
@@ -170,6 +190,18 @@ pub mod HypXERC20Lockbox {
     }
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
+        /// Transfers tokens from the sender, deposits them into the lockbox, and burns the corresponding xERC20 tokens.
+        ///
+        /// This hook first transfers tokens from the sender, deposits them into the lockbox, and then burns the
+        /// corresponding xERC20 tokens associated with the transfer.
+        ///
+        /// # Arguments
+        ///
+        /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
+        ///
+        /// # Returns
+        ///
+        /// A `Bytes` object representing the transfer metadata.
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
@@ -182,6 +214,16 @@ pub mod HypXERC20Lockbox {
             BytesTrait::new_empty()
         }
 
+        /// Transfers tokens to the recipient, mints xERC20 tokens, and withdraws tokens from the lockbox.
+        ///
+        /// This hook first mints the corresponding xERC20 tokens and then withdraws the corresponding amount
+        /// of ERC20 tokens from the lockbox to the specified recipient.
+        ///
+        /// # Arguments
+        ///
+        /// * `recipient` - A `u256` representing the recipient's address.
+        /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
+        /// * `metadata` - A `Bytes` object containing metadata associated with the transfer.
         fn transfer_to_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,

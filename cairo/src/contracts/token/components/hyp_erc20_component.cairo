@@ -80,19 +80,41 @@ pub mod HypErc20Component {
         +ERC20HooksTrait<TContractState>,
         impl ERC20: ERC20Component::HasComponent<TContractState>
     > of IERC20Metadata<ComponentState<TContractState>> {
-        /// Returns the name of the token.
+        /// Returns the name of the ERC20 token.
+        ///
+        /// This function retrieves the name of the token by reading from the `ERC20_name` field
+        /// of the ERC20 component.
+        ///
+        /// # Returns
+        ///
+        /// A `ByteArray` representing the name of the token.
         fn name(self: @ComponentState<TContractState>) -> ByteArray {
             let erc20 = get_dep_component!(self, ERC20);
             erc20.ERC20_name.read()
         }
 
-        /// Returns the ticker symbol of the token, usually a shorter version of the name.
+        /// Returns the symbol of the ERC20 token.
+        ///
+        /// This function retrieves the symbol, or ticker, of the token by reading from the `ERC20_symbol`
+        /// field of the ERC20 component.
+        ///
+        /// # Returns
+        ///
+        /// A `ByteArray` representing the token's symbol.
         fn symbol(self: @ComponentState<TContractState>) -> ByteArray {
             let erc20 = get_dep_component!(self, ERC20);
             erc20.ERC20_symbol.read()
         }
 
-        /// Returns the number of decimals used to get its user representation.
+        /// Returns the number of decimals used to represent the token.
+        ///
+        /// This function returns the number of decimals defined for the token, which represents the
+        /// smallest unit of the token used in its user-facing operations. The value is read from the
+        /// `decimals` field of the component's storage.
+        ///
+        /// # Returns
+        ///
+        /// A `u8` representing the number of decimals used by the token.
         fn decimals(self: @ComponentState<TContractState>) -> u8 {
             self.decimals.read()
         }
@@ -111,16 +133,45 @@ pub mod HypErc20Component {
         +ERC20HooksTrait<TContractState>,
         impl ERC20: ERC20Component::HasComponent<TContractState>
     > of InternalTrait<TContractState> {
+        /// Initializes the token with a specific number of decimals.
+        ///
+        /// This function sets the `decimals` value for the token during the initialization phase, defining
+        /// how many decimal places the token will support.
+        ///
+        /// # Arguments
+        ///
+        /// * `decimals` - A `u8` value representing the number of decimals for the token.
         fn initialize(ref self: ComponentState<TContractState>, decimals: u8) {
             self.decimals.write(decimals);
         }
 
+        /// Burns tokens from the sender's account.
+        ///
+        /// This function transfers the specified amount of tokens from the sender's account by
+        /// calling the `burn` function on the ERC20 component.
+        ///
+        /// # Arguments
+        ///
+        /// * `amount` - A `u256` value representing the amount of tokens to be burned.
+        ///
+        /// # Returns
+        ///
+        /// A `Bytes` object representing an empty payload.
         fn _transfer_from_sender(ref self: ComponentState<TContractState>, amount: u256) -> Bytes {
             let mut erc20 = get_dep_component_mut!(ref self, ERC20);
             erc20.burn(starknet::get_caller_address(), amount);
             BytesTrait::new_empty()
         }
 
+        /// Mints tokens to the specified recipient.
+        ///
+        /// This function mints new tokens and transfers them to the recipient's account by calling
+        /// the `mint` function on the ERC20 component.
+        ///
+        /// # Arguments
+        ///
+        /// * `recipient` - A `u256` value representing the recipient's address.
+        /// * `amount` - A `u256` value representing the amount of tokens to mint.
         fn _transfer_to(ref self: ComponentState<TContractState>, recipient: u256, amount: u256) {
             let mut erc20 = get_dep_component_mut!(ref self, ERC20);
             erc20.mint(recipient.try_into().expect('u256 to ContractAddress failed'), amount);

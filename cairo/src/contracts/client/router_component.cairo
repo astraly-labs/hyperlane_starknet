@@ -12,6 +12,14 @@ pub trait IRouter<TState> {
     fn routers(self: @TState, domain: u32) -> u256;
 }
 
+/// # Router Component Module
+///
+/// This module implements a router component that manages the enrollment and
+/// unenrollment of remote routers across various domains. It provides the
+/// functionality for dispatching messages to remote routers and handling incoming
+/// messages. The core functionality is split across traits, with the primary logic
+/// provided by the `IRouter` trait and the additional internal mechanisms handled
+/// by the `RouterComponent`.
 #[starknet::component]
 pub mod RouterComponent {
     use alexandria_bytes::Bytes;
@@ -54,6 +62,15 @@ pub mod RouterComponent {
         +Drop<TContractState>,
         impl Hook: IMessageRecipientInternalHookTrait<TContractState>
     > of super::IRouter<ComponentState<TContractState>> {
+        /// Enrolls a remote router for the specified `domain`.
+        ///
+        /// This function requires ownership verification before proceeding. Once verified,
+        /// it calls the internal method `_enroll_remote_router` to complete the enrollment.
+        ///
+        /// # Arguments
+        ///
+        /// * `domain` - A `u32` representing the domain for which the router is being enrolled.
+        /// * `router` - A `u256` representing the address of the router to be enrolled.
         fn enroll_remote_router(
             ref self: ComponentState<TContractState>, domain: u32, router: u256
         ) {
@@ -62,6 +79,20 @@ pub mod RouterComponent {
             self._enroll_remote_router(domain, router);
         }
 
+        /// Enrolls multiple remote routers across multiple `domains`.
+        ///
+        /// This function requires ownership verification. It checks that the lengths of the
+        /// `domains` and `addresses` arrays are the same, then enrolls each router for its
+        /// corresponding domain using `_enroll_remote_router`.
+        ///
+        /// # Arguments
+        ///
+        /// * `domains` - An array of `u32` values representing the domains for which routers are being enrolled.
+        /// * `addresses` - An array of `u256` values representing the addresses of the routers to be enrolled.
+        ///
+        /// # Panics
+        ///
+        /// Panics if the lengths of `domains` and `addresses` do not match.
         fn enroll_remote_routers(
             ref self: ComponentState<TContractState>, domains: Array<u32>, addresses: Array<u256>
         ) {
@@ -80,6 +111,14 @@ pub mod RouterComponent {
             }
         }
 
+        /// Unenrolls the router for the specified `domain`.
+        ///
+        /// This function requires ownership verification. Once verified, it calls the internal method
+        /// `_unenroll_remote_router` to complete the unenrollment.
+        ///
+        /// # Arguments
+        ///
+        /// * `domain` - A `u32` representing the domain for which the router is being unenrolled.
         fn unenroll_remote_router(ref self: ComponentState<TContractState>, domain: u32) {
             let mut ownable_comp = get_dep_component_mut!(ref self, Owner);
             ownable_comp.assert_only_owner();
@@ -87,6 +126,14 @@ pub mod RouterComponent {
             self._unenroll_remote_router(domain);
         }
 
+        /// Unenrolls the routers for multiple `domains`.
+        ///
+        /// This function removes the router for each domain in the `domains` array
+        /// using the `_unenroll_remote_router` method.
+        ///
+        /// # Arguments
+        ///
+        /// * `domains` - An array of `u32` values representing the domains for which routers are being unenrolled.
         fn unenroll_remote_routers(ref self: ComponentState<TContractState>, domains: Array<u32>,) {
             let domains_len = domains.len();
             let mut i = 0;
@@ -96,6 +143,21 @@ pub mod RouterComponent {
             }
         }
 
+        /// Handles an incoming message from a remote router.
+        ///
+        /// This function checks if a remote router is enrolled for the `origin` domain, verifies that the
+        /// `sender` matches the enrolled router, and calls the `_handle` method on the `Hook` to process
+        /// the message.
+        ///
+        /// # Arguments
+        ///
+        /// * `origin` - A `u32` representing the origin domain of the message.
+        /// * `sender` - A `u256` representing the address of the message sender.
+        /// * `message` - The message payload as a `Bytes` object.
+        ///
+        /// # Panics
+        ///
+        /// Panics if the sender does not match the enrolled router for the origin domain.
         fn handle(
             ref self: ComponentState<TContractState>, origin: u32, sender: u256, message: Bytes
         ) {
@@ -105,10 +167,30 @@ pub mod RouterComponent {
             Hook::_handle(ref self, origin, sender, message);
         }
 
+        /// Returns an array of enrolled domains.
+        ///
+        /// This function reads the keys from the `routers` map, which represent the enrolled
+        /// domains.
+        ///
+        /// # Returns
+        ///
+        /// An array of `u32` values representing the enrolled domains.
         fn domains(self: @ComponentState<TContractState>) -> Array<u32> {
             self.routers.read().keys()
         }
 
+        /// Returns the router address for a given `domain`.
+        ///
+        /// This function retrieves the address of the enrolled router for the specified
+        /// `domain` from the `routers` map.
+        ///
+        /// # Arguments
+        ///
+        /// * `domain` - A `u32` representing the domain for which the router address is being queried.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` value representing the router address for the specified domain.
         fn routers(self: @ComponentState<TContractState>, domain: u32) -> u256 {
             self.routers.read().get(domain)
         }

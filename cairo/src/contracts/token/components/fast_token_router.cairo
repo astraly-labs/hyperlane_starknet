@@ -104,6 +104,23 @@ pub mod FastTokenRouterComponent {
         impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
         impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
     > of super::IFastTokenRouter<ComponentState<TContractState>> {
+        /// Fills a fast transfer request by transferring the specified amount minus the fast fee to the recipient.
+        ///
+        /// This function is used to process a fast transfer request, ensuring that the transfer has not already been filled.
+        /// It deducts the fast fee from the total amount and transfers the remaining amount to the recipient. The function also
+        /// records the sender's address in the filled fast transfer mapping.
+        ///
+        /// # Arguments
+        ///
+        /// * `recipient` - A `u256` representing the recipient of the fast transfer.
+        /// * `amount` - A `u256` representing the total amount of the fast transfer.
+        /// * `fast_fee` - A `u256` representing the fee to be deducted from the transfer amount.
+        /// * `origin` - A `u32` representing the domain of origin for the transfer.
+        /// * `fast_transfer_id` - A `u256` representing the unique ID of the fast transfer request.
+        ///
+        /// # Panics
+        ///
+        /// Panics if the fast transfer has already been filled.
         fn fill_fast_transfer(
             ref self: ComponentState<TContractState>,
             recipient: u256,
@@ -129,6 +146,23 @@ pub mod FastTokenRouterComponent {
             FTRHooks::fast_transfer_to_hook(ref self, recipient, amount - fast_fee);
         }
 
+        /// Initiates a fast transfer to a remote domain and returns the message ID for tracking.
+        ///
+        /// This function sends a fast transfer to a recipient in a specified remote domain. It deducts the fast fee
+        /// from the total amount and dispatches the transfer using the gas router and mailbox components. The function
+        /// emits an event for the sent transfer and returns the message ID for tracking the transfer.
+        ///
+        /// # Arguments
+        ///
+        /// * `destination` - A `u32` representing the destination domain.
+        /// * `recipient` - A `u256` representing the recipient's address.
+        /// * `amount_or_id` - A `u256` representing the amount to transfer or the token ID.
+        /// * `fast_fee` - A `u256` representing the fast transfer fee.
+        /// * `value` - A `u256` representing the value being transferred with the message.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the message ID for the dispatched fast transfer.
         fn fast_transfer_remote(
             ref self: ComponentState<TContractState>,
             destination: u32,

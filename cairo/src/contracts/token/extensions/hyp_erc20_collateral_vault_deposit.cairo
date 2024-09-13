@@ -134,6 +134,11 @@ pub mod HypERC20CollateralVaultDeposit {
     impl HypERC20CollateralVaultDepositImpl of super::IHypERC20CollateralVaultDeposit<
         ContractState
     > {
+        /// Sweeps excess shares from the vault.
+        ///
+        /// This function checks for excess shares in the vault, which are shares that exceed the amount
+        /// that was initially deposited. It redeems these excess shares and transfers the redeemed assets
+        /// to the contract owner. The function emits an `ExcessSharesSwept` event after completing the sweep.
         fn sweep(ref self: ContractState) {
             self.ownable.assert_only_owner();
             let this_address = starknet::get_contract_address();
@@ -148,10 +153,26 @@ pub mod HypERC20CollateralVaultDeposit {
                 );
         }
 
+        /// Returns the contract address of the vault.
+        ///
+        /// This function retrieves the contract address of the vault that is being used for collateral
+        /// deposits and withdrawals.
+        ///
+        /// # Returns
+        ///
+        /// A `ContractAddress` representing the vault's contract address.
         fn get_vault(self: @ContractState) -> ContractAddress {
             self.vault.read().contract_address
         }
 
+        /// Returns the total amount of assets deposited in the vault.
+        ///
+        /// This function returns the total amount of assets that have been deposited into the vault by
+        /// this contract.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the total assets deposited.
         fn get_asset_deposited(self: @ContractState) -> u256 {
             self.asset_deposited.read()
         }
@@ -186,12 +207,28 @@ pub mod HypERC20CollateralVaultDeposit {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
+        /// Deposits the specified amount into the vault.
+        ///
+        /// This internal function deposits the specified amount of assets into the vault and updates the
+        /// total amount of assets deposited by the contract.
+        ///
+        /// # Arguments
+        ///
+        /// * `amount` - A `u256` representing the amount of assets to deposit.
         fn _deposit_into_vault(ref self: ContractState, amount: u256) {
             let asset_deposited = self.asset_deposited.read();
             self.asset_deposited.write(asset_deposited + amount);
             self.vault.read().deposit(amount, starknet::get_contract_address());
         }
 
+        // Returns the total amount of assets deposited in the vault.
+        ///
+        /// This function returns the total amount of assets that have been deposited into the vault by
+        /// this contract.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the total assets deposited.
         fn _withdraw_from_vault(ref self: ContractState, amount: u256, recipient: ContractAddress) {
             let asset_deposited = self.asset_deposited.read();
             self.asset_deposited.write(asset_deposited - amount);

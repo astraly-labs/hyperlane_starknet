@@ -104,6 +104,17 @@ pub mod TokenRouterComponent {
         impl Hooks: TokenRouterHooksTrait<TContractState>,
         +Drop<TContractState>,
     > of IMessageRecipientInternalHookTrait<TContractState> {
+        /// Handles the receipt of a message and processes a token transfer.
+        ///
+        /// This function is invoked when a message is received, processing the transfer of tokens to the recipient.
+        /// It retrieves the recipient, amount, and metadata from the message and triggers the appropriate hook to
+        /// handle the transfer. The function also emits a `ReceivedTransferRemote` event after processing the transfer.
+        ///
+        /// # Arguments
+        ///
+        /// * `origin` - A `u32` representing the origin domain.
+        /// * `sender` - A `u256` representing the sender's address.
+        /// * `message` - A `Bytes` object representing the incoming message.
         fn _handle(
             ref self: RouterComponent::ComponentState<TContractState>,
             origin: u32,
@@ -132,6 +143,24 @@ pub mod TokenRouterComponent {
         +TokenRouterHooksTrait<TContractState>,
         impl TransferRemoteHook: TokenRouterTransferRemoteHookTrait<TContractState>
     > of super::ITokenRouter<ComponentState<TContractState>> {
+        /// Initiates a token transfer to a remote domain.
+        ///
+        /// This function dispatches a token transfer to the specified recipient on a remote domain, transferring
+        /// either an amount of tokens or a token ID. It supports optional hooks and metadata for additional
+        /// processing during the transfer. The function emits a `SentTransferRemote` event once the transfer is initiated.
+        ///
+        /// # Arguments
+        ///
+        /// * `destination` - A `u32` representing the destination domain.
+        /// * `recipient` - A `u256` representing the recipient's address.
+        /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
+        /// * `value` - A `u256` representing the value of the transfer.
+        /// * `hook_metadata` - An optional `Bytes` object representing metadata for the hook.
+        /// * `hook` - An optional `ContractAddress` representing the contract hook to invoke during the transfer.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the message ID of the dispatched transfer.
         fn transfer_remote(
             ref self: ComponentState<TContractState>,
             destination: u32,

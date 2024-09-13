@@ -115,6 +115,19 @@ pub mod HypERC721URICollateral {
     }
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
+        /// Transfers the token from the sender and retrieves its metadata.
+        ///
+        /// This hook handles the transfer of a token from the sender and appends its URI to the metadata.
+        /// It retrieves the token URI from the ERC721 contract and appends it to the metadata for processing
+        /// as part of the transfer message.
+        ///
+        /// # Arguments
+        ///
+        /// * `amount_or_id` - A `u256` representing the token ID being transferred.
+        ///
+        /// # Returns
+        ///
+        /// A `Bytes` object containing the token's URI as metadata.
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {

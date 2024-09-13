@@ -78,10 +78,29 @@ pub mod HypErc20CollateralComponent {
         +GasRouterComponent::HasComponent<TContractState>,
         +TokenRouterComponent::HasComponent<TContractState>,
     > of super::IHypErc20Collateral<ComponentState<TContractState>> {
+        /// Returns the balance of the given account for the wrapped ERC20 token.
+        ///
+        /// This function retrieves the balance of the wrapped ERC20 token for a specified account by calling the
+        /// `balance_of` function on the wrapped token dispatcher.
+        ///
+        /// # Arguments
+        ///
+        /// * `account` - A `ContractAddress` representing the account whose balance is being queried.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the balance of the specified account.
         fn balance_of(self: @ComponentState<TContractState>, account: ContractAddress) -> u256 {
             self.wrapped_token.read().balance_of(account)
         }
 
+        /// Returns the contract address of the wrapped ERC20 token.
+        ///
+        /// This function retrieves the contract address of the wrapped ERC20 token from the token dispatcher.
+        ///
+        /// # Returns
+        ///
+        /// A `ContractAddress` representing the address of the wrapped ERC20 token.
         fn get_wrapped_token(self: @ComponentState<TContractState>) -> ContractAddress {
             let wrapped_token: ERC20ABIDispatcher = self.wrapped_token.read();
             wrapped_token.contract_address

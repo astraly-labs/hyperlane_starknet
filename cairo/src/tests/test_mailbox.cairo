@@ -15,8 +15,7 @@ use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use openzeppelin::token::erc20::interface::{ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
-use snforge_std::cheatcodes::events::EventAssertions;
-use snforge_std::{start_prank, CheatTarget, stop_prank};
+use snforge_std::{start_cheat_caller_address, stop_cheat_caller_address, EventSpyAssertionsTrait};
 
 
 #[test]
@@ -36,9 +35,9 @@ fn test_owner() {
 fn test_transfer_ownership() {
     let (mailbox, mut spy, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     ownable.transfer_ownership(NEW_OWNER().try_into().unwrap());
-    stop_prank(CheatTarget::One(ownable.contract_address));
+    stop_cheat_caller_address(ownable.contract_address);
     let owner: felt252 = ownable.owner().into();
     assert(owner == NEW_OWNER().try_into().unwrap(), 'Failed transfer ownership');
 
@@ -60,7 +59,7 @@ fn test_transfer_ownership() {
 fn test_set_default_hook() {
     let (mailbox, mut spy, mock_hook, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     mailbox.set_default_hook(mock_hook.contract_address);
     assert(mailbox.get_default_hook() == mock_hook.contract_address, 'Failed to set default hook');
     let expected_event = mailbox::Event::DefaultHookSet(
@@ -73,7 +72,7 @@ fn test_set_default_hook() {
 fn test_set_required_hook() {
     let (mailbox, mut spy, mock_hook, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     mailbox.set_required_hook(mock_hook.contract_address);
     assert(
         mailbox.get_required_hook() == mock_hook.contract_address, 'Failed to set required hook'
@@ -88,7 +87,7 @@ fn test_set_required_hook() {
 fn test_set_default_ism() {
     let (mailbox, mut spy, _, mock_ism) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     mailbox.set_default_ism(mock_ism.contract_address);
     assert(mailbox.get_default_ism() == mock_ism.contract_address, 'Failed to set default ism');
     let expected_event = mailbox::Event::DefaultIsmSet(
@@ -101,7 +100,7 @@ fn test_set_default_ism() {
 fn test_set_default_hook_fails_if_not_owner() {
     let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, NEW_OWNER().try_into().unwrap());
     mailbox.set_default_hook(NEW_DEFAULT_HOOK());
 }
 
@@ -110,7 +109,7 @@ fn test_set_default_hook_fails_if_not_owner() {
 fn test_set_required_hook_fails_if_not_owner() {
     let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, NEW_OWNER().try_into().unwrap());
     mailbox.set_required_hook(NEW_REQUIRED_HOOK());
 }
 
@@ -119,7 +118,7 @@ fn test_set_required_hook_fails_if_not_owner() {
 fn test_set_default_ism_fails_if_not_owner() {
     let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, NEW_OWNER().try_into().unwrap());
     mailbox.set_default_ism(NEW_DEFAULT_ISM());
 }
 
@@ -127,7 +126,7 @@ fn test_set_default_ism_fails_if_not_owner() {
 fn test_dispatch() {
     let (mailbox, mut spy, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -182,12 +181,12 @@ fn test_dispatch_with_protocol_fee_hook() {
     );
     let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     erc20_dispatcher.approve(MAILBOX(), PROTOCOL_FEE);
-    stop_prank(CheatTarget::One(ownable.contract_address));
+    stop_cheat_caller_address(ownable.contract_address);
     // The owner has the initial fee token supply
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -251,13 +250,13 @@ fn test_dispatch_with_two_fee_hook() {
     );
     let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     // (mock_fee_hook consummes 3 * PROTOCOL_FEE)
     erc20_dispatcher.approve(MAILBOX(), 5 * PROTOCOL_FEE);
-    stop_prank(CheatTarget::One(ownable.contract_address));
+    stop_cheat_caller_address(ownable.contract_address);
     // The owner has the initial fee token supply
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -321,13 +320,13 @@ fn test_dispatch_with_two_fee_hook_fails_if_greater_than_required_and_lower_than
     );
     let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     // (mock_fee_hook consummes 3 * PROTOCOL_FEE)
     erc20_dispatcher.approve(MAILBOX(), 3 * PROTOCOL_FEE);
-    stop_prank(CheatTarget::One(ownable.contract_address));
+    stop_cheat_caller_address(ownable.contract_address);
     // The owner has the initial fee token supply
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -390,14 +389,14 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_provided_fee_lower_than_require
         Option::Some(mock_hook.contract_address)
     );
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     // We transfer some token to the new owner
     let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     erc20_dispatcher.transfer(NEW_OWNER().try_into().unwrap(), PROTOCOL_FEE - 10);
 
     // The new owner has has PROTOCOL_FEE -10 tokens so the required hook post dispatch fails
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, NEW_OWNER().try_into().unwrap());
     erc20_dispatcher.approve(MAILBOX(), PROTOCOL_FEE - 10);
     let array = array![
         0x01020304050607080910111213141516,
@@ -430,16 +429,16 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_user_balance_lower_than_fee_amo
         Option::Some(mock_hook.contract_address)
     );
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     // We transfer some token to the new owner
     let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     erc20_dispatcher.transfer(NEW_OWNER().try_into().unwrap(), PROTOCOL_FEE - 10);
 
     // The new owner has has PROTOCOL_FEE -10 tokens so the required hook post dispatch fails
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, NEW_OWNER().try_into().unwrap());
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, NEW_OWNER().try_into().unwrap());
     erc20_dispatcher.approve(MAILBOX(), PROTOCOL_FEE - 10);
     let array = array![
         0x01020304050607080910111213141516,
@@ -472,18 +471,18 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_insufficient_allowance() {
         Option::Some(mock_hook.contract_address)
     );
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     // We transfer some token to the new owner
     let erc20_dispatcher = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     erc20_dispatcher.transfer(NEW_OWNER().try_into().unwrap(), PROTOCOL_FEE);
 
     // The new owner has has PROTOCOL_FEE -10 tokens so the required hook post dispatch fails
     let ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, NEW_OWNER().try_into().unwrap());
     erc20_dispatcher.approve(MAILBOX(), PROTOCOL_FEE - 10);
 
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, NEW_OWNER().try_into().unwrap());
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -509,7 +508,7 @@ fn test_process() {
     let mock_ism_address = mailbox.get_default_ism();
     let (mock_recipient, _) = mock_setup(mock_ism_address);
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -558,7 +557,7 @@ fn test_process_fails_if_version_mismatch() {
     let mock_ism_address = mailbox.get_default_ism();
     let (mock_recipient, _) = mock_setup(mock_ism_address);
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -587,7 +586,7 @@ fn test_process_fails_if_destination_domain_does_not_match_local_domain() {
     let mock_ism_address = mailbox.get_default_ism();
     let (mock_recipient, _) = mock_setup(mock_ism_address);
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
@@ -616,7 +615,7 @@ fn test_process_fails_if_already_delivered() {
     let mock_ism_address = mailbox.get_default_ism();
     let (mock_recipient, _) = mock_setup(mock_ism_address);
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    start_cheat_caller_address(ownable.contract_address, OWNER().try_into().unwrap());
     // mailbox.set_local_domain(DESTINATION_DOMAIN);
     let array = array![
         0x01020304050607080910111213141516,

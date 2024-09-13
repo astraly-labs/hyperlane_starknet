@@ -93,10 +93,7 @@ fn perform_remote_transfer_collateral(
 }
 
 fn process_transfers_collateral(
-    setup: @Setup,
-    collateral: @IHypERC20TestDispatcher,
-    recipient: ContractAddress,
-    amount: u256
+    setup: @Setup, collateral: @IHypERC20TestDispatcher, recipient: ContractAddress, amount: u256
 ) {
     start_prank(
         CheatTarget::One((*setup).remote_token.contract_address),

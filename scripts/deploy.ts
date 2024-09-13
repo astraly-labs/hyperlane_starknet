@@ -14,7 +14,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const BUILD_PATH = "../contracts/target/dev/hyperlane_starknet";
+const BUILD_PATH = "../cairo/target/dev/hyperlane_starknet";
 const ACCOUNT_ADDRESS = process.env.ACCOUNT_ADDRESS;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const CONFIG_FILE = "contract_config.json";

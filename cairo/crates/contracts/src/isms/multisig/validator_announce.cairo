@@ -3,19 +3,19 @@ pub mod validator_announce {
     use alexandria_bytes::{Bytes, BytesTrait};
     use alexandria_data_structures::array_ext::ArrayTraitExt;
     use core::poseidon::poseidon_hash_span;
-    use hyperlane_starknet::contracts::client::mailboxclient_component::{
+    use contracts::client::mailboxclient_component::{
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
         MailboxclientComponent::MailboxClientImpl
     };
-    use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
-    use hyperlane_starknet::interfaces::{
+    use contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
+    use contracts::interfaces::{
         IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IValidatorAnnounce
     };
-    use hyperlane_starknet::utils::keccak256::{
+    use contracts::utils::keccak256::{
         reverse_endianness, to_eth_signature, compute_keccak, ByteData, u256_word_size,
         u64_word_size, HASH_SIZE, bool_is_eth_signature_valid
     };
-    use hyperlane_starknet::utils::store_arrays::StoreFelt252Array;
+    use contracts::utils::store_arrays::StoreFelt252Array;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::{

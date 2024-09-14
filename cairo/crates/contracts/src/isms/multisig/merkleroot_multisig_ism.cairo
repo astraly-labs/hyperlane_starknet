@@ -1,15 +1,15 @@
 #[starknet::contract]
 pub mod merkleroot_multisig_ism {
     use alexandria_bytes::{Bytes, BytesTrait};
-    use hyperlane_starknet::contracts::hooks::merkle_tree_hook::merkle_tree_hook::MerkleInternalImpl;
-    use hyperlane_starknet::contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
-    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
-    use hyperlane_starknet::contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MerkleRootIsmMetadata;
-    use hyperlane_starknet::interfaces::{
+    use contracts::hooks::merkle_tree_hook::merkle_tree_hook::MerkleInternalImpl;
+    use contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
+    use contracts::libs::message::{Message, MessageTrait};
+    use contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MerkleRootIsmMetadata;
+    use contracts::interfaces::{
         ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration,
     };
-    use hyperlane_starknet::utils::keccak256::{ByteData, HASH_SIZE, bool_is_eth_signature_valid};
+    use contracts::utils::keccak256::{ByteData, HASH_SIZE, bool_is_eth_signature_valid};
     use openzeppelin::access::ownable::OwnableComponent;
     use starknet::ContractAddress;
     use starknet::EthAddress;

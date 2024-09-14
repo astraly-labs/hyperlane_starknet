@@ -46,7 +46,7 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
         String::from("UpgradeableCptEvent"),
     );
     aliases.insert(
-        String::from("hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent::Event"),
+        String::from("contracts::client::mailboxclient_component::MailboxclientComponent::Event"),
         String::from("MailboxclientEvent"),
     );
 
@@ -120,7 +120,7 @@ fn main() {
         generate_strk_bind(
             abi_file,
             strk_abi_base
-                .join(format!("hyperlane_starknet_{abi_file}.contract_class.json"))
+                .join(format!("contracts_{abi_file}.contract_class.json"))
                 .to_str()
                 .unwrap(),
             strk_bind_base.join(format!("{bind_out}.rs")),

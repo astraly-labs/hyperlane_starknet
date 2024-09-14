@@ -2,8 +2,8 @@
 pub mod domain_routing_ism {
     use alexandria_bytes::Bytes;
     use core::panic_with_felt252;
-    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
-    use hyperlane_starknet::interfaces::{
+    use contracts::libs::message::{Message, MessageTrait};
+    use contracts::interfaces::{
         IDomainRoutingIsm, IRoutingIsm, IInterchainSecurityModule, ModuleType,
         IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait
     };

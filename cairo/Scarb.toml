@@ -19,13 +19,5 @@ alexandria_storage = { git = "https://github.com/keep-starknet-strange/alexandri
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.14.0" }
 
 
-[workspace.dev-dependencies]
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v0.22.0" }
-
 [workspace.tool.fmt]
 sort-module-level-items = true
-
-# Enable CASM codegen.
-casm = true
-# Emit Python-powered hints in order to run compiled CASM class with legacy Cairo VM.
-casm-add-pythonic-hints = false

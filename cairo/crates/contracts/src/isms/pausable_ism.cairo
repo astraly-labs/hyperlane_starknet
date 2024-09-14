@@ -9,8 +9,8 @@ pub trait IPausableIsm<TContractState> {
 #[starknet::contract]
 pub mod pausable_ism {
     use alexandria_bytes::Bytes;
-    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
-    use hyperlane_starknet::interfaces::{
+    use contracts::libs::message::{Message, MessageTrait};
+    use contracts::interfaces::{
         ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait
     };

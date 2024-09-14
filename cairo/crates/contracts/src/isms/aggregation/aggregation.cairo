@@ -1,9 +1,9 @@
 #[starknet::contract]
 pub mod aggregation {
     use alexandria_bytes::{Bytes, BytesTrait};
-    use hyperlane_starknet::contracts::libs::aggregation_ism_metadata::aggregation_ism_metadata::AggregationIsmMetadata;
-    use hyperlane_starknet::contracts::libs::message::{Message, MessageTrait};
-    use hyperlane_starknet::interfaces::{
+    use contracts::libs::aggregation_ism_metadata::aggregation_ism_metadata::AggregationIsmMetadata;
+    use contracts::libs::message::{Message, MessageTrait};
+    use contracts::interfaces::{
         IAggregationDispatcher, IAggregation, IAggregationDispatcherTrait, ModuleType,
         IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait,

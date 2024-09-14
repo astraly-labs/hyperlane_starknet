@@ -64,7 +64,9 @@ version = "0.0.6"
 dependencies = [
  "alexandria_bytes",
  "alexandria_storage",
+ "mocks",
  "openzeppelin",
+ "snforge_std",
 ]
 
 [[package]]
@@ -84,11 +86,18 @@ version = "0.14.0"
 source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.14.0#f091c4f51ddeb10297db984acae965328c5a4e5b"
 
 [[package]]
+name = "snforge_std"
+version = "0.22.0"
+source = "git+https://github.com/foundry-rs/starknet-foundry?tag=v0.22.0#9b215944c6c5871c738381b4ded61bbf06e7ba35"
+
+[[package]]
 name = "token"
 version = "0.0.1"
 dependencies = [
  "alexandria_bytes",
  "alexandria_storage",
  "contracts",
+ "mocks",
  "openzeppelin",
+ "snforge_std",
 ]

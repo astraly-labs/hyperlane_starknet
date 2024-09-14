@@ -56,8 +56,7 @@ pub mod HypErc721 {
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
     // HypERC721
-    #[abi(embed_v0)]
-    impl HypErc721Impl = HypErc721Component::HypErc721Impl<ContractState>;
+    impl HypErc721InternalImpl = HypErc721Component::HypErc721InternalImpl<ContractState>;
 
     // TokenRouter
     #[abi(embed_v0)]

@@ -23,7 +23,6 @@ fn setup_xerc20() -> Setup {
     DECIMALS.serialize(ref calldata);
     let (xerc20, _) = contract.deploy(@calldata).unwrap();
     setup.primary_token = ITestERC20Dispatcher { contract_address: xerc20 };
-    println!("XERC20Test: {:?}", xerc20);
 
     let contract = declare("HypXERC20").unwrap();
     let (local_token, _) = contract
@@ -38,7 +37,6 @@ fn setup_xerc20() -> Setup {
         )
         .unwrap();
     setup.local_token = IHypERC20TestDispatcher { contract_address: local_token };
-    println!("HypXERC20: {:?}", local_token);
 
     setup
         .local_token

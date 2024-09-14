@@ -16,7 +16,7 @@ use starknet::{
 
 use super::{types::Codes, StarknetAccount};
 
-const BUILD_PATH_PREFIX: &str = "../contracts/target/dev/hyperlane_starknet_";
+const BUILD_PATH_PREFIX: &str = "../cairo/target/dev/hyperlane_starknet_";
 
 const KATANA_RPC_URL: &str = "http://localhost:5050";
 

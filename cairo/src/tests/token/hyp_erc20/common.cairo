@@ -72,6 +72,12 @@ pub fn SYMBOL() -> ByteArray {
 
 #[starknet::interface]
 pub trait IHypERC20Test<TContractState> {
+    // Collateral
+    fn transfer_from_sender_hook(ref self: TContractState, amount_or_id: u256) -> Bytes;
+    fn transfer_to_hook(
+        ref self: TContractState, recipient: ContractAddress, amount: u256, metadata: Bytes
+    ) -> bool;
+    fn get_wrapped_token(self: @TContractState) -> ContractAddress;
     // MailboxClient
     fn set_hook(ref self: TContractState, _hook: ContractAddress);
     fn set_interchain_security_module(ref self: TContractState, _module: ContractAddress);
@@ -133,18 +139,15 @@ pub struct Setup {
 pub fn setup() -> Setup {
     let contract = declare("TestISM").unwrap();
     let (default_ism, _) = contract.deploy(@array![]).unwrap();
-    println!("DEFAULT_ISM: {:?}", default_ism);
 
     let contract = declare("TestPostDispatchHook").unwrap();
     let (noop_hook, _) = contract.deploy(@array![]).unwrap();
-    println!("NOOP_HOOK: {:?}", noop_hook);
     let noop_hook = ITestPostDispatchHookDispatcher { contract_address: noop_hook };
 
     let contract = declare("Ether").unwrap();
     let mut calldata: Array<felt252> = array![];
     starknet::get_contract_address().serialize(ref calldata);
     let (eth_address, _) = contract.deploy(@calldata).unwrap();
-    println!("ETH: {:?}", eth_address);
     let eth = MockEthDispatcher { contract_address: eth_address };
     eth.mint(ALICE(), 10 * E18);
 
@@ -159,7 +162,6 @@ pub fn setup() -> Setup {
             ]
         )
         .unwrap();
-    println!("LOCAL_MAILBOX: {:?}", local_mailbox);
     let local_mailbox = IMockMailboxDispatcher { contract_address: local_mailbox };
 
     let (remote_mailbox, _) = contract
@@ -172,7 +174,6 @@ pub fn setup() -> Setup {
             ]
         )
         .unwrap();
-    println!("REMOTE_MAILBOX: {:?}", remote_mailbox);
     let remote_mailbox = IMockMailboxDispatcher { contract_address: remote_mailbox };
 
     local_mailbox.add_remote_mail_box(DESTINATION, remote_mailbox.contract_address);
@@ -188,12 +189,10 @@ pub fn setup() -> Setup {
     TOTAL_SUPPLY.serialize(ref calldata);
     DECIMALS.serialize(ref calldata);
     let (primary_token, _) = contract.deploy(@calldata).unwrap();
-    println!("PRIMARY_TOKEN: {:?}", primary_token);
     let primary_token = ITestERC20Dispatcher { contract_address: primary_token };
 
     let (erc20_token, _) = contract.deploy(@calldata).unwrap();
     let erc20_token = ITestERC20Dispatcher { contract_address: erc20_token };
-    println!("ERC20_TOKEN: {:?}", erc20_token.contract_address);
 
     let hyp_erc20_contract = declare("HypErc20").unwrap();
     let mut calldata: Array<felt252> = array![];
@@ -206,12 +205,10 @@ pub fn setup() -> Setup {
     default_ism.serialize(ref calldata);
     OWNER().serialize(ref calldata);
     let (implementation, _) = hyp_erc20_contract.deploy(@calldata).unwrap();
-    println!("IMPLEMENTATION: {:?}", implementation);
     let implementation = IHypERC20TestDispatcher { contract_address: implementation };
 
     let contract = declare("TestInterchainGasPayment").unwrap();
     let (igp, _) = contract.deploy(@array![]).unwrap();
-    println!("IGP: {:?}", igp);
     let igp = ITestInterchainGasPaymentDispatcher { contract_address: igp };
 
     let mut calldata: Array<felt252> = array![];
@@ -224,11 +221,9 @@ pub fn setup() -> Setup {
     igp.contract_address.serialize(ref calldata);
     starknet::get_contract_address().serialize(ref calldata);
     let (remote_token, _) = hyp_erc20_contract.deploy(@calldata).unwrap();
-    println!("REMOTE_TOKEN: {:?}", remote_token);
     let remote_token = IHypERC20TestDispatcher { contract_address: remote_token };
 
     let (local_token, _) = hyp_erc20_contract.deploy(@calldata).unwrap();
-    println!("LOCAL_TOKEN: {:?}", local_token);
     let local_token = IHypERC20TestDispatcher { contract_address: local_token };
 
     let local_token_address: felt252 = local_token.contract_address.into();

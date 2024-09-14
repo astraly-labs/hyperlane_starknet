@@ -1,5 +1,10 @@
+#[starknet::interface]
+trait IMockHypERC721URIStorage<TContractState> {
+    fn set_token_uri(ref self: TContractState, token_id: u256, uri: ByteArray);
+}
+
 #[starknet::contract]
-pub mod HypERC721URIStorage {
+pub mod MockHypERC721URIStorage {
     use alexandria_bytes::{Bytes, BytesTrait};
     use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
@@ -15,7 +20,7 @@ pub mod HypERC721URIStorage {
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
-    use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl,};
+    use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::{ContractAddress, get_caller_address};
 
@@ -141,6 +146,13 @@ pub mod HypERC721URIStorage {
             .mailboxclient
             .initialize(mailbox, Option::Some(_hook), Option::Some(_interchainSecurityModule));
         self.hyp_erc721.initialize(_mint_amount, _name, _symbol);
+    }
+
+    #[abi(embed_v0)]
+    impl IMockHypERC721URIStorageImpl of super::IMockHypERC721URIStorage<ContractState> {
+        fn set_token_uri(ref self: ContractState, token_id: u256, uri: ByteArray) {
+            self.erc721_uri_storage._set_token_uri(token_id, uri);
+        }
     }
 
     #[abi(embed_v0)]

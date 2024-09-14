@@ -1,0 +1,22 @@
+[package]
+name = "token"
+version = "0.0.1"
+edition = "2023_11"
+
+# See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
+
+[dependencies]
+starknet.workspace = true
+alexandria_bytes.workspace = true
+alexandria_storage.workspace = true
+openzeppelin.workspace = true
+contracts = {path = "../contracts"}
+
+[tool]
+fmt.workspace = true
+
+[[target.starknet-contract]]
+casm = true
+
+[lib]
+name = "token"

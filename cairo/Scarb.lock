@@ -59,13 +59,23 @@ version = "0.3.0"
 source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=bcdca70#bcdca70afdf59c9976148e95cebad5cf63d75a7f"
 
 [[package]]
-name = "hyperlane_starknet"
+name = "contracts"
 version = "0.0.6"
 dependencies = [
  "alexandria_bytes",
  "alexandria_storage",
  "openzeppelin",
- "snforge_std",
+]
+
+[[package]]
+name = "mocks"
+version = "0.0.6"
+dependencies = [
+ "alexandria_bytes",
+ "alexandria_storage",
+ "contracts",
+ "openzeppelin",
+ "token",
 ]
 
 [[package]]
@@ -74,6 +84,11 @@ version = "0.14.0"
 source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.14.0#f091c4f51ddeb10297db984acae965328c5a4e5b"
 
 [[package]]
-name = "snforge_std"
-version = "0.22.0"
-source = "git+https://github.com/foundry-rs/starknet-foundry?tag=v0.22.0#9b215944c6c5871c738381b4ded61bbf06e7ba35"
+name = "token"
+version = "0.0.1"
+dependencies = [
+ "alexandria_bytes",
+ "alexandria_storage",
+ "contracts",
+ "openzeppelin",
+]

@@ -1,0 +1,23 @@
+[package]
+name = "contracts"
+version = "0.0.6"
+edition = "2023_11"
+
+# See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
+
+[dependencies]
+starknet.workspace = true
+alexandria_bytes.workspace = true
+alexandria_storage.workspace = true
+openzeppelin.workspace = true
+
+
+[tool]
+fmt.workspace = true
+
+[[target.starknet-contract]]
+casm = true
+casm-add-pythonic-hints = true
+
+[lib]
+name = "contracts"

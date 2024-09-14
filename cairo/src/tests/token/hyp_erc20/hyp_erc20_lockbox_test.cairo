@@ -79,7 +79,6 @@ fn setup_lockbox() -> (Setup, IHypERC20LockboxTestDispatcher) {
     let contract = declare("XERC20Test").unwrap();
     let (xerc20, _) = contract.deploy(@calldata).unwrap();
     let xerc20 = IXERC20TestDispatcher { contract_address: xerc20 };
-    println!("XERC20: {:?}", xerc20.contract_address);
 
     let contract = declare("XERC20LockboxTest").unwrap();
 
@@ -89,8 +88,6 @@ fn setup_lockbox() -> (Setup, IHypERC20LockboxTestDispatcher) {
 
     let (lockbox, _) = contract.deploy(@calldata).unwrap();
     let lockbox = IXERC20LockboxTestDispatcher { contract_address: lockbox };
-    println!("LOCKBOX: {:?}", lockbox.contract_address);
-
     let contract = declare("HypXERC20Lockbox").unwrap();
 
     let mut calldata: Array<felt252> = array![];
@@ -102,7 +99,6 @@ fn setup_lockbox() -> (Setup, IHypERC20LockboxTestDispatcher) {
 
     let (xerc20lockbox, _) = contract.deploy(@calldata).unwrap();
     let xerc20lockbox = IHypERC20LockboxTestDispatcher { contract_address: xerc20lockbox };
-    println!("XERC20LOCKBOX: {:?}", xerc20lockbox.contract_address);
 
     let remote_token_address: felt252 = setup.remote_token.contract_address.into();
     xerc20lockbox.enroll_remote_router(DESTINATION, remote_token_address.into());

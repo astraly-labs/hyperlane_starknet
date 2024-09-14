@@ -20,6 +20,7 @@ pub trait ITestERC721<TState> {
     fn is_approved_for_all(
         self: @TState, owner: ContractAddress, operator: ContractAddress
     ) -> bool;
+    fn token_uri(self: @TState, token_id: u256) -> ByteArray;
 }
 
 #[starknet::contract]
@@ -33,6 +34,7 @@ mod TestERC721 {
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
 
     impl ERC721Impl = ERC721Component::ERC721Impl<ContractState>;
+    impl ERC721MetadataImpl = ERC721Component::ERC721MetadataImpl<ContractState>;
     impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
 
     #[storage]
@@ -106,6 +108,10 @@ mod TestERC721 {
             self: @ContractState, owner: ContractAddress, operator: ContractAddress
         ) -> bool {
             self.erc721.is_approved_for_all(owner, operator)
+        }
+
+        fn token_uri(self: @ContractState, token_id: u256) -> ByteArray {
+            self.erc721.token_uri(token_id)
         }
     }
 }

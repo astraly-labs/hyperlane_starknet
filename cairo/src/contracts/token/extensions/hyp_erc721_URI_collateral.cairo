@@ -103,10 +103,11 @@ pub mod HypERC721URICollateral {
         ref self: ContractState,
         erc721: ContractAddress,
         mailbox: ContractAddress,
+        hook: ContractAddress,
         owner: ContractAddress
     ) {
         self.ownable.initializer(owner);
-        self.mailboxclient.initialize(mailbox, Option::None, Option::None);
+        self.mailboxclient.initialize(mailbox, Option::Some(hook), Option::None);
 
         self
             .hyp_erc721_collateral
@@ -132,7 +133,13 @@ pub mod HypERC721URICollateral {
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.token_router.transfer_from_sender_hook(amount_or_id);
+            contract_state
+                .hyp_erc721_collateral
+                .wrapped_token
+                .read()
+                .transfer_from(
+                    starknet::get_caller_address(), starknet::get_contract_address(), amount_or_id
+                );
 
             let uri = contract_state
                 .hyp_erc721_collateral

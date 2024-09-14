@@ -66,7 +66,6 @@ fn setup_vault() -> (Setup, IERC4626Dispatcher, IHypERC20CollateralVaultDepositD
     name.serialize(ref calldata);
     symbol.serialize(ref calldata);
     let (vault, _) = contract.deploy(@calldata).unwrap();
-    println!("VAULT: {:?}", vault);
 
     let contract = declare("HypERC20CollateralVaultDeposit").unwrap();
     let mut calldata: Array<felt252> = array![];
@@ -76,7 +75,6 @@ fn setup_vault() -> (Setup, IERC4626Dispatcher, IHypERC20CollateralVaultDepositD
     setup.noop_hook.contract_address.serialize(ref calldata);
     setup.implementation.interchain_security_module().serialize(ref calldata);
     let (implementation, _) = contract.deploy(@calldata).unwrap();
-    println!("HypERC20CollateralVaultDeposit: {:?}", implementation);
     setup.local_token = IHypERC20TestDispatcher { contract_address: implementation };
     setup
         .local_token

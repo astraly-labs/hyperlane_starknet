@@ -1,25 +1,23 @@
 #[starknet::contract]
 pub mod HypERC721URIStorage {
-    use openzeppelin::access::ownable::OwnableComponent;
+    use alexandria_bytes::{Bytes, BytesTrait};
+    use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
     use hyperlane_starknet::contracts::client::mailboxclient_component::MailboxclientComponent;
     use hyperlane_starknet::contracts::client::router_component::RouterComponent;
-    use hyperlane_starknet::contracts::client::gas_router_component::GasRouterComponent;
+    use hyperlane_starknet::contracts::token::components::erc721_uri_storage::ERC721URIStorageComponent;
+    use hyperlane_starknet::contracts::token::components::hyp_erc721_component::{
+        HypErc721Component
+    };
     use hyperlane_starknet::contracts::token::components::token_router::{
         TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
         TokenRouterComponent::MessageRecipientInternalHookImpl,
         TokenRouterTransferRemoteHookDefaultImpl
     };
-    use hyperlane_starknet::contracts::token::components::hyp_erc721_component::{
-        HypErc721Component
-    };
-    use openzeppelin::token::erc721::{
-        ERC721Component, ERC721Component::ERC721HooksTrait
-    };
+    use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
-    use starknet::{ ContractAddress, get_caller_address };
+    use openzeppelin::token::erc721::{ERC721Component, ERC721Component::ERC721HooksTrait};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use hyperlane_starknet::contracts::token::components::erc721_uri_storage::ERC721URIStorageComponent;
-    use alexandria_bytes::{ Bytes, BytesTrait };
+    use starknet::{ContractAddress, get_caller_address};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
@@ -30,7 +28,9 @@ pub mod HypERC721URIStorage {
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
-    component!(path: ERC721URIStorageComponent, storage: erc721_uri_storage, event: ERC721UriStorageEvent);
+    component!(
+        path: ERC721URIStorageComponent, storage: erc721_uri_storage, event: ERC721UriStorageEvent
+    );
 
     // Ownable
     #[abi(embed_v0)]
@@ -39,8 +39,10 @@ pub mod HypERC721URIStorage {
 
     // MailboxClient
     #[abi(embed_v0)]
-    impl MailboxClientImpl = MailboxclientComponent::MailboxClientImpl<ContractState>;
-    impl MailboxClientInternalImpl = MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
+    impl MailboxClientImpl =
+        MailboxclientComponent::MailboxClientImpl<ContractState>;
+    impl MailboxClientInternalImpl =
+        MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
 
     //Router
     #[abi(embed_v0)]
@@ -61,13 +63,15 @@ pub mod HypERC721URIStorage {
 
     //ERC721
     #[abi(embed_v0)]
-    impl ERC721URIStorageImpl = ERC721URIStorageComponent::ERC721URIStorageImpl<ContractState>;
+    impl ERC721URIStorageImpl =
+        ERC721URIStorageComponent::ERC721URIStorageImpl<ContractState>;
     #[abi(embed_v0)]
     impl ERC721Impl = ERC721Component::ERC721Impl<ContractState>;
     #[abi(embed_v0)]
     impl ERC721CamelOnlyImpl = ERC721Component::ERC721CamelOnlyImpl<ContractState>;
     impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
-    impl ERC721URIStorageInternalImpl = ERC721URIStorageComponent::ERC721URIStorageInternalImpl<ContractState>;
+    impl ERC721URIStorageInternalImpl =
+        ERC721URIStorageComponent::ERC721URIStorageInternalImpl<ContractState>;
 
     //upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
@@ -134,12 +138,10 @@ pub mod HypERC721URIStorage {
         _interchainSecurityModule: ContractAddress,
     ) {
         self.ownable.initializer(owner);
-        self.mailboxclient.initialize(mailbox, Option::Some(_hook), Option::Some(_interchainSecurityModule));
-        self.hyp_erc721.initialize(
-            _mint_amount,
-            _name,
-            _symbol
-        )
+        self
+            .mailboxclient
+            .initialize(mailbox, Option::Some(_hook), Option::Some(_interchainSecurityModule));
+        self.hyp_erc721.initialize(_mint_amount, _name, _symbol);
     }
 
     #[abi(embed_v0)]
@@ -169,15 +171,11 @@ pub mod HypERC721URIStorage {
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>,
-            amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
             let contract_state = TokenRouterComponent::HasComponent::get_contract(@self);
             let token_owner = contract_state.erc721.owner_of(amount_or_id);
-            assert!(
-                token_owner == get_caller_address(),
-                "Caller is not owner of token"
-            );
+            assert!(token_owner == get_caller_address(), "Caller is not owner of token");
 
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             contract_state.erc721.burn(amount_or_id);
@@ -206,17 +204,18 @@ pub mod HypERC721URIStorage {
     fn bytes_to_byte_array(self: Bytes) -> ByteArray {
         let mut res: ByteArray = Default::default();
         let mut offset = 0;
-        while offset < self.size() {
-            if offset + 31 <= self.size() {
-                let (new_offset, value) = self.read_bytes31(offset);
-                res.append_word(value.into(), 31);
-                offset = new_offset;
-            } else {
-                let (new_offset, value) = self.read_u8(offset);
-                res.append_byte(value);
-                offset = new_offset;
-            }
-        };
+        while offset < self
+            .size() {
+                if offset + 31 <= self.size() {
+                    let (new_offset, value) = self.read_bytes31(offset);
+                    res.append_word(value.into(), 31);
+                    offset = new_offset;
+                } else {
+                    let (new_offset, value) = self.read_u8(offset);
+                    res.append_byte(value);
+                    offset = new_offset;
+                }
+            };
         res
     }
 }

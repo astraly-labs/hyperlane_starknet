@@ -5,9 +5,9 @@ use hyperlane_starknet::interfaces::{
     IMockValidatorAnnounceDispatcher, IMockValidatorAnnounceDispatcherTrait,
     IValidatorAnnounceDispatcher, IValidatorAnnounceDispatcherTrait,
 };
-use hyperlane_starknet::tests::setup::{setup_mock_validator_announce, setup_validator_announce};
 use snforge_std::cheatcodes::events::EventAssertions;
 use starknet::{contract_address_const, EthAddress};
+use super::setup::{setup_mock_validator_announce, setup_validator_announce};
 
 pub const TEST_STARKNET_DOMAIN: u32 = 23448593;
 

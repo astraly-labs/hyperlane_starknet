@@ -7,14 +7,14 @@ use hyperlane_starknet::interfaces::{
     IValidatorConfigurationDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait,
     IMailboxDispatcher, IMailboxDispatcherTrait
 };
-use hyperlane_starknet::tests::setup::{
-    OWNER, setup_domain_routing_ism, build_messageid_metadata, LOCAL_DOMAIN, DESTINATION_DOMAIN,
-    setup_messageid_multisig_ism, get_message_and_signature, VALID_OWNER, VALID_RECIPIENT
-};
 use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget, stop_prank, ContractClassTrait};
 use starknet::{ContractAddress, contract_address_const};
+use super::super::setup::{
+    OWNER, setup_domain_routing_ism, build_messageid_metadata, LOCAL_DOMAIN, DESTINATION_DOMAIN,
+    setup_messageid_multisig_ism, get_message_and_signature, VALID_OWNER, VALID_RECIPIENT
+};
 
 
 #[test]

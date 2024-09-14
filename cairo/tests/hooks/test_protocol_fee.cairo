@@ -4,14 +4,14 @@ use hyperlane_starknet::interfaces::{
     Types, IProtocolFeeDispatcher, IProtocolFeeDispatcherTrait, IPostDispatchHookDispatcher,
     IPostDispatchHookDispatcherTrait, ETH_ADDRESS
 };
-use hyperlane_starknet::tests::setup::{
-    setup_protocol_fee, OWNER, MAX_PROTOCOL_FEE, BENEFICIARY, PROTOCOL_FEE, INITIAL_SUPPLY,
-    setup_mock_token
-};
 use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget, stop_prank};
+use super::super::setup::{
+    setup_protocol_fee, OWNER, MAX_PROTOCOL_FEE, BENEFICIARY, PROTOCOL_FEE, INITIAL_SUPPLY,
+    setup_mock_token
+};
 
 
 #[test]

@@ -14,23 +14,23 @@ use hyperlane_starknet::contracts::mocks::{
     mock_eth::{MockEthDispatcher, MockEthDispatcherTrait}
 };
 use hyperlane_starknet::contracts::token::hyp_erc20_collateral::HypErc20Collateral;
-use hyperlane_starknet::tests::setup::{
-    OWNER, LOCAL_DOMAIN, DESTINATION_DOMAIN, RECIPIENT_ADDRESS, MAILBOX, DESTINATION_MAILBOX,
-    setup_protocol_fee, setup_mock_hook, PROTOCOL_FEE, INITIAL_SUPPLY, setup_mock_fee_hook,
-    setup_mock_ism, setup_mock_token
-};
-use hyperlane_starknet::tests::token::hyp_erc20::common::{
-    setup, Setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, DESTINATION, TRANSFER_AMT, ALICE, BOB,
-    perform_remote_transfer_with_emit, perform_remote_transfer_and_gas, E18,
-    IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, enroll_remote_router,
-    enroll_local_router, set_custom_gas_config, REQUIRED_VALUE, GAS_LIMIT
-};
 use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
     start_prank, stop_prank, declare, ContractClassTrait, CheatTarget, spy_events, SpyOn
 };
 use starknet::ContractAddress;
+use super::common::{
+    setup, Setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, DESTINATION, TRANSFER_AMT, ALICE, BOB,
+    perform_remote_transfer_with_emit, perform_remote_transfer_and_gas, E18,
+    IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, enroll_remote_router,
+    enroll_local_router, set_custom_gas_config, REQUIRED_VALUE, GAS_LIMIT
+};
+use super::super::super::setup::{
+    OWNER, LOCAL_DOMAIN, DESTINATION_DOMAIN, RECIPIENT_ADDRESS, MAILBOX, DESTINATION_MAILBOX,
+    setup_protocol_fee, setup_mock_hook, PROTOCOL_FEE, INITIAL_SUPPLY, setup_mock_fee_hook,
+    setup_mock_ism, setup_mock_token
+};
 
 fn setup_hyp_erc20_collateral() -> (IHypERC20TestDispatcher, Setup) {
     let setup = setup();

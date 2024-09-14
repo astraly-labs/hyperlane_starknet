@@ -6,17 +6,17 @@ use hyperlane_starknet::interfaces::{
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait,
 };
-use hyperlane_starknet::tests::setup::{
-    setup_aggregation, OWNER, setup_messageid_multisig_ism, get_message_and_signature, LOCAL_DOMAIN,
-    DESTINATION_DOMAIN, build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT, setup_noop_ism,
-    MODULES, CONTRACT_MODULES
-};
 use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget};
 use starknet::ContractAddress;
+use super::super::setup::{
+    setup_aggregation, OWNER, setup_messageid_multisig_ism, get_message_and_signature, LOCAL_DOMAIN,
+    DESTINATION_DOMAIN, build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT, setup_noop_ism,
+    MODULES, CONTRACT_MODULES
+};
 
 #[test]
 fn test_aggregation_module_type() {

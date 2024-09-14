@@ -6,15 +6,15 @@ use hyperlane_starknet::interfaces::{
     IMailboxDispatcher, IMailboxDispatcherTrait, IMerkleTreeHookDispatcher,
     IMerkleTreeHookDispatcherTrait
 };
-use hyperlane_starknet::tests::setup::{
-    setup_merkle_tree_hook, MAILBOX, LOCAL_DOMAIN, VALID_OWNER, VALID_RECIPIENT, DESTINATION_DOMAIN
-};
 use hyperlane_starknet::utils::keccak256::{ByteData, HASH_SIZE};
 use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use merkle_tree_hook::{InternalTrait, treeContractMemberStateTrait, countContractMemberStateTrait};
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::cheatcodes::events::EventAssertions;
 use snforge_std::{start_prank, CheatTarget};
+use super::super::setup::{
+    setup_merkle_tree_hook, MAILBOX, LOCAL_DOMAIN, VALID_OWNER, VALID_RECIPIENT, DESTINATION_DOMAIN
+};
 
 #[test]
 fn test_merkle_tree_hook_type() {

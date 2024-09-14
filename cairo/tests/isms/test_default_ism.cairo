@@ -4,13 +4,13 @@ use hyperlane_starknet::interfaces::{
     ModuleType, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IMailboxDispatcher, IMailboxDispatcherTrait, IPausableIsmDispatcher, IPausableIsmDispatcherTrait
 };
-use hyperlane_starknet::tests::setup::{
-    setup_trusted_relayer_ism, setup_noop_ism, setup_pausable_ism, mock_setup, DESTINATION_DOMAIN,
-    OWNER, LOCAL_DOMAIN, DESTINATION_MAILBOX
-};
 use hyperlane_starknet::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget};
+use super::super::setup::{
+    setup_trusted_relayer_ism, setup_noop_ism, setup_pausable_ism, mock_setup, DESTINATION_DOMAIN,
+    OWNER, LOCAL_DOMAIN, DESTINATION_MAILBOX
+};
 
 
 #[test]

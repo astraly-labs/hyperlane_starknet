@@ -1,6 +1,4 @@
-use mocks::test_erc20::{
-    ITestERC20Dispatcher, ITestERC20DispatcherTrait
-};
+use mocks::test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait};
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
 use snforge_std::{
     declare, ContractClassTrait, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn,

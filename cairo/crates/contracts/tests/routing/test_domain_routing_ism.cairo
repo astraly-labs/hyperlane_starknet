@@ -1,5 +1,4 @@
 use alexandria_bytes::{Bytes, BytesTrait};
-use contracts::libs::message::{Message, HYPERLANE_VERSION};
 use contracts::interfaces::{
     ModuleType, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, IDomainRoutingIsmDispatcher,
@@ -7,6 +6,7 @@ use contracts::interfaces::{
     IValidatorConfigurationDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait,
     IMailboxDispatcher, IMailboxDispatcherTrait
 };
+use contracts::libs::message::{Message, HYPERLANE_VERSION};
 use contracts::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{start_prank, CheatTarget, stop_prank, ContractClassTrait};

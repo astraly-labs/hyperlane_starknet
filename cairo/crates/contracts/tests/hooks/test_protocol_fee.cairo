@@ -1,9 +1,9 @@
 use alexandria_bytes::{Bytes, BytesTrait};
-use contracts::libs::message::{Message, MessageTrait};
 use contracts::interfaces::{
     Types, IProtocolFeeDispatcher, IProtocolFeeDispatcherTrait, IPostDispatchHookDispatcher,
     IPostDispatchHookDispatcherTrait, ETH_ADDRESS
 };
+use contracts::libs::message::{Message, MessageTrait};
 use contracts::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};

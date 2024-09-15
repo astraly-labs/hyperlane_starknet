@@ -2,6 +2,7 @@ use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::client::gas_router_component::{
     GasRouterComponent::GasRouterConfig, IGasRouterDispatcher, IGasRouterDispatcherTrait
 };
+use contracts::utils::utils::U256TryIntoContractAddress;
 use mocks::{
     test_post_dispatch_hook::{
         ITestPostDispatchHookDispatcher, ITestPostDispatchHookDispatcherTrait
@@ -13,8 +14,6 @@ use mocks::{
     },
     mock_eth::{MockEthDispatcher, MockEthDispatcherTrait}
 };
-use token::hyp_erc20_collateral::HypErc20Collateral;
-use contracts::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
     start_prank, stop_prank, declare, ContractClassTrait, CheatTarget, spy_events, SpyOn
@@ -26,6 +25,7 @@ use super::common::{
     IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, enroll_remote_router,
     enroll_local_router, set_custom_gas_config, REQUIRED_VALUE, GAS_LIMIT
 };
+use token::hyp_erc20_collateral::HypErc20Collateral;
 
 fn setup_hyp_erc20_collateral() -> (IHypERC20TestDispatcher, Setup) {
     let setup = setup();

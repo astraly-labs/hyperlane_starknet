@@ -1,11 +1,11 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::hooks::merkle_tree_hook::merkle_tree_hook;
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 use contracts::interfaces::{
     Types, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait, IMerkleTreeHook,
     IMailboxDispatcher, IMailboxDispatcherTrait, IMerkleTreeHookDispatcher,
     IMerkleTreeHookDispatcherTrait
 };
+use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 use contracts::utils::keccak256::{ByteData, HASH_SIZE};
 use contracts::utils::utils::U256TryIntoContractAddress;
 use merkle_tree_hook::{InternalTrait, treeContractMemberStateTrait, countContractMemberStateTrait};

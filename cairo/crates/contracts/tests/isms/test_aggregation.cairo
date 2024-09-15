@@ -1,11 +1,11 @@
 use alexandria_bytes::{Bytes, BytesTrait};
-use contracts::isms::aggregation::aggregation;
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 use contracts::interfaces::{
     ModuleType, IAggregationDispatcher, IAggregationDispatcherTrait,
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait,
 };
+use contracts::isms::aggregation::aggregation;
+use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 use contracts::utils::utils::U256TryIntoContractAddress;
 
 use openzeppelin::access::ownable::OwnableComponent;

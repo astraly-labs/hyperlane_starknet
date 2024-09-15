@@ -2,8 +2,10 @@ use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::client::gas_router_component::{
     GasRouterComponent::GasRouterConfig, IGasRouterDispatcher, IGasRouterDispatcherTrait
 };
-use contracts::client::router_component::{
-    IRouterDispatcher, IRouterDispatcherTrait
+use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
+use contracts::interfaces::{
+    IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
+    IMessageRecipientDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait
 };
 use mocks::{
     test_post_dispatch_hook::{
@@ -16,19 +18,6 @@ use mocks::{
     },
     test_erc721::{ITestERC721Dispatcher, ITestERC721DispatcherTrait}
 };
-use token::components::hyp_erc721_collateral_component::{
-    IHypErc721CollateralDispatcher, IHypErc721CollateralDispatcherTrait
-};
-use token::components::hyp_erc721_component::{
-    IHypErc721Dispatcher, IHypErc721DispatcherTrait
-};
-use token::components::token_router::{
-    ITokenRouterDispatcher, ITokenRouterDispatcherTrait
-};
-use contracts::interfaces::{
-    IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
-    IMessageRecipientDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait
-};
 use openzeppelin::token::erc721::interface::{IERC721Dispatcher, IERC721DispatcherTrait};
 use snforge_std::cheatcodes::contract_class::ContractClass;
 use snforge_std::{
@@ -36,6 +25,11 @@ use snforge_std::{
     start_prank, stop_prank, EventFetcher, event_name_hash
 };
 use starknet::ContractAddress;
+use token::components::hyp_erc721_collateral_component::{
+    IHypErc721CollateralDispatcher, IHypErc721CollateralDispatcherTrait
+};
+use token::components::hyp_erc721_component::{IHypErc721Dispatcher, IHypErc721DispatcherTrait};
+use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 
 const PUB_KEY: felt252 = 0x1;
 const ZERO_SUPPLY: u256 = 0;

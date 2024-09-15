@@ -9,11 +9,11 @@ pub trait IPausableIsm<TContractState> {
 #[starknet::contract]
 pub mod pausable_ism {
     use alexandria_bytes::Bytes;
-    use contracts::libs::message::{Message, MessageTrait};
     use contracts::interfaces::{
         ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait
     };
+    use contracts::libs::message::{Message, MessageTrait};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::security::pausable::PausableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};

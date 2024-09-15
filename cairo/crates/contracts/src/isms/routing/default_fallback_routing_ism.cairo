@@ -1,17 +1,17 @@
 #[starknet::contract]
 pub mod default_fallback_routing_ism {
     use alexandria_bytes::Bytes;
-    use core::panic_with_felt252;
     use contracts::client::mailboxclient_component::{
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
         MailboxclientComponent::MailboxClientImpl
     };
-    use contracts::libs::message::{Message, MessageTrait};
     use contracts::interfaces::{
         IDomainRoutingIsm, IRoutingIsm, IInterchainSecurityModule, ModuleType,
         IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
         IMailboxDispatcher, IMailboxDispatcherTrait
     };
+    use contracts::libs::message::{Message, MessageTrait};
+    use core::panic_with_felt252;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
 

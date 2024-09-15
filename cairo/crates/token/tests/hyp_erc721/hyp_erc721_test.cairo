@@ -1,15 +1,11 @@
 use alexandria_bytes::Bytes;
-use contracts::client::router_component::{
-    IRouterDispatcher, IRouterDispatcherTrait
-};
-use token::components::token_router::{
-    ITokenRouterDispatcher, ITokenRouterDispatcherTrait
-};
+use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
 use starknet::ContractAddress;
 use super::common::{
     setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
     IHypErc721TestDispatcherTrait, ALICE, BOB, deploy_remote_token, perform_remote_transfer
 };
+use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 
 fn hyp_erc721_setup() -> Setup {
     let mut setup = setup();

@@ -1,15 +1,5 @@
-use mocks::mock_mailbox::{
-    IMockMailboxDispatcher, IMockMailboxDispatcherTrait
-};
-use mocks::{
-    test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},
-};
-use token::extensions::hyp_erc20_collateral_vault_deposit::{
-    IHypERC20CollateralVaultDepositDispatcher, IHypERC20CollateralVaultDepositDispatcherTrait
-};
-use token::interfaces::ierc4626::{
-    IERC4626Dispatcher, IERC4626DispatcherTrait
-};
+use mocks::mock_mailbox::{IMockMailboxDispatcher, IMockMailboxDispatcherTrait};
+use mocks::{test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},};
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{declare, ContractClassTrait, CheatTarget, start_prank, stop_prank,};
 use starknet::ContractAddress;
@@ -19,6 +9,10 @@ use super::super::hyp_erc20::common::{
     perform_remote_transfer_and_gas, enroll_remote_router, enroll_local_router,
     perform_remote_transfer, handle_local_transfer, mint_and_approve
 };
+use token::extensions::hyp_erc20_collateral_vault_deposit::{
+    IHypERC20CollateralVaultDepositDispatcher, IHypERC20CollateralVaultDepositDispatcherTrait
+};
+use token::interfaces::ierc4626::{IERC4626Dispatcher, IERC4626DispatcherTrait};
 
 const DUST_AMOUNT: u256 = 100_000_000_000; // E11
 

@@ -1,10 +1,10 @@
 use alexandria_bytes::{Bytes, BytesTrait};
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
-use contracts::mailbox::mailbox;
 use contracts::interfaces::{
     IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcherTrait,
     ETH_ADDRESS
 };
+use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
+use contracts::mailbox::mailbox;
 use contracts::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};

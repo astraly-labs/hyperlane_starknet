@@ -2,8 +2,10 @@ use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::client::gas_router_component::{
     GasRouterComponent::GasRouterConfig, IGasRouterDispatcher, IGasRouterDispatcherTrait
 };
-use contracts::client::router_component::{
-    IRouterDispatcher, IRouterDispatcherTrait
+use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
+use contracts::interfaces::{
+    IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
+    IMessageRecipientDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait
 };
 use mocks::{
     test_post_dispatch_hook::{
@@ -16,19 +18,13 @@ use mocks::{
     },
     mock_eth::{MockEthDispatcher, MockEthDispatcherTrait}
 };
-use token::components::token_router::{
-    ITokenRouterDispatcher, ITokenRouterDispatcherTrait
-};
-use contracts::interfaces::{
-    IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
-    IMessageRecipientDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait
-};
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
     declare, ContractClassTrait, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn,
     start_prank, stop_prank, EventFetcher, event_name_hash
 };
 use starknet::ContractAddress;
+use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 
 pub const E18: u256 = 1_000_000_000_000_000_000;
 pub const ORIGIN: u32 = 11;

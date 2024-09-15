@@ -1,9 +1,5 @@
-use mocks::xerc20_test::{
-    XERC20Test, IXERC20TestDispatcher, IXERC20TestDispatcherTrait
-};
-use mocks::{
-    test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},
-};
+use mocks::xerc20_test::{XERC20Test, IXERC20TestDispatcher, IXERC20TestDispatcherTrait};
+use mocks::{test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},};
 use snforge_std::{declare, ContractClassTrait, CheatTarget, start_prank, stop_prank,};
 use starknet::ContractAddress;
 use super::common::{

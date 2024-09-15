@@ -103,10 +103,11 @@ pub mod HypERC721URICollateral {
         ref self: ContractState,
         erc721: ContractAddress,
         mailbox: ContractAddress,
+        hook: ContractAddress,
         owner: ContractAddress
     ) {
         self.ownable.initializer(owner);
-        self.mailboxclient.initialize(mailbox, Option::None, Option::None);
+        self.mailboxclient.initialize(mailbox, Option::Some(hook), Option::None);
 
         self
             .hyp_erc721_collateral
@@ -115,11 +116,30 @@ pub mod HypERC721URICollateral {
     }
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
+        /// Transfers the token from the sender and retrieves its metadata.
+        ///
+        /// This hook handles the transfer of a token from the sender and appends its URI to the metadata.
+        /// It retrieves the token URI from the ERC721 contract and appends it to the metadata for processing
+        /// as part of the transfer message.
+        ///
+        /// # Arguments
+        ///
+        /// * `amount_or_id` - A `u256` representing the token ID being transferred.
+        ///
+        /// # Returns
+        ///
+        /// A `Bytes` object containing the token's URI as metadata.
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            contract_state.token_router.transfer_from_sender_hook(amount_or_id);
+            contract_state
+                .hyp_erc721_collateral
+                .wrapped_token
+                .read()
+                .transfer_from(
+                    starknet::get_caller_address(), starknet::get_contract_address(), amount_or_id
+                );
 
             let uri = contract_state
                 .hyp_erc721_collateral

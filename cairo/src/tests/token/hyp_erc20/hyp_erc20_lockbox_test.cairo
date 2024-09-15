@@ -88,7 +88,6 @@ fn setup_lockbox() -> (Setup, IHypERC20LockboxTestDispatcher) {
 
     let (lockbox, _) = contract.deploy(@calldata).unwrap();
     let lockbox = IXERC20LockboxTestDispatcher { contract_address: lockbox };
-
     let contract = declare("HypXERC20Lockbox").unwrap();
 
     let mut calldata: Array<felt252> = array![];

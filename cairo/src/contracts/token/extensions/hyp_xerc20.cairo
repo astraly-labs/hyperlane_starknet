@@ -127,6 +127,18 @@ pub mod HypXERC20 {
     }
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
+        /// Transfers tokens from the sender, burns the xERC20 tokens, and returns metadata.
+        ///
+        /// This hook transfers tokens from the sender, burns the corresponding xERC20 tokens, and returns any metadata
+        /// associated with the transfer.
+        ///
+        /// # Arguments
+        ///
+        /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
+        ///
+        /// # Returns
+        ///
+        /// A `Bytes` object representing the metadata associated with the transfer.
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
@@ -140,6 +152,16 @@ pub mod HypXERC20 {
             BytesTrait::new_empty()
         }
 
+        /// Mints xERC20 tokens for the recipient and returns the transferred amount.
+        ///
+        /// This hook mints xERC20 tokens for the recipient based on the transferred amount of tokens and updates the
+        /// corresponding ERC20 balances.
+        ///
+        /// # Arguments
+        ///
+        /// * `recipient` - A `u256` representing the recipient's address.
+        /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
+        /// * `metadata` - A `Bytes` object containing metadata associated with the transfer.
         fn transfer_to_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,

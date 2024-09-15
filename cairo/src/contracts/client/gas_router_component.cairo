@@ -11,6 +11,25 @@ pub trait IGasRouter<TState> {
     fn quote_gas_payment(self: @TState, destination_domain: u32) -> u256;
 }
 
+/// # Gas Router Component Module
+///
+/// This module provides a gas management mechanism for routing messages across domains. 
+/// It allows setting gas limits for specific destinations and quoting gas payments for 
+/// message dispatches.
+///
+/// ## Key Concepts
+///
+/// - **Gas Configuration**: This module allows users to set gas limits for specific destination 
+///   domains, either individually or through an array of configurations.
+///
+/// - **Message Dispatching**: Gas management is integrated with the message dispatch system, 
+///   enabling the module to quote gas payments for dispatching messages to other domains.
+///
+/// - **Ownership-based Access Control**: The ability to set gas limits is restricted to the 
+///   contract owner.
+///
+/// - **Component Composition**: The `GasRouterComponent` integrates with other components such as 
+///   `RouterComponent` for dispatching messages and `MailboxclientComponent` for mailbox interactions.
 #[starknet::component]
 pub mod GasRouterComponent {
     use alexandria_bytes::{Bytes, BytesTrait};
@@ -47,6 +66,22 @@ pub mod GasRouterComponent {
         impl Router: RouterComponent::HasComponent<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>,
     > of super::IGasRouter<ComponentState<TContractState>> {
+        /// Sets the gas limit for a specified domain or applies an array of gas configurations.
+        ///
+        /// This function allows the contract owner to configure gas limits for one or multiple domains.
+        /// If an array of `GasRouterConfig` is provided via `gas_configs`, the function iterates over
+        /// the array and applies each configuration. If a specific `domain` and `gas` are provided,
+        /// the function sets the gas limit for that domain.
+        ///
+        /// # Arguments
+        ///
+        /// * `gas_configs` - An optional array of `GasRouterConfig`, each containing a `domain` and a `gas` value.
+        /// * `domain` - An optional `u32` representing the domain for which the gas limit is being set.
+        /// * `gas` - An optional `u256` representing the gas limit for the given domain.
+        ///
+        /// # Panics
+        ///
+        /// Panics if neither `gas_configs` nor a valid `domain` and `gas` are provided.
         fn set_destination_gas(
             ref self: ComponentState<TContractState>,
             gas_configs: Option<Array<GasRouterConfig>>,
@@ -78,6 +113,19 @@ pub mod GasRouterComponent {
             }
         }
 
+        /// Returns the quoted gas payment for dispatching a message to the specified domain.
+        ///
+        /// This function calculates and returns the gas payment required to dispatch a message
+        /// to a specified destination domain. It uses the router and mailbox components to compute
+        /// the necessary gas amount for the message dispatch.
+        ///
+        /// # Arguments
+        ///
+        /// * `destination_domain` - A `u32` representing the domain to which the message is being sent.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` value representing the quoted gas payment.
         fn quote_gas_payment(
             self: @ComponentState<TContractState>, destination_domain: u32
         ) -> u256 {

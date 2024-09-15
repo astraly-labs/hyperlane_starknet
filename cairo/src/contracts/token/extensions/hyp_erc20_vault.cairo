@@ -151,6 +151,24 @@ mod HypErc20Vault {
     }
 
     impl TokenRouterTransferRemoteHookImpl of TokenRouterTransferRemoteHookTrait<ContractState> {
+        /// Initiates a remote token transfer with optional hooks and metadata.
+        ///
+        /// This function handles the transfer of tokens to a recipient on a remote domain. It converts
+        /// the token amount to shares, generates the token message, and dispatches the message to the
+        /// specified destination. The transfer can optionally use a hook for additional processing.
+        ///
+        /// # Arguments
+        ///
+        /// * `destination` - A `u32` representing the destination domain.
+        /// * `recipient` - A `u256` representing the recipient's address.
+        /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
+        /// * `value` - A `u256` representing the value associated with the transfer.
+        /// * `hook_metadata` - An optional `Bytes` object containing metadata for the hook.
+        /// * `hook` - An optional `ContractAddress` representing the hook for additional processing.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the message ID of the dispatched transfer.
         fn _transfer_remote(
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             destination: u32,
@@ -218,32 +236,104 @@ mod HypErc20Vault {
 
     #[abi(embed_v0)]
     impl HypeErc20Vault of super::IHypErc20Vault<ContractState> {
+        // Converts a specified amount of assets to shares based on the current exchange rate.
+        ///
+        /// This function calculates the number of shares corresponding to the given amount of assets
+        /// by using the exchange rate stored in the contract.
+        ///
+        /// # Arguments
+        ///
+        /// * `amount` - A `u256` representing the amount of assets to convert.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the number of shares equivalent to the given amount of assets.
         fn assets_to_shares(self: @ContractState, amount: u256) -> u256 {
             math::mul_div(amount, PRECISION, self.exchange_rate.read())
         }
 
+        /// Converts a specified number of shares to assets based on the current exchange rate.
+        ///
+        /// This function calculates the number of assets corresponding to the given number of shares
+        /// by using the exchange rate stored in the contract.
+        ///
+        /// # Arguments
+        ///
+        /// * `shares` - A `u256` representing the number of shares to convert.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the number of assets equivalent to the given number of shares.
+        ///
         fn shares_to_assets(self: @ContractState, shares: u256) -> u256 {
             math::mul_div(shares, self.exchange_rate.read(), PRECISION)
         }
 
+        /// Returns the balance of shares for the specified account.
+        ///
+        /// This function retrieves the number of shares owned by the given account. The shares are represented
+        /// by the balance in the ERC20 component.
+        ///
+        /// # Arguments
+        ///
+        /// * `account` - A `ContractAddress` representing the account whose share balance is being queried.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the share balance of the specified account.
         fn share_balance_of(self: @ContractState, account: ContractAddress) -> u256 {
             self.erc20.balance_of(account)
         }
 
+        /// Returns the precision value used for calculations in the vault.
+        ///
+        /// This function returns the precision value applied to vault calculations, which is a constant
+        /// defined in the contract.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the precision value.
         fn get_precision(self: @ContractState) -> u256 {
             PRECISION
         }
 
+        /// Returns the collateral domain used by the vault.
+        ///
+        /// This function retrieves the collateral domain in which the vault operates, which is defined
+        /// at the time of contract deployment.
+        ///
+        /// # Returns
+        ///
+        /// A `u32` representing the collateral domain.
         fn get_collateral_domain(self: @ContractState) -> u32 {
             self.collateral_domain.read()
         }
 
+        /// Returns the current exchange rate between assets and shares.
+        ///
+        /// This function retrieves the current exchange rate used by the vault for converting assets
+        /// to shares and vice versa.
+        ///
+        /// # Returns
+        ///
+        /// A `u256` representing the exchange rate.
         fn get_exchange_rate(self: @ContractState) -> u256 {
             self.exchange_rate.read()
         }
     }
 
     impl MessageRecipientInternalHookImpl of IMessageRecipientInternalHookTrait<ContractState> {
+        /// Handles incoming messages and updates the exchange rate if necessary.
+        ///
+        /// This internal function processes messages received from remote domains. If the message
+        /// is from the collateral domain, it updates the vault's exchange rate based on the metadata
+        /// contained in the message.
+        ///
+        /// # Arguments
+        ///
+        /// * `origin` - A `u32` representing the origin domain of the message.
+        /// * `sender` - A `u256` representing the sender of the message.
+        /// * `message` - A `Bytes` object containing the message data.
         fn _handle(
             ref self: RouterComponent::ComponentState<ContractState>,
             origin: u32,

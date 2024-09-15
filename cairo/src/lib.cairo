@@ -37,6 +37,7 @@ mod contracts {
         pub mod message_recipient;
         pub mod mock_account;
         pub mod mock_eth;
+        pub mod mock_hyp_erc721_uri_storage;
         pub mod mock_mailbox;
         pub mod mock_validator_announce;
         pub mod test_erc20;
@@ -146,7 +147,6 @@ mod tests {
             pub mod hyp_erc721_test;
             pub mod hyp_erc721_uri_storage_test;
         }
-
         pub mod vault_extensions {
             pub mod hyp_erc20_collateral_vault_deposit_test;
             pub mod hyp_erc20_vault_test;

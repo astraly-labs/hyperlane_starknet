@@ -72,6 +72,12 @@ pub fn SYMBOL() -> ByteArray {
 
 #[starknet::interface]
 pub trait IHypERC20Test<TContractState> {
+    // Collateral
+    fn transfer_from_sender_hook(ref self: TContractState, amount_or_id: u256) -> Bytes;
+    fn transfer_to_hook(
+        ref self: TContractState, recipient: ContractAddress, amount: u256, metadata: Bytes
+    ) -> bool;
+    fn get_wrapped_token(self: @TContractState) -> ContractAddress;
     // MailboxClient
     fn set_hook(ref self: TContractState, _hook: ContractAddress);
     fn set_interchain_security_module(ref self: TContractState, _module: ContractAddress);

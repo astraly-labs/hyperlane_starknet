@@ -129,6 +129,18 @@ pub mod HypFiatToken {
     }
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
+        /// Transfers tokens from the sender and burns them.
+        ///
+        /// This hook transfers tokens from the sender and then burns the corresponding amount of the fiat token.
+        /// It retrieves the token metadata and ensures that the correct amount is transferred from the sender.
+        ///
+        /// # Arguments
+        ///
+        /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
+        ///
+        /// # Returns
+        ///
+        /// A `Bytes` object containing the metadata for the transfer.
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
@@ -139,6 +151,16 @@ pub mod HypFiatToken {
             metadata
         }
 
+        /// Transfers tokens to the recipient and mints new fiat tokens.
+        ///
+        /// This hook transfers tokens to the recipient and mints the corresponding amount of fiat tokens
+        /// based on the provided amount or token ID. It ensures that the mint operation is successful.
+        ///
+        /// # Arguments
+        ///
+        /// * `recipient` - A `u256` representing the recipient's address.
+        /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
+        /// * `metadata` - A `Bytes` object containing metadata associated with the transfer.
         fn transfer_to_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,

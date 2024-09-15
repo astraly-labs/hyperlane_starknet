@@ -45,10 +45,10 @@ pub fn ZERO_ADDRESS() -> ContractAddress {
 fn EMPTY_STRING() -> ByteArray {
     ""
 }
-fn NAME() -> ByteArray {
+pub fn NAME() -> ByteArray {
     "Hyperlane Hedgehogs"
 }
-fn SYMBOL() -> ByteArray {
+pub fn SYMBOL() -> ByteArray {
     "HHH"
 }
 pub fn ALICE() -> ContractAddress {
@@ -63,8 +63,8 @@ fn PROXY_ADMIN() -> ContractAddress {
 pub const INITIAL_SUPPLY: u256 = 10;
 pub const ORIGIN: u32 = 11;
 pub const DESTINATION: u32 = 22;
-const TRANSFER_ID: u256 = 0;
-fn URI() -> ByteArray {
+pub const TRANSFER_ID: u256 = 0;
+pub fn URI() -> ByteArray {
     "http://bit.ly/3reJLpx"
 }
 
@@ -125,6 +125,11 @@ pub trait IHypErc721Test<TContractState> {
     fn get_wrapped_token(self: @TContractState) -> ContractAddress;
     // HypERC721
     fn initialize(ref self: TContractState, mint_amount: u256, name: ByteArray, symbol: ByteArray);
+    // HypERC721URIStorage
+    fn name(self: @TContractState) -> ByteArray;
+    fn symbol(self: @TContractState) -> ByteArray;
+    fn token_uri(self: @TContractState, token_id: u256) -> ByteArray;
+    fn set_token_uri(ref self: TContractState, token_id: u256, uri: ByteArray);
 }
 
 #[derive(Copy, Drop)]

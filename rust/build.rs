@@ -1,12 +1,23 @@
-use std::{collections::HashMap, env::current_dir, path::PathBuf};
-
+use std::{collections::HashMap, env::current_dir, path::{PathBuf, Path}, fs};
 use ethers::prelude::Abigen;
 
+fn check_path_exists(path: &Path) {
+    if !path.exists() {
+        panic!("Path does not exist: {:?}", path);
+    }
+}
+
 fn generate_eth_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
+    // Check if the ABI file exists
+    let abi_file_path = Path::new(abi_file);
+    check_path_exists(abi_file_path);
+
+    // Remove output file if it exists
     if bind_out.exists() {
-        std::fs::remove_file(&bind_out).unwrap();
+        fs::remove_file(&bind_out).unwrap();
     }
 
+    // Generate Ethereum bindings
     Abigen::new(name, abi_file)
         .unwrap()
         .generate()
@@ -16,8 +27,13 @@ fn generate_eth_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
 }
 
 fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
+    // Check if the ABI file exists
+    let abi_file_path = Path::new(abi_file);
+    check_path_exists(abi_file_path);
+
+    // Remove output file if it exists
     if bind_out.exists() {
-        std::fs::remove_file(&bind_out).unwrap();
+        fs::remove_file(&bind_out).unwrap();
     }
 
     let mut aliases = HashMap::new();
@@ -50,6 +66,11 @@ fn main() {
         .unwrap()
         .join("tests")
         .join("contracts/eth/bind");
+
+    // Check if the Ethereum ABI directory exists
+    check_path_exists(&eth_abi_base);
+    check_path_exists(&eth_bind_base);
+
     let eth_deployments = [
         ("Mailbox", "mailbox"),
         ("FastHypERC20", "fast_hyp_erc20"),
@@ -73,13 +94,20 @@ fn main() {
     // Generate Starknet bindings
     let strk_abi_base = current_dir()
         .unwrap()
-        .parent()
+        .parent() // Move one directory up to source directory
         .unwrap()
-        .join("contracts/target/dev");
+        .join("cairo")
+        .join("target")
+        .join("dev");
     let strk_bind_base = current_dir()
         .unwrap()
         .join("tests")
         .join("contracts/strk/bind");
+
+    // Check if the Starknet ABI directory exists
+    check_path_exists(&strk_abi_base);
+    check_path_exists(&strk_bind_base);
+
     let strk_deployments = [
         ("mailbox", "mailbox"),
         ("domain_routing_ism", "routing"),

@@ -1,7 +1,10 @@
 #[starknet::interface]
-trait IERC4626YieldSharing<TContractState> {
+pub trait IERC4626YieldSharing<TContractState> {
     fn set_fee(ref self: TContractState, new_fee: u256);
     fn get_claimable_fees(self: @TContractState) -> u256;
+    fn scale(self: @TContractState) -> u256;
+    fn accumulated_fees(self: @TContractState) -> u256;
+    fn last_vault_balance(self: @TContractState) -> u256;
 }
 
 #[starknet::contract]
@@ -73,6 +76,7 @@ mod ERC4626YieldSharingMock {
         self.ownable.initializer(get_caller_address());
     }
 
+    #[abi(embed_v0)]
     pub impl ERC4626YieldSharingImpl of super::IERC4626YieldSharing<ContractState> {
         fn set_fee(ref self: ContractState, new_fee: u256) {
             self.ownable.assert_only_owner();
@@ -92,8 +96,20 @@ mod ERC4626YieldSharingMock {
 
             self.accumulated_fees.read() + new_fees
         }
+
+        fn scale(self: @ContractState) -> u256 {
+            SCALE
+        }
+        fn accumulated_fees(self: @ContractState) -> u256 {
+            self.accumulated_fees.read()
+        }
+
+        fn last_vault_balance(self: @ContractState) -> u256 {
+            self.last_vault_balance.read()
+        }
     }
 
+    #[abi(embed_v0)]
     pub impl ERC4626 of IERC4626<ContractState> {
         fn name(self: @ContractState) -> ByteArray {
             self.erc4626.name()

@@ -149,6 +149,7 @@ mod tests {
 
         pub mod vault_extensions {
             pub mod hyp_erc20_collateral_vault_deposit_test;
+            pub mod hyp_erc20_vault_test;
         }
     }
     pub mod libs {

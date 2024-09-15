@@ -11,7 +11,7 @@ use hyperlane_starknet::contracts::token::interfaces::ierc4626::{
     IERC4626Dispatcher, IERC4626DispatcherTrait
 };
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{declare, ContractClassTrait, CheatTarget, start_prank, stop_prank,};
+use snforge_std::{declare, CheatTarget, start_prank, stop_prank, ContractClass, ContractClassTrait};
 use starknet::ContractAddress;
 use super::super::hyp_erc20::common::{
     Setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, ALICE, BOB, E18, REQUIRED_VALUE,
@@ -66,7 +66,6 @@ fn setup_vault() -> (Setup, IERC4626Dispatcher, IHypERC20CollateralVaultDepositD
     name.serialize(ref calldata);
     symbol.serialize(ref calldata);
     let (vault, _) = contract.deploy(@calldata).unwrap();
-    println!("VAULT: {:?}", vault);
 
     let contract = declare("HypERC20CollateralVaultDeposit").unwrap();
     let mut calldata: Array<felt252> = array![];
@@ -76,7 +75,7 @@ fn setup_vault() -> (Setup, IERC4626Dispatcher, IHypERC20CollateralVaultDepositD
     setup.noop_hook.contract_address.serialize(ref calldata);
     setup.implementation.interchain_security_module().serialize(ref calldata);
     let (implementation, _) = contract.deploy(@calldata).unwrap();
-    println!("HypERC20CollateralVaultDeposit: {:?}", implementation);
+
     setup.local_token = IHypERC20TestDispatcher { contract_address: implementation };
     setup
         .local_token

@@ -64,7 +64,7 @@ pub mod MockMailbox {
         ContractAddress, ClassHash, get_caller_address, get_block_number, contract_address_const,
         get_contract_address
     };
-    use super::IMockMailboxDispatcherTrait;
+    use super::{IMockMailboxDispatcherTrait, IMockMailboxDispatcher};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -256,7 +256,11 @@ pub mod MockMailbox {
             };
             required_hook.post_dispatch(metadata.clone(), message.clone());
             let hook = ITestPostDispatchHookDispatcher { contract_address: hook };
-            hook.post_dispatch(metadata, message);
+            hook.post_dispatch(metadata, message.clone());
+            let remote_mailbox = self.remote_mailboxes.read(destination_domain);
+            assert!(remote_mailbox != contract_address_const::<0>());
+            IMockMailboxDispatcher { contract_address: remote_mailbox }
+                .add_inbound_message(message);
             id
         }
 
@@ -266,7 +270,7 @@ pub mod MockMailbox {
         }
 
         fn process_next_inbound_message(ref self: ContractState) {
-            let message = self.inbound_messages.read(self.inbound_unprocessed_nonce.read());
+            let message = self.inbound_messages.read(self.inbound_processed_nonce.read());
             IMailboxDispatcher { contract_address: starknet::get_contract_address() }
                 .process(BytesTrait::new_empty(), message);
             self.inbound_processed_nonce.write(self.inbound_processed_nonce.read() + 1);

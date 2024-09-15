@@ -148,27 +148,22 @@ pub fn setup() -> Setup {
     let mut calldata: Array<felt252> = array![];
     (INITIAL_SUPPLY * 2).serialize(ref calldata);
     let (primary_token, _) = contract.deploy(@calldata).unwrap();
-    println!("PRIMARY TOKEN: {:?}", primary_token);
     let local_primary_token = ITestERC721Dispatcher { contract_address: primary_token };
 
     let (remote_primary_token, _) = contract.deploy(@calldata).unwrap();
-    println!("REMOTE PRIMARY TOKEN: {:?}", remote_primary_token);
     let remote_primary_token = ITestERC721Dispatcher { contract_address: remote_primary_token };
 
     let contract = declare("TestPostDispatchHook").unwrap();
     let (noop_hook, _) = contract.deploy(@array![]).unwrap();
-    println!("NOOP HOOK: {:?}", noop_hook);
     let noop_hook = ITestPostDispatchHookDispatcher { contract_address: noop_hook };
 
     let contract = declare("TestISM").unwrap();
     let (default_ism, _) = contract.deploy(@array![]).unwrap();
-    println!("DEFAULT ISM: {:?}", default_ism);
 
     let contract = declare("Ether").unwrap();
     let mut calldata: Array<felt252> = array![];
     starknet::get_contract_address().serialize(ref calldata);
     let (eth_address, _) = contract.deploy(@calldata).unwrap();
-    println!("ETH: {:?}", eth_address);
     //let eth = MockEthDispatcher { contract_address: eth_address };
 
     let contract = declare("MockMailbox").unwrap();
@@ -182,7 +177,6 @@ pub fn setup() -> Setup {
             ]
         )
         .unwrap();
-    println!("LOCAL MAILBOX: {:?}", local_mailbox);
     let local_mailbox = IMockMailboxDispatcher { contract_address: local_mailbox };
 
     let (remote_mailbox, _) = contract
@@ -195,7 +189,6 @@ pub fn setup() -> Setup {
             ]
         )
         .unwrap();
-    println!("REMOTE MAILBOX: {:?}", remote_mailbox);
     let remote_mailbox = IMockMailboxDispatcher { contract_address: remote_mailbox };
 
     local_mailbox.set_default_hook(noop_hook.contract_address);
@@ -213,7 +206,6 @@ pub fn setup() -> Setup {
             ]
         )
         .unwrap();
-    println!("REMOTE TOKEN: {:?}", remote_token);
     let remote_token = IHypErc721TestDispatcher { contract_address: remote_token };
 
     let hyp_erc721_contract = declare("HypErc721").unwrap();
@@ -226,14 +218,14 @@ pub fn setup() -> Setup {
     calldata.append(default_ism.into());
     calldata.append(starknet::get_contract_address().into());
     let (local_token, _) = hyp_erc721_contract.deploy(@calldata).unwrap();
-    println!("LOCAL TOKEN: {:?}", local_token);
     let local_token = IHypErc721TestDispatcher { contract_address: local_token };
 
     let contract = declare("MockAccount").unwrap();
     let (alice, _) = contract.deploy(@array![PUB_KEY]).unwrap();
-    println!("ALICE: {:?}", alice);
     let (bob, _) = contract.deploy(@array![PUB_KEY]).unwrap();
-    println!("BOB: {:?}", bob);
+
+    local_mailbox.add_remote_mail_box(DESTINATION, remote_mailbox.contract_address);
+    remote_mailbox.add_remote_mail_box(ORIGIN, local_mailbox.contract_address);
 
     Setup {
         local_primary_token,
@@ -260,7 +252,6 @@ pub fn deploy_remote_token(mut setup: Setup, is_collateral: bool) -> Setup {
         ZERO_ADDRESS().serialize(ref calldata);
         starknet::get_contract_address().serialize(ref calldata);
         let (remote_token, _) = setup.hyp_erc721_collateral_contract.deploy(@calldata).unwrap();
-        println!("NEW REMOTE TOKEN: {:?}", remote_token);
         setup.remote_token = IHypErc721TestDispatcher { contract_address: remote_token };
         setup
             .remote_primary_token
@@ -277,7 +268,6 @@ pub fn deploy_remote_token(mut setup: Setup, is_collateral: bool) -> Setup {
         ZERO_ADDRESS().serialize(ref calldata);
         starknet::get_contract_address().serialize(ref calldata);
         let (remote_token, _) = setup.hyp_erc721_contract.deploy(@calldata).unwrap();
-        println!("NEW REMOTE TOKEN: {:?}", remote_token);
         setup.remote_token = IHypErc721TestDispatcher { contract_address: remote_token };
     }
     let local_token_address: felt252 = setup.local_token.contract_address.into();
@@ -286,7 +276,6 @@ pub fn deploy_remote_token(mut setup: Setup, is_collateral: bool) -> Setup {
 }
 
 pub fn process_transfer(setup: @Setup, recipient: ContractAddress, token_id: u256) {
-    println!("INSIDE PROCESS TRANSFER");
     start_prank(
         CheatTarget::One((*setup).remote_token.contract_address),
         (*setup).remote_mailbox.contract_address
@@ -299,7 +288,6 @@ pub fn process_transfer(setup: @Setup, recipient: ContractAddress, token_id: u25
 }
 
 pub fn perform_remote_transfer(setup: @Setup, msg_value: u256, token_id: u256) {
-    println!("INSIDE PERFORM REMOTE TRANSFER");
     let alice_address: felt252 = (*setup).alice.into();
     (*setup)
         .local_token

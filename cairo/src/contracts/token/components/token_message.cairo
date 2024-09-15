@@ -4,8 +4,9 @@ use alexandria_bytes::{Bytes, BytesTrait};
 #[generate_trait]
 pub impl TokenMessage of TokenMessageTrait {
     fn format(recipient: u256, amount: u256, metadata: Bytes) -> Bytes {
-        let data: Array<u128> = array![recipient.low, recipient.high, amount.low, amount.high];
-        let mut bytes = BytesTrait::new(4, data);
+        let mut bytes = BytesTrait::new_empty();
+        bytes.append_u256(recipient);
+        bytes.append_u256(amount);
         bytes.concat(@metadata);
         bytes
     }

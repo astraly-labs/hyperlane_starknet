@@ -1,3 +1,4 @@
+//! Modified from {https://github.com/nodeset-org/erc4626-cairo/blob/main/src/erc4626/erc4626.cairo}
 #[starknet::interface]
 pub trait IERC4626YieldSharing<TContractState> {
     fn set_fee(ref self: TContractState, new_fee: u256);
@@ -11,37 +12,40 @@ pub trait IERC4626YieldSharing<TContractState> {
 mod ERC4626YieldSharingMock {
     use core::integer::BoundedInt;
     use hyperlane_starknet::contracts::libs::math;
-    use hyperlane_starknet::contracts::mocks::erc4626_component::{
-        ERC4626Component, ERC4626HooksEmptyImpl
-    };
-    use hyperlane_starknet::contracts::token::interfaces::ierc4626::IERC4626;
+    use hyperlane_starknet::contracts::token::interfaces::ierc4626::{IERC4626, IERC4626Camel};
     use openzeppelin::access::ownable::{OwnableComponent};
     use openzeppelin::introspection::src5::SRC5Component;
-    use openzeppelin::token::erc20::ERC20Component;
-    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
+    use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
     use starknet::{get_contract_address, get_caller_address, ContractAddress};
 
-    component!(path: ERC4626Component, storage: erc4626, event: ERC4626Event);
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
-    impl ERC4626Impl = ERC4626Component::ERC4626Impl<ContractState>;
-    impl ERC4626InternalImpl = ERC4626Component::InternalImpl<ContractState>;
-
+    impl ERC20MixinImpl = ERC20Component::ERC20MixinImpl<ContractState>;
+    impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
     // E18
     const SCALE: u256 = 1_000_000_000_000_000_000;
 
+    pub mod Errors {
+        pub const EXCEEDED_MAX_DEPOSIT: felt252 = 'ERC4626: exceeded max deposit';
+        pub const EXCEEDED_MAX_MINT: felt252 = 'ERC4626: exceeded max mint';
+        pub const EXCEEDED_MAX_REDEEM: felt252 = 'ERC4626: exceeded max redeem';
+        pub const EXCEEDED_MAX_WITHDRAW: felt252 = 'ERC4626: exceeded max withdraw';
+    }
+
     #[storage]
     struct Storage {
         fee: u256,
         accumulated_fees: u256,
         last_vault_balance: u256,
-        #[substorage(v0)]
-        erc4626: ERC4626Component::Storage,
+        ERC4626_asset: ContractAddress,
+        ERC4626_underlying_decimals: u8,
+        ERC4626_offset: u8,
         #[substorage(v0)]
         erc20: ERC20Component::Storage,
         #[substorage(v0)]
@@ -53,14 +57,36 @@ mod ERC4626YieldSharingMock {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        #[flat]
-        ERC4626Event: ERC4626Component::Event,
+        Deposit: Deposit,
+        Withdraw: Withdraw,
         #[flat]
         ERC20Event: ERC20Component::Event,
         #[flat]
         SRC5Event: SRC5Component::Event,
         #[flat]
         OwnableEvent: OwnableComponent::Event
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct Deposit {
+        #[key]
+        sender: ContractAddress,
+        #[key]
+        owner: ContractAddress,
+        assets: u256,
+        shares: u256
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct Withdraw {
+        #[key]
+        sender: ContractAddress,
+        #[key]
+        receiver: ContractAddress,
+        #[key]
+        owner: ContractAddress,
+        assets: u256,
+        shares: u256
     }
 
     #[constructor]
@@ -71,7 +97,12 @@ mod ERC4626YieldSharingMock {
         symbol: ByteArray,
         initial_fee: u256
     ) {
-        self.erc4626.initializer(asset, name, symbol, 0);
+        let dispatcher = ERC20ABIDispatcher { contract_address: asset };
+        self.ERC4626_offset.write(0);
+        let decimals = dispatcher.decimals();
+        self.erc20.initializer(name, symbol);
+        self.ERC4626_asset.write(asset);
+        self.ERC4626_underlying_decimals.write(decimals);
         self.fee.write(initial_fee);
         self.ownable.initializer(get_caller_address());
     }
@@ -84,7 +115,9 @@ mod ERC4626YieldSharingMock {
         }
 
         fn get_claimable_fees(self: @ContractState) -> u256 {
-            let new_vault_balance = IERC20Dispatcher { contract_address: self.erc4626.asset() }
+            let new_vault_balance = ERC20ABIDispatcher {
+                contract_address: self.ERC4626_asset.read()
+            }
                 .balance_of(get_contract_address());
             let last_vault_balance = self.last_vault_balance.read();
             if new_vault_balance <= last_vault_balance {
@@ -110,35 +143,35 @@ mod ERC4626YieldSharingMock {
     }
 
     #[abi(embed_v0)]
-    pub impl ERC4626 of IERC4626<ContractState> {
+    pub impl ERC4626Impl of IERC4626<ContractState> {
         fn name(self: @ContractState) -> ByteArray {
-            self.erc4626.name()
+            self.erc20.name()
         }
 
         fn symbol(self: @ContractState) -> ByteArray {
-            self.erc4626.symbol()
+            self.erc20.symbol()
         }
 
         fn decimals(self: @ContractState) -> u8 {
-            self.erc4626.decimals()
+            self.ERC4626_underlying_decimals.read() + self.ERC4626_offset.read()
         }
 
         fn total_supply(self: @ContractState) -> u256 {
-            self.erc4626.total_supply()
+            self.erc20.total_supply()
         }
 
         fn balance_of(self: @ContractState, account: ContractAddress) -> u256 {
-            self.erc4626.balance_of(account)
+            self.erc20.balance_of(account)
         }
 
         fn allowance(
             self: @ContractState, owner: ContractAddress, spender: ContractAddress
         ) -> u256 {
-            self.erc4626.allowance(owner, spender)
+            self.erc20.allowance(owner, spender)
         }
 
         fn transfer(ref self: ContractState, recipient: ContractAddress, amount: u256) -> bool {
-            self.erc4626.transfer(recipient, amount)
+            self.erc20.transfer(recipient, amount)
         }
 
         fn transfer_from(
@@ -147,49 +180,63 @@ mod ERC4626YieldSharingMock {
             recipient: ContractAddress,
             amount: u256
         ) -> bool {
-            self.erc4626.transfer_from(sender, recipient, amount)
+            self.erc20.transfer_from(sender, recipient, amount)
         }
 
         fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {
-            self.erc4626.approve(spender, amount)
+            self.erc20.approve(spender, amount)
         }
 
         fn asset(self: @ContractState) -> ContractAddress {
-            self.erc4626.asset()
+            self.ERC4626_asset.read()
         }
 
         fn convert_to_assets(self: @ContractState, shares: u256) -> u256 {
-            self.erc4626.convert_to_assets(shares)
+            self._convert_to_assets(shares, false)
         }
 
         fn convert_to_shares(self: @ContractState, assets: u256) -> u256 {
-            self.erc4626.convert_to_shares(assets)
+            self._convert_to_shares(assets, false)
         }
         // Overriden
         fn deposit(ref self: ContractState, assets: u256, receiver: ContractAddress) -> u256 {
             let last_vault_balance = self.last_vault_balance.read();
             self.last_vault_balance.write(last_vault_balance + assets);
-            self.erc4626.deposit(assets, receiver)
+            let max_assets = self.max_deposit(receiver);
+            assert(max_assets >= assets, Errors::EXCEEDED_MAX_DEPOSIT);
+
+            let caller = get_caller_address();
+            let shares = self.preview_deposit(assets);
+            self._deposit(caller, receiver, assets, shares);
+
+            shares
         }
 
         fn mint(ref self: ContractState, shares: u256, receiver: ContractAddress) -> u256 {
-            self.erc4626.mint(shares, receiver)
+            let max_shares = self.max_mint(receiver);
+            assert(max_shares >= shares, Errors::EXCEEDED_MAX_MINT);
+
+            let caller = get_caller_address();
+            let assets = self.preview_mint(shares);
+            self._deposit(caller, receiver, assets, shares);
+
+            assets
         }
 
         fn preview_deposit(self: @ContractState, assets: u256) -> u256 {
-            self.erc4626.preview_deposit(assets)
+            self._convert_to_shares(assets, false)
         }
 
         fn preview_mint(self: @ContractState, shares: u256) -> u256 {
-            self.erc4626.preview_mint(shares)
+            self._convert_to_assets(shares, true)
         }
 
         fn preview_redeem(self: @ContractState, shares: u256) -> u256 {
-            self.erc4626.preview_redeem(shares)
+            self._convert_to_assets(shares, false)
         }
 
         fn preview_withdraw(self: @ContractState, assets: u256) -> u256 {
-            self.erc4626.preview_withdraw(assets)
+            self._convert_to_shares(assets, true)
         }
 
         fn max_deposit(self: @ContractState, receiver: ContractAddress) -> u256 {
@@ -201,35 +248,136 @@ mod ERC4626YieldSharingMock {
         }
 
         fn max_redeem(self: @ContractState, owner: ContractAddress) -> u256 {
-            self.erc4626.max_redeem(owner)
+            self.erc20.balance_of(owner)
         }
 
         fn max_withdraw(self: @ContractState, owner: ContractAddress) -> u256 {
-            self.erc4626.max_withdraw(owner)
+            let balance = self.erc20.balance_of(owner);
+            let shares = self._convert_to_assets(balance, false);
+            shares
         }
         // Overriden
         fn redeem(
             ref self: ContractState, shares: u256, receiver: ContractAddress, owner: ContractAddress
         ) -> u256 {
             self._accrue_yield();
-            self.erc4626.redeem(shares, receiver, owner)
+            let max_shares = self.max_redeem(owner);
+            assert(shares <= max_shares, Errors::EXCEEDED_MAX_REDEEM);
+
+            let caller = get_caller_address();
+            let assets = self.preview_redeem(shares);
+            self._withdraw(caller, receiver, owner, assets, shares);
+            assets
         }
-        // Overriden
+
         fn total_assets(self: @ContractState) -> u256 {
-            self.erc4626.total_assets() - self.get_claimable_fees()
+            let dispatcher = ERC20ABIDispatcher { contract_address: self.ERC4626_asset.read() };
+            dispatcher.balance_of(get_contract_address()) - self.get_claimable_fees()
         }
 
         fn withdraw(
             ref self: ContractState, assets: u256, receiver: ContractAddress, owner: ContractAddress
         ) -> u256 {
-            self.erc4626.withdraw(assets, receiver, owner)
+            let max_assets = self.max_withdraw(owner);
+            assert(assets <= max_assets, Errors::EXCEEDED_MAX_WITHDRAW);
+
+            let caller = get_caller_address();
+            let shares = self.preview_withdraw(assets);
+            self._withdraw(caller, receiver, owner, assets, shares);
+
+            shares
+        }
+    }
+
+    #[abi(embed_v0)]
+    pub impl ERC4626CamelImpl of IERC4626Camel<ContractState> {
+        fn totalSupply(self: @ContractState) -> u256 {
+            ERC4626Impl::total_supply(self)
+        }
+        fn balanceOf(self: @ContractState, account: ContractAddress) -> u256 {
+            ERC4626Impl::balance_of(self, account)
+        }
+        fn transferFrom(
+            ref self: ContractState,
+            sender: ContractAddress,
+            recipient: ContractAddress,
+            amount: u256
+        ) -> bool {
+            ERC4626Impl::transfer_from(ref self, sender, recipient, amount)
+        }
+
+        fn convertToAssets(self: @ContractState, shares: u256) -> u256 {
+            self._convert_to_assets(shares, false)
+        }
+
+        fn convertToShares(self: @ContractState, assets: u256) -> u256 {
+            self._convert_to_shares(assets, false)
+        }
+
+        fn previewDeposit(self: @ContractState, assets: u256) -> u256 {
+            self._convert_to_shares(assets, false)
+        }
+
+        fn previewMint(self: @ContractState, shares: u256) -> u256 {
+            self._convert_to_assets(shares, true)
+        }
+
+        fn previewRedeem(self: @ContractState, shares: u256) -> u256 {
+            self._convert_to_assets(shares, false)
+        }
+
+        fn previewWithdraw(self: @ContractState, assets: u256) -> u256 {
+            self._convert_to_shares(assets, true)
+        }
+
+        fn totalAssets(self: @ContractState) -> u256 {
+            self.total_assets()
+        }
+
+        fn maxDeposit(self: @ContractState, receiver: ContractAddress) -> u256 {
+            BoundedInt::max()
+        }
+
+        fn maxMint(self: @ContractState, receiver: ContractAddress) -> u256 {
+            BoundedInt::max()
+        }
+
+        fn maxRedeem(self: @ContractState, owner: ContractAddress) -> u256 {
+            self.max_redeem(owner)
+        }
+
+        fn maxWithdraw(self: @ContractState, owner: ContractAddress) -> u256 {
+            self.max_withdraw(owner)
+        }
+    }
+
+    fn pow_256(self: u256, mut exponent: u8) -> u256 {
+        if self == 0 {
+            return 0;
+        }
+        let mut result = 1;
+        let mut base = self;
+
+        loop {
+            if exponent & 1 == 1 {
+                result = result * base;
+            }
+
+            exponent = exponent / 2;
+            if exponent == 0 {
+                break result;
+            }
+
+            base = base * base;
         }
     }
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn _accrue_yield(ref self: ContractState) {
-            let new_vault_balance = IERC20Dispatcher { contract_address: self.erc4626.asset() }
+            let new_vault_balance = ERC20ABIDispatcher {
+                contract_address: self.ERC4626_asset.read()
+            }
                 .balance_of(get_contract_address());
             let last_vault_balance = self.last_vault_balance.read();
             if new_vault_balance > last_vault_balance {
@@ -240,5 +388,71 @@ mod ERC4626YieldSharingMock {
                 self.last_vault_balance.write(new_vault_balance);
             }
         }
+
+        fn _convert_to_assets(self: @ContractState, shares: u256, round: bool) -> u256 {
+            let total_assets = ERC4626Impl::total_assets(self) + 1;
+            let total_shares = ERC4626Impl::total_supply(self)
+                + pow_256(10, self.ERC4626_offset.read());
+            let assets = shares * total_assets / total_shares;
+            if round && ((assets * total_shares) / total_assets < shares) {
+                assets + 1
+            } else {
+                assets
+            }
+        }
+
+        fn _convert_to_shares(self: @ContractState, assets: u256, round: bool) -> u256 {
+            let total_assets = ERC4626Impl::total_assets(self) + 1;
+            let total_shares = ERC4626Impl::total_supply(self)
+                + pow_256(10, self.ERC4626_offset.read());
+            let share = assets * total_shares / total_assets;
+            if round && ((share * total_assets) / total_shares < assets) {
+                share + 1
+            } else {
+                share
+            }
+        }
+
+        fn _deposit(
+            ref self: ContractState,
+            caller: ContractAddress,
+            receiver: ContractAddress,
+            assets: u256,
+            shares: u256
+        ) {
+            let dispatcher = ERC20ABIDispatcher { contract_address: self.ERC4626_asset.read() };
+            dispatcher.transfer_from(caller, get_contract_address(), assets);
+            self.erc20.mint(receiver, shares);
+            self.emit(Deposit { sender: caller, owner: receiver, assets, shares });
+        }
+
+        fn _withdraw(
+            ref self: ContractState,
+            caller: ContractAddress,
+            receiver: ContractAddress,
+            owner: ContractAddress,
+            assets: u256,
+            shares: u256
+        ) {
+            if (caller != owner) {
+                let allowance = self.erc20.allowance(owner, caller);
+                if (allowance != BoundedInt::max()) {
+                    assert(allowance >= shares, ERC20Component::Errors::APPROVE_FROM_ZERO);
+                    self.erc20.ERC20_allowances.write((owner, caller), allowance - shares);
+                }
+            }
+
+            self.erc20.burn(owner, shares);
+
+            let dispatcher = ERC20ABIDispatcher { contract_address: self.ERC4626_asset.read() };
+            dispatcher.transfer(receiver, assets);
+
+            self.emit(Withdraw { sender: caller, receiver, owner, assets, shares });
+        }
+
+        fn _decimals_offset(self: @ContractState) -> u8 {
+            self.ERC4626_offset.read()
+        }
     }
 }
+

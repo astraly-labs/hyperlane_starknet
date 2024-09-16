@@ -403,11 +403,10 @@ fn test_withdrawal_after_drawdown() {
     // decrease collateral in vault by 10%
     let drawdown = 5 * E18;
     start_prank(
-        CheatTarget::One(remote_rebasing_token.contract_address),
-        yield_sharing_vault.contract_address
+        CheatTarget::One(setup.primary_token.contract_address), yield_sharing_vault.contract_address
     );
     setup.primary_token.burn(drawdown);
-    stop_prank(CheatTarget::One(remote_rebasing_token.contract_address));
+    stop_prank(CheatTarget::One(setup.primary_token.contract_address));
 
     local_rebasing_token.rebase(DESTINATION, 0);
     setup.remote_mailbox.process_next_inbound_message();

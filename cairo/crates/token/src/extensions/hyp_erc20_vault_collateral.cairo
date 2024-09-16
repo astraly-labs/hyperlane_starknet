@@ -1,5 +1,5 @@
 #[starknet::interface]
-trait IHypErc20VaultCollateral<TContractState> {
+pub trait IHypErc20VaultCollateral<TContractState> {
     fn rebase(ref self: TContractState, destination_domain: u32, value: u256);
     // getters 
     fn get_vault(self: @TContractState) -> starknet::ContractAddress;
@@ -116,11 +116,13 @@ mod HypErc20VaultCollateral {
         mailbox: ContractAddress,
         vault: ContractAddress,
         owner: ContractAddress,
-        hook: Option<ContractAddress>,
-        interchain_security_module: Option<ContractAddress>
+        hook: ContractAddress,
+        interchain_security_module: ContractAddress
     ) {
         self.ownable.initializer(owner);
-        self.mailbox.initialize(mailbox, hook, interchain_security_module);
+        self
+            .mailbox
+            .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         let vault_dispatcher = ERC4626ABIDispatcher { contract_address: vault };
         let erc20 = vault_dispatcher.asset();
         self.collateral.initialize(erc20);
@@ -165,11 +167,31 @@ mod HypErc20VaultCollateral {
             let mut token_metadata: Bytes = BytesTrait::new_empty();
             token_metadata.append_u256(exchange_rate);
             let token_message = TokenMessageTrait::format(recipient, shares, token_metadata);
-            let message_id = contract_state
-                .router
-                ._Router_dispatch(
-                    destination, value, token_message, hook_metadata.unwrap(), hook.unwrap()
-                );
+            let mut message_id = 0;
+
+            match hook_metadata {
+                Option::Some(hook_metadata) => {
+                    if !hook.is_some() {
+                        panic!("Transfer remote invalid arguments, missing hook");
+                    }
+
+                    message_id = contract_state
+                        .router
+                        ._Router_dispatch(
+                            destination, value, token_message, hook_metadata, hook.unwrap()
+                        );
+                },
+                Option::None => {
+                    let hook_metadata = contract_state
+                        .gas_router
+                        ._Gas_router_hook_metadata(destination);
+                    let hook = contract_state.mailbox.get_hook();
+                    message_id = contract_state
+                        .router
+                        ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
+                }
+            }
+
             self
                 .emit(
                     TokenRouterComponent::SentTransferRemote {
@@ -232,7 +254,7 @@ mod HypErc20VaultCollateral {
                 );
         }
     }
-
+    #[abi(embed_v0)]
     impl HypeErc20VaultCollateral of super::IHypErc20VaultCollateral<ContractState> {
         /// Rebases the vault collateral and sends a message to a remote domain.
         ///

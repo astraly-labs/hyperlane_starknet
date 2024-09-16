@@ -1,5 +1,5 @@
 #[starknet::interface]
-trait IHypErc20Vault<TContractState> {
+pub trait IHypErc20Vault<TContractState> {
     fn assets_to_shares(self: @TContractState, amount: u256) -> u256;
     fn shares_to_assets(self: @TContractState, shares: u256) -> u256;
     fn share_balance_of(self: @TContractState, account: starknet::ContractAddress) -> u256;
@@ -18,6 +18,8 @@ mod HypErc20Vault {
         RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait
     };
     use contracts::libs::math;
+    use core::option::OptionTrait;
+    use core::traits::TryInto;
     use core::zeroable::NonZero;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{

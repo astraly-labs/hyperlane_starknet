@@ -20,8 +20,8 @@ use mocks::{
 };
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
-    declare, ContractClassTrait, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn,
-    start_prank, stop_prank, EventFetcher, event_name_hash
+    declare, ContractClassTrait, ContractClass, CheatTarget, EventSpy, EventAssertions, spy_events,
+    SpyOn, start_prank, stop_prank, EventFetcher, event_name_hash
 };
 use starknet::ContractAddress;
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
@@ -49,10 +49,10 @@ pub fn ALICE() -> ContractAddress {
 pub fn BOB() -> ContractAddress {
     starknet::contract_address_const::<0x2>()
 }
-fn CAROL() -> ContractAddress {
+pub fn CAROL() -> ContractAddress {
     starknet::contract_address_const::<0x3>()
 }
-fn DANIEL() -> ContractAddress {
+pub fn DANIEL() -> ContractAddress {
     starknet::contract_address_const::<0x4>()
 }
 fn PROXY_ADMIN() -> ContractAddress {
@@ -130,6 +130,8 @@ pub struct Setup {
     pub local_token: IHypERC20TestDispatcher,
     pub igp: ITestInterchainGasPaymentDispatcher,
     pub erc20_token: ITestERC20Dispatcher,
+    pub eth_token: MockEthDispatcher,
+    pub mock_mailbox_contract: ContractClass
 }
 
 pub fn setup() -> Setup {
@@ -144,11 +146,11 @@ pub fn setup() -> Setup {
     let mut calldata: Array<felt252> = array![];
     starknet::get_contract_address().serialize(ref calldata);
     let (eth_address, _) = contract.deploy(@calldata).unwrap();
-    let eth = MockEthDispatcher { contract_address: eth_address };
-    eth.mint(ALICE(), 10 * E18);
+    let eth_token = MockEthDispatcher { contract_address: eth_address };
+    eth_token.mint(ALICE(), 10 * E18);
 
-    let contract = declare("MockMailbox").unwrap();
-    let (local_mailbox, _) = contract
+    let mock_mailbox_contract = declare("MockMailbox").unwrap();
+    let (local_mailbox, _) = mock_mailbox_contract
         .deploy(
             @array![
                 ORIGIN.into(),
@@ -160,7 +162,7 @@ pub fn setup() -> Setup {
         .unwrap();
     let local_mailbox = IMockMailboxDispatcher { contract_address: local_mailbox };
 
-    let (remote_mailbox, _) = contract
+    let (remote_mailbox, _) = mock_mailbox_contract
         .deploy(
             @array![
                 DESTINATION.into(),
@@ -219,6 +221,15 @@ pub fn setup() -> Setup {
     let (remote_token, _) = hyp_erc20_contract.deploy(@calldata).unwrap();
     let remote_token = IHypERC20TestDispatcher { contract_address: remote_token };
 
+    let mut calldata: Array<felt252> = array![];
+    DECIMALS.serialize(ref calldata);
+    local_mailbox.contract_address.serialize(ref calldata);
+    TOTAL_SUPPLY.serialize(ref calldata);
+    NAME().serialize(ref calldata);
+    SYMBOL().serialize(ref calldata);
+    noop_hook.contract_address.serialize(ref calldata);
+    igp.contract_address.serialize(ref calldata);
+    starknet::get_contract_address().serialize(ref calldata);
     let (local_token, _) = hyp_erc20_contract.deploy(@calldata).unwrap();
     let local_token = IHypERC20TestDispatcher { contract_address: local_token };
 
@@ -237,6 +248,8 @@ pub fn setup() -> Setup {
         local_token,
         igp,
         erc20_token,
+        eth_token,
+        mock_mailbox_contract
     }
 }
 

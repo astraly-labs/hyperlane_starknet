@@ -18,8 +18,6 @@ mod HypErc20Vault {
         RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait
     };
     use contracts::libs::math;
-    use core::option::OptionTrait;
-    use core::traits::TryInto;
     use core::zeroable::NonZero;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{

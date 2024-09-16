@@ -22,7 +22,7 @@ jobs:
 
       - name: Build contracts
         run: |
-          cd contracts && scarb build
+          cd cairo && scarb build
 
       - name: Build the rust code
         run: |

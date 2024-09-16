@@ -7,7 +7,7 @@ jobs:
   contracts:
     runs-on: ubuntu-latest
     env:
-      working-directory: ./contracts
+      working-directory: ./cairo
     steps:
       - uses: actions/checkout@v3
 

@@ -1,7 +1,7 @@
 use mocks::mock_mailbox::{IMockMailboxDispatcher, IMockMailboxDispatcherTrait};
 use mocks::{test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},};
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{declare, CheatTarget, start_prank, stop_prank, ContractClass, ContractClassTrait};
+use snforge_std::{declare, ContractClassTrait, CheatTarget, start_prank, stop_prank,};
 use starknet::ContractAddress;
 use super::super::hyp_erc20::common::{
     Setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, ALICE, BOB, E18, REQUIRED_VALUE,
@@ -69,7 +69,6 @@ fn setup_vault() -> (Setup, IERC4626Dispatcher, IHypERC20CollateralVaultDepositD
     setup.noop_hook.contract_address.serialize(ref calldata);
     setup.implementation.interchain_security_module().serialize(ref calldata);
     let (implementation, _) = contract.deploy(@calldata).unwrap();
-
     setup.local_token = IHypERC20TestDispatcher { contract_address: implementation };
     setup
         .local_token

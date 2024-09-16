@@ -50,7 +50,7 @@ The implementation guidelines can be found [here](https://docs.hyperlane.xyz/doc
 |  Aggregation ISM | ✅ |  
 |  Routing ISM | ✅ |  
 |  Interchain Gas Payment | ❌ |  
-|  Warp Routes | ❌ |  
+|  Warp Routes | ✅ |  
 
 
 ## Project structure

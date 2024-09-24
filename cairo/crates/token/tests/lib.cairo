@@ -14,7 +14,7 @@ pub mod hyp_erc721 {
     pub mod hyp_erc721_test;
     pub mod hyp_erc721_uri_storage_test;
 }
-
 pub mod vault_extensions {
     pub mod hyp_erc20_collateral_vault_deposit_test;
+    pub mod hyp_erc20_vault_test;
 }

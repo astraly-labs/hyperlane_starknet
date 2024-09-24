@@ -1,5 +1,5 @@
 #[starknet::interface]
-trait IHypErc20Vault<TContractState> {
+pub trait IHypErc20Vault<TContractState> {
     fn assets_to_shares(self: @TContractState, amount: u256) -> u256;
     fn shares_to_assets(self: @TContractState, shares: u256) -> u256;
     fn share_balance_of(self: @TContractState, account: starknet::ContractAddress) -> u256;

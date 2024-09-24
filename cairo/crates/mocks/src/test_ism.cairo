@@ -1,9 +1,9 @@
 use alexandria_bytes::Bytes;
-
+use contracts::libs::message::Message;
 #[starknet::interface]
 pub trait ITestISM<TContractState> {
     fn set_verify(ref self: TContractState, verify: bool);
-    fn verify(ref self: TContractState, calldata: Bytes, _calldata: Bytes) -> bool;
+    fn verify(self: @TContractState, _metadata: Bytes, _message: Message) -> bool;
 }
 
 #[starknet::contract]
@@ -27,7 +27,7 @@ pub mod TestISM {
             self.verify_result.write(verify);
         }
 
-        fn verify(ref self: ContractState, calldata: Bytes, _calldata: Bytes) -> bool {
+        fn verify(self: @ContractState, _metadata: Bytes, _message: super::Message) -> bool {
             self.verify_result.read()
         }
     }

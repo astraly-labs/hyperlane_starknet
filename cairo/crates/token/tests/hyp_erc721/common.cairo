@@ -223,6 +223,9 @@ pub fn setup() -> Setup {
     let (alice, _) = contract.deploy(@array![PUB_KEY]).unwrap();
     let (bob, _) = contract.deploy(@array![PUB_KEY]).unwrap();
 
+    local_mailbox.add_remote_mail_box(DESTINATION, remote_mailbox.contract_address);
+    remote_mailbox.add_remote_mail_box(ORIGIN, local_mailbox.contract_address);
+
     Setup {
         local_primary_token,
         remote_primary_token,

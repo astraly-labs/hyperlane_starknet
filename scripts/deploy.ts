@@ -5,7 +5,7 @@ import {
   Provider,
   CallData,
   RpcProvider,
-  ContractFactory, 
+  ContractFactory,
   ContractFactoryParams
 } from "starknet";
 import fs from "fs";
@@ -14,13 +14,13 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const BUILD_PATH = "../cairo/target/dev/hyperlane_starknet";
+const BUILD_PATH = "../cairo/target/dev/contracts";
+const MOCK_BUILD_PATH = "../cairo/target/dev/mocks";
 const ACCOUNT_ADDRESS = process.env.ACCOUNT_ADDRESS;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const CONFIG_FILE = "contract_config.json";
-const NETWORK = process.env.NETWORK
-const DEPLOYED_CONTRACTS_FILE = path.join('deployments', `${NETWORK}_deployed_contracts.json`);
-
+const CONFIGS_DIR = 'configs';
+const DEPLOYMENTS_DIR = 'deployments';
+const NETWORK = process.env.NETWORK;
 
 interface DeployedContracts {
   [key: string]: string;
@@ -34,6 +34,54 @@ interface ContractConfig {
 interface Config {
   contracts: Record<string, ContractConfig>;
   deploymentOrder: string[];
+}
+
+function getConfigPath(network: string): string {
+  if (!network) {
+    throw new Error('NETWORK environment variable is not set');
+  }
+
+  const configFileName = `${network.toLowerCase()}.json`;
+  const configPath = path.join(CONFIGS_DIR, configFileName);
+
+  if (!fs.existsSync(configPath)) {
+    throw new Error(`Config file not found for network ${network} at ${configPath}`);
+  }
+
+  return configPath;
+}
+
+function ensureNetworkDirectory(network: string): string {
+  if (!network) {
+    throw new Error('NETWORK environment variable is not set');
+  }
+
+  // Create main deployments directory if it doesn't exist
+  if (!fs.existsSync(DEPLOYMENTS_DIR)) {
+    fs.mkdirSync(DEPLOYMENTS_DIR);
+  }
+
+  // Create network-specific subdirectory
+  const networkDir = path.join(DEPLOYMENTS_DIR, network);
+  if (!fs.existsSync(networkDir)) {
+    fs.mkdirSync(networkDir);
+  }
+
+  return networkDir;
+}
+
+function findContractFile(name: string, suffix: string): string {
+  const mainPath = `${BUILD_PATH}_${name}${suffix}`;
+  const mockPath = `${MOCK_BUILD_PATH}_${name}${suffix}`;
+
+  if (fs.existsSync(mainPath)) {
+    return mainPath;
+  } else if (fs.existsSync(mockPath)) {
+    console.log(`Using mock contract for ${name} from ${mockPath}`);
+    return mockPath;
+  }
+
+  throw new Error(`Contract file not found for ${name} with suffix ${suffix} in either ${BUILD_PATH} or ${MOCK_BUILD_PATH}`);
 }
 
 async function buildAccount(): Promise<Account> {
@@ -50,12 +98,12 @@ async function buildAccount(): Promise<Account> {
 }
 
 function getCompiledContract(name: string): any {
-  const contractPath = `${BUILD_PATH}_${name}.contract_class.json`;
+  const contractPath = findContractFile(name, '.contract_class.json');
   return json.parse(fs.readFileSync(contractPath).toString("ascii"));
 }
 
 function getCompiledContractCasm(name: string): any {
-  const contractPath = `${BUILD_PATH}_${name}.compiled_contract_class.json`;
+  const contractPath = findContractFile(name, '.compiled_contract_class.json');
   return json.parse(fs.readFileSync(contractPath).toString("ascii"));
 }
 
@@ -88,7 +136,7 @@ async function deployContract(
   deployedContracts: DeployedContracts
 ): Promise<string> {
   console.log(`Deploying contract ${contractName}...`);
-  
+
   const compiledContract = getCompiledContract(contractName);
   const casm = getCompiledContractCasm(contractName);
   const processedArgs = processConstructorArgs(constructorArgs, deployedContracts);
@@ -99,7 +147,8 @@ async function deployContract(
     casm
   };
 
-  const contractFactory = new ContractFactory(params);  const contract = await contractFactory.deploy(constructorCalldata);
+  const contractFactory = new ContractFactory(params);
+  const contract = await contractFactory.deploy(constructorCalldata);
 
   console.log(`Contract ${contractName} deployed at address:`, contract.address);
 
@@ -108,15 +157,27 @@ async function deployContract(
 
 async function deployContracts(): Promise<DeployedContracts> {
   try {
+    if (!NETWORK) {
+      throw new Error('NETWORK environment variable is not set');
+    }
+
     const account = await buildAccount();
-    const config: Config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+
+    // Get network-specific config file
+    const configPath = getConfigPath(NETWORK);
+    const config: Config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
     const deployedContracts: DeployedContracts = {};
+
+    // Ensure network directory exists and set up deployment file path
+    const networkDir = ensureNetworkDirectory(NETWORK);
+    const deploymentsFile = path.join(networkDir, 'deployments.json');
 
     for (const contractName of config.deploymentOrder) {
       const address = await deployContract(
-        account, 
-        contractName, 
-        config.contracts[contractName].constructor, 
+        account,
+        contractName,
+        config.contracts[contractName].constructor,
         deployedContracts
       );
       deployedContracts[contractName] = address;
@@ -125,8 +186,9 @@ async function deployContracts(): Promise<DeployedContracts> {
     console.log("All contracts deployed successfully:");
     console.log(deployedContracts);
 
-    fs.writeFileSync(DEPLOYED_CONTRACTS_FILE, JSON.stringify(deployedContracts, null, 2));
-    console.log(`Deployed contracts saved to ${DEPLOYED_CONTRACTS_FILE}`);
+    // Write deployments to network-specific file
+    fs.writeFileSync(deploymentsFile, JSON.stringify(deployedContracts, null, 2));
+    console.log(`Deployed contracts saved to ${deploymentsFile}`);
 
     return deployedContracts;
   } catch (error) {

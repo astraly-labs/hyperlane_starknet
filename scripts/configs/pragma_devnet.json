@@ -100,7 +100,7 @@
             "constructor": {
                 "local_domain": {
                     "type": "u32",
-                    "value": "23448591"
+                    "value": "6363709"
                 },
                 "owner": {
                     "type": "ContractAddress",

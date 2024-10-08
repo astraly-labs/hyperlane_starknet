@@ -36,7 +36,6 @@ pub mod RouterComponent {
     #[storage]
     struct Storage {
         routers: EnumerableMap<u32, u256>,
-        gas_router: ContractAddress,
     }
 
     mod Err {

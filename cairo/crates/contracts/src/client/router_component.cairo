@@ -54,7 +54,7 @@ pub mod RouterComponent {
     pub impl Router<
         TContractState,
         +HasComponent<TContractState>,
-        +MailboxclientComponent::HasComponent<TContractState>,
+        impl MailboxClient: MailboxclientComponent::HasComponent<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>,
         +Drop<TContractState>,
         impl Hook: IMessageRecipientInternalHookTrait<TContractState>
@@ -131,7 +131,9 @@ pub mod RouterComponent {
         /// # Arguments
         ///
         /// * `domains` - An array of `u32` values representing the domains for which routers are being unenrolled.
-        fn unenroll_remote_routers(ref self: ComponentState<TContractState>, domains: Array<u32>,) {
+        fn unenroll_remote_routers(ref self: ComponentState<TContractState>, domains: Array<u32>) {
+            let ownable_comp = get_dep_component!(@self, Owner);
+            ownable_comp.assert_only_owner();
             let domains_len = domains.len();
             let mut i = 0;
             while i < domains_len {
@@ -158,6 +160,8 @@ pub mod RouterComponent {
         fn handle(
             ref self: ComponentState<TContractState>, origin: u32, sender: u256, message: Bytes
         ) {
+            let mailbox_client_comp = get_dep_component!(@self, MailboxClient);
+            mailbox_client_comp.assert_only_mailbox();
             let router = self._must_have_remote_router(origin);
             assert!(router == sender, "Enrolled router does not match sender");
 

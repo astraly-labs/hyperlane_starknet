@@ -156,25 +156,6 @@ pub trait IMailboxClient<TContractState> {
     fn _is_delivered(self: @TContractState, _id: u256) -> bool;
 
     fn mailbox(self: @TContractState) -> ContractAddress;
-
-    fn _dispatch(
-        self: @TContractState,
-        _destination_domain: u32,
-        _recipient: u256,
-        _message_body: Bytes,
-        _fee_amount: u256,
-        _hook_metadata: Option<Bytes>,
-        _hook: Option<ContractAddress>
-    ) -> u256;
-
-    fn quote_dispatch(
-        self: @TContractState,
-        _destination_domain: u32,
-        _recipient: u256,
-        _message_body: Bytes,
-        _hook_metadata: Option<Bytes>,
-        _hook: Option<ContractAddress>
-    ) -> u256;
 }
 
 

@@ -18,6 +18,7 @@ pub mod MailboxclientComponent {
 
     pub mod Errors {
         pub const ADDRESS_CANNOT_BE_ZERO: felt252 = 'Address cannot be zero';
+        pub const CALLER_NOT_MAILBOX: felt252 = 'Caller not mailbox';
     }
 
     #[embeddable_as(MailboxClientImpl)]
@@ -117,71 +118,6 @@ pub mod MailboxclientComponent {
             let mailbox: IMailboxDispatcher = self.mailbox.read();
             mailbox.contract_address
         }
-
-        /// Dispatches a message to the destination domain & recipient.
-        /// 
-        /// # Arguments
-        /// 
-        /// * - `_destination_domain` Domain of destination chain
-        /// * - `_recipient` Address of recipient on destination chain
-        /// * - `_message_body` Bytes content of message body
-        /// * - `_fee_amount` - the payment provided for sending the message
-        /// * - `_hook_metadata` Metadata used by the post dispatch hook
-        /// * - `_hook` Custom hook to use instead of the default
-        /// 
-        /// # Returns 
-        /// 
-        /// u256 - The message ID inserted into the Mailbox's merkle tree
-        fn _dispatch(
-            self: @ComponentState<TContractState>,
-            _destination_domain: u32,
-            _recipient: u256,
-            _message_body: Bytes,
-            _fee_amount: u256,
-            _hook_metadata: Option<Bytes>,
-            _hook: Option<ContractAddress>
-        ) -> u256 {
-            self
-                .mailbox
-                .read()
-                .dispatch(
-                    _destination_domain,
-                    _recipient,
-                    _message_body,
-                    _fee_amount,
-                    _hook_metadata,
-                    _hook
-                )
-        }
-
-        /// Computes quote for dispatching a message to the destination domain & recipient.
-        /// 
-        /// # Arguments
-        /// 
-        /// * - `_destination_domain` Domain of destination chain
-        /// * - `_recipient` Address of recipient on destination chain
-        /// * - `_message_body` Bytes content of message body
-        /// * - `_hook_metadata` Metadata used by the post dispatch hook
-        /// * - `_hook` Custom hook to use instead of the default
-        /// 
-        /// # Returns 
-        /// 
-        /// u256 - The payment required to dispatch the message
-        fn quote_dispatch(
-            self: @ComponentState<TContractState>,
-            _destination_domain: u32,
-            _recipient: u256,
-            _message_body: Bytes,
-            _hook_metadata: Option<Bytes>,
-            _hook: Option<ContractAddress>
-        ) -> u256 {
-            self
-                .mailbox
-                .read()
-                .quote_dispatch(
-                    _destination_domain, _recipient, _message_body, _hook_metadata, _hook
-                )
-        }
     }
 
     #[generate_trait]
@@ -209,6 +145,16 @@ pub mod MailboxclientComponent {
             if let Option::Some(ism) = _interchain_security_module {
                 self.interchain_security_module.write(ism);
             }
+        }
+
+        /// Panics if caller is not the 'mailbox'. 
+        /// Use this to restrict access to certain functions to the `mailbox`.
+        fn assert_only_mailbox(self: @ComponentState<TContractState>) {
+            let mailbox: IMailboxDispatcher = self.mailbox.read();
+            assert(
+                starknet::get_caller_address() == mailbox.contract_address,
+                Errors::CALLER_NOT_MAILBOX
+            );
         }
     }
 }

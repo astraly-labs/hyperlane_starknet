@@ -37,6 +37,11 @@ pub mod HypErc20CollateralComponent {
         wrapped_token: ERC20ABIDispatcher
     }
 
+    pub mod Errors {
+        pub const ERC20_TRANSFER_FAILED: felt252 = 'ERC20 transfer failed';
+        pub const ERC20_TRANSFER_FROM_FAILED: felt252 = 'ERC20 transfer_from failed';
+    }
+
     pub impl TokenRouterHooksImpl<
         TContractState,
         +HasComponent<TContractState>,
@@ -123,20 +128,28 @@ pub mod HypErc20CollateralComponent {
         }
 
         fn _transfer_from_sender(ref self: ComponentState<TContractState>, amount: u256) -> Bytes {
-            self
-                .wrapped_token
-                .read()
-                .transfer_from(
-                    starknet::get_caller_address(), starknet::get_contract_address(), amount
-                );
+            assert(
+                self
+                    .wrapped_token
+                    .read()
+                    .transfer_from(
+                        starknet::get_caller_address(), starknet::get_contract_address(), amount
+                    ),
+                Errors::ERC20_TRANSFER_FROM_FAILED
+            );
             BytesTrait::new_empty()
         }
 
         fn _transfer_to(ref self: ComponentState<TContractState>, recipient: u256, amount: u256) {
-            self
-                .wrapped_token
-                .read()
-                .transfer(recipient.try_into().expect('u256 to ContractAddress failed'), amount);
+            assert(
+                self
+                    .wrapped_token
+                    .read()
+                    .transfer(
+                        recipient.try_into().expect('u256 to ContractAddress failed'), amount
+                    ),
+                Errors::ERC20_TRANSFER_FAILED
+            );
         }
     }
 }

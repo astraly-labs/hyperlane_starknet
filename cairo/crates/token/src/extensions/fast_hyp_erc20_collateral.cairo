@@ -180,11 +180,16 @@ pub mod FastHypERC20Collateral {
             let mut contract_state = FastTokenRouterComponent::HasComponent::get_contract_mut(
                 ref self
             );
-            contract_state
-                .collateral
-                .wrapped_token
-                .read()
-                .transfer(recipient.try_into().expect('u256 to ContractAddress failed'), amount);
+            assert(
+                contract_state
+                    .collateral
+                    .wrapped_token
+                    .read()
+                    .transfer(
+                        recipient.try_into().expect('u256 to ContractAddress failed'), amount
+                    ),
+                'ERC20 transfer failed'
+            );
         }
 
         /// Receives tokens from the sender as part of the fast token router process.
@@ -204,11 +209,14 @@ pub mod FastHypERC20Collateral {
             let mut contract_state = FastTokenRouterComponent::HasComponent::get_contract_mut(
                 ref self
             );
-            contract_state
-                .collateral
-                .wrapped_token
-                .read()
-                .transfer_from(sender, starknet::get_contract_address(), amount);
+            assert(
+                contract_state
+                    .collateral
+                    .wrapped_token
+                    .read()
+                    .transfer_from(sender, starknet::get_contract_address(), amount),
+                'ERC20 transfer_from failed'
+            );
         }
     }
 }

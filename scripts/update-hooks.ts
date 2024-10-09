@@ -6,8 +6,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const NETWORK = process.env.NETWORK;
-const DEFAULT_HOOK = "0x2a155aac0327e9a2e84052615577c62f4059245008efa4a7b07fa0dedfa1cb5";
-const REQUIRED_HOOK = "0x2a155aac0327e9a2e84052615577c62f4059245008efa4a7b07fa0dedfa1cb5";
+const DEFAULT_HOOK = "0x3531fcf312035d230bc0e68fc0198457f44a82d0f1f67f418b227b80788a390";
+const REQUIRED_HOOK = "0x3531fcf312035d230bc0e68fc0198457f44a82d0f1f67f418b227b80788a390";
 
 async function updateHooks(): Promise<void> {
     try {

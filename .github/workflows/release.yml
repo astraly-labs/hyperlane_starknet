@@ -13,7 +13,7 @@ jobs:
     name: artifact
     runs-on: ubuntu-latest
     env:
-      working-directory: ./contracts
+      working-directory: ./cairo
     steps:
       - uses: actions/checkout@v4
       - uses: software-mansion/setup-scarb@v1
@@ -54,6 +54,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./contracts/hyperlane-starknet-${{ github.ref_name }}.zip
-            ./contracts/hyperlane-starknet-${{ github.ref_name }}.CHECKSUM
-            ./contracts/hyperlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
+            ./cairo/hyperlane-starknet-${{ github.ref_name }}.zip
+            ./cairo/hyperlane-starknet-${{ github.ref_name }}.CHECKSUM
+            ./cairo/hyperlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5

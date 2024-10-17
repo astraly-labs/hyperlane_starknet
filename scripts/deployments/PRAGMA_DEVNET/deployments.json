@@ -1,15 +1,15 @@
 {
-  "merkleroot_multisig_ism": "0xb2d90f230c653fe4cd70c33acceab59b5a3a02484c51d2eff413a243d2a86b",
-  "messageid_multisig_ism": "0x53e2587a4c87e1a64a74a081633702db92318aa61ccb81fd9cf14daecc6d492",
-  "domain_routing_ism": "0x62c2d617f3d18fe457722ddcc87234d8bcbaca903022a35be1c7b1555f2f22e",
-  "noop_ism": "0x68f4f40e70ca22c57092a0e5119173ad2770594213ef6ea890967c3695d505d",
-  "pausable_ism": "0x661aad1ff8ef411a41f7adda6cced589d3599037294fe16f80cd7f89f778f66",
-  "aggregation": "0x6746609d234b008e156ce5068163c15b09cd07ace4d6539353fb64e7a87158",
-  "protocol_fee": "0x2bd2961a06f1acf8731c8605dfa3482162499f6bf55262ff35fa7428c547b9b",
-  "hook": "0x5356a792d7d0cfa68981e628d8d4d1923a8a73dd989d30b969d3368854468c8",
-  "mailbox": "0x5bfb1a565a1fa2eb33c5d8e587a7aeb5e6846d3aadf9fecb529ace1e3457096",
-  "merkle_tree_hook": "0x1520c48d7aced426c41e8b71587add7fb64c9945115d3ea677a49f45ddf81e3",
-  "default_fallback_routing_ism": "0x79f951180eaf2c8997bb4749b37c37cb898fb0cba0f398d6a8fe26a6e3ffb4e",
-  "trusted_relayer_ism": "0x3f90f55d0f865527e6eb2c47d6e429d1ac17fbea597bcc36e73e56874cd61c1",
-  "validator_announce": "0x22245997c5f4f5e6eb13764be91de00b4299147ce7f516dbad925c7aeb69d3"
+  "merkleroot_multisig_ism": "0x73a8852042455fbba6bd1416f34f14771e5b641656acc3f978bcebb9d049785",
+  "messageid_multisig_ism": "0x43c386192f8e1111dec42c421b3b8263b9857da1fc1f9e4b5a5fc7d3b597ab7",
+  "domain_routing_ism": "0x597086c829adb3d90590ae826ac9271c2229655d53b837da63a0970c2b1daf4",
+  "noop_ism": "0x479ed3231bc9af37867c76112f36593da13435f71d2bccf840fbf9efe88a2ef",
+  "pausable_ism": "0x365a375ba248f03f41845bf990c1fcacedbc3ffb37eedbfa92756887caf03f8",
+  "aggregation": "0x55989eb1bab206cf8cc11e505062464c11fdfdddda9947ede6fdac24f4f858",
+  "protocol_fee": "0x5ce93a6d916a4f6f9006d7fb52397d280efcaf9b205bda621d83f77b4fc7123",
+  "hook": "0x7dc36e94ba602cd50e429f5c197a45289f21a6f8d3f342e5341950585c9c869",
+  "mailbox": "0x26e76ecc3dda4a22624c40f9a2aa63c6137f233c3a17d979e3edd5c8d6347ce",
+  "merkle_tree_hook": "0x419e2af9a3c20b33d146a813d46f7578748c8a384a414c2e9695e5738f4f743",
+  "default_fallback_routing_ism": "0x43b2ea929dfbd5a2f1d3e49978dd1825bba7bc571eb3a6fc09d50f53d97940c",
+  "trusted_relayer_ism": "0xacf0617e5635882a5bc18ad96248263fa3aba399571879f0579602ca29a422",
+  "validator_announce": "0x1f4d0450cf9956fa33026ca10c80f30179c1e44ec973ce24a93884085aee943"
 }

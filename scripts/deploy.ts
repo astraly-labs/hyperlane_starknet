@@ -160,14 +160,21 @@ async function deployContracts(): Promise<DeployedContracts> {
     const deploymentsFile = path.join(networkDir, 'deployments.json');
 
     for (const contractName of config.deploymentOrder) {
-      const address = await deployContract(
+      let address = await deployContract(
         account,
         contractName,
         config.contracts[contractName].constructor,
         deployedContracts
       );
+
+      // Ensure the address is 66 characters long (including the '0x' prefix)
+      if (address.length < 66) {
+        address = '0x' + address.slice(2).padStart(64, '0');
+      }
+
       deployedContracts[contractName] = address;
     }
+
 
     console.log("All contracts deployed successfully:");
     console.log(deployedContracts);

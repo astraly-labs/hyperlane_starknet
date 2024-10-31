@@ -153,6 +153,23 @@ pub mod HypNativeScaled {
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut hyp_native_component_state =
+                HypNativeComponent::HasComponent::get_component_mut(
+                ref contract_state
+            );
+            let scaled_amount = amount_or_id * contract_state.scale.read();
+            assert(
+                hyp_native_component_state
+                    .native_token
+                    .read()
+                    .transfer_from(
+                        starknet::get_caller_address(),
+                        starknet::get_contract_address(),
+                        scaled_amount
+                    ),
+                HypNativeComponent::Errors::NATIVE_TOKEN_TRANSFER_FROM_FAILED
+            );
             BytesTrait::new_empty()
         }
 

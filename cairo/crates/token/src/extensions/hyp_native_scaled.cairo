@@ -10,10 +10,7 @@ pub mod HypNativeScaled {
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::{
-        interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait}, ERC20Component,
-        ERC20HooksEmptyImpl
-    };
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
@@ -32,11 +29,7 @@ pub mod HypNativeScaled {
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: HypNativeComponent, storage: hyp_native, event: HypNativeEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
-    component!(path: ERC20Component, storage: erc20, event: ERC20Event);
 
-    // ERC20
-    #[abi(embed_v0)]
-    impl ERC20Impl = ERC20Component::ERC20MixinImpl<ContractState>;
     // Ownable
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
@@ -68,8 +61,6 @@ pub mod HypNativeScaled {
     #[storage]
     struct Storage {
         scale: u256,
-        #[substorage(v0)]
-        erc20: ERC20Component::Storage,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -103,8 +94,6 @@ pub mod HypNativeScaled {
         HypNativeEvent: HypNativeComponent::Event,
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
-        #[flat]
-        ERC20Event: ERC20Component::Event,
     }
 
     #[constructor]

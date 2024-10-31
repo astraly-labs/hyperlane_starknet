@@ -2,7 +2,6 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IHypNative<TState> {
-    // fn balance_of(self: @TState, account: ContractAddress) -> u256;
     fn receive(ref self: TState, amount: u256);
 }
 
@@ -23,9 +22,7 @@ pub mod HypNativeComponent {
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalImpl, OwnableComponent::OwnableImpl
     };
-    use openzeppelin::token::erc20::{
-        interface::{IERC20, ERC20ABIDispatcher, ERC20ABIDispatcherTrait}, ERC20Component
-    };
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use starknet::ContractAddress;
     use token::components::token_message::TokenMessageTrait;
     use token::components::token_router::{
@@ -34,7 +31,6 @@ pub mod HypNativeComponent {
         TokenRouterTransferRemoteHookDefaultImpl
     };
     use token::interfaces::imessage_recipient::IMessageRecipient;
-
 
     #[storage]
     struct Storage {
@@ -66,7 +62,6 @@ pub mod HypNativeComponent {
         +OwnableComponent::HasComponent<TContractState>,
         +RouterComponent::HasComponent<TContractState>,
         +GasRouterComponent::HasComponent<TContractState>,
-        +ERC20Component::HasComponent<TContractState>,
         impl Mailboxclient: MailboxclientComponent::HasComponent<TContractState>,
         impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
     > of super::IHypNative<ComponentState<TContractState>> {
@@ -94,7 +89,6 @@ pub mod HypNativeComponent {
         +OwnableComponent::HasComponent<TContractState>,
         +GasRouterComponent::HasComponent<TContractState>,
         +TokenRouterComponent::HasComponent<TContractState>,
-        +ERC20Component::HasComponent<TContractState>
     > of TokenRouterHooksTrait<TContractState> {
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
@@ -126,7 +120,6 @@ pub mod HypNativeComponent {
         +OwnableComponent::HasComponent<TContractState>,
         impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
         impl TokenRouterComp: TokenRouterComponent::HasComponent<TContractState>,
-        impl ERC20: ERC20Component::HasComponent<TContractState>
     > of ITokenRouter<ComponentState<TContractState>> {
         fn transfer_remote(
             ref self: ComponentState<TContractState>,
@@ -161,7 +154,6 @@ pub mod HypNativeComponent {
         +OwnableComponent::HasComponent<TContractState>,
         +RouterComponent::HasComponent<TContractState>,
         +GasRouterComponent::HasComponent<TContractState>,
-        +ERC20Component::HasComponent<TContractState>,
         impl Mailboxclient: MailboxclientComponent::HasComponent<TContractState>,
         impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {

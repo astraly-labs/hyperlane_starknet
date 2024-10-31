@@ -14,7 +14,7 @@ pub mod HypNativeScaled {
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
-    use token::components::hyp_native_component::{HypNativeComponent};
+    use token::components::hyp_native_component::HypNativeComponent;
     use token::components::token_message::TokenMessageTrait;
     use token::components::token_router::{
         TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait,
@@ -151,23 +151,8 @@ pub mod HypNativeScaled {
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            let mut hyp_native_component_state =
-                HypNativeComponent::HasComponent::get_component_mut(
-                ref contract_state
-            );
-            let scaled_amount = amount_or_id * contract_state.scale.read();
-            assert(
-                hyp_native_component_state
-                    .native_token
-                    .read()
-                    .transfer_from(
-                        starknet::get_caller_address(),
-                        starknet::get_contract_address(),
-                        scaled_amount
-                    ),
-                HypNativeComponent::Errors::NATIVE_TOKEN_TRANSFER_FROM_FAILED
-            );
-            BytesTrait::new_empty()
+            let amount_to_transfer = amount_or_id * contract_state.scale.read();
+            contract_state.hyp_native._transfer_from_sender(amount_to_transfer)
         }
 
         fn transfer_to_hook(

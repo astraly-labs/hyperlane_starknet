@@ -123,7 +123,7 @@ pub mod HypErc721Collateral {
             let mut component_state = HypErc721CollateralComponent::HasComponent::get_component_mut(
                 ref contract_state
             );
-            
+
             component_state
                 .wrapped_token
                 .read()

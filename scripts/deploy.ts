@@ -1,23 +1,20 @@
 import {
   Account,
-  Contract,
   json,
-  Provider,
   CallData,
-  RpcProvider,
   ContractFactory,
   ContractFactoryParams
 } from "starknet";
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
+import { buildAccount } from "./utils";
 
 dotenv.config();
 
 const BUILD_PATH = "../cairo/target/dev/contracts";
 const MOCK_BUILD_PATH = "../cairo/target/dev/mocks";
 const ACCOUNT_ADDRESS = process.env.ACCOUNT_ADDRESS;
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const CONFIGS_DIR = 'configs';
 const DEPLOYMENTS_DIR = 'deployments';
 const NETWORK = process.env.NETWORK;
@@ -84,18 +81,7 @@ function findContractFile(name: string, suffix: string): string {
   throw new Error(`Contract file not found for ${name} with suffix ${suffix} in either ${BUILD_PATH} or ${MOCK_BUILD_PATH}`);
 }
 
-async function buildAccount(): Promise<Account> {
-  const provider = new RpcProvider({ nodeUrl: process.env.STARKNET_RPC_URL });
 
-  if (!PRIVATE_KEY || !ACCOUNT_ADDRESS) {
-    throw new Error("Private key or account address not set in .env file");
-  }
-  if (!NETWORK) {
-    throw new Error('NETWORK environment variable is not set');
-  }
-
-  return new Account(provider, ACCOUNT_ADDRESS, PRIVATE_KEY);
-}
 
 function getCompiledContract(name: string): any {
   const contractPath = findContractFile(name, '.contract_class.json');
@@ -174,14 +160,21 @@ async function deployContracts(): Promise<DeployedContracts> {
     const deploymentsFile = path.join(networkDir, 'deployments.json');
 
     for (const contractName of config.deploymentOrder) {
-      const address = await deployContract(
+      let address = await deployContract(
         account,
         contractName,
         config.contracts[contractName].constructor,
         deployedContracts
       );
+
+      // Ensure the address is 66 characters long (including the '0x' prefix)
+      if (address.length < 66) {
+        address = '0x' + address.slice(2).padStart(64, '0');
+      }
+
       deployedContracts[contractName] = address;
     }
+
 
     console.log("All contracts deployed successfully:");
     console.log(deployedContracts);

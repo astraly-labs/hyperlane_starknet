@@ -37,9 +37,6 @@ pub mod HypNativeScaled {
     // HypNative
     #[abi(embed_v0)]
     impl HypNativeImpl = HypNativeComponent::HypNativeImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl HypNativeTokenRouterImpl =
-        HypNativeComponent::TokenRouterImpl<ContractState>;
     impl HypNativeInternalImpl = HypNativeComponent::HypNativeInternalImpl<ContractState>;
     // GasRouter
     #[abi(embed_v0)]
@@ -124,7 +121,7 @@ pub mod HypNativeScaled {
         }
     }
 
-    #[embeddable_as(TokenRouterImpl)]
+    #[abi(embed_v0)]
     impl TokenRouter of ITokenRouter<ContractState> {
         fn transfer_remote(
             ref self: ContractState,

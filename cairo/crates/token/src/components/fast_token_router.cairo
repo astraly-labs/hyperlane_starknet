@@ -237,7 +237,7 @@ pub mod FastTokenRouterComponent {
 
             let filler_address = self
                 ._get_fast_transfers_key(origin, fast_transfer_id, amount, fast_fee, recipient);
-            if filler_address == 0 {
+            if filler_address != 0 {
                 return filler_address;
             }
 

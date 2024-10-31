@@ -61,7 +61,6 @@ pub mod HypErc721Collateral {
 
     #[storage]
     struct Storage {
-        wrapped_token: ERC721ABIDispatcher,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -110,15 +109,22 @@ pub mod HypErc721Collateral {
         self
             .mailboxclient
             .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
-        self.wrapped_token.write(ERC721ABIDispatcher { contract_address: erc721 });
+        self
+            .hyp_erc721_collateral
+            .wrapped_token
+            .write(ERC721ABIDispatcher { contract_address: erc721 });
     }
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
-            let contract_state = TokenRouterComponent::HasComponent::get_contract(@self);
-            contract_state
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut component_state = HypErc721CollateralComponent::HasComponent::get_component_mut(
+                ref contract_state
+            );
+            
+            component_state
                 .wrapped_token
                 .read()
                 .transfer_from(
@@ -135,6 +141,10 @@ pub mod HypErc721Collateral {
             metadata: Bytes
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let mut component_state = HypErc721CollateralComponent::HasComponent::get_component_mut(
+                ref contract_state
+            );
+
             let recipient_felt: felt252 = recipient.try_into().expect('u256 to felt failed');
             let recipient: ContractAddress = recipient_felt.try_into().unwrap();
 
@@ -151,7 +161,7 @@ pub mod HypErc721Collateral {
                 i = i + 1;
             };
 
-            contract_state
+            component_state
                 .wrapped_token
                 .read()
                 .safe_transfer_from(

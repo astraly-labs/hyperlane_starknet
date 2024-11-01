@@ -8,29 +8,17 @@ pub trait IHypNative<TState> {
 #[starknet::component]
 pub mod HypNativeComponent {
     use alexandria_bytes::{Bytes, BytesTrait};
-    use contracts::client::gas_router_component::{
-        GasRouterComponent,
-        GasRouterComponent::{GasRouterInternalImpl, InternalTrait as GasRouterInternalTrait}
+    use contracts::client::{
+        gas_router_component::GasRouterComponent, router_component::RouterComponent,
+        mailboxclient_component::MailboxclientComponent
     };
-    use contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientImpl
-    };
-    use contracts::client::router_component::{
-        RouterComponent,
-        RouterComponent::{InternalTrait as RouterInternalTrait, RouterComponentInternalImpl}
-    };
-    use openzeppelin::access::ownable::{
-        OwnableComponent, OwnableComponent::InternalImpl, OwnableComponent::OwnableImpl
-    };
+    use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use starknet::ContractAddress;
-    use token::components::token_message::TokenMessageTrait;
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl,
-        TokenRouterComponent::TokenRouterHooksTrait, ITokenRouter,
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait, ITokenRouter,
         TokenRouterTransferRemoteHookDefaultImpl
     };
-    use token::interfaces::imessage_recipient::IMessageRecipient;
 
     #[storage]
     struct Storage {

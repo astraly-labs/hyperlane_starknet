@@ -14,9 +14,7 @@ pub mod HypErc721CollateralComponent {
         gas_router_component::GasRouterComponent, router_component::RouterComponent,
         mailboxclient_component::MailboxclientComponent
     };
-    use openzeppelin::access::ownable::{
-        OwnableComponent, OwnableComponent::InternalImpl, OwnableComponent::OwnableImpl
-    };
+    use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait};
     use starknet::ContractAddress;
     use token::components::token_router::{

@@ -15,7 +15,6 @@ pub mod HypNativeScaled {
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
     use token::components::hyp_native_component::HypNativeComponent;
-    use token::components::token_message::TokenMessageTrait;
     use token::components::token_router::{
         TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait,
         TokenRouterComponent::MessageRecipientInternalHookImpl,

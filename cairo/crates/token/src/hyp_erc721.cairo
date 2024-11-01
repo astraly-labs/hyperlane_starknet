@@ -21,9 +21,8 @@ pub mod HypErc721 {
     use starknet::ContractAddress;
     use token::components::erc721_enumerable::ERC721EnumerableComponent;
     use token::components::hyp_erc721_component::HypErc721Component;
-    use token::components::token_message::TokenMessageTrait;
     use token::components::token_router::{
-        TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait,
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
         TokenRouterComponent::MessageRecipientInternalHookImpl,
         TokenRouterTransferRemoteHookDefaultImpl
     };

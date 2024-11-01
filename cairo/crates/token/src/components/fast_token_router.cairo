@@ -29,18 +29,14 @@ pub mod FastTokenRouterComponent {
         MailboxclientComponent::MailboxClient
     };
     use contracts::client::router_component::{
-        RouterComponent, RouterComponent::RouterComponentInternalImpl,
-        RouterComponent::IMessageRecipientInternalHookTrait, IRouter
+        RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait
     };
     use contracts::utils::utils::U256TryIntoContractAddress;
-    use openzeppelin::access::ownable::{
-        OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
-    };
+    use openzeppelin::access::ownable::OwnableComponent;
     use starknet::ContractAddress;
     use token::components::token_message::TokenMessageTrait;
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl,
-        TokenRouterComponent::TokenRouterHooksTrait
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait
     };
 
     #[storage]

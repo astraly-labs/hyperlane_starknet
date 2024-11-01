@@ -1,3 +1,4 @@
+use core::integer::BoundedInt;
 use mocks::xerc20_test::{XERC20Test, IXERC20TestDispatcher, IXERC20TestDispatcherTrait};
 use mocks::{test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},};
 use snforge_std::{declare, ContractClassTrait, CheatTarget, start_prank, stop_prank,};
@@ -33,6 +34,11 @@ fn setup_xerc20() -> Setup {
         )
         .unwrap();
     setup.local_token = IHypERC20TestDispatcher { contract_address: local_token };
+
+    start_prank(CheatTarget::One(setup.eth_token.contract_address), ALICE());
+    ITestERC20Dispatcher { contract_address: setup.eth_token.contract_address }
+        .approve(local_token, BoundedInt::max());
+    stop_prank(CheatTarget::One(setup.eth_token.contract_address));
 
     setup
         .local_token

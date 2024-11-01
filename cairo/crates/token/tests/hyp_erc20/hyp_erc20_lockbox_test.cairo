@@ -1,5 +1,6 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::client::gas_router_component::GasRouterComponent::GasRouterConfig;
+use core::integer::BoundedInt;
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
 use mocks::{
     test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},
@@ -99,6 +100,13 @@ fn setup_lockbox() -> (Setup, IHypERC20LockboxTestDispatcher) {
 
     let (xerc20lockbox, _) = contract.deploy(@calldata).unwrap();
     let xerc20lockbox = IHypERC20LockboxTestDispatcher { contract_address: xerc20lockbox };
+
+    start_prank(CheatTarget::One(setup.eth_token.contract_address), ALICE());
+    ERC20ABIDispatcher { contract_address: setup.eth_token.contract_address }
+        .approve(xerc20.contract_address, BoundedInt::max());
+    ERC20ABIDispatcher { contract_address: setup.eth_token.contract_address }
+        .approve(lockbox.contract_address, BoundedInt::max());
+    stop_prank(CheatTarget::One(setup.eth_token.contract_address));
 
     let remote_token_address: felt252 = setup.remote_token.contract_address.into();
     xerc20lockbox.enroll_remote_router(DESTINATION, remote_token_address.into());

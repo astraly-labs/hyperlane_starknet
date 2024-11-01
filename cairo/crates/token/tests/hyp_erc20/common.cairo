@@ -5,8 +5,10 @@ use contracts::client::gas_router_component::{
 use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
 use contracts::interfaces::{
     IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
-    IMessageRecipientDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait
+    IMessageRecipientDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait,
+    ETH_ADDRESS
 };
+use core::integer::BoundedInt;
 use mocks::{
     test_post_dispatch_hook::{
         ITestPostDispatchHookDispatcher, ITestPostDispatchHookDispatcherTrait
@@ -145,7 +147,7 @@ pub fn setup() -> Setup {
     let contract = declare("Ether").unwrap();
     let mut calldata: Array<felt252> = array![];
     starknet::get_contract_address().serialize(ref calldata);
-    let (eth_address, _) = contract.deploy(@calldata).unwrap();
+    let (eth_address, _) = contract.deploy_at(@calldata, ETH_ADDRESS()).unwrap();
     let eth_token = MockEthDispatcher { contract_address: eth_address };
     eth_token.mint(ALICE(), 10 * E18);
 
@@ -205,6 +207,11 @@ pub fn setup() -> Setup {
     let (implementation, _) = hyp_erc20_contract.deploy(@calldata).unwrap();
     let implementation = IHypERC20TestDispatcher { contract_address: implementation };
 
+    start_prank(CheatTarget::One(eth_token.contract_address), ALICE());
+    IERC20Dispatcher { contract_address: eth_token.contract_address }
+        .approve(implementation.contract_address, BoundedInt::max());
+    stop_prank(CheatTarget::One(eth_token.contract_address));
+
     let contract = declare("TestInterchainGasPayment").unwrap();
     let (igp, _) = contract.deploy(@array![]).unwrap();
     let igp = ITestInterchainGasPaymentDispatcher { contract_address: igp };
@@ -234,6 +241,12 @@ pub fn setup() -> Setup {
     let local_token = IHypERC20TestDispatcher { contract_address: local_token };
 
     let local_token_address: felt252 = local_token.contract_address.into();
+
+    start_prank(CheatTarget::One(eth_token.contract_address), ALICE());
+    IERC20Dispatcher { contract_address: eth_token.contract_address }
+        .approve(local_token.contract_address, BoundedInt::max());
+    stop_prank(CheatTarget::One(eth_token.contract_address));
+
     remote_token.enroll_remote_router(ORIGIN, local_token_address.into());
 
     local_token.transfer(ALICE(), 1000 * E18);

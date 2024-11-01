@@ -1,3 +1,4 @@
+use core::integer::BoundedInt;
 use mocks::test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait};
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
 use snforge_std::{
@@ -27,6 +28,11 @@ fn fiat_token_setup() -> Setup {
 
     let (fiat_token, _) = local_token.deploy(@calldata).unwrap();
     let fiat_token = IHypERC20TestDispatcher { contract_address: fiat_token };
+
+    start_prank(CheatTarget::One(setup.eth_token.contract_address), ALICE());
+    ITestERC20Dispatcher { contract_address: setup.eth_token.contract_address }
+        .approve(fiat_token.contract_address, BoundedInt::max());
+    stop_prank(CheatTarget::One(setup.eth_token.contract_address));
 
     let remote_token_address: felt252 = setup.remote_token.contract_address.into();
     fiat_token.enroll_remote_router(DESTINATION, remote_token_address.into());

@@ -65,8 +65,6 @@ pub mod HypERC721URICollateral {
 
     #[storage]
     struct Storage {
-        erc721: ContractAddress,
-        mailbox: ContractAddress,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]

@@ -57,11 +57,9 @@ The implementation guidelines can be found [here](https://docs.hyperlane.xyz/doc
 
 ### Contracts
 
-The contracts are located in the `contracts/` directory. It's a `scarb` project, so you can use the `scarb` CLI to build it.
+The contracts are located in the `cairo/` directory. It's a `scarb` project, so you can use the `scarb` CLI to build it.
 
 It uses `Starknet Foundry` for tests.
-
-See the [contracts README](contracts/README.md) for more information.
 
 ### Pre-requisites
 - Install Scarb (see [here](https://docs.swmansion.com/scarb/download))
@@ -92,11 +90,11 @@ snforge test
 
 To run the integration tests: 
   - Install [Dojo](https://book.dojoengine.org/getting-started)
-  - Install [Foundry](https://book.getfoundry.sh/getting-started/installation)
+  - Install [Starknet-foundry](https://foundry-rs.github.io/starknet-foundry/getting-started/installation#installation)
 
 Once installed, build the contracts: 
 ```bash
-cd contracts && scarb build && cd -
+cd cairo && scarb build && cd -
 ```
 
 Open another terminal, start a new Katana instance: 

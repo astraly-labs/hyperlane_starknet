@@ -150,12 +150,9 @@ pub mod RateLimitedComponent {
         impl Ownable: OwnableComponent::HasComponent<TContractState>,
         +Drop<TContractState>
     > of InternalTrait<TContractState> {
-        /// Note: this init requires owner to be eq to caller cuz set_refill_rate checks assertion only_owner
-        /// one idea might be giving the ownership to caller at first then transfer it to given owner address.
         fn initialize(
             ref self: ComponentState<TContractState>, capacity: u256, owner: ContractAddress
-        ) {
-            /// Note: I dont like component initializing other component, in solidity  it uses both mailboxclient and ratelimited both initialize owner as msg.sender. 
+        ) { 
             let mut ownable_comp = get_dep_component_mut!(ref self, Ownable);
             ownable_comp.initializer(starknet::get_caller_address());
 

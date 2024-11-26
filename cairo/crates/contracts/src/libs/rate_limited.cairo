@@ -19,7 +19,7 @@ pub mod RateLimitedComponent {
     use starknet::ContractAddress;
 
     // A day
-    pub const DURATION: u256 = 60 * 60 * 24;
+    pub const DURATION: u64 = 60 * 60 * 24;
 
     #[storage]
     pub struct Storage {
@@ -49,7 +49,7 @@ pub mod RateLimitedComponent {
 
     pub mod Errors {
         pub const RATE_LIMIT_EXCEEDED: felt252 = 'RateLimit exceeded';
-        pub const RATE_LIMIT_NOT_SETTED: felt252 = 'RateLimit not setted!';
+        pub const RATE_LIMIT_NOT_SET: felt252 = 'RateLimit not set!';
         pub const CAPACITY_LT_DURATION: felt252 = 'Capacity must gte to duration!';
     }
 
@@ -62,7 +62,7 @@ pub mod RateLimitedComponent {
     > of super::IRateLimited<ComponentState<TContractState>> {
         /// Returns `u256` representing the max capacity where the bucket will no longer fill.
         fn max_capacity(self: @ComponentState<TContractState>) -> u256 {
-            self.refill_rate.read() * DURATION
+            self.refill_rate.read() * DURATION.into()
         }
 
         /// Calculates the adjsuted fill level based on time.
@@ -72,11 +72,11 @@ pub mod RateLimitedComponent {
         /// A `u256` representing the current level.
         fn calculate_current_level(self: @ComponentState<TContractState>) -> u256 {
             let capacity = self.max_capacity();
-            assert(capacity > 0, Errors::RATE_LIMIT_NOT_SETTED);
+            assert(capacity > 0, Errors::RATE_LIMIT_NOT_SET);
 
             let current_timestamp = starknet::get_block_timestamp();
             let last_updated = self.last_updated.read();
-            if current_timestamp > last_updated + DURATION.try_into().unwrap() {
+            if current_timestamp > last_updated + DURATION {
                 return capacity;
             }
 
@@ -153,7 +153,7 @@ pub mod RateLimitedComponent {
         fn initialize(
             ref self: ComponentState<TContractState>, capacity: u256, owner: ContractAddress
         ) {
-            assert(capacity >= DURATION, Errors::CAPACITY_LT_DURATION);
+            assert(capacity >= DURATION.into(), Errors::CAPACITY_LT_DURATION);
 
             let mut ownable_comp = get_dep_component_mut!(ref self, Ownable);
             ownable_comp.initializer(owner);
@@ -180,7 +180,7 @@ pub mod RateLimitedComponent {
         /// Internal function to set refill rate by given capacity.
         fn _set_refill_rate(ref self: ComponentState<TContractState>, capacity: u256) -> u256 {
             let old_refill_rate = self.refill_rate.read();
-            let new_refill_rate = capacity / DURATION;
+            let new_refill_rate = capacity / DURATION.into();
             self.refill_rate.write(new_refill_rate);
             self
                 .emit(

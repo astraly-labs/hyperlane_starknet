@@ -95,7 +95,6 @@ fn setup() -> Setup {
     MAX_CAPACITY.serialize(ref ctor_calldata);
     owner.serialize(ref ctor_calldata);
     let (deployed_address, _) = rate_limited_contract.deploy(@ctor_calldata).unwrap();
-
     Setup {
         rate_limited: IRateLimitedDispatcher { contract_address: deployed_address }, owner, hook
     }
@@ -252,7 +251,7 @@ fn test_should_decreases_limit_within_same_day() {
 
     match safe_dispatcher.validate_and_consume_filled_level(amount) {
         Result::Ok(_) => panic!("should have been panicked!"),
-        Result::Err(data) => { assert!(*data.at(0) == 'RateLimitExceeded'); },
+        Result::Err(data) => { assert!(*data.at(0) == 'RateLimit exceeded'); },
     }
 
     stop_warp(CheatTarget::One(setup.rate_limited.contract_address));
@@ -312,7 +311,7 @@ fn test_should_panic_when_current_level_when_capacity_is_zero() {
 }
 
 #[test]
-#[should_panic(expected: 'RateLimitExceeded')]
+#[should_panic(expected: 'RateLimit exceeded')]
 fn test_should_panic_when_validate_consume_filled_levels_when_exceeding_limit() {
     let setup = setup();
 

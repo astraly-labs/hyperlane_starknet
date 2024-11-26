@@ -47,6 +47,12 @@ pub mod RateLimitedComponent {
         pub last_updated: u64
     }
 
+    pub mod Errors {
+        pub const RATE_LIMIT_EXCEEDED: felt252 = 'RateLimit exceeded';
+        pub const RATE_LIMIT_NOT_SETTED: felt252 = 'RateLimit not setted!';
+        pub const CAPACITY_LT_DURATION: felt252 = 'Capacity must gte to duration!';
+    }
+
     #[embeddable_as(RateLimited)]
     pub impl RateLimitedImpl<
         TContractState,
@@ -66,8 +72,8 @@ pub mod RateLimitedComponent {
         /// A `u256` representing the current level.
         fn calculate_current_level(self: @ComponentState<TContractState>) -> u256 {
             let capacity = self.max_capacity();
+            assert(capacity > 0, Errors::RATE_LIMIT_NOT_SETTED);
 
-            assert(capacity > 0, 'RateLimit not setted!');
             let current_timestamp = starknet::get_block_timestamp();
             let last_updated = self.last_updated.read();
             if current_timestamp > last_updated + DURATION.try_into().unwrap() {
@@ -94,14 +100,7 @@ pub mod RateLimitedComponent {
         fn set_refill_rate(ref self: ComponentState<TContractState>, capacity: u256) -> u256 {
             let ownable_comp = get_dep_component!(@self, Ownable);
             ownable_comp.assert_only_owner();
-            let old_refill_rate = self.refill_rate.read();
-            let new_refill_rate = capacity / DURATION;
-            self.refill_rate.write(new_refill_rate);
-            self
-                .emit(
-                    RateLimitSet { old_capacity: old_refill_rate, new_capacity: new_refill_rate }
-                );
-            new_refill_rate
+            self._set_refill_rate(capacity)
         }
 
         /// Validates the amount and decreases the current capacity.
@@ -117,7 +116,7 @@ pub mod RateLimitedComponent {
             ref self: ComponentState<TContractState>, consumed_amount: u256
         ) -> u256 {
             let adjusted_filled_level = self.calculate_current_level();
-            assert(consumed_amount <= adjusted_filled_level, 'RateLimitExceeded');
+            assert(consumed_amount <= adjusted_filled_level, Errors::RATE_LIMIT_EXCEEDED);
 
             let filled_level = adjusted_filled_level - consumed_amount;
             self.filled_level.write(filled_level);
@@ -150,25 +149,25 @@ pub mod RateLimitedComponent {
         impl Ownable: OwnableComponent::HasComponent<TContractState>,
         +Drop<TContractState>
     > of InternalTrait<TContractState> {
+        /// Internal function to initialize the component.
         fn initialize(
             ref self: ComponentState<TContractState>, capacity: u256, owner: ContractAddress
-        ) { 
+        ) {
+            assert(capacity >= DURATION, Errors::CAPACITY_LT_DURATION);
+
             let mut ownable_comp = get_dep_component_mut!(ref self, Ownable);
-            ownable_comp.initializer(starknet::get_caller_address());
+            ownable_comp.initializer(owner);
 
-            assert(capacity >= DURATION, 'Capacity must gte to duration');
-            self.set_refill_rate(capacity);
+            self._set_refill_rate(capacity);
             self.filled_level.write(capacity);
-
-            ownable_comp.transfer_ownership(owner);
         }
 
         /// Calculates the refilled amount based on time and refill rate.
         /// 
         /// To calculate:
-        ///   refilled = elapsed * refilledRate
-        ///   elapsed = timestamp - Limit.lastUpdated
-        ///   RefilledRate = Capacity / DURATION
+        ///   elapsed = timestamp - last_updated
+        ///   refill_rate = capacity / DURATION
+        ///   refilled = elapsed * refill_rate
         /// 
         /// # Returns 
         /// 
@@ -176,6 +175,18 @@ pub mod RateLimitedComponent {
         fn calculate_refilled_amount(self: @ComponentState<TContractState>) -> u256 {
             let elapsed = starknet::get_block_timestamp() - self.last_updated.read();
             elapsed.into() * self.refill_rate.read()
+        }
+
+        /// Internal function to set refill rate by given capacity.
+        fn _set_refill_rate(ref self: ComponentState<TContractState>, capacity: u256) -> u256 {
+            let old_refill_rate = self.refill_rate.read();
+            let new_refill_rate = capacity / DURATION;
+            self.refill_rate.write(new_refill_rate);
+            self
+                .emit(
+                    RateLimitSet { old_capacity: old_refill_rate, new_capacity: new_refill_rate }
+                );
+            new_refill_rate
         }
     }
 }

@@ -4,7 +4,7 @@ pub trait IRateLimited<TState> {
     fn calculate_current_level(self: @TState) -> u256;
     fn set_refill_rate(ref self: TState, capacity: u256) -> u256;
     fn validate_and_consume_filled_level(ref self: TState, consumed_amount: u256) -> u256;
-    // getters 
+    // Getters 
     fn filled_level(self: @TState) -> u256;
     fn refill_rate(self: @TState) -> u256;
     fn last_updated(self: @TState) -> u64;
@@ -60,12 +60,12 @@ pub mod RateLimitedComponent {
         impl Ownable: OwnableComponent::HasComponent<TContractState>,
         +Drop<TContractState>
     > of super::IRateLimited<ComponentState<TContractState>> {
-        /// Returns `u256` representing the max capacity where the bucket will no longer fill.
+        /// Returns a `u256` representing the max capacity at which the bucket will no longer fill.
         fn max_capacity(self: @ComponentState<TContractState>) -> u256 {
             self.refill_rate.read() * DURATION.into()
         }
 
-        /// Calculates the adjsuted fill level based on time.
+        /// Calculates the adjusted fill level based on time.
         /// 
         /// # Returns
         /// 
@@ -88,7 +88,7 @@ pub mod RateLimitedComponent {
             }
         }
 
-        /// Sets the refill rate by given capacity.
+        /// Sets the refill rate based on the given capacity.
         /// 
         /// # Arguments
         /// 
@@ -107,7 +107,7 @@ pub mod RateLimitedComponent {
         /// 
         /// # Arguments
         /// 
-        /// - `consumed_amount` - A `u256` amount to consume the fill level.
+        /// - `consumed_amount` - A `u256` representing the amount to consume from the fill level.
         /// 
         /// # Returns
         /// 
@@ -126,17 +126,17 @@ pub mod RateLimitedComponent {
             filled_level
         }
 
-        /// Returns `u256` representing the filled_level.
+        /// Returns a `u256` representing the filled level.
         fn filled_level(self: @ComponentState<TContractState>) -> u256 {
             self.filled_level.read()
         }
 
-        /// Returns `u256` representing the refill rate.
+        /// Returns a `u256` representing the refill rate.
         fn refill_rate(self: @ComponentState<TContractState>) -> u256 {
             self.refill_rate.read()
         }
 
-        /// Returns `u64` representing the last timestamp updated.
+        /// Returns a `u64` representing the last updated timestamp.
         fn last_updated(self: @ComponentState<TContractState>) -> u64 {
             self.last_updated.read()
         }
@@ -177,7 +177,7 @@ pub mod RateLimitedComponent {
             elapsed.into() * self.refill_rate.read()
         }
 
-        /// Internal function to set refill rate by given capacity.
+        /// Internal function to set the refill rate based on the given capacity.
         fn _set_refill_rate(ref self: ComponentState<TContractState>, capacity: u256) -> u256 {
             let old_refill_rate = self.refill_rate.read();
             let new_refill_rate = capacity / DURATION.into();

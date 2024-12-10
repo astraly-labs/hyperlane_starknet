@@ -17,4 +17,5 @@ pub mod routing {
 }
 pub mod libs {
     pub mod test_enumerable_map;
+    pub mod test_rate_limited;
 }

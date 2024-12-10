@@ -6,6 +6,7 @@ pub mod libs {
     pub mod enumerable_map;
     pub mod math;
     pub mod message;
+    pub mod rate_limited;
     pub mod multisig {
         pub mod merkleroot_ism_metadata;
         pub mod message_id_ism_metadata;

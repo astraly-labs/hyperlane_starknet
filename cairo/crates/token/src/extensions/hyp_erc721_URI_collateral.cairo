@@ -65,8 +65,6 @@ pub mod HypERC721URICollateral {
 
     #[storage]
     struct Storage {
-        erc721: ContractAddress,
-        mailbox: ContractAddress,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -164,6 +162,10 @@ pub mod HypERC721URICollateral {
             recipient: u256,
             amount_or_id: u256,
             metadata: Bytes
-        ) {}
+        ) {
+            HypErc721CollateralComponent::TokenRouterHooksImpl::transfer_to_hook(
+                ref self, recipient, amount_or_id, metadata
+            );
+        }
     }
 }

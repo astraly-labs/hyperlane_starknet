@@ -5,16 +5,9 @@ pub trait IHypErc721<TState> {
 
 #[starknet::component]
 pub mod HypErc721Component {
-    use contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
-        MailboxclientComponent::MailboxClient
-    };
-    use openzeppelin::access::ownable::{
-        OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
-    };
-    use openzeppelin::introspection::src5::{
-        SRC5Component, SRC5Component::SRC5Impl, SRC5Component::InternalTrait as SRC5InternalTrait
-    };
+    use contracts::client::mailboxclient_component::{MailboxclientComponent};
+    use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::introspection::src5::{SRC5Component, SRC5Component::SRC5Impl};
     use openzeppelin::token::erc721::{
         ERC721Component, ERC721Component::ERC721Impl,
         ERC721Component::InternalTrait as ERC721InternalTrait, ERC721Component::ERC721HooksTrait,

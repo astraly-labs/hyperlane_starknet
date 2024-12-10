@@ -3,6 +3,7 @@ use contracts::client::gas_router_component::{
     GasRouterComponent::GasRouterConfig, IGasRouterDispatcher, IGasRouterDispatcherTrait
 };
 use contracts::utils::utils::U256TryIntoContractAddress;
+use core::integer::BoundedInt;
 use mocks::{
     test_post_dispatch_hook::{
         ITestPostDispatchHookDispatcher, ITestPostDispatchHookDispatcherTrait
@@ -40,6 +41,11 @@ fn setup_hyp_erc20_collateral() -> (IHypERC20TestDispatcher, Setup) {
 
     let (collateral_address, _) = hyp_erc20_collateral_contract.deploy(@constructor_args).unwrap();
     let collateral = IHypERC20TestDispatcher { contract_address: collateral_address };
+
+    start_prank(CheatTarget::One(setup.eth_token.contract_address), ALICE());
+    IERC20Dispatcher { contract_address: setup.eth_token.contract_address }
+        .approve(collateral_address, BoundedInt::max());
+    stop_prank(CheatTarget::One(setup.eth_token.contract_address));
 
     // Enroll remote router
     let remote_token_address: felt252 = setup.remote_token.contract_address.into();

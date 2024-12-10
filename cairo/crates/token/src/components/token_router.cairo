@@ -225,23 +225,6 @@ pub mod TokenRouterComponent {
     }
 }
 
-//pub impl TokenRouterEmptyHooksImpl<
-//    TContractState
-//> of TokenRouterComponent::TokenRouterHooksTrait<TContractState> {
-//    fn transfer_from_sender_hook(
-//        ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
-//    ) -> Bytes {
-//        alexandria_bytes::BytesTrait::new_empty()
-//    }
-//
-//    fn transfer_to_hook(
-//        ref self: TokenRouterComponent::ComponentState<TContractState>,
-//        recipient: u256,
-//        amount_or_id: u256,
-//        metadata: Bytes
-//    ) {}
-//}
-
 pub impl TokenRouterTransferRemoteHookDefaultImpl<
     TContractState,
     +Drop<TContractState>,

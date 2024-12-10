@@ -26,22 +26,27 @@ pub mod RouterComponent {
     use contracts::client::mailboxclient_component::{
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
     };
-    use contracts::interfaces::{IMailboxClient, IMailboxDispatcher, IMailboxDispatcherTrait};
+    use contracts::interfaces::{
+        IMailboxClient, IMailboxDispatcher, IMailboxDispatcherTrait, ETH_ADDRESS
+    };
     use contracts::libs::enumerable_map::{EnumerableMap, EnumerableMapTrait};
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
     };
+    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::ContractAddress;
 
     #[storage]
     struct Storage {
         routers: EnumerableMap<u32, u256>,
-        gas_router: ContractAddress,
     }
 
     mod Err {
         pub fn domain_not_found(domain: u32) {
             panic!("No router enrolled for domain {}", domain);
+        }
+        pub fn fee_transfer_failed() {
+            panic!("fee transfer from sender failed");
         }
     }
 
@@ -55,7 +60,7 @@ pub mod RouterComponent {
     pub impl Router<
         TContractState,
         +HasComponent<TContractState>,
-        +MailboxclientComponent::HasComponent<TContractState>,
+        impl MailboxClient: MailboxclientComponent::HasComponent<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>,
         +Drop<TContractState>,
         impl Hook: IMessageRecipientInternalHookTrait<TContractState>
@@ -132,7 +137,9 @@ pub mod RouterComponent {
         /// # Arguments
         ///
         /// * `domains` - An array of `u32` values representing the domains for which routers are being unenrolled.
-        fn unenroll_remote_routers(ref self: ComponentState<TContractState>, domains: Array<u32>,) {
+        fn unenroll_remote_routers(ref self: ComponentState<TContractState>, domains: Array<u32>) {
+            let ownable_comp = get_dep_component!(@self, Owner);
+            ownable_comp.assert_only_owner();
             let domains_len = domains.len();
             let mut i = 0;
             while i < domains_len {
@@ -159,6 +166,8 @@ pub mod RouterComponent {
         fn handle(
             ref self: ComponentState<TContractState>, origin: u32, sender: u256, message: Bytes
         ) {
+            let mailbox_client_comp = get_dep_component!(@self, MailboxClient);
+            mailbox_client_comp.assert_only_mailbox();
             let router = self._must_have_remote_router(origin);
             assert!(router == sender, "Enrolled router does not match sender");
 
@@ -242,9 +251,19 @@ pub mod RouterComponent {
         ) -> u256 {
             let router = self._must_have_remote_router(destination_domain);
             let mut mailbox_comp = get_dep_component!(self, MailBoxClient);
-            let value = mailbox_comp
-                .mailbox
-                .read()
+
+            let mut fee_token_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
+            if !fee_token_dispatcher
+                .transfer_from(
+                    starknet::get_caller_address(), starknet::get_contract_address(), value
+                ) {
+                Err::fee_transfer_failed();
+            }
+
+            let mailbox_dispatcher = mailbox_comp.mailbox.read();
+            fee_token_dispatcher.approve(mailbox_dispatcher.contract_address, value);
+
+            let value = mailbox_dispatcher
                 .dispatch(
                     destination_domain,
                     router,

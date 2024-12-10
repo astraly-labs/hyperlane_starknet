@@ -10,15 +10,11 @@ pub mod HypNativeScaled {
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::{
-        interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait}, ERC20Component,
-        ERC20HooksEmptyImpl
-    };
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
-    use token::components::hyp_native_component::{HypNativeComponent};
-    use token::components::token_message::TokenMessageTrait;
+    use token::components::hyp_native_component::HypNativeComponent;
     use token::components::token_router::{
         TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait,
         TokenRouterComponent::MessageRecipientInternalHookImpl,
@@ -32,11 +28,7 @@ pub mod HypNativeScaled {
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: HypNativeComponent, storage: hyp_native, event: HypNativeEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
-    component!(path: ERC20Component, storage: erc20, event: ERC20Event);
 
-    // ERC20
-    #[abi(embed_v0)]
-    impl ERC20Impl = ERC20Component::ERC20MixinImpl<ContractState>;
     // Ownable
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
@@ -44,9 +36,6 @@ pub mod HypNativeScaled {
     // HypNative
     #[abi(embed_v0)]
     impl HypNativeImpl = HypNativeComponent::HypNativeImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl HypNativeTokenRouterImpl =
-        HypNativeComponent::TokenRouterImpl<ContractState>;
     impl HypNativeInternalImpl = HypNativeComponent::HypNativeInternalImpl<ContractState>;
     // GasRouter
     #[abi(embed_v0)]
@@ -68,8 +57,6 @@ pub mod HypNativeScaled {
     #[storage]
     struct Storage {
         scale: u256,
-        #[substorage(v0)]
-        erc20: ERC20Component::Storage,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -103,8 +90,6 @@ pub mod HypNativeScaled {
         HypNativeEvent: HypNativeComponent::Event,
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
-        #[flat]
-        ERC20Event: ERC20Component::Event,
     }
 
     #[constructor]
@@ -135,7 +120,7 @@ pub mod HypNativeScaled {
         }
     }
 
-    #[embeddable_as(TokenRouterImpl)]
+    #[abi(embed_v0)]
     impl TokenRouter of ITokenRouter<ContractState> {
         fn transfer_remote(
             ref self: ContractState,
@@ -164,7 +149,9 @@ pub mod HypNativeScaled {
         fn transfer_from_sender_hook(
             ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
         ) -> Bytes {
-            BytesTrait::new_empty()
+            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
+            let amount_to_transfer = amount_or_id * contract_state.scale.read();
+            contract_state.hyp_native._transfer_from_sender(amount_to_transfer)
         }
 
         fn transfer_to_hook(

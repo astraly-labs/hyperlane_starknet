@@ -5,7 +5,6 @@ pub mod HypNative {
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
@@ -23,7 +22,6 @@ pub mod HypNative {
     component!(path: RouterComponent, storage: router, event: RouterEvent);
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: HypNativeComponent, storage: hyp_native, event: HypNativeEvent);
-    component!(path: ERC20Component, storage: erc20, event: ERC20Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
     // HypNative
@@ -53,9 +51,6 @@ pub mod HypNative {
         MailboxclientComponent::MailboxClientImpl<ContractState>;
     impl MailboxClientInternalImpl =
         MailboxclientComponent::MailboxClientInternalImpl<ContractState>;
-    // ERC20
-    #[abi(embed_v0)]
-    impl ERC20MixinImpl = ERC20Component::ERC20MixinImpl<ContractState>;
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
@@ -73,8 +68,6 @@ pub mod HypNative {
         gas_router: GasRouterComponent::Storage,
         #[substorage(v0)]
         hyp_native: HypNativeComponent::Storage,
-        #[substorage(v0)]
-        erc20: ERC20Component::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage
     }
@@ -95,8 +88,6 @@ pub mod HypNative {
         #[flat]
         HypNativeEvent: HypNativeComponent::Event,
         #[flat]
-        ERC20Event: ERC20Component::Event,
-        #[flat]
         UpgradeableEvent: UpgradeableComponent::Event
     }
 
@@ -104,6 +95,7 @@ pub mod HypNative {
     fn constructor(
         ref self: ContractState,
         mailbox: ContractAddress,
+        native_token: ContractAddress,
         hook: ContractAddress,
         interchain_security_module: ContractAddress,
         owner: ContractAddress
@@ -112,6 +104,7 @@ pub mod HypNative {
         self
             .mailboxclient
             .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
+        self.hyp_native.initialize(native_token);
     }
 
     #[abi(embed_v0)]

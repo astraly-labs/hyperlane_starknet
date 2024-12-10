@@ -1,21 +1,11 @@
-use starknet::ContractAddress;
-
 #[starknet::component]
 pub mod HypErc20Component {
     use alexandria_bytes::{Bytes, BytesTrait};
-    use contracts::client::gas_router_component::{
-        GasRouterComponent,
-        GasRouterComponent::{GasRouterInternalImpl, InternalTrait as GasRouterInternalTrait}
+    use contracts::client::{
+        gas_router_component::GasRouterComponent, router_component::RouterComponent,
+        mailboxclient_component::MailboxclientComponent
     };
-    use contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientImpl
-    };
-    use contracts::client::router_component::{
-        RouterComponent,
-        RouterComponent::{InternalTrait as RouterInternalTrait, RouterComponentInternalImpl}
-    };
-    use contracts::interfaces::IMailboxClient;
-    use contracts::utils::utils::{U256TryIntoContractAddress};
+    use contracts::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::ERC20Component;
     use openzeppelin::token::erc20::{
@@ -24,10 +14,8 @@ pub mod HypErc20Component {
     };
 
     use starknet::ContractAddress;
-    use token::components::token_message::TokenMessageTrait;
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterInternalImpl,
-        TokenRouterComponent::TokenRouterHooksTrait
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait
     };
 
     #[storage]

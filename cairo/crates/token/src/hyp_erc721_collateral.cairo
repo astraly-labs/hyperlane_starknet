@@ -9,11 +9,14 @@ pub mod HypErc721Collateral {
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
-    use token::components::hyp_erc721_collateral_component::{HypErc721CollateralComponent};
-    use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-        TokenRouterComponent::MessageRecipientInternalHookImpl,
-        TokenRouterTransferRemoteHookDefaultImpl
+    use token::components::{
+        hyp_erc721_collateral_component::{
+            HypErc721CollateralComponent, HypErc721CollateralComponent::TokenRouterHooksImpl
+        },
+        token_router::{
+            TokenRouterComponent, TokenRouterTransferRemoteHookDefaultImpl,
+            TokenRouterComponent::MessageRecipientInternalHookImpl,
+        }
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -61,7 +64,6 @@ pub mod HypErc721Collateral {
 
     #[storage]
     struct Storage {
-        wrapped_token: ERC721ABIDispatcher,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -110,57 +112,10 @@ pub mod HypErc721Collateral {
         self
             .mailboxclient
             .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
-        self.wrapped_token.write(ERC721ABIDispatcher { contract_address: erc721 });
-    }
-
-    impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
-        fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
-        ) -> Bytes {
-            let contract_state = TokenRouterComponent::HasComponent::get_contract(@self);
-            contract_state
-                .wrapped_token
-                .read()
-                .transfer_from(
-                    starknet::get_caller_address(), starknet::get_contract_address(), amount_or_id
-                );
-
-            BytesTrait::new_empty()
-        }
-
-        fn transfer_to_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>,
-            recipient: u256,
-            amount_or_id: u256,
-            metadata: Bytes
-        ) {
-            let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
-            let recipient_felt: felt252 = recipient.try_into().expect('u256 to felt failed');
-            let recipient: ContractAddress = recipient_felt.try_into().unwrap();
-
-            let metadata_array_u128 = metadata.data();
-            let mut metadata_array_felt252: Array<felt252> = array![];
-
-            let len = metadata_array_u128.len();
-            let mut i = 0;
-            while i < len {
-                let metadata_felt252: felt252 = (*metadata_array_u128.at(i))
-                    .try_into()
-                    .expect('u128 to felt failed');
-                metadata_array_felt252.append(metadata_felt252);
-                i = i + 1;
-            };
-
-            contract_state
-                .wrapped_token
-                .read()
-                .safe_transfer_from(
-                    starknet::get_contract_address(),
-                    recipient,
-                    amount_or_id,
-                    metadata_array_felt252.span()
-                );
-        }
+        self
+            .hyp_erc721_collateral
+            .wrapped_token
+            .write(ERC721ABIDispatcher { contract_address: erc721 });
     }
 
     #[abi(embed_v0)]

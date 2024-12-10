@@ -5,19 +5,22 @@ use contracts::client::gas_router_component::{
 use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
 use contracts::interfaces::{
     IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
-    IMessageRecipientDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait
+    IMessageRecipientDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait,
+    ETH_ADDRESS
 };
+use core::integer::BoundedInt;
 use mocks::{
     test_post_dispatch_hook::{
         ITestPostDispatchHookDispatcher, ITestPostDispatchHookDispatcherTrait
     },
     mock_mailbox::{IMockMailboxDispatcher, IMockMailboxDispatcherTrait},
-    // test_erc721::{ITestERC721Dispatcher, ITestERC721DispatcherTrait},
     test_interchain_gas_payment::{
         ITestInterchainGasPaymentDispatcher, ITestInterchainGasPaymentDispatcherTrait
     },
-    test_erc721::{ITestERC721Dispatcher, ITestERC721DispatcherTrait}
+    test_erc721::{ITestERC721Dispatcher, ITestERC721DispatcherTrait},
+    mock_eth::{MockEthDispatcher, MockEthDispatcherTrait}
 };
+use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use openzeppelin::token::erc721::interface::{IERC721Dispatcher, IERC721DispatcherTrait};
 use snforge_std::cheatcodes::contract_class::ContractClass;
 use snforge_std::{
@@ -31,6 +34,7 @@ use token::components::hyp_erc721_collateral_component::{
 use token::components::hyp_erc721_component::{IHypErc721Dispatcher, IHypErc721DispatcherTrait};
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 
+pub const E18: u256 = 1_000_000_000_000_000_000;
 const PUB_KEY: felt252 = 0x1;
 const ZERO_SUPPLY: u256 = 0;
 pub fn ZERO_ADDRESS() -> ContractAddress {
@@ -138,6 +142,7 @@ pub struct Setup {
     pub local_token: IHypErc721TestDispatcher,
     pub hyp_erc721_contract: ContractClass,
     pub hyp_erc721_collateral_contract: ContractClass,
+    pub eth_token: MockEthDispatcher,
     pub alice: ContractAddress,
     pub bob: ContractAddress,
 }
@@ -162,9 +167,9 @@ pub fn setup() -> Setup {
     let contract = declare("Ether").unwrap();
     let mut calldata: Array<felt252> = array![];
     starknet::get_contract_address().serialize(ref calldata);
-    let (eth_address, _) = contract.deploy(@calldata).unwrap();
-    //let eth = MockEthDispatcher { contract_address: eth_address };
-
+    let (eth_address, _) = contract.deploy_at(@calldata, ETH_ADDRESS()).unwrap();
+    let eth_token = MockEthDispatcher { contract_address: eth_address };
+    eth_token.mint(starknet::get_contract_address(), 10 * E18);
     let contract = declare("MockMailbox").unwrap();
     let (local_mailbox, _) = contract
         .deploy(
@@ -207,6 +212,11 @@ pub fn setup() -> Setup {
         .unwrap();
     let remote_token = IHypErc721TestDispatcher { contract_address: remote_token };
 
+    start_prank(CheatTarget::One(eth_token.contract_address), ALICE());
+    IERC20Dispatcher { contract_address: eth_token.contract_address }
+        .approve(remote_token.contract_address, BoundedInt::max());
+    stop_prank(CheatTarget::One(eth_token.contract_address));
+
     let hyp_erc721_contract = declare("HypErc721").unwrap();
     let mut calldata: Array<felt252> = array![];
     local_mailbox.contract_address.serialize(ref calldata);
@@ -218,6 +228,11 @@ pub fn setup() -> Setup {
     calldata.append(starknet::get_contract_address().into());
     let (local_token, _) = hyp_erc721_contract.deploy(@calldata).unwrap();
     let local_token = IHypErc721TestDispatcher { contract_address: local_token };
+
+    start_prank(CheatTarget::One(eth_token.contract_address), ALICE());
+    IERC20Dispatcher { contract_address: eth_token.contract_address }
+        .approve(local_token.contract_address, BoundedInt::max());
+    stop_prank(CheatTarget::One(eth_token.contract_address));
 
     let contract = declare("MockAccount").unwrap();
     let (alice, _) = contract.deploy(@array![PUB_KEY]).unwrap();
@@ -237,6 +252,7 @@ pub fn setup() -> Setup {
         local_token,
         hyp_erc721_contract,
         hyp_erc721_collateral_contract,
+        eth_token,
         alice,
         bob,
     }
@@ -271,6 +287,10 @@ pub fn deploy_remote_token(mut setup: Setup, is_collateral: bool) -> Setup {
     }
     let local_token_address: felt252 = setup.local_token.contract_address.into();
     setup.remote_token.enroll_remote_router(ORIGIN, local_token_address.into());
+
+    IERC20Dispatcher { contract_address: setup.eth_token.contract_address }
+        .approve(setup.local_token.contract_address, BoundedInt::max());
+
     setup
 }
 

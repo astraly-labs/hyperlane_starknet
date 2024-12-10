@@ -60,6 +60,8 @@ pub mod ERC4626Component {
         pub const EXCEEDED_MAX_MINT: felt252 = 'ERC4626: exceeded max mint';
         pub const EXCEEDED_MAX_REDEEM: felt252 = 'ERC4626: exceeded max redeem';
         pub const EXCEEDED_MAX_WITHDRAW: felt252 = 'ERC4626: exceeded max withdraw';
+        pub const ERC20_TRANSFER_FAILED: felt252 = 'ERC20 transfer failed';
+        pub const ERC20_TRANSFER_FROM_FAILED: felt252 = 'ERC20 transfer_from failed';
     }
 
     pub trait ERC4626HooksTrait<TContractState> {
@@ -442,7 +444,10 @@ pub mod ERC4626Component {
             Hooks::before_deposit(ref self, caller, receiver, assets, shares);
 
             let dispatcher = ERC20ABIDispatcher { contract_address: self.ERC4626_asset.read() };
-            dispatcher.transfer_from(caller, get_contract_address(), assets);
+            assert(
+                dispatcher.transfer_from(caller, get_contract_address(), assets),
+                Errors::ERC20_TRANSFER_FROM_FAILED
+            );
             let mut erc20_comp_mut = get_dep_component_mut!(ref self, ERC20);
             erc20_comp_mut.mint(receiver, shares);
             self.emit(Deposit { sender: caller, owner: receiver, assets, shares });
@@ -473,7 +478,7 @@ pub mod ERC4626Component {
             erc20_comp_mut.burn(owner, shares);
 
             let dispatcher = ERC20ABIDispatcher { contract_address: self.ERC4626_asset.read() };
-            dispatcher.transfer(receiver, assets);
+            assert(dispatcher.transfer(receiver, assets), Errors::ERC20_TRANSFER_FAILED);
 
             self.emit(Withdraw { sender: caller, receiver, owner, assets, shares });
 

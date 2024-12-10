@@ -21,14 +21,13 @@ pub mod HypErc721 {
     use starknet::ContractAddress;
     use token::components::erc721_enumerable::ERC721EnumerableComponent;
     use token::components::hyp_erc721_component::HypErc721Component;
-    use token::components::token_message::TokenMessageTrait;
     use token::components::token_router::{
-        TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait,
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
         TokenRouterComponent::MessageRecipientInternalHookImpl,
         TokenRouterTransferRemoteHookDefaultImpl
     };
     use token::interfaces::imessage_recipient::IMessageRecipient;
-    // also needs {https://github.com/OpenZeppelin/cairo-contracts/blob/main/packages/token/src/erc721/extensions/erc721_enumerable/erc721_enumerable.cairo}
+
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(path: HypErc721Component, storage: hyp_erc721, event: HypErc721Event);
@@ -50,7 +49,7 @@ pub mod HypErc721 {
     #[abi(embed_v0)]
     impl ERC721EnumerableImpl =
         ERC721EnumerableComponent::ERC721EnumerableImpl<ContractState>;
-    // impl ERC721EnumerableInternalImpl = ERC721EnumerableComponent::InternalImpl<ContractState>;
+    impl ERC721EnumerableInternalImpl = ERC721EnumerableComponent::InternalImpl<ContractState>;
 
     // Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
@@ -149,6 +148,7 @@ pub mod HypErc721 {
             .mailboxclient
             .initialize(mailbox, Option::Some(hook), Option::Some(interchain_security_module));
         self.hyp_erc721.initialize(mint_amount, name, symbol);
+        self.erc721_enumerable.initializer();
     }
 
     #[abi(embed_v0)]

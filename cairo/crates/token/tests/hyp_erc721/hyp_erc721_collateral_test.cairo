@@ -1,6 +1,8 @@
 use alexandria_bytes::Bytes;
 use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
+use core::integer::BoundedInt;
 use mocks::test_erc721::{ITestERC721Dispatcher, ITestERC721DispatcherTrait};
+use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::cheatcodes::contract_class::{ContractClass, ContractClassTrait};
 use starknet::ContractAddress;
 use super::common::{
@@ -24,6 +26,9 @@ fn setup_erc721_collateral() -> Setup {
     let local_token = IHypErc721TestDispatcher { contract_address: local_token };
 
     setup.local_token = local_token;
+
+    IERC20Dispatcher { contract_address: setup.eth_token.contract_address }
+        .approve(local_token.contract_address, BoundedInt::max());
 
     let remote_token_address: felt252 = setup.remote_token.contract_address.into();
     setup.local_token.enroll_remote_router(DESTINATION, remote_token_address.into());

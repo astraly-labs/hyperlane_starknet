@@ -1,10 +1,11 @@
 [package]
 name = "hyperlane-starknet"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
     "byeongsu-hong <hong@byeongsu.dev>",
     "Eric <hashableric@gmail.com>",
     "Steve <steve8060914@gmail.com>",
+    "Pragma <support@pragma.build>",
 ]
 edition = "2021"
 license = "Apache-2.0"
@@ -34,8 +35,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 starknet = "0.10.0"
 
-[dev_dependencies]
-
+[dev-dependencies]
 # starknet
 cainome = { git = "https://github.com/cartridge-gg/cainome", tag = "v0.2.9", features = [
     "abigen-rs",

@@ -1,5 +1,10 @@
-use std::{collections::HashMap, env::current_dir, path::{PathBuf, Path}, fs};
 use ethers::prelude::Abigen;
+use std::{
+    collections::HashMap,
+    env::current_dir,
+    fs,
+    path::{Path, PathBuf},
+};
 
 fn check_path_exists(path: &Path) {
     if !path.exists() {
@@ -55,7 +60,7 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
     abigen
         .generate()
         .expect("Fail to generate bindings")
-        .write_to_file(&bind_out.to_str().expect("valid utf8 path"))
+        .write_to_file(bind_out.to_str().expect("valid utf8 path"))
         .expect("Fail to write bindings to file");
 }
 

@@ -1,9 +1,5 @@
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
-
-<!-- ************************************* -->
-<!-- *        HEADER WITH LOGO           * -->
-<!-- ************************************* -->
 <p align="center">
   <img src="assets/logo/logo.png" height="256">
 </p>
@@ -18,44 +14,30 @@
   <a href="https://hyperlane.xyz">https://hyperlane.xyz</a>
 </p>
 
-<!-- ************************************* -->
-<!-- *        BADGES                     * -->
-<!-- ************************************* -->
-<div align="center">
-<br />
-
-
-</div>
-
-<!-- ************************************* -->
-<!-- *        CONTENTS                   * -->
-<!-- ************************************* -->
-
 This repository is an implementation of the Hyperlane protocol for Starknet app-chains.
 You can learn more about Hyperlane [here](https://docs.hyperlane.xyz/docs/protocol/protocol-overview).
 
 The implementation guidelines can be found [here](https://docs.hyperlane.xyz/docs/guides/implementation-guide).
 
-## Supported Features
-| Feature  |  Supported |
-|---|---|
-| Mailbox   |  ✅ |  
-| Merkle Tree Hook  | ✅  |  
-| Protocol Fee Hook  | ✅  |  
-|  Aggregation Hook | ❌ |  
-|  Routing Hook | ❌ |  
-|  Pausable Hook | ❌ |  
-|  Multisig ISM | ✅ |  
-|  Pausable ISM | ✅ |  
-|  Aggregation ISM | ✅ |  
-|  Routing ISM | ✅ |  
-|  Interchain Gas Payment | ❌ |  
-|  Warp Routes | ✅ |  
+# Supported Features
+| Feature                | Supported |
+| ---------------------- | --------- |
+| Mailbox                | ✅         |
+| Merkle Tree Hook       | ✅         |
+| Protocol Fee Hook      | ✅         |
+| Aggregation Hook       | ❌         |
+| Routing Hook           | ❌         |
+| Pausable Hook          | ❌         |
+| Multisig ISM           | ✅         |
+| Pausable ISM           | ✅         |
+| Aggregation ISM        | ✅         |
+| Routing ISM            | ✅         |
+| Interchain Gas Payment | ❌         |
+| Warp Routes            | ✅         |
 
+# Project structure
 
-## Project structure
-
-### Contracts
+## Contracts
 
 The contracts are located in the `contracts/` directory. It's a `scarb` project, so you can use the `scarb` CLI to build it.
 
@@ -118,6 +100,29 @@ Restart another instance for the second test (strk -> evm):
 ```bash
 cd rust && cargo test -- test_mailbox_strk_to_evm
  ```
+ 
+## Scripts
+
+This section details the steps to deploy Hyperlane contracts on Starknet.
+
+We have a set of javascript scripts available for this purpose. To use them, you first need to install dependencies and populate the env variables:
+```sh
+cd scripts/
+bun install # or using npm
+cp .env.example .env # populate the variables inside
+```
+
+(in the `.env`, the beneficiary address is the account that will be used to recover funds from the protocol fee)
+
+From there, you can run either:
+* `bun run deploy` to deploy the Hyperlane contracts,
+* or `bun run update-hooks` to update the hooks of the deployed contract.
+
+Constructors parameters can be specified in the `contract_config.json`.
+
+## Rust
+
+The rust repository is strictly used for tests purposes.
 
 ## 📖 License
 
@@ -138,22 +143,3 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
-
-
-## 🪛 Deployment
-
-This section details the steps to deploy Hyperlane contracts on Starknet. Note that the deployment script will set a basic configuration for all the required contracts. Further configuration process might be required based on the use case. Constructors parameters can be specified in the `contract_config.json`.
-Firstly, set the following environment variables, important for the deployment process: 
-```bash
-STARKNET_RPC_URL=
-ACCOUNT_ADDRESS=
-BENEFICIARY_ADDRESS=
-NETWORK=
-PRIVATE_KEY=
-``` 
-The beneficiary address is the account that will be used to recover funds from the protocol fee. 
-Once set, the contracts can be deployed using this command( assuming `ts-node` is installed): 
-
-```bash
-ts-node deploy.ts  
-``` 

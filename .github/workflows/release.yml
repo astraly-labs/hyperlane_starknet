@@ -3,7 +3,7 @@ name: release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 jobs:
   artifact:
@@ -12,11 +12,13 @@ jobs:
       pull-requests: write
     name: artifact
     runs-on: ubuntu-latest
-    env: 
-      working-directory: ./contracts
+    env:
+      working-directory: ./cairo
     steps:
       - uses: actions/checkout@v4
       - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.6.5"
       - name: Build contracts
         working-directory: ${{ env.working-directory}}
         run: scarb build
@@ -24,7 +26,7 @@ jobs:
         working-directory: ${{ env.working-directory}}
         run: |
           mkdir -p filtered_artifacts
-          find ./target/dev -type f -name '*.contract_class.json' -exec cp {} filtered_artifacts/ \;
+          find ./target/dev -type f \( -name '*.contract_class.json' -o -name '*.compiled_contract_class.json' \) -exec cp {} filtered_artifacts/ \;
       - name: Generate checksums
         working-directory: ${{ env.working-directory}}
         run: |
@@ -41,7 +43,7 @@ jobs:
           cd ..
           sha256sum hyperlane-starknet-${{ github.ref_name }}.zip > hyperlane-starknet-${{ github.ref_name }}.CHECKSUM
           md5sum hyperlane-starknet-${{ github.ref_name }}.zip > hyperlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
-  
+
       - name: Find zip files
         working-directory: ${{ env.working-directory}}
         run: |
@@ -52,8 +54,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./contracts/hyperlane-starknet-${{ github.ref_name }}.zip
-            ./contracts/hyperlane-starknet-${{ github.ref_name }}.CHECKSUM
-            ./contracts/hyperlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5
-
-            
+            ./cairo/hyperlane-starknet-${{ github.ref_name }}.zip
+            ./cairo/hyperlane-starknet-${{ github.ref_name }}.CHECKSUM
+            ./cairo/hyperlane-starknet-${{ github.ref_name }}.CHECKSUM.MD5

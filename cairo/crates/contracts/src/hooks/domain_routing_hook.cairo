@@ -44,6 +44,7 @@ pub mod domain_routing_hook {
         pub const FEE_AMOUNT_TRANSFER_FAILED: felt252 = 'Hook fee transfer failed';
         pub const ZERO_FEE: felt252 = 'Zero fee amount';
         pub const INSUFFICIENT_ALLOWANCE: felt252 = 'Insufficient allowance';
+        pub const AMOUNT_DOES_NOT_COVER_HOOK_QUOTE: felt252 = 'Amount does not cover quote fee';
     }
 
     #[event]
@@ -83,14 +84,27 @@ pub mod domain_routing_hook {
             ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
         ) {
             assert(_fee_amount > 0, Errors::ZERO_FEE);
+
+            // We should check that the fee_amount is enough for the desired hook to work before actually send the amount
+            // We assume that the fee token is the same across the hooks
+
+            let required_amount = self.quote_dispatch(_metadata.clone(), _message.clone());
+            assert(_fee_amount >= required_amount, Errors::AMOUNT_DOES_NOT_COVER_HOOK_QUOTE);
+
             let caller = get_caller_address();
             let configured_hook_address: ContractAddress = self
                 ._get_configured_hook(_message.clone())
                 .contract_address;
-            self._transfer_routing_fee_to_hook(caller, configured_hook_address, _fee_amount);
+
+            // Tricky here: if the destination hook does operations with the transfered fee, we need to send it before
+            // the operation. However, if we send the fee before and for an unexpected reason the destination hook reverts,
+            // it will have to send back the token to the caller. For now, we assume that the destination hook does not 
+            // do anything with the fee, so we can send it after the `_post_dispatch` call. 
             self
-                ._get_configured_hook(_message.clone())
-                .post_dispatch(_metadata, _message, _fee_amount);
+            ._get_configured_hook(_message.clone())
+            .post_dispatch(_metadata, _message, _fee_amount);
+            self._transfer_routing_fee_to_hook(caller, configured_hook_address, required_amount);
+            
         }
 
         fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
@@ -140,8 +154,7 @@ pub mod domain_routing_hook {
                 token_dispatcher.allowance(from, this_contract_address) >= amount,
                 Errors::INSUFFICIENT_ALLOWANCE
             );
-            let transfer_flag: bool = token_dispatcher.transfer_from(from, to, amount);
-            assert(transfer_flag == false, Errors::FEE_AMOUNT_TRANSFER_FAILED);
+            token_dispatcher.transfer_from(from, to, amount);
         }
     }
 }

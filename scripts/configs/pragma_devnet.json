@@ -192,6 +192,23 @@
                     "value": "$OWNER_ADDRESS"
                 }
             }
+        }, 
+        "domain_routing_hook": {
+            "name": "domain_routing_hook", 
+            "constructor": {
+                "mailbox": {
+                    "type": "ContractAddress",
+                    "value": "$mailbox"
+                },
+                "owner": {
+                    "type": "ContractAddress",
+                    "value": "$OWNER_ADDRESS"
+                },
+                "token_address": {
+                    "type": "ContractAddress",
+                    "value": "0x049D36570D4e46f48e99674bd3fcc84644DdD6b96F7C741B1562B82f9e004dC7"
+                }
+            }
         }
     },
     "deploymentOrder": [
@@ -207,6 +224,7 @@
         "merkle_tree_hook",
         "default_fallback_routing_ism",
         "trusted_relayer_ism",
-        "validator_announce"
+        "validator_announce", 
+        "domain_routing_hook"
     ]
 }

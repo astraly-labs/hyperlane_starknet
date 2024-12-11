@@ -588,10 +588,11 @@ pub fn setup_protocol_fee() -> (IProtocolFeeDispatcher, IPostDispatchHookDispatc
 pub fn setup_domain_routing_hook() -> (IPostDispatchHookDispatcher, IDomainRoutingHookDispatcher) {
     let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
     let domain_routing_hook_class = declare("domain_routing_hook").unwrap();
-
-    let (domain_routing_hook_addrs, _) = domain_routing_hook_class
-        .deploy(@array![mailbox.contract_address.into(), OWNER().into(), ETH_ADDRESS().into()])
-        .unwrap();
+    let u256_owner: felt252 = OWNER().try_into().unwrap();
+    let args: Array<felt252> = array![
+        mailbox.contract_address.into(), u256_owner, ETH_ADDRESS().into()
+    ];
+    let (domain_routing_hook_addrs, _) = domain_routing_hook_class.deploy(@args).unwrap();
     (
         IPostDispatchHookDispatcher { contract_address: domain_routing_hook_addrs },
         IDomainRoutingHookDispatcher { contract_address: domain_routing_hook_addrs }

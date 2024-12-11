@@ -1,12 +1,12 @@
 #[starknet::contract]
 pub mod domain_routing_hook {
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
-    use hyperlane_starknet::contracts::client::mailboxclient_component::{
+    use contracts::client::mailboxclient_component::{
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
     };
-    use hyperlane_starknet::contracts::client::{mailboxclient};
-    use hyperlane_starknet::contracts::libs::message::Message;
-    use hyperlane_starknet::interfaces::{
+    use contracts::client::{mailboxclient};
+    use contracts::libs::message::Message;
+    use contracts::interfaces::{
         IPostDispatchHook, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
         DomainRoutingHookConfig, IDomainRoutingHook, Types
     };
@@ -64,7 +64,7 @@ pub mod domain_routing_hook {
         _owner: ContractAddress,
         _fee_token_address: ContractAddress
     ) {
-        self.mailboxclient.initialize(_mailbox);
+        self.mailboxclient.initialize(_mailbox, Option::None, Option::None);
         self.ownable.initializer(_owner);
         self.fee_token.write(_fee_token_address);
     }

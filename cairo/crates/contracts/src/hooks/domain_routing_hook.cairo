@@ -41,7 +41,6 @@ pub mod domain_routing_hook {
     mod Errors {
         pub const INVALID_DESTINATION: felt252 = 'Destination has no hooks';
         pub const INSUFFICIENT_BALANCE: felt252 = 'Insufficient balance';
-        pub const FEE_AMOUNT_TRANSFER_FAILED: felt252 = 'Hook fee transfer failed';
         pub const ZERO_FEE: felt252 = 'Zero fee amount';
         pub const INSUFFICIENT_ALLOWANCE: felt252 = 'Insufficient allowance';
         pub const AMOUNT_DOES_NOT_COVER_HOOK_QUOTE: felt252 = 'Amount does not cover quote fee';
@@ -101,10 +100,9 @@ pub mod domain_routing_hook {
             // it will have to send back the token to the caller. For now, we assume that the destination hook does not 
             // do anything with the fee, so we can send it after the `_post_dispatch` call. 
             self
-            ._get_configured_hook(_message.clone())
-            .post_dispatch(_metadata, _message, _fee_amount);
+                ._get_configured_hook(_message.clone())
+                .post_dispatch(_metadata, _message, _fee_amount);
             self._transfer_routing_fee_to_hook(caller, configured_hook_address, required_amount);
-            
         }
 
         fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {

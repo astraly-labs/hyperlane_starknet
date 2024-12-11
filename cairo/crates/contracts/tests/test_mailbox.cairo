@@ -173,7 +173,7 @@ fn test_dispatch() {
 
 #[test]
 fn test_dispatch_with_protocol_fee_hook() {
-    let (_, protocol_fee_hook) = setup_protocol_fee();
+    let (_, protocol_fee_hook) = setup_protocol_fee(Option::None);
     let mock_hook = setup_mock_hook();
     let (mailbox, mut spy, _, _) = setup_mailbox(
         MAILBOX(),
@@ -242,7 +242,7 @@ fn test_dispatch_with_protocol_fee_hook() {
 
 #[test]
 fn test_dispatch_with_two_fee_hook() {
-    let (_, protocol_fee_hook) = setup_protocol_fee();
+    let (_, protocol_fee_hook) = setup_protocol_fee(Option::None);
     let mock_hook = setup_mock_fee_hook();
     let (mailbox, mut spy, _, _) = setup_mailbox(
         MAILBOX(),
@@ -312,7 +312,7 @@ fn test_dispatch_with_two_fee_hook() {
 #[test]
 #[should_panic(expected: ('Provided fee < needed fee',))]
 fn test_dispatch_with_two_fee_hook_fails_if_greater_than_required_and_lower_than_default() {
-    let (_, protocol_fee_hook) = setup_protocol_fee();
+    let (_, protocol_fee_hook) = setup_protocol_fee(Option::None);
     let mock_hook = setup_mock_fee_hook();
     let (mailbox, mut spy, _, _) = setup_mailbox(
         MAILBOX(),
@@ -381,7 +381,7 @@ fn test_dispatch_with_two_fee_hook_fails_if_greater_than_required_and_lower_than
 #[test]
 #[should_panic(expected: ('Provided fee < needed fee',))]
 fn test_dispatch_with_protocol_fee_hook_fails_if_provided_fee_lower_than_required_fee() {
-    let (_, protocol_fee_hook) = setup_protocol_fee();
+    let (_, protocol_fee_hook) = setup_protocol_fee(Option::None);
     let mock_hook = setup_mock_hook();
 
     let (mailbox, _, _, _) = setup_mailbox(
@@ -421,7 +421,7 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_provided_fee_lower_than_require
 #[test]
 #[should_panic(expected: ('Insufficient balance',))]
 fn test_dispatch_with_protocol_fee_hook_fails_if_user_balance_lower_than_fee_amount() {
-    let (_, protocol_fee_hook) = setup_protocol_fee();
+    let (_, protocol_fee_hook) = setup_protocol_fee(Option::None);
     let mock_hook = setup_mock_hook();
 
     let (mailbox, _, _, _) = setup_mailbox(
@@ -463,7 +463,7 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_user_balance_lower_than_fee_amo
 #[test]
 #[should_panic(expected: ('Insufficient allowance',))]
 fn test_dispatch_with_protocol_fee_hook_fails_if_insufficient_allowance() {
-    let (_, protocol_fee_hook) = setup_protocol_fee();
+    let (_, protocol_fee_hook) = setup_protocol_fee(Option::None);
     let mock_hook = setup_mock_hook();
 
     let (mailbox, _, _, _) = setup_mailbox(

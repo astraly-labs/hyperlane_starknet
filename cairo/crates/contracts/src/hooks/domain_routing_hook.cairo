@@ -5,11 +5,11 @@ pub mod domain_routing_hook {
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
     };
     use contracts::client::{mailboxclient};
-    use contracts::libs::message::Message;
     use contracts::interfaces::{
         IPostDispatchHook, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
         DomainRoutingHookConfig, IDomainRoutingHook, Types
     };
+    use contracts::libs::message::Message;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};

@@ -5,9 +5,9 @@ use contracts::interfaces::{
     IDomainRoutingHookDispatcher, IDomainRoutingHookDispatcherTrait, DomainRoutingHookConfig,
     ETH_ADDRESS
 };
+use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 
 use contracts::utils::utils::U256TryIntoContractAddress;
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
 
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};

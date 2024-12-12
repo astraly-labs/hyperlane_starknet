@@ -28,6 +28,7 @@ pub mod domain_routing_hook {
     #[storage]
     struct Storage {
         hooks: LegacyMap<u32, IPostDispatchHookDispatcher>,
+        domains: LegacyMap<u32, u32>,
         fee_token: ContractAddress,
         #[substorage(v0)]
         mailboxclient: MailboxclientComponent::Storage,
@@ -125,6 +126,9 @@ pub mod domain_routing_hook {
                     Option::None(_) => { break; },
                 };
             };
+        }
+        fn get_hook(self: @ContractState, domain: u32) -> ContractAddress {
+            self.hooks.read(domain).contract_address
         }
     }
 

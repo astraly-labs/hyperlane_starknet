@@ -41,6 +41,7 @@ fn test_domain_rounting_set_hook() {
     let destination: u32 = 12;
     let hook: ContractAddress = contract_address_const::<1>();
     set_routing_hook_addrs.set_hook(destination, hook);
+    assert_eq!(set_routing_hook_addrs.get_hook(destination), hook);
 }
 
 #[test]
@@ -58,13 +59,16 @@ fn test_domain_rounting_set_hook_array() {
     let ownable = IOwnableDispatcher { contract_address: set_routing_hook_addrs.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     let mut hook_config_arr = ArrayTrait::<DomainRoutingHookConfig>::new();
-    hook_config_arr
-        .append(DomainRoutingHookConfig { destination: 1, hook: contract_address_const::<2>() });
-    hook_config_arr
-        .append(DomainRoutingHookConfig { destination: 2, hook: contract_address_const::<3>() });
-    hook_config_arr
-        .append(DomainRoutingHookConfig { destination: 3, hook: contract_address_const::<4>() });
+    let config_1 = DomainRoutingHookConfig { destination: 1, hook: contract_address_const::<2>() };
+    let config_2 = DomainRoutingHookConfig { destination: 2, hook: contract_address_const::<3>() };
+    let config_3 = DomainRoutingHookConfig { destination: 3, hook: contract_address_const::<4>() };
+    hook_config_arr.append(config_1);
+    hook_config_arr.append(config_2);
+    hook_config_arr.append(config_3);
     set_routing_hook_addrs.set_hooks(hook_config_arr);
+    assert_eq!(set_routing_hook_addrs.get_hook(config_1.destination), config_1.hook);
+    assert_eq!(set_routing_hook_addrs.get_hook(config_2.destination), config_2.hook);
+    assert_eq!(set_routing_hook_addrs.get_hook(config_3.destination), config_3.hook);
 }
 
 

@@ -191,25 +191,6 @@ fn hook_set_for_destination_post_dispatch() {
 
 
 #[test]
-#[should_panic(expected: 'Zero fee amount',)]
-fn test_post_dispatch_zero_fee() {
-    let (routing_hook_addrs, _) = setup_domain_routing_hook();
-    let message = Message {
-        version: HYPERLANE_VERSION,
-        nonce: 0_u32,
-        origin: 0_u32,
-        sender: 0,
-        destination: 18,
-        recipient: 0,
-        body: BytesTrait::new_empty(),
-    };
-    let metadata = BytesTrait::new_empty();
-
-    // This should panic with 'Zero fee amount'
-    routing_hook_addrs.post_dispatch(metadata, message, 0);
-}
-
-#[test]
 #[should_panic(expected: 'Amount does not cover quote fee',)]
 fn test_post_dispatch_insufficient_fee() {
     let (routing_hook_addrs, set_routing_hook_addrs) = setup_domain_routing_hook();

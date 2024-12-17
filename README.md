@@ -26,7 +26,7 @@ The implementation guidelines can be found [here](https://docs.hyperlane.xyz/doc
 | Merkle Tree Hook       | ✅         |
 | Protocol Fee Hook      | ✅         |
 | Aggregation Hook       | ❌         |
-| Routing Hook           | ❌         |
+| Routing Hook           | ✅ (unaudited)         |
 | Pausable Hook          | ❌         |
 | Multisig ISM           | ✅         |
 | Pausable ISM           | ✅         |

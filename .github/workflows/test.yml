@@ -1,33 +1,78 @@
 name: contracts-tests
+
 on:
   push:
   pull_request:
 
 jobs:
-  contracts:
+  contracts-cairo:
     runs-on: ubuntu-latest
     env:
       working-directory: ./cairo
+      SCARB_VERSION: "2.6.5"
+      SNFOUNDRY_VERSION: "0.22.0"
     steps:
       - uses: actions/checkout@v3
 
       - uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: "2.6.5"
+          scarb-version: ${{ env.SCARB_VERSION }}
+
       - uses: foundry-rs/setup-snfoundry@v3
         with:
-          starknet-foundry-version: "0.22.0"
-      - working-directory: ${{ env.working-directory}}
+          starknet-foundry-version: ${{ env.SNFOUNDRY_VERSION }}
+
+      - name: Format check
+        working-directory: ${{ env.working-directory }}
         run: scarb fmt --check
 
       - name: Cache contracts
         id: cache-contracts
         uses: actions/cache@v3
         with:
-          path: ./target
-          key: ${{ runner.os }}-contracts-${{ hashFiles('./src', 'Scarb.lock') }}
+          path: ${{ env.working-directory }}/target
+          key: ${{ runner.os }}-contracts-${{ env.working-directory }}-${{ hashFiles(format('{0}/src/**', env.working-directory), format('{0}/Scarb.lock', env.working-directory)) }}
 
-      - working-directory: ${{ env.working-directory}}
+      - name: Build
+        working-directory: ${{ env.working-directory }}
         run: scarb build
-      - working-directory: ${{ env.working-directory}}
+
+      - name: Test
+        working-directory: ${{ env.working-directory }}
+        run: snforge test
+
+  contracts-xerc20:
+    runs-on: ubuntu-latest
+    env:
+      working-directory: ./xerc20
+      SCARB_VERSION: "2.9.2"
+      SNFOUNDRY_VERSION: "0.34.0"
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: ${{ env.SCARB_VERSION }}
+
+      - uses: foundry-rs/setup-snfoundry@v3
+        with:
+          starknet-foundry-version: ${{ env.SNFOUNDRY_VERSION }}
+
+      - name: Format check
+        working-directory: ${{ env.working-directory }}
+        run: scarb fmt --check
+
+      - name: Cache contracts
+        id: cache-contracts
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.working-directory }}/target
+          key: ${{ runner.os }}-contracts-${{ env.working-directory }}-${{ hashFiles(format('{0}/src/**', env.working-directory), format('{0}/Scarb.lock', env.working-directory)) }}
+
+      - name: Build
+        working-directory: ${{ env.working-directory }}
+        run: scarb build
+
+      - name: Test
+        working-directory: ${{ env.working-directory }}
         run: snforge test

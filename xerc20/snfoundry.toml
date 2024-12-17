@@ -1,0 +1,11 @@
+[sncast.default]
+# change here with the account name you use
+account = "user" 
+
+# change this line with the path to your accounts.json 
+# see how to import your account if you already have one
+# {https://foundry-rs.github.io/starknet-foundry/appendix/sncast/account/import.html}
+accounts-file = ".starknet_accounts/starknet_open_zeppelin_accounts.json" 
+
+# node url
+url = "http://127.0.0.1:5050"

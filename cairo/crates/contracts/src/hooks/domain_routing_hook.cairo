@@ -1,3 +1,5 @@
+/// WARNING: THIS CONTRACT IS NOT AUDITED
+
 #[starknet::contract]
 pub mod domain_routing_hook {
     use alexandria_bytes::{Bytes, BytesTrait, BytesStore};

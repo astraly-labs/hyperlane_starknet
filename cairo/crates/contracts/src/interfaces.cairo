@@ -294,3 +294,15 @@ pub trait IRoutingIsm<TContractState> {
     fn route(self: @TContractState, _message: Message) -> ContractAddress;
 }
 
+#[derive(Drop, Serde, Copy)]
+pub struct DomainRoutingHookConfig {
+    pub destination: u32,
+    pub hook: ContractAddress
+}
+
+#[starknet::interface]
+pub trait IDomainRoutingHook<TContractState> {
+    fn set_hook(ref self: TContractState, _destination: u32, _hook: ContractAddress);
+    fn set_hooks(ref self: TContractState, configs: Array<DomainRoutingHookConfig>);
+    fn get_hook(self: @TContractState, domain: u32) -> ContractAddress;
+}

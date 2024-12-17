@@ -16,13 +16,13 @@ use super::super::setup::{
 
 #[test]
 fn test_hook_type() {
-    let (_, protocol_fee) = setup_protocol_fee();
+    let (_, protocol_fee) = setup_protocol_fee(Option::None);
     assert_eq!(protocol_fee.hook_type(), Types::PROTOCOL_FEE(()));
 }
 
 #[test]
 fn test_set_protocol_fee() {
-    let (protocol_fee, _) = setup_protocol_fee();
+    let (protocol_fee, _) = setup_protocol_fee(Option::None);
     let ownable = IOwnableDispatcher { contract_address: protocol_fee.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     let new_protocol_fee = 20000;
@@ -34,7 +34,7 @@ fn test_set_protocol_fee() {
 #[test]
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_protocol_fee_fails_if_not_owner() {
-    let (protocol_fee, _) = setup_protocol_fee();
+    let (protocol_fee, _) = setup_protocol_fee(Option::None);
     let new_protocol_fee = 20000;
     protocol_fee.set_protocol_fee(new_protocol_fee);
 }
@@ -42,7 +42,7 @@ fn test_set_protocol_fee_fails_if_not_owner() {
 #[test]
 #[should_panic(expected: ('Exceeds max protocol fee',))]
 fn test_set_protocol_fee_fails_if_higher_than_max() {
-    let (protocol_fee, _) = setup_protocol_fee();
+    let (protocol_fee, _) = setup_protocol_fee(Option::None);
     let ownable = IOwnableDispatcher { contract_address: protocol_fee.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     let new_protocol_fee = MAX_PROTOCOL_FEE + 1;
@@ -53,7 +53,7 @@ fn test_set_protocol_fee_fails_if_higher_than_max() {
 
 #[test]
 fn test_set_beneficiary() {
-    let (protocol_fee, _) = setup_protocol_fee();
+    let (protocol_fee, _) = setup_protocol_fee(Option::None);
     let ownable = IOwnableDispatcher { contract_address: protocol_fee.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
     let new_beneficiary = 'NEW_BENEFICIARY'.try_into().unwrap();
@@ -65,7 +65,7 @@ fn test_set_beneficiary() {
 #[test]
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_beneficiary_fails_if_not_owner() {
-    let (protocol_fee, _) = setup_protocol_fee();
+    let (protocol_fee, _) = setup_protocol_fee(Option::None);
     let new_beneficiary = 'NEW_BENEFICIARY'.try_into().unwrap();
     protocol_fee.set_beneficiary(new_beneficiary);
 }
@@ -74,7 +74,7 @@ fn test_set_beneficiary_fails_if_not_owner() {
 #[test]
 fn test_collect_protocol_fee() {
     let fee_token = setup_mock_token();
-    let (protocol_fee, _) = setup_protocol_fee();
+    let (protocol_fee, _) = setup_protocol_fee(Option::None);
     let ownable = IOwnableDispatcher { contract_address: fee_token.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
 
@@ -92,7 +92,7 @@ fn test_collect_protocol_fee() {
 #[should_panic(expected: ('Insufficient balance',))]
 fn test_collect_protocol_fee_fails_if_insufficient_balance() {
     setup_mock_token();
-    let (protocol_fee, _) = setup_protocol_fee();
+    let (protocol_fee, _) = setup_protocol_fee(Option::None);
     protocol_fee.collect_protocol_fees();
 }
 
@@ -100,7 +100,7 @@ fn test_collect_protocol_fee_fails_if_insufficient_balance() {
 #[test]
 fn test_supports_metadata() {
     let mut metadata = BytesTrait::new_empty();
-    let (_, post_dispatch_hook) = setup_protocol_fee();
+    let (_, post_dispatch_hook) = setup_protocol_fee(Option::None);
     assert_eq!(post_dispatch_hook.supports_metadata(metadata.clone()), true);
     let variant = 1;
     metadata.append_u16(variant);
@@ -115,7 +115,7 @@ fn test_supports_metadata() {
 #[should_panic(expected: ('Invalid metadata variant',))]
 fn test_post_dispatch_fails_if_invalid_variant() {
     let fee_token = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
-    let (_, post_dispatch_hook) = setup_protocol_fee();
+    let (_, post_dispatch_hook) = setup_protocol_fee(Option::None);
     let ownable = IOwnableDispatcher { contract_address: fee_token.contract_address };
     let mut metadata = BytesTrait::new_empty();
     let variant = 2;
@@ -130,7 +130,7 @@ fn test_post_dispatch_fails_if_invalid_variant() {
 
 #[test]
 fn test_quote_dispatch() {
-    let (_, post_dispatch_hook) = setup_protocol_fee();
+    let (_, post_dispatch_hook) = setup_protocol_fee(Option::None);
     let mut metadata = BytesTrait::new_empty();
     let variant = 1;
     let message = MessageTrait::default();
@@ -142,7 +142,7 @@ fn test_quote_dispatch() {
 #[test]
 #[should_panic(expected: ('Invalid metadata variant',))]
 fn test_quote_dispatch_fails_if_invalid_variant() {
-    let (_, post_dispatch_hook) = setup_protocol_fee();
+    let (_, post_dispatch_hook) = setup_protocol_fee(Option::None);
     let mut metadata = BytesTrait::new_empty();
     let variant = 2;
     metadata.append_u16(variant);

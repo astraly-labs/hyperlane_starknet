@@ -10,12 +10,14 @@ use contracts::interfaces::{
     IProtocolFeeDispatcherTrait, IMockValidatorAnnounceDispatcher,
     ISpecifiesInterchainSecurityModuleDispatcher, ISpecifiesInterchainSecurityModuleDispatcherTrait,
     IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, IDomainRoutingIsmDispatcher,
-    IDomainRoutingIsmDispatcherTrait, IPausableIsmDispatcher, IPausableIsmDispatcherTrait,
-    ETH_ADDRESS
+    IDomainRoutingIsmDispatcherTrait, IDomainRoutingHookDispatcher,
+    IDomainRoutingHookDispatcherTrait, IPausableIsmDispatcher, IPausableIsmDispatcherTrait,
+    ETH_ADDRESS,
 };
 use contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MERKLE_PROOF_ITERATION;
 use openzeppelin::account::utils::signature::EthSignature;
 use openzeppelin::token::erc20::interface::{ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
+use snforge_std::cheatcodes::contract_class::ContractClass;
 use snforge_std::{
     declare, ContractClassTrait, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn
 };
@@ -563,8 +565,13 @@ pub fn setup_mock_token() -> ERC20ABIDispatcher {
     ERC20ABIDispatcher { contract_address: fee_token_addr }
 }
 
-pub fn setup_protocol_fee() -> (IProtocolFeeDispatcher, IPostDispatchHookDispatcher) {
-    let protocol_fee_class = declare("protocol_fee").unwrap();
+pub fn setup_protocol_fee(
+    class_hash: Option::<ContractClass>
+) -> (IProtocolFeeDispatcher, IPostDispatchHookDispatcher) {
+    let protocol_fee_class = match class_hash {
+        Option::Some(hash) => hash,
+        Option::None => declare("protocol_fee").unwrap()
+    };
     let (protocol_fee_addr, _) = protocol_fee_class
         .deploy(
             @array![
@@ -583,3 +590,22 @@ pub fn setup_protocol_fee() -> (IProtocolFeeDispatcher, IPostDispatchHookDispatc
         IPostDispatchHookDispatcher { contract_address: protocol_fee_addr }
     )
 }
+
+pub fn setup_domain_routing_hook() -> (IPostDispatchHookDispatcher, IDomainRoutingHookDispatcher) {
+    let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
+    let domain_routing_hook_class = declare("domain_routing_hook").unwrap();
+    let u256_owner: felt252 = OWNER().try_into().expect('Failed to convert owner');
+    let args: Array<felt252> = array![
+        mailbox.contract_address.into(), u256_owner, ETH_ADDRESS().into()
+    ];
+    let deployment_result = domain_routing_hook_class.deploy(@args);
+    if deployment_result.is_err() {
+        panic(deployment_result.unwrap_err());
+    }
+    let (domain_routing_hook_addrs, _) = deployment_result.unwrap();
+    (
+        IPostDispatchHookDispatcher { contract_address: domain_routing_hook_addrs },
+        IDomainRoutingHookDispatcher { contract_address: domain_routing_hook_addrs }
+    )
+}
+

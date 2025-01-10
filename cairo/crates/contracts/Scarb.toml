@@ -8,13 +8,15 @@ edition = "2023_11"
 [dependencies]
 starknet.workspace = true
 alexandria_bytes.workspace = true
+alexandria_math.workspace = true
 alexandria_storage.workspace = true
+alexandria_data_structures.workspace = true
 openzeppelin.workspace = true
 mocks = {path = "../mocks"}
 
 [dev-dependencies]
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v0.22.0" }
-
+assert_macros.workspace = true
+snforge_std.workspace = true
 
 [tool]
 fmt.workspace = true

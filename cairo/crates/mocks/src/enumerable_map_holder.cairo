@@ -12,10 +12,12 @@ pub trait IEnumerableMapHolder<TContractState> {
 #[starknet::contract]
 pub mod EnumerableMapHolder {
     use contracts::libs::enumerable_map::{EnumerableMap, EnumerableMapTrait};
+    use starknet::storage::{StoragePointerReadAccess};
+
 
     #[storage]
     struct Storage {
-        routers: EnumerableMap<u32, u256>
+        routers: EnumerableMap<u32, u256>,
     }
 
     #[abi(embed_v0)]

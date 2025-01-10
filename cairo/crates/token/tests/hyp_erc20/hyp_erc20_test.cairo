@@ -1,13 +1,13 @@
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
 use snforge_std::{
-    declare, ContractClassTrait, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn,
-    start_prank, stop_prank, EventFetcher, event_name_hash
+    declare, ContractClassTrait, ContractClass, cheat_caller_address, CheatSpan, EventSpy,
+    EventSpyAssertionsTrait, spy_events, DeclareResultTrait,
 };
 use super::common::{
     setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, perform_remote_transfer_with_emit,
     perform_remote_transfer_and_gas, ALICE, BOB, E18, IHypERC20TestDispatcher,
     IHypERC20TestDispatcherTrait, enroll_remote_router, enroll_local_router,
-    perform_remote_transfer, set_custom_gas_config, REQUIRED_VALUE, GAS_LIMIT
+    perform_remote_transfer, set_custom_gas_config, REQUIRED_VALUE, GAS_LIMIT,
 };
 
 #[test]
@@ -35,9 +35,9 @@ fn test_erc20_local_transfer() {
     assert_eq!(alice, 1000 * E18);
     assert_eq!(bob, 0);
 
-    start_prank(CheatTarget::One((setup).local_token.contract_address), ALICE());
+    cheat_caller_address((setup).local_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
+
     erc20_token.transfer(BOB(), 100 * E18);
-    stop_prank(CheatTarget::One(erc20_token.contract_address));
 
     let alice = erc20_token.balance_of(ALICE());
     let bob = erc20_token.balance_of(BOB());

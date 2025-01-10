@@ -1,32 +1,37 @@
 use mocks::mock_mailbox::{IMockMailboxDispatcher, IMockMailboxDispatcherTrait};
-use mocks::{test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},};
+use mocks::{test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait}};
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{declare, ContractClassTrait, CheatTarget, start_prank, stop_prank,};
+use snforge_std::{
+    declare, ContractClassTrait, ContractClass, cheat_caller_address, CheatSpan, EventSpy,
+    EventSpyAssertionsTrait, spy_events, DeclareResultTrait,
+};
 use starknet::ContractAddress;
 use super::super::hyp_erc20::common::{
     Setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, ALICE, BOB, E18, REQUIRED_VALUE,
     DESTINATION, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, setup,
     perform_remote_transfer_and_gas, enroll_remote_router, enroll_local_router,
-    perform_remote_transfer, handle_local_transfer, mint_and_approve
+    perform_remote_transfer, handle_local_transfer, mint_and_approve,
 };
 use token::extensions::hyp_erc20_collateral_vault_deposit::{
-    IHypERC20CollateralVaultDepositDispatcher, IHypERC20CollateralVaultDepositDispatcherTrait
+    IHypERC20CollateralVaultDepositDispatcher, IHypERC20CollateralVaultDepositDispatcherTrait,
 };
 use token::interfaces::ierc4626::{IERC4626Dispatcher, IERC4626DispatcherTrait};
 
 const DUST_AMOUNT: u256 = 100_000_000_000; // E11
 
 fn _transfer_roundtrip_and_increase_yields(
-    setup: @Setup, vault: ContractAddress, transfer_amount: u256, yield_amount: u256
+    setup: @Setup, vault: ContractAddress, transfer_amount: u256, yield_amount: u256,
 ) {
     // Transfer from Alice to Bob
-    start_prank(CheatTarget::One((*setup).primary_token.contract_address), ALICE());
+
+    cheat_caller_address(
+        (*setup).primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1),
+    );
     (*setup).primary_token.approve((*setup).local_token.contract_address, transfer_amount);
-    stop_prank(CheatTarget::One((*setup).primary_token.contract_address));
     perform_remote_transfer(setup, 0, transfer_amount);
     // Increase vault balance, which will reduce share redeemed for the same amount
     (*setup).primary_token.mint(vault, yield_amount);
-    start_prank(CheatTarget::One((*setup).remote_token.contract_address), BOB());
+    cheat_caller_address((*setup).remote_token.contract_address, BOB(), CheatSpan::TargetCalls(1));
     (*setup)
         .remote_token
         .transfer_remote(
@@ -36,9 +41,8 @@ fn _transfer_roundtrip_and_increase_yields(
             transfer_amount,
             0,
             Option::None,
-            Option::None
+            Option::None,
         );
-    stop_prank(CheatTarget::One((*setup).remote_token.contract_address));
 }
 
 fn assert_approx_eq_abs(lhs: u256, rhs: u256, relaxation: u256) {
@@ -52,7 +56,7 @@ fn assert_approx_eq_abs(lhs: u256, rhs: u256, relaxation: u256) {
 
 fn setup_vault() -> (Setup, IERC4626Dispatcher, IHypERC20CollateralVaultDepositDispatcher) {
     let mut setup = setup();
-    let contract = declare("ERC4626Mock").unwrap();
+    let contract = declare("ERC4626Mock").unwrap().contract_class();
     let mut calldata: Array<felt252> = array![];
     setup.primary_token.contract_address.serialize(ref calldata);
     let name: ByteArray = "Regular Vault";
@@ -61,7 +65,7 @@ fn setup_vault() -> (Setup, IERC4626Dispatcher, IHypERC20CollateralVaultDepositD
     symbol.serialize(ref calldata);
     let (vault, _) = contract.deploy(@calldata).unwrap();
 
-    let contract = declare("HypERC20CollateralVaultDeposit").unwrap();
+    let contract = declare("HypERC20CollateralVaultDeposit").unwrap().contract_class();
     let mut calldata: Array<felt252> = array![];
     setup.local_mailbox.contract_address.serialize(ref calldata);
     vault.serialize(ref calldata);
@@ -74,7 +78,7 @@ fn setup_vault() -> (Setup, IERC4626Dispatcher, IHypERC20CollateralVaultDepositD
         .local_token
         .enroll_remote_router(
             DESTINATION,
-            Into::<ContractAddress, felt252>::into(setup.remote_token.contract_address).into()
+            Into::<ContractAddress, felt252>::into(setup.remote_token.contract_address).into(),
         );
 
     setup.remote_mailbox.set_default_hook(setup.noop_hook.contract_address);
@@ -86,33 +90,31 @@ fn setup_vault() -> (Setup, IERC4626Dispatcher, IHypERC20CollateralVaultDepositD
         .remote_token
         .enroll_remote_router(
             ORIGIN,
-            Into::<ContractAddress, felt252>::into(setup.local_token.contract_address).into()
+            Into::<ContractAddress, felt252>::into(setup.local_token.contract_address).into(),
         );
     (
         setup,
         IERC4626Dispatcher { contract_address: vault },
-        IHypERC20CollateralVaultDepositDispatcher { contract_address: implementation }
+        IHypERC20CollateralVaultDepositDispatcher { contract_address: implementation },
     )
 }
 
 fn erc4626_vault_deposit_remote_transfer_deposits_into_vault(
-    mut transfer_amount: u256
+    mut transfer_amount: u256,
 ) -> (Setup, IERC4626Dispatcher, IHypERC20CollateralVaultDepositDispatcher) {
     transfer_amount %= TOTAL_SUPPLY + 1;
     let (mut setup, mut vault, mut erc20_collateral_vault_deposit) = setup_vault();
-    start_prank(CheatTarget::One(setup.primary_token.contract_address), ALICE());
+    cheat_caller_address(setup.primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     mint_and_approve(@setup, transfer_amount, ALICE(), setup.local_token.contract_address);
-    stop_prank(CheatTarget::One(setup.primary_token.contract_address));
     // Check vault shares balance before and after transfer
     assert_eq!(vault.max_redeem(erc20_collateral_vault_deposit.contract_address), 0);
     assert_eq!(erc20_collateral_vault_deposit.get_asset_deposited(), 0);
 
-    start_prank(CheatTarget::One(setup.primary_token.contract_address), ALICE());
+    cheat_caller_address(setup.primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     setup.primary_token.approve(setup.local_token.contract_address, transfer_amount);
-    stop_prank(CheatTarget::One(setup.primary_token.contract_address));
     perform_remote_transfer(@setup, 0, transfer_amount);
     assert_approx_eq_abs(
-        vault.max_redeem(erc20_collateral_vault_deposit.contract_address), transfer_amount, 1
+        vault.max_redeem(erc20_collateral_vault_deposit.contract_address), transfer_amount, 1,
     );
     assert_eq!(erc20_collateral_vault_deposit.get_asset_deposited(), transfer_amount);
     (setup, vault, erc20_collateral_vault_deposit)
@@ -127,11 +129,10 @@ fn test_fuzz_erc4626_vault_deposit_remote_transfer_deposits_into_vault(mut trans
 fn test_fuzz_erc4626_vault_deposit_remote_transfer_withdraws_from_vault(mut transfer_amount: u256) {
     transfer_amount %= TOTAL_SUPPLY + 1;
     let (mut setup, mut vault, mut erc20_collateral_vault_deposit) = setup_vault();
-    start_prank(CheatTarget::One(setup.primary_token.contract_address), ALICE());
+    cheat_caller_address(setup.primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     mint_and_approve(@setup, transfer_amount, ALICE(), setup.local_token.contract_address);
-    stop_prank(CheatTarget::One(setup.primary_token.contract_address));
     _transfer_roundtrip_and_increase_yields(
-        @setup, vault.contract_address, transfer_amount, DUST_AMOUNT
+        @setup, vault.contract_address, transfer_amount, DUST_AMOUNT,
     );
     // Check Alice's local token balance
     let prev_balance = setup.local_token.balance_of(ALICE());
@@ -149,7 +150,7 @@ fn test_fuzz_erc4626_vault_deposit_remote_transfer_withdraw_less_shares(mut rewa
     }
     let (mut setup, mut vault, mut erc20_collateral_vault_deposit) = setup_vault();
     _transfer_roundtrip_and_increase_yields(
-        @setup, vault.contract_address, TRANSFER_AMT, reward_amount
+        @setup, vault.contract_address, TRANSFER_AMT, reward_amount,
     );
     // Check Alice's local token balance
     let prev_balance = setup.local_token.balance_of(ALICE());
@@ -170,23 +171,24 @@ fn test_fuzz_erc4626_vault_deposit_remote_transfer_sweep_revert_non_owner(mut re
     }
     let (mut setup, mut vault, mut erc20_collateral_vault_deposit) = setup_vault();
     _transfer_roundtrip_and_increase_yields(
-        @setup, vault.contract_address, TRANSFER_AMT, reward_amount
+        @setup, vault.contract_address, TRANSFER_AMT, reward_amount,
     );
-    start_prank(CheatTarget::One(erc20_collateral_vault_deposit.contract_address), BOB());
+    cheat_caller_address(
+        erc20_collateral_vault_deposit.contract_address, BOB(), CheatSpan::TargetCalls(1),
+    );
     erc20_collateral_vault_deposit.sweep();
-    stop_prank(CheatTarget::One(erc20_collateral_vault_deposit.contract_address));
 }
 
 #[test]
 fn test_fuzz_erc4626_vault_deposit_remote_transfer_sweep_no_excess_shares(
-    mut transfer_amount: u256
+    mut transfer_amount: u256,
 ) {
     let (mut setup, _, mut erc20_collateral_vault_deposit) =
         erc4626_vault_deposit_remote_transfer_deposits_into_vault(
-        transfer_amount
+        transfer_amount,
     );
     let owner = IOwnableDispatcher {
-        contract_address: erc20_collateral_vault_deposit.contract_address
+        contract_address: erc20_collateral_vault_deposit.contract_address,
     }
         .owner();
     let owner_balance_prev = setup.primary_token.balance_of(owner);
@@ -203,11 +205,11 @@ fn test_erc4626_vault_deposit_remote_transfer_sweep_excess_shares_12312(mut rewa
     }
     let (mut setup, mut vault, mut erc20_collateral_vault_deposit) = setup_vault();
     _transfer_roundtrip_and_increase_yields(
-        @setup, vault.contract_address, TRANSFER_AMT, reward_amount
+        @setup, vault.contract_address, TRANSFER_AMT, reward_amount,
     );
     handle_local_transfer(@setup, TRANSFER_AMT);
     let owner = IOwnableDispatcher {
-        contract_address: erc20_collateral_vault_deposit.contract_address
+        contract_address: erc20_collateral_vault_deposit.contract_address,
     }
         .owner();
     let owner_balance_prev = setup.primary_token.balance_of(owner);
@@ -219,7 +221,7 @@ fn test_erc4626_vault_deposit_remote_transfer_sweep_excess_shares_12312(mut rewa
 
 #[test]
 fn test_erc4626_vault_deposit_remote_transfer_sweep_excess_shares_multiple_deposit(
-    mut reward_amount: u256
+    mut reward_amount: u256,
 ) {
     reward_amount %= TOTAL_SUPPLY + 1;
     if reward_amount < DUST_AMOUNT {
@@ -227,20 +229,19 @@ fn test_erc4626_vault_deposit_remote_transfer_sweep_excess_shares_multiple_depos
     }
     let (mut setup, mut vault, mut erc20_collateral_vault_deposit) = setup_vault();
     _transfer_roundtrip_and_increase_yields(
-        @setup, vault.contract_address, TRANSFER_AMT, reward_amount
+        @setup, vault.contract_address, TRANSFER_AMT, reward_amount,
     );
     handle_local_transfer(@setup, TRANSFER_AMT);
 
     let owner = IOwnableDispatcher {
-        contract_address: erc20_collateral_vault_deposit.contract_address
+        contract_address: erc20_collateral_vault_deposit.contract_address,
     }
         .owner();
     let owner_balance_prev = setup.primary_token.balance_of(owner);
     let excess_amount = vault.max_redeem(erc20_collateral_vault_deposit.contract_address);
     // Deposit again for Alice
-    start_prank(CheatTarget::One(setup.primary_token.contract_address), ALICE());
+    cheat_caller_address(setup.primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     setup.primary_token.approve(setup.local_token.contract_address, TRANSFER_AMT);
-    stop_prank(CheatTarget::One(setup.primary_token.contract_address));
     perform_remote_transfer(@setup, 0, TRANSFER_AMT);
     // Sweep and check
     erc20_collateral_vault_deposit.sweep();

@@ -1,23 +1,22 @@
 use alexandria_bytes::Bytes;
 use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
 use mocks::test_erc721::{ITestERC721Dispatcher, ITestERC721DispatcherTrait};
-use snforge_std::cheatcodes::contract_class::{ContractClass, ContractClassTrait};
 use snforge_std::{
-    declare, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn, start_prank, stop_prank,
-    EventFetcher, event_name_hash
+    declare, ContractClassTrait, ContractClass, cheat_caller_address, CheatSpan, EventSpy,
+    EventSpyAssertionsTrait, spy_events, DeclareResultTrait,
 };
 use starknet::ContractAddress;
 use super::common::{
     setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
     IHypErc721TestDispatcherTrait, ALICE, BOB, deploy_remote_token, perform_remote_transfer,
-    ZERO_ADDRESS, NAME, SYMBOL, URI
+    ZERO_ADDRESS, NAME, SYMBOL, URI,
 };
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 
 fn setup_erc721_uri_storage() -> Setup {
     let mut setup = setup();
 
-    let contract = declare("MockHypERC721URIStorage").unwrap();
+    let contract = declare("MockHypERC721URIStorage").unwrap().contract_class();
     let mut calldata: Array<felt252> = array![];
     setup.local_mailbox.contract_address.serialize(ref calldata);
     INITIAL_SUPPLY.serialize(ref calldata);
@@ -28,7 +27,7 @@ fn setup_erc721_uri_storage() -> Setup {
     starknet::get_contract_address().serialize(ref calldata);
     let (hyp_erc721_uri_storage, _) = contract.deploy(@calldata).unwrap();
     let hyp_erc721_uri_storage = IHypErc721TestDispatcher {
-        contract_address: hyp_erc721_uri_storage
+        contract_address: hyp_erc721_uri_storage,
     };
 
     hyp_erc721_uri_storage.set_token_uri(0, URI());

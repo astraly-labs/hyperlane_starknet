@@ -14,7 +14,7 @@ use snforge_std::{cheat_caller_address, CheatSpan, EventSpyAssertionsTrait};
 use super::super::setup::{
     setup_merkle_tree_hook, MAILBOX, LOCAL_DOMAIN, VALID_OWNER, VALID_RECIPIENT, DESTINATION_DOMAIN,
 };
-
+use starknet::storage::{StorageMapReadAccess, StoragePointerReadAccess};
 #[test]
 fn test_merkle_tree_hook_type() {
     let (_, merkle_tree_hook, _) = setup_merkle_tree_hook();

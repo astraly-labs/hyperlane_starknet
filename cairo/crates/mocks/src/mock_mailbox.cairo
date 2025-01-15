@@ -103,7 +103,7 @@ pub mod MockMailbox {
         // The required post dispatch hook, used for post processing of ALL dispatches.
         required_hook: ContractAddress,
         // Mapping of message ID to delivery context that processed the message.
-        deliveries: LegacyMap::<u256, Delivery>,
+        deliveries: Map::<u256, Delivery>,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]

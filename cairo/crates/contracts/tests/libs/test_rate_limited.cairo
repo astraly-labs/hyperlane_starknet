@@ -3,8 +3,9 @@ use contracts::libs::rate_limited::{
     IRateLimitedSafeDispatcher, IRateLimitedSafeDispatcherTrait,
     RateLimitedComponent::InternalTrait as RateLimitedInternalTrait,
 };
-use core::integer::BoundedInt;
+use core::num::traits::Bounded;
 use core::num::traits::{Zero, One};
+use core::ops::RemAssign;
 use snforge_std::{
     declare, ContractClassTrait, cheat_caller_address, CheatSpan, cheat_block_timestamp, spy_events,
     EventSpyAssertionsTrait, DeclareResultTrait, start_cheat_block_timestamp_global,
@@ -56,16 +57,18 @@ pub fn bound<
     T,
     +PartialOrd<T>,
     +PartialEq<T>,
-    +BoundedInt<T>,
-    +RemEq<T>,
+    +Bounded<T>,
+    +Rem<T>,
     +Add<T>,
     +One<T>,
     +Drop<T>,
     +Copy<T>,
+    // +RemAssign<T, T>,
+    +RemAssign<T, T>,
 >(
     mut value: T, lower: T, upper: T,
 ) -> T {
-    if upper == BoundedInt::<T>::max() {
+    if upper == Bounded::<T>::MAX {
         if value < lower {
             return lower;
         }
@@ -214,7 +217,7 @@ fn test_should_consume_filled_level_and_emit_events() {
 fn test_should_never_return_gt_max_limit(mut new_amount: u256, mut new_time: u64) {
     let setup = setup();
 
-    new_time = bound(new_time, 0, BoundedInt::max() - DAY);
+    new_time = bound(new_time, 0, Bounded::MAX - DAY);
     start_cheat_block_timestamp_global(new_time);
 
     cheat_caller_address(

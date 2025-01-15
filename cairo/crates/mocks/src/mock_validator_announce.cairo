@@ -38,10 +38,10 @@ pub mod mock_validator_announce {
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
         domain: u32,
-        storage_location_len: LegacyMap::<EthAddress, u256>,
-        storage_locations: LegacyMap::<(EthAddress, u256), Array<felt252>>,
-        replay_protection: LegacyMap::<felt252, bool>,
-        validators: LegacyMap::<EthAddress, EthAddress>,
+        storage_location_len: Map::<EthAddress, u256>,
+        storage_locations: Map::<(EthAddress, u256), Array<felt252>>,
+        replay_protection: Map::<felt252, bool>,
+        validators: Map::<EthAddress, EthAddress>,
     }
 
 

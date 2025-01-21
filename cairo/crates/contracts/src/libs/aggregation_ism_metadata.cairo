@@ -75,7 +75,7 @@ pub mod aggregation_ism_metadata {
     /// # Returns
     /// 
     /// Result<u32, u32), u8> -  Result on whether or not metadata was provided for the ISM at `_index`
-    fn metadata_range(_metadata: Bytes, _index: u8) -> Result<(u32, u32), u8> {
+    pub fn metadata_range(_metadata: Bytes, _index: u8) -> Result<(u32, u32), u8> {
         let start = _index.into() * RANGE_SIZE * 2;
         let mid = start + RANGE_SIZE;
         let (_, mid_metadata) = _metadata.read_u32(mid.into());
@@ -89,6 +89,7 @@ pub mod aggregation_ism_metadata {
 mod test {
     use alexandria_bytes::{Bytes, BytesTrait};
     use super::aggregation_ism_metadata::AggregationIsmMetadata;
+    use super::aggregation_ism_metadata::metadata_range;
 
     #[test]
     fn test_aggregation_ism_metadata() {
@@ -131,5 +132,27 @@ mod test {
         );
         assert_eq!(AggregationIsmMetadata::has_metadata(encoded_metadata.clone(), 0), true);
         assert_eq!(AggregationIsmMetadata::has_metadata(encoded_metadata.clone(), 1), false);
+    }
+
+    #[test]
+    fn test_aggregation_ism_has_metadata_AAAAAA() {
+        // [0, 0, 0, 8, 0, 0, 0, 141, 2, 208, 163, 69, 107, 221, 59, 254, 40, 70, 127, 194, 111, 32, 204, 20, 18, 20, 209, 155, 139, 86, 30, 88, 163, 203, 80, 220, 252, 62, 47, 89, 96, 10, 30, 139, 66, 77, 14, 202, 134, 71, 249, 116, 168, 30, 154, 126, 218, 21, 254, 36, 192, 54, 134, 161, 61, 239, 108, 253, 29, 163, 201, 6, 0, 0, 0, 1, 16, 18, 191, 214, 79, 225, 104, 10, 19, 102, 207, 66, 65, 202, 41, 104, 182, 123, 85, 239, 151, 152, 184, 11, 55, 105, 94, 146, 222, 178, 93, 114, 124, 165, 40, 180, 54, 7, 44, 5, 178, 246, 155, 65, 138, 155, 165, 133, 80, 254, 172, 234, 18, 209, 109, 2, 63, 109, 60, 104, 49, 52, 196, 102, 28]
+        let encoded_metadata = BytesTrait::new(
+            64,
+            array![
+                0x000000080000008d02d0a3456bdd3bfe,
+                0x28467fc26f20cc141214d19b8b561e58,
+                0xa3cb50dcfc3e2f59600a1e8b424d0eca,
+                0x8647f974a81e9a7eda15fe24c03686a1
+            ]
+        );
+        assert_eq!(AggregationIsmMetadata::has_metadata(encoded_metadata.clone(), 0), true);
+        assert_eq!(AggregationIsmMetadata::has_metadata(encoded_metadata.clone(), 1), false);
+        // let result = AggregationIsmMetadata::metadata_at(encoded_metadata.clone(), 0);
+        // println!("result: {:?}", result.unwrap());
+        let range = metadata_range(encoded_metadata.clone(), 0);
+        let (start, end): (u32, u32) = range.unwrap();
+        println!("start: {:?}", start);
+        println!("end: {:?}", end);
     }
 }

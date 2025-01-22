@@ -14,6 +14,7 @@ dotenv.config();
 
 const BUILD_PATH = "../cairo/target/dev/contracts";
 const MOCK_BUILD_PATH = "../cairo/target/dev/mocks";
+const TOKEN_BUILD_PATH= "../xerc20/target/dev/xerc20"
 const ACCOUNT_ADDRESS = process.env.ACCOUNT_ADDRESS;
 const CONFIGS_DIR = 'configs';
 const DEPLOYMENTS_DIR = 'deployments';
@@ -38,7 +39,7 @@ function getConfigPath(network: string): string {
     throw new Error('NETWORK environment variable is not set');
   }
 
-  const configFileName = `${network.toLowerCase()}.json`;
+  const configFileName = `pragma_${network.toLowerCase()}.json`;
   const configPath = path.join(CONFIGS_DIR, configFileName);
 
   if (!fs.existsSync(configPath)) {
@@ -70,12 +71,15 @@ function ensureNetworkDirectory(network: string): string {
 function findContractFile(name: string, suffix: string): string {
   const mainPath = `${BUILD_PATH}_${name}${suffix}`;
   const mockPath = `${MOCK_BUILD_PATH}_${name}${suffix}`;
+  const xerc20Path = `${TOKEN_BUILD_PATH}_${name}${suffix}`;
 
   if (fs.existsSync(mainPath)) {
     return mainPath;
   } else if (fs.existsSync(mockPath)) {
     console.log(`Using mock contract for ${name} from ${mockPath}`);
     return mockPath;
+  } else if (fs.existsSync(xerc20Path)) {
+    return xerc20Path;
   }
 
   throw new Error(`Contract file not found for ${name} with suffix ${suffix} in either ${BUILD_PATH} or ${MOCK_BUILD_PATH}`);
@@ -93,26 +97,48 @@ function getCompiledContractCasm(name: string): any {
   return json.parse(fs.readFileSync(contractPath).toString("ascii"));
 }
 
-function processConstructorArgs(args: Record<string, { type: string; value: string | string[] }>, deployedContracts: DeployedContracts): any {
-  return Object.entries(args).reduce((acc, [key, { type, value }]) => {
+async function processConstructorArgs(
+  args: Record<string, { type: string; value: string | string[] }>, 
+  deployedContracts: DeployedContracts,
+  account: Account
+): Promise<any> {
+
+  if (!ACCOUNT_ADDRESS) {
+    throw new Error('ACCOUNT_ADDRESS environment variable is not set');
+  }
+
+  if (!process.env.BENEFICIARY_ADDRESS) {
+    throw new Error('BENEFICIARY_ADDRESS environment variable is not set');
+  }
+
+  const processedArgs: Record<string, string | string[]> = {};
+  
+  for (const [key, { type, value }] of Object.entries(args)) {
     if (typeof value === 'string' && value.startsWith('$')) {
       if (value === '$OWNER_ADDRESS') {
-        acc[key] = ACCOUNT_ADDRESS;
+        processedArgs[key] = ACCOUNT_ADDRESS as string;
       } else if (value === '$BENEFICIARY_ADDRESS') {
-        acc[key] = process.env.BENEFICIARY_ADDRESS;
+        processedArgs[key] = process.env.BENEFICIARY_ADDRESS as string;
+      } else if (value === '$XERC20_CLASS_HASH') {
+        const xerc20ClassHash = await declareContract(account, 'XERC20');
+        processedArgs[key] = xerc20ClassHash;
+      } else if (value === '$LOCKBOX_CLASS_HASH') {
+        const lockboxClassHash = await declareContract(account, 'XERC20Lockbox');
+        processedArgs[key] = lockboxClassHash;
       } else {
         const contractName = value.slice(1);
         if (deployedContracts[contractName]) {
-          acc[key] = deployedContracts[contractName];
+          processedArgs[key] = deployedContracts[contractName];
         } else {
           throw new Error(`Contract ${contractName} not yet deployed, required for ${key}`);
         }
       }
     } else {
-      acc[key] = value;
+      processedArgs[key] = value;
     }
-    return acc;
-  }, {} as any);
+  }
+  
+  return processedArgs;
 }
 
 async function deployContract(
@@ -125,7 +151,7 @@ async function deployContract(
 
   const compiledContract = getCompiledContract(contractName);
   const casm = getCompiledContractCasm(contractName);
-  const processedArgs = processConstructorArgs(constructorArgs, deployedContracts);
+  const processedArgs = await processConstructorArgs(constructorArgs, deployedContracts, account);
   const constructorCalldata = CallData.compile(processedArgs);
   const params: ContractFactoryParams = {
     compiledContract,
@@ -140,6 +166,23 @@ async function deployContract(
 
   return contract.address;
 }
+
+
+async function declareContract(account: Account, name: string): Promise<string> {
+  console.log(`Declaring contract ${name}...`);
+  const compiledContract = getCompiledContract(name);
+  const casm = getCompiledContractCasm(name);
+  
+  const declareResponse = await account.declareIfNot({
+    contract: compiledContract,
+    casm
+  });
+
+  console.log(`Contract ${name} declared with class hash:`, declareResponse.class_hash);
+  
+  return declareResponse.class_hash;
+}
+
 
 async function deployContracts(): Promise<DeployedContracts> {
   try {

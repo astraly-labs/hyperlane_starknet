@@ -39,7 +39,7 @@ function getConfigPath(network: string): string {
     throw new Error('NETWORK environment variable is not set');
   }
 
-  const configFileName = `pragma_${network.toLowerCase()}.json`;
+  const configFileName = `${network.toLowerCase()}.json`;
   const configPath = path.join(CONFIGS_DIR, configFileName);
 
   if (!fs.existsSync(configPath)) {

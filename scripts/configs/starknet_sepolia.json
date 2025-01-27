@@ -10,7 +10,7 @@
                 "validators": {
                     "type": "Span<felt252>",
                     "value": [
-                        "0x0000000000000000000000000000000000000000000000000000000000000002"
+                        "0x5a8863fcb317A5a04c4638166de6FCF662a09Cba"
                     ]
                 },
                 "threshold": {
@@ -32,7 +32,7 @@
                 },
                 "protocol_fee_low": {
                     "type": "u128",
-                    "value": "10000000000000000"
+                    "value": "1000000000000000"
                 },
                 "protocol_fee_high": {
                     "type": "u128",
@@ -91,7 +91,7 @@
                 },
                 "trusted_relayer": {
                     "type": "ContractAddress",
-                    "value": "0x0000000000000000000000000000000000000000000000000000000000000001"
+                    "value": "0x5a8863fcb317A5a04c4638166de6FCF662a09Cba"
                 }
             }
         },
@@ -100,7 +100,7 @@
             "constructor": {
                 "local_domain": {
                     "type": "u32",
-                    "value": "6363709"
+                    "value": "23448591"
                 },
                 "owner": {
                     "type": "ContractAddress",
@@ -143,7 +143,9 @@
                 "modules": {
                     "type": "Span<felt252>",
                     "value": [
-                        "0x0000000000000000000000000000000000000000000000000000000000000002"
+                        "$merkleroot_multisig_ism",
+                        "$pausable_ism",
+                        "$messageid_multisig_ism"
                     ]
                 },
                 "threshold": {
@@ -162,7 +164,7 @@
                 "validators": {
                     "type": "Span<felt252>",
                     "value": [
-                        "0x0000000000000000000000000000000000000000000000000000000000000003"
+                        "0x5a8863fcb317A5a04c4638166de6FCF662a09Cba"
                     ]
                 },
                 "threshold": {

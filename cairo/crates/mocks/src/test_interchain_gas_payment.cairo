@@ -15,6 +15,7 @@ pub mod TestInterchainGasPayment {
     use contracts::libs::message::{Message, MessageTrait};
     use openzeppelin::access::ownable::OwnableComponent;
     use starknet::ContractAddress;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 

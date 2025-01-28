@@ -16,11 +16,14 @@ pub mod TestPostDispatchHook {
     use alexandria_bytes::Bytes;
     use contracts::libs::message::{Message, MessageTrait};
     use core::keccak::keccak_u256s_le_inputs;
-
+    use starknet::storage::{
+        Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
+        StoragePointerWriteAccess,
+    };
     #[storage]
     struct Storage {
         fee: u256,
-        message_dispatched: LegacyMap<u256, bool>,
+        message_dispatched: Map<u256, bool>,
     }
 
     #[abi(embed_v0)]
@@ -48,9 +51,9 @@ pub mod TestPostDispatchHook {
                     message.origin.into(),
                     message.sender,
                     message.destination.into(),
-                    message.recipient
+                    message.recipient,
                 ]
-                    .span()
+                    .span(),
             );
             self.message_dispatched.write(hash, true);
         }

@@ -7,7 +7,7 @@ pub trait ITestERC20<TContractState> {
     fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
     fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
     fn transfer_from(
-        ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
+        ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256,
     ) -> bool;
     fn approve(ref self: TContractState, spender: ContractAddress, amount: u256) -> bool;
     fn decimals(self: @TContractState) -> u8;
@@ -21,6 +21,7 @@ pub trait ITestERC20<TContractState> {
 pub mod TestERC20 {
     use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
     use starknet::ContractAddress;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
 
@@ -81,12 +82,12 @@ pub mod TestERC20 {
             ref self: ContractState,
             sender: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) -> bool {
             self.erc20.transfer_from(sender, recipient, amount)
         }
         fn allowance(
-            self: @ContractState, owner: ContractAddress, spender: ContractAddress
+            self: @ContractState, owner: ContractAddress, spender: ContractAddress,
         ) -> u256 {
             self.erc20.allowance(owner, spender)
         }

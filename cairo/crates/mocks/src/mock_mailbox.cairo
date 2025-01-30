@@ -229,6 +229,24 @@ pub mod MockMailbox {
                 Option::Some(hook) => { hook },
                 Option::None(()) => { self.default_hook.read() }
             };
+            let hook_metadata = match metadata {
+                Option::Some(hook_metadata) => {
+                    let mut sanitized_bytes_metadata = BytesTrait::new_empty();
+                    sanitized_bytes_metadata.concat(@hook_metadata);
+                    assert(
+                        sanitized_bytes_metadata == hook_metadata,
+                        Errors::SIZE_DOES_NOT_MATCH_METADATA
+                    );
+                    hook_metadata
+                },
+                Option::None(()) => BytesTrait::new_empty()
+            };
+            let mut sanitized_bytes_message_body = BytesTrait::new_empty();
+            sanitized_bytes_message_body.concat(@message_body);
+            assert(
+                sanitized_bytes_message_body == message_body,
+                Errors::SIZE_DOES_NOT_MATCH_MESSAGE_BODY
+            );
             let (id, message) = build_message(
                 @self, destination_domain, recipient_address, message_body.clone()
             );
@@ -247,16 +265,12 @@ pub mod MockMailbox {
                 );
             self.emit(DispatchId { id });
 
-            let metadata = match metadata {
-                Option::Some(metadata) => metadata,
-                Option::None(()) => BytesTrait::new_empty()
-            };
             let required_hook = ITestPostDispatchHookDispatcher {
                 contract_address: self.required_hook.read()
             };
-            required_hook.post_dispatch(metadata.clone(), message.clone());
+            required_hook.post_dispatch(hook_metadata.clone(), message.clone());
             let hook = ITestPostDispatchHookDispatcher { contract_address: hook };
-            hook.post_dispatch(metadata, message.clone());
+            hook.post_dispatch(hook_metadata, message.clone());
             let remote_mailbox = self.remote_mailboxes.read(destination_domain);
             assert!(remote_mailbox != contract_address_const::<0>());
             IMockMailboxDispatcher { contract_address: remote_mailbox }

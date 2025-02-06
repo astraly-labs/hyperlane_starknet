@@ -23,7 +23,7 @@ pub mod standard_hook_metadata {
     const GAS_LIMIT_OFFSET: u8 = 34;
     const REFUND_ADDRESS_OFFSET: u8 = 66;
     const MIN_METADATA_LENGTH: u256 = 98;
-
+    const U128_NUMBER_OF_BYTES: usize = 16;
     pub const VARIANT: u8 = 1;
 
     #[generate_trait]
@@ -140,7 +140,7 @@ pub mod standard_hook_metadata {
                 refund_address_u256.high
             ];
 
-            let mut formatted_metadata = BytesTrait::new(data.len(), data);
+            let mut formatted_metadata = BytesTrait::new(data.len() * U128_NUMBER_OF_BYTES, data);
             formatted_metadata.concat(@custom_metadata);
             formatted_metadata
         }

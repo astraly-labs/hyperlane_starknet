@@ -261,7 +261,7 @@ pub mod mailbox {
                 Option::Some(hook_metadata) => {
                     let mut sanitized_bytes_metadata = BytesTrait::new_empty();
                     sanitized_bytes_metadata.concat(@hook_metadata);
-                    assert( // what does this exactly checks
+                    assert(
                         sanitized_bytes_metadata == hook_metadata,
                         Errors::SIZE_DOES_NOT_MATCH_METADATA,
                     );
@@ -524,4 +524,3 @@ pub mod mailbox {
         )
     }
 }
-

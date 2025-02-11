@@ -20,6 +20,7 @@ snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v
 
 [[target.starknet-contract]]
 sierra = true
+casm = true
 
 [tool.fmt]
 sort-module-level-items = true

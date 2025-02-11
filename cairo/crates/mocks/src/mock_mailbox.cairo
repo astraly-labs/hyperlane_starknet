@@ -238,17 +238,17 @@ pub mod MockMailbox {
                     sanitized_bytes_metadata.concat(@hook_metadata);
                     assert(
                         sanitized_bytes_metadata == hook_metadata,
-                        Errors::SIZE_DOES_NOT_MATCH_METADATA
+                        Errors::SIZE_DOES_NOT_MATCH_METADATA,
                     );
                     hook_metadata
                 },
-                Option::None(()) => BytesTrait::new_empty()
+                Option::None(()) => BytesTrait::new_empty(),
             };
             let mut sanitized_bytes_message_body = BytesTrait::new_empty();
             sanitized_bytes_message_body.concat(@message_body);
             assert(
                 sanitized_bytes_message_body == message_body,
-                Errors::SIZE_DOES_NOT_MATCH_MESSAGE_BODY
+                Errors::SIZE_DOES_NOT_MATCH_MESSAGE_BODY,
             );
             let (id, message) = build_message(
                 @self, destination_domain, recipient_address, message_body.clone(),

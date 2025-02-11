@@ -1,6 +1,6 @@
 #[starknet::contract]
 pub mod HypNative {
-    use alexandria_bytes::bytes::{BytesTrait, Bytes};
+    use alexandria_bytes::bytes::{Bytes, BytesTrait};
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
@@ -9,11 +9,11 @@ pub mod HypNative {
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
     use token::components::hyp_native_component::{
-        HypNativeComponent, HypNativeComponent::TokenRouterHooksImpl
+        HypNativeComponent, HypNativeComponent::TokenRouterHooksImpl,
     };
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-        TokenRouterComponent::MessageRecipientInternalHookImpl
+        TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+        TokenRouterComponent::TokenRouterHooksTrait,
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -69,7 +69,7 @@ pub mod HypNative {
         #[substorage(v0)]
         hyp_native: HypNativeComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -88,7 +88,7 @@ pub mod HypNative {
         #[flat]
         HypNativeEvent: HypNativeComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     #[constructor]
@@ -98,7 +98,7 @@ pub mod HypNative {
         native_token: ContractAddress,
         hook: ContractAddress,
         interchain_security_module: ContractAddress,
-        owner: ContractAddress
+        owner: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self

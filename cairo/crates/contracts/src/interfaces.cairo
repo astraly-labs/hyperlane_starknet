@@ -21,7 +21,7 @@ pub enum Types {
     PAUSABLE,
     PROTOCOL_FEE,
     LAYER_ZERO_V1,
-    Rate_Limited_Hook
+    Rate_Limited_Hook,
 }
 
 
@@ -93,13 +93,13 @@ pub trait IMailbox<TContractState> {
 pub trait IInterchainSecurityModule<TContractState> {
     fn module_type(self: @TContractState) -> ModuleType;
 
-    fn verify(self: @TContractState, _metadata: Bytes, _message: Message,) -> bool;
+    fn verify(self: @TContractState, _metadata: Bytes, _message: Message) -> bool;
 }
 
 #[starknet::interface]
 pub trait IValidatorConfiguration<TContractState> {
     fn validators_and_threshold(
-        self: @TContractState, _message: Message
+        self: @TContractState, _message: Message,
     ) -> (Span<EthAddress>, u32);
 
     fn get_validators(self: @TContractState) -> Span<EthAddress>;
@@ -120,7 +120,7 @@ pub trait IPostDispatchHook<TContractState> {
     fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
 
     fn post_dispatch(
-        ref self: TContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
+        ref self: TContractState, _metadata: Bytes, _message: Message, _fee_amount: u256,
     );
 
     fn quote_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message) -> u256;
@@ -166,11 +166,11 @@ pub trait IInterchainGasPaymaster<TContractState> {
         _message_id: u256,
         _destination_domain: u32,
         _gas_amount: u256,
-        _payment: u256
+        _payment: u256,
     );
 
     fn quote_gas_payment(
-        ref self: TContractState, _destination_domain: u32, _gas_amount: u256
+        ref self: TContractState, _destination_domain: u32, _gas_amount: u256,
     ) -> u256;
 }
 
@@ -205,14 +205,14 @@ pub trait IValidatorAnnounce<TContractState> {
     fn get_announced_validators(self: @TContractState) -> Span<EthAddress>;
 
     fn get_announced_storage_locations(
-        self: @TContractState, _validators: Span<EthAddress>
+        self: @TContractState, _validators: Span<EthAddress>,
     ) -> Span<Span<Array<felt252>>>;
 
     fn announce(
         ref self: TContractState,
         _validator: EthAddress,
         _storage_location: Array<felt252>,
-        _signature: Bytes
+        _signature: Bytes,
     ) -> bool;
 
     fn get_announcement_digest(self: @TContractState, _storage_location: Array<u256>) -> u256;
@@ -223,17 +223,17 @@ pub trait IMockValidatorAnnounce<TContractState> {
     fn get_announced_validators(self: @TContractState) -> Span<EthAddress>;
 
     fn get_announced_storage_locations(
-        self: @TContractState, _validators: Span<EthAddress>
+        self: @TContractState, _validators: Span<EthAddress>,
     ) -> Span<Span<Array<felt252>>>;
 
     fn announce(
         ref self: TContractState,
         _validator: EthAddress,
         _storage_location: Array<felt252>,
-        _signature: Bytes
+        _signature: Bytes,
     ) -> bool;
 
-    fn get_announcement_digest(self: @TContractState, _storage_location: Array<u256>,) -> u256;
+    fn get_announcement_digest(self: @TContractState, _storage_location: Array<u256>) -> u256;
 }
 
 #[starknet::interface]
@@ -241,10 +241,10 @@ pub trait IAggregation<TContractState> {
     fn module_type(self: @TContractState) -> ModuleType;
 
     fn modules_and_threshold(
-        self: @TContractState, _message: Message
+        self: @TContractState, _message: Message,
     ) -> (Span<ContractAddress>, u8);
 
-    fn verify(self: @TContractState, _metadata: Bytes, _message: Message,) -> bool;
+    fn verify(self: @TContractState, _metadata: Bytes, _message: Message) -> bool;
 
     fn get_modules(self: @TContractState) -> Span<ContractAddress>;
 
@@ -297,7 +297,7 @@ pub trait IRoutingIsm<TContractState> {
 #[derive(Drop, Serde, Copy)]
 pub struct DomainRoutingHookConfig {
     pub destination: u32,
-    pub hook: ContractAddress
+    pub hook: ContractAddress,
 }
 
 #[starknet::interface]

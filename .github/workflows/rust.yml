@@ -18,7 +18,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: "2.6.5"
+          scarb-version: "2.9.2"
 
       - name: Build contracts
         run: |
@@ -34,7 +34,7 @@ jobs:
 
       - name: Install dojo
         run: |-
-          /home/runner/.config/.dojo/bin/dojoup -v 0.7.0-alpha.2
+          /home/runner/.config/.dojo/bin/dojoup -v 1.1.0
           sudo mv /home/runner/.config/.dojo/bin/katana /usr/local/bin/
 
       - name: Install Foundry

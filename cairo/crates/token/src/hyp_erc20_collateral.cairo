@@ -9,12 +9,12 @@ pub mod HypErc20Collateral {
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
     use token::components::{
+        hyp_erc20_collateral_component::{
+            HypErc20CollateralComponent, HypErc20CollateralComponent::TokenRouterHooksImpl,
+        },
         token_router::{
             TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
-            TokenRouterTransferRemoteHookDefaultImpl
-        },
-        hyp_erc20_collateral_component::{
-            HypErc20CollateralComponent, HypErc20CollateralComponent::TokenRouterHooksImpl
+            TokenRouterTransferRemoteHookDefaultImpl,
         },
     };
 
@@ -24,7 +24,7 @@ pub mod HypErc20Collateral {
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: TokenRouterComponent, storage: token_router, event: TokenRouterEvent);
     component!(
-        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent
+        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent,
     );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
@@ -71,7 +71,7 @@ pub mod HypErc20Collateral {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -90,7 +90,7 @@ pub mod HypErc20Collateral {
         #[flat]
         TokenRouterEvent: TokenRouterComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     #[constructor]
@@ -100,7 +100,7 @@ pub mod HypErc20Collateral {
         erc20: ContractAddress,
         owner: ContractAddress,
         hook: ContractAddress,
-        interchain_security_module: ContractAddress
+        interchain_security_module: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self

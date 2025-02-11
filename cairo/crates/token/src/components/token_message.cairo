@@ -5,8 +5,8 @@ use alexandria_bytes::{Bytes, BytesTrait};
 pub impl TokenMessage of TokenMessageTrait {
     /// Formats a token message with the recipient, amount, and metadata.
     ///
-    /// This function creates a token message by combining the recipient address, the transfer amount,
-    /// and any additional metadata. The resulting message is returned as a `Bytes` object.
+    /// This function creates a token message by combining the recipient address, the transfer
+    /// amount, and any additional metadata. The resulting message is returned as a `Bytes` object.
     ///
     /// # Arguments
     ///
@@ -27,8 +27,8 @@ pub impl TokenMessage of TokenMessageTrait {
 
     /// Extracts the recipient address from the token message.
     ///
-    /// This function reads the recipient address from the token message, starting at the beginning of
-    /// the message data. The recipient is returned as a `u256`.
+    /// This function reads the recipient address from the token message, starting at the beginning
+    /// of the message data. The recipient is returned as a `u256`.
     ///
     /// # Returns
     ///
@@ -40,8 +40,8 @@ pub impl TokenMessage of TokenMessageTrait {
 
     /// Extracts the transfer amount from the token message.
     ///
-    /// This function reads the amount of tokens to be transferred from the token message, starting at
-    /// byte offset 32. The amount is returned as a `u256`.
+    /// This function reads the amount of tokens to be transferred from the token message, starting
+    /// at byte offset 32. The amount is returned as a `u256`.
     ///
     /// # Returns
     ///
@@ -53,8 +53,8 @@ pub impl TokenMessage of TokenMessageTrait {
 
     /// Extracts the token ID from the token message.
     ///
-    /// This function is equivalent to the `amount` function, as in certain token standards the token
-    /// ID is encoded in the same field as the transfer amount.
+    /// This function is equivalent to the `amount` function, as in certain token standards the
+    /// token ID is encoded in the same field as the transfer amount.
     ///
     /// # Returns
     ///

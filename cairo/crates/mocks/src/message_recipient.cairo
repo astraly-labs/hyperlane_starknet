@@ -1,13 +1,13 @@
 #[starknet::contract]
 pub mod message_recipient {
-    use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+    use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
     use contracts::interfaces::{
         IMessageRecipient, IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait,
-        ModuleType, ISpecifiesInterchainSecurityModule,
-        ISpecifiesInterchainSecurityModuleDispatcher,
-        ISpecifiesInterchainSecurityModuleDispatcherTrait
+        ISpecifiesInterchainSecurityModule, ISpecifiesInterchainSecurityModuleDispatcher,
+        ISpecifiesInterchainSecurityModuleDispatcherTrait, ModuleType,
     };
     use starknet::ContractAddress;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 
 
     #[storage]
@@ -15,8 +15,12 @@ pub mod message_recipient {
         origin: u32,
         sender: u256,
         message: Bytes,
-        ism: ContractAddress
+        ism: ContractAddress,
     }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    pub enum Event {}
 
     #[constructor]
     fn constructor(ref self: ContractState, _ism: ContractAddress) {
@@ -46,7 +50,7 @@ pub mod message_recipient {
 
     #[abi(embed_v0)]
     impl ISpecifiesInterchainSecurityModuleImpl of ISpecifiesInterchainSecurityModule<
-        ContractState
+        ContractState,
     > {
         fn interchain_security_module(self: @ContractState) -> ContractAddress {
             self.ism.read()

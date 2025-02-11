@@ -12,9 +12,10 @@ pub trait IXERC20LockboxTest<TContractState> {
 pub mod XERC20LockboxTest {
     use mocks::{
         test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},
-        xerc20_test::{IXERC20TestDispatcher, IXERC20TestDispatcherTrait}
+        xerc20_test::{IXERC20TestDispatcher, IXERC20TestDispatcherTrait},
     };
     use starknet::ContractAddress;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 
     #[storage]
     struct Storage {
@@ -42,7 +43,7 @@ pub mod XERC20LockboxTest {
             let erc20 = ITestERC20Dispatcher { contract_address: self.ERC20.read() };
             erc20
                 .transfer_from(
-                    starknet::get_caller_address(), starknet::get_contract_address(), amount
+                    starknet::get_caller_address(), starknet::get_contract_address(), amount,
                 );
             let xerc20 = IXERC20TestDispatcher { contract_address: self.XERC20.read() };
             xerc20.mint(user, amount);

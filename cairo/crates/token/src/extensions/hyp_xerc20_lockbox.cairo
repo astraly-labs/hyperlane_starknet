@@ -21,14 +21,13 @@ pub mod HypXERC20Lockbox {
     use token::components::{
         hyp_erc20_collateral_component::HypErc20CollateralComponent,
         token_router::{
-            TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-            TokenRouterComponent::MessageRecipientInternalHookImpl,
-            TokenRouterTransferRemoteHookDefaultImpl
+            TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+            TokenRouterComponent::TokenRouterHooksTrait, TokenRouterTransferRemoteHookDefaultImpl,
         },
     };
     use token::interfaces::ixerc20::{IXERC20Dispatcher, IXERC20DispatcherTrait};
     use token::interfaces::ixerc20_lockbox::{
-        IXERC20LockboxDispatcher, IXERC20LockboxDispatcherTrait
+        IXERC20LockboxDispatcher, IXERC20LockboxDispatcherTrait,
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -37,7 +36,7 @@ pub mod HypXERC20Lockbox {
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: TokenRouterComponent, storage: token_router, event: TokenRouterEvent);
     component!(
-        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent
+        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent,
     );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
@@ -106,7 +105,7 @@ pub mod HypXERC20Lockbox {
         #[flat]
         TokenRouterEvent: TokenRouterComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     #[constructor]
@@ -116,7 +115,7 @@ pub mod HypXERC20Lockbox {
         lockbox: ContractAddress,
         owner: ContractAddress,
         hook: ContractAddress,
-        interchain_security_module: ContractAddress
+        interchain_security_module: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self
@@ -135,24 +134,27 @@ pub mod HypXERC20Lockbox {
     impl HypXERC20LockboxImpl of super::IHypXERC20Lockbox<ContractState> {
         /// Approves the lockbox for both the ERC20 and xERC20 tokens.
         ///
-        /// This function approves the lockbox contract to handle the maximum allowed amount of both the ERC20 and xERC20 tokens.
-        /// It ensures that both the ERC20 and xERC20 tokens are authorized for transfer to the lockbox.
+        /// This function approves the lockbox contract to handle the maximum allowed amount of both
+        /// the ERC20 and xERC20 tokens.
+        /// It ensures that both the ERC20 and xERC20 tokens are authorized for transfer to the
+        /// lockbox.
         fn approve_lockbox(ref self: ContractState) {
             let lockbox_address = self.lockbox.read().contract_address;
             assert!(
                 self.collateral.wrapped_token.read().approve(lockbox_address, BoundedInt::max()),
-                "erc20 lockbox approve failed"
+                "erc20 lockbox approve failed",
             );
             assert!(
                 ERC20ABIDispatcher { contract_address: self.xerc20.read().contract_address }
                     .approve(lockbox_address, BoundedInt::max()),
-                "xerc20 lockbox approve failed"
+                "xerc20 lockbox approve failed",
             );
         }
 
         /// Retrieves the contract address of the lockbox.
         ///
-        /// This function returns the `ContractAddress` of the lockbox that has been approved for the ERC20 and xERC20 tokens.
+        /// This function returns the `ContractAddress` of the lockbox that has been approved for
+        /// the ERC20 and xERC20 tokens.
         ///
         /// # Returns
         ///
@@ -163,7 +165,8 @@ pub mod HypXERC20Lockbox {
 
         /// Retrieves the contract address of the xERC20 token.
         ///
-        /// This function returns the `ContractAddress` of the xERC20 token that is used in conjunction with the lockbox.
+        /// This function returns the `ContractAddress` of the xERC20 token that is used in
+        /// conjunction with the lockbox.
         ///
         /// # Returns
         ///
@@ -187,10 +190,11 @@ pub mod HypXERC20Lockbox {
     }
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
-        /// Transfers tokens from the sender, deposits them into the lockbox, and burns the corresponding xERC20 tokens.
+        /// Transfers tokens from the sender, deposits them into the lockbox, and burns the
+        /// corresponding xERC20 tokens.
         ///
-        /// This hook first transfers tokens from the sender, deposits them into the lockbox, and then burns the
-        /// corresponding xERC20 tokens associated with the transfer.
+        /// This hook first transfers tokens from the sender, deposits them into the lockbox, and
+        /// then burns the corresponding xERC20 tokens associated with the transfer.
         ///
         /// # Arguments
         ///
@@ -200,7 +204,7 @@ pub mod HypXERC20Lockbox {
         ///
         /// A `Bytes` object representing the transfer metadata.
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256,
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             contract_state.collateral._transfer_from_sender(amount_or_id);
@@ -211,10 +215,11 @@ pub mod HypXERC20Lockbox {
             BytesTrait::new_empty()
         }
 
-        /// Transfers tokens to the recipient, mints xERC20 tokens, and withdraws tokens from the lockbox.
+        /// Transfers tokens to the recipient, mints xERC20 tokens, and withdraws tokens from the
+        /// lockbox.
         ///
-        /// This hook first mints the corresponding xERC20 tokens and then withdraws the corresponding amount
-        /// of ERC20 tokens from the lockbox to the specified recipient.
+        /// This hook first mints the corresponding xERC20 tokens and then withdraws the
+        /// corresponding amount of ERC20 tokens from the lockbox to the specified recipient.
         ///
         /// # Arguments
         ///
@@ -225,7 +230,7 @@ pub mod HypXERC20Lockbox {
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
 

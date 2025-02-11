@@ -2,22 +2,22 @@ use core::integer::BoundedInt;
 use mocks::test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait};
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
 use snforge_std::{
-    declare, ContractClassTrait, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn,
-    start_prank, stop_prank, EventFetcher, event_name_hash
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, EventSpy,
+    EventSpyAssertionsTrait, cheat_caller_address, declare, spy_events,
 };
 use starknet::ContractAddress;
 use super::common::{
-    setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, DESTINATION, OWNER,
-    perform_remote_transfer_with_emit, perform_remote_transfer_and_gas, ALICE, BOB, E18,
-    IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, enroll_remote_router,
-    enroll_local_router, perform_remote_transfer, set_custom_gas_config, REQUIRED_VALUE, GAS_LIMIT,
-    Setup, handle_local_transfer
+    ALICE, BOB, DECIMALS, DESTINATION, E18, GAS_LIMIT, IHypERC20TestDispatcher,
+    IHypERC20TestDispatcherTrait, ORIGIN, OWNER, REQUIRED_VALUE, Setup, TOTAL_SUPPLY, TRANSFER_AMT,
+    enroll_local_router, enroll_remote_router, handle_local_transfer, perform_remote_transfer,
+    perform_remote_transfer_and_gas, perform_remote_transfer_with_emit, set_custom_gas_config,
+    setup,
 };
 
 fn fiat_token_setup() -> Setup {
     let mut setup = setup();
 
-    let local_token = declare("HypFiatToken").unwrap();
+    let local_token = declare("HypFiatToken").unwrap().contract_class();
 
     let mut calldata: Array<felt252> = array![];
     setup.primary_token.contract_address.serialize(ref calldata);
@@ -28,11 +28,10 @@ fn fiat_token_setup() -> Setup {
 
     let (fiat_token, _) = local_token.deploy(@calldata).unwrap();
     let fiat_token = IHypERC20TestDispatcher { contract_address: fiat_token };
+    cheat_caller_address(setup.eth_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
 
-    start_prank(CheatTarget::One(setup.eth_token.contract_address), ALICE());
     ITestERC20Dispatcher { contract_address: setup.eth_token.contract_address }
         .approve(fiat_token.contract_address, BoundedInt::max());
-    stop_prank(CheatTarget::One(setup.eth_token.contract_address));
 
     let remote_token_address: felt252 = setup.remote_token.contract_address.into();
     fiat_token.enroll_remote_router(DESTINATION, remote_token_address.into());
@@ -51,10 +50,11 @@ fn test_fiat_token_remote_transfer() {
     let setup = fiat_token_setup();
 
     let balance_before = setup.local_token.balance_of(ALICE());
+    cheat_caller_address(
+        (setup).primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1),
+    );
 
-    start_prank(CheatTarget::One((setup).primary_token.contract_address), ALICE());
     setup.primary_token.approve(setup.local_token.contract_address, TRANSFER_AMT);
-    stop_prank(CheatTarget::One(setup.primary_token.contract_address));
 
     perform_remote_transfer_and_gas(@setup, REQUIRED_VALUE, TRANSFER_AMT, 0);
     let balance_after = setup.local_token.balance_of(ALICE());

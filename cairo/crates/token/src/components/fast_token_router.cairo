@@ -6,7 +6,7 @@ pub trait IFastTokenRouter<TState> {
         amount: u256,
         fast_fee: u256,
         origin: u32,
-        fast_transfer_id: u256
+        fast_transfer_id: u256,
     );
     fn fast_transfer_remote(
         ref self: TState,
@@ -14,7 +14,7 @@ pub trait IFastTokenRouter<TState> {
         recipient: u256,
         amount_or_id: u256,
         fast_fee: u256,
-        value: u256
+        value: u256,
     ) -> u256;
 }
 
@@ -22,35 +22,35 @@ pub trait IFastTokenRouter<TState> {
 pub mod FastTokenRouterComponent {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::client::gas_router_component::{
-        GasRouterComponent, GasRouterComponent::GasRouterInternalImpl
+        GasRouterComponent, GasRouterComponent::GasRouterInternalImpl,
     };
     use contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
-        MailboxclientComponent::MailboxClient
+        MailboxclientComponent, MailboxclientComponent::MailboxClient,
+        MailboxclientComponent::MailboxClientInternalImpl,
     };
     use contracts::client::router_component::{
-        RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait
+        RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait,
     };
     use contracts::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
-    use starknet::ContractAddress;
+    use starknet::{ContractAddress, storage::Map};
     use token::components::token_message::TokenMessageTrait;
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
     };
 
     #[storage]
     struct Storage {
         fast_transfer_id: u256,
-        filled_fast_transfers: LegacyMap<u256, ContractAddress>,
+        filled_fast_transfers: Map<u256, ContractAddress>,
     }
 
     pub trait FastTokenRouterHooksTrait<TContractState> {
         fn fast_transfer_to_hook(
-            ref self: ComponentState<TContractState>, recipient: u256, amount: u256
+            ref self: ComponentState<TContractState>, recipient: u256, amount: u256,
         );
         fn fast_receive_from_hook(
-            ref self: ComponentState<TContractState>, sender: ContractAddress, amount: u256
+            ref self: ComponentState<TContractState>, sender: ContractAddress, amount: u256,
         );
     }
 
@@ -70,7 +70,7 @@ pub mod FastTokenRouterComponent {
             ref self: RouterComponent::ComponentState<TContractState>,
             origin: u32,
             sender: u256,
-            message: Bytes
+            message: Bytes,
         ) {
             let recipient = message.recipient();
             let amount = message.amount();
@@ -80,7 +80,7 @@ pub mod FastTokenRouterComponent {
             let mut component_state = HasComponent::get_component_mut(ref contract_state);
             component_state._transfer_to(recipient, amount, origin, metadata);
             let mut component_state = TokenRouterComponent::HasComponent::get_component_mut(
-                ref contract_state
+                ref contract_state,
             );
             component_state
                 .emit(TokenRouterComponent::ReceivedTransferRemote { origin, recipient, amount });
@@ -100,11 +100,14 @@ pub mod FastTokenRouterComponent {
         impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
         impl TokenRouter: TokenRouterComponent::HasComponent<TContractState>,
     > of super::IFastTokenRouter<ComponentState<TContractState>> {
-        /// Fills a fast transfer request by transferring the specified amount minus the fast fee to the recipient.
+        /// Fills a fast transfer request by transferring the specified amount minus the fast fee to
+        /// the recipient.
         ///
-        /// This function is used to process a fast transfer request, ensuring that the transfer has not already been filled.
-        /// It deducts the fast fee from the total amount and transfers the remaining amount to the recipient. The function also
-        /// records the sender's address in the filled fast transfer mapping.
+        /// This function is used to process a fast transfer request, ensuring that the transfer has
+        /// not already been filled.
+        /// It deducts the fast fee from the total amount and transfers the remaining amount to the
+        /// recipient. The function also records the sender's address in the filled fast transfer
+        /// mapping.
         ///
         /// # Arguments
         ///
@@ -123,7 +126,7 @@ pub mod FastTokenRouterComponent {
             amount: u256,
             fast_fee: u256,
             origin: u32,
-            fast_transfer_id: u256
+            fast_transfer_id: u256,
         ) {
             let filled_fast_transfer_key = self
                 ._get_fast_transfers_key(origin, fast_transfer_id, amount, fast_fee, recipient);
@@ -132,7 +135,7 @@ pub mod FastTokenRouterComponent {
                 self
                     .filled_fast_transfers
                     .read(filled_fast_transfer_key) == starknet::contract_address_const::<0>(),
-                "Fast transfer: request already filled"
+                "Fast transfer: request already filled",
             );
 
             let caller = starknet::get_caller_address();
@@ -144,9 +147,10 @@ pub mod FastTokenRouterComponent {
 
         /// Initiates a fast transfer to a remote domain and returns the message ID for tracking.
         ///
-        /// This function sends a fast transfer to a recipient in a specified remote domain. It deducts the fast fee
-        /// from the total amount and dispatches the transfer using the gas router and mailbox components. The function
-        /// emits an event for the sent transfer and returns the message ID for tracking the transfer.
+        /// This function sends a fast transfer to a recipient in a specified remote domain. It
+        /// deducts the fast fee from the total amount and dispatches the transfer using the gas
+        /// router and mailbox components. The function emits an event for the sent transfer and
+        /// returns the message ID for tracking the transfer.
         ///
         /// # Arguments
         ///
@@ -186,7 +190,7 @@ pub mod FastTokenRouterComponent {
                 .emit(
                     TokenRouterComponent::SentTransferRemote {
                         destination, recipient, amount: amount_or_id,
-                    }
+                    },
                 );
             message_id
         }
@@ -210,7 +214,7 @@ pub mod FastTokenRouterComponent {
             recipient: u256,
             amount: u256,
             origin: u32,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let token_recipient = self._get_token_recipient(recipient, amount, origin, metadata);
 
@@ -222,7 +226,7 @@ pub mod FastTokenRouterComponent {
             recipient: u256,
             amount: u256,
             origin: u32,
-            metadata: Bytes
+            metadata: Bytes,
         ) -> u256 {
             if metadata.size() == 0 {
                 return recipient;
@@ -246,7 +250,7 @@ pub mod FastTokenRouterComponent {
             fast_transfer_id: u256,
             amount: u256,
             fast_fee: u256,
-            recipient: u256
+            recipient: u256,
         ) -> u256 {
             let data = BytesTrait::new(
                 9,
@@ -259,8 +263,8 @@ pub mod FastTokenRouterComponent {
                     fast_fee.low,
                     fast_fee.high,
                     recipient.low,
-                    recipient.high
-                ]
+                    recipient.high,
+                ],
             );
             data.keccak()
         }
@@ -269,11 +273,11 @@ pub mod FastTokenRouterComponent {
             ref self: ComponentState<TContractState>,
             amount: u256,
             fast_fee: u256,
-            fast_transfer_id: u256
+            fast_transfer_id: u256,
         ) -> Bytes {
             FTRHooks::fast_receive_from_hook(ref self, starknet::get_caller_address(), amount);
             BytesTrait::new(
-                4, array![fast_fee.low, fast_fee.high, fast_transfer_id.low, fast_transfer_id.high]
+                4, array![fast_fee.low, fast_fee.high, fast_transfer_id.low, fast_transfer_id.high],
             )
         }
     }
@@ -281,16 +285,16 @@ pub mod FastTokenRouterComponent {
 
 
 pub impl FastTokenRouterHooksEmptyImpl<
-    TContractState
+    TContractState,
 > of FastTokenRouterComponent::FastTokenRouterHooksTrait<TContractState> {
     fn fast_transfer_to_hook(
         ref self: FastTokenRouterComponent::ComponentState<TContractState>,
         recipient: u256,
-        amount: u256
+        amount: u256,
     ) {}
     fn fast_receive_from_hook(
         ref self: FastTokenRouterComponent::ComponentState<TContractState>,
         sender: starknet::ContractAddress,
-        amount: u256
+        amount: u256,
     ) {}
 }

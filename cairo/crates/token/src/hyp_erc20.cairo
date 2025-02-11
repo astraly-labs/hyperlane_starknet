@@ -13,8 +13,8 @@ pub mod HypErc20 {
         hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl},
         token_router::{
             TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
-            TokenRouterTransferRemoteHookDefaultImpl
-        }
+            TokenRouterTransferRemoteHookDefaultImpl,
+        },
     };
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
@@ -76,7 +76,7 @@ pub mod HypErc20 {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -97,7 +97,7 @@ pub mod HypErc20 {
         #[flat]
         TokenRouterEvent: TokenRouterComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     #[constructor]
@@ -110,7 +110,7 @@ pub mod HypErc20 {
         symbol: ByteArray,
         hook: ContractAddress,
         interchain_security_module: ContractAddress,
-        owner: ContractAddress
+        owner: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self

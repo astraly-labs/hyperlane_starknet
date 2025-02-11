@@ -9,8 +9,8 @@ pub mod HypErc721Component {
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::{SRC5Component, SRC5Component::SRC5Impl};
     use openzeppelin::token::erc721::{
-        ERC721Component, ERC721Component::ERC721Impl,
-        ERC721Component::InternalTrait as ERC721InternalTrait, ERC721Component::ERC721HooksTrait,
+        ERC721Component, ERC721Component::ERC721HooksTrait, ERC721Component::ERC721Impl,
+        ERC721Component::InternalTrait as ERC721InternalTrait,
     };
 
 
@@ -30,9 +30,9 @@ pub mod HypErc721Component {
     > of HypErc721InternalTrait<TContractState> {
         /// Initializes the ERC721 token contract with a specified mint amount, name, and symbol.
         ///
-        /// This function sets the name and symbol for the ERC721 token contract and mints the specified number
-        /// of tokens to the caller's address. The initialization process ensures that the contract is set up
-        /// with the given name, symbol, and initial minting operation.
+        /// This function sets the name and symbol for the ERC721 token contract and mints the
+        /// specified number of tokens to the caller's address. The initialization process ensures
+        /// that the contract is set up with the given name, symbol, and initial minting operation.
         ///
         /// # Arguments
         ///

@@ -1,12 +1,11 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::interfaces::IMessageRecipientDispatcherTrait;
 use contracts::interfaces::{
-    IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, ModuleType,
-    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-    IInterchainSecurityModule, IValidatorConfigurationDispatcher,
-    IValidatorConfigurationDispatcherTrait,
+    IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+    IInterchainSecurityModuleDispatcherTrait, IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait,
+    IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait, ModuleType,
 };
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
+use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
 use contracts::libs::multisig::message_id_ism_metadata::message_id_ism_metadata::MessageIdIsmMetadata;
 use contracts::mailbox::mailbox;
 use contracts::utils::utils::U256TryIntoContractAddress;
@@ -14,12 +13,11 @@ use core::array::ArrayTrait;
 use core::array::SpanTrait;
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::cheatcodes::events::EventAssertions;
-use snforge_std::{start_prank, CheatTarget};
+use snforge_std::{CheatSpan, cheat_caller_address};
 use super::super::setup::{
-    setup_messageid_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1, VALIDATOR_ADDRESS_2,
-    get_message_and_signature, LOCAL_DOMAIN, DESTINATION_DOMAIN, RECIPIENT_ADDRESS,
-    build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT, build_fake_messageid_metadata
+    DESTINATION_DOMAIN, LOCAL_DOMAIN, NEW_OWNER, OWNER, RECIPIENT_ADDRESS, VALIDATOR_ADDRESS_1,
+    VALIDATOR_ADDRESS_2, VALID_OWNER, VALID_RECIPIENT, build_fake_messageid_metadata,
+    build_messageid_metadata, get_message_and_signature, setup_messageid_multisig_ism,
 };
 
 
@@ -27,11 +25,13 @@ use super::super::setup::{
 fn test_set_validators() {
     let threshold = 2;
     let new_validators: Array<felt252> = array![
-        VALIDATOR_ADDRESS_1().into(), VALIDATOR_ADDRESS_2().into()
+        VALIDATOR_ADDRESS_1().into(), VALIDATOR_ADDRESS_2().into(),
     ];
     let (_, validators) = setup_messageid_multisig_ism(new_validators.span(), threshold);
     let ownable = IOwnableDispatcher { contract_address: validators.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     let validators_span = validators.get_validators();
     assert_eq!(*validators_span.at(0).into(), (*new_validators.at(0)).try_into().unwrap());
     assert_eq!(*validators_span.at(1).into(), (*new_validators.at(1)).try_into().unwrap());
@@ -64,7 +64,7 @@ fn test_message_id_ism_metadata() {
     let metadata = build_messageid_metadata(origin_merkle_tree, root, index);
     assert(
         MessageIdIsmMetadata::origin_merkle_tree_hook(metadata.clone()) == origin_merkle_tree,
-        'wrong merkle tree hook'
+        'wrong merkle tree hook',
     );
     assert(MessageIdIsmMetadata::root(metadata.clone()) == root, 'wrong root');
     assert(MessageIdIsmMetadata::index(metadata.clone()) == index, 'wrong index');
@@ -75,9 +75,9 @@ fn test_message_id_ism_metadata() {
         }
         assert(
             MessageIdIsmMetadata::signature_at(
-                metadata.clone(), cur_idx
+                metadata.clone(), cur_idx,
             ) == (y_parity, *signatures.at(cur_idx).r, *signatures.at(cur_idx).s),
-            'wrong signature '
+            'wrong signature ',
         );
         cur_idx += 1;
     }
@@ -90,7 +90,7 @@ fn test_message_id_multisig_module_type() {
     let (messageid, _) = setup_messageid_multisig_ism(array!['validator_1'].span(), threshold);
     assert(
         messageid.module_type() == ModuleType::MESSAGE_ID_MULTISIG(messageid.contract_address),
-        'Wrong module type'
+        'Wrong module type',
     );
 }
 
@@ -101,7 +101,7 @@ fn test_message_id_multisig_verify_with_4_valid_signatures() {
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
-        0x01020304050607080910000000000000
+        0x01020304050607080910000000000000,
     ];
     let message_body = BytesTrait::new(42, array);
     let message = Message {
@@ -111,7 +111,7 @@ fn test_message_id_multisig_verify_with_4_valid_signatures() {
         sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
         recipient: VALID_RECIPIENT(),
-        body: message_body.clone()
+        body: message_body.clone(),
     };
     let (_, validators_address, _) = get_message_and_signature();
     let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
@@ -130,7 +130,7 @@ fn test_message_id_multisig_verify_with_insufficient_valid_signatures() {
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
-        0x01020304050607080910000000000000
+        0x01020304050607080910000000000000,
     ];
     let message_body = BytesTrait::new(42, array);
     let message = Message {
@@ -140,7 +140,7 @@ fn test_message_id_multisig_verify_with_insufficient_valid_signatures() {
         sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
         recipient: VALID_RECIPIENT(),
-        body: message_body.clone()
+        body: message_body.clone(),
     };
     let (_, validators_address, _) = get_message_and_signature();
     let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
@@ -161,7 +161,7 @@ fn test_message_id_multisig_verify_with_empty_metadata() {
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
-        0x01020304050607080910000000000000
+        0x01020304050607080910000000000000,
     ];
     let message_body = BytesTrait::new(42, array);
     let message = Message {
@@ -171,7 +171,7 @@ fn test_message_id_multisig_verify_with_empty_metadata() {
         sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
         recipient: VALID_RECIPIENT(),
-        body: message_body.clone()
+        body: message_body.clone(),
     };
     let (_, validators_address, _) = get_message_and_signature();
     let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
@@ -187,7 +187,7 @@ fn test_message_id_multisig_verify_with_4_valid_signatures_fails_if_duplicate_si
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
-        0x01020304050607080910000000000000
+        0x01020304050607080910000000000000,
     ];
     let message_body = BytesTrait::new(42, array);
     let message = Message {
@@ -197,7 +197,7 @@ fn test_message_id_multisig_verify_with_4_valid_signatures_fails_if_duplicate_si
         sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
         recipient: VALID_RECIPIENT(),
-        body: message_body.clone()
+        body: message_body.clone(),
     };
     let (_, validators_address, _) = get_message_and_signature();
     let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);

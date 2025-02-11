@@ -1,9 +1,9 @@
 pub mod checkpoint_lib {
-    use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+    use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
     use contracts::libs::message::Message;
     use contracts::utils::keccak256::{
-        reverse_endianness, compute_keccak, ByteData, u64_word_size, u256_word_size, HASH_SIZE,
-        to_eth_signature
+        ByteData, HASH_SIZE, compute_keccak, reverse_endianness, to_eth_signature, u256_word_size,
+        u64_word_size,
     };
 
 
@@ -13,7 +13,7 @@ pub mod checkpoint_lib {
             _origin_merkle_tree_hook: u256,
             _checkpoint_root: u256,
             _checkpoint_index: u32,
-            _message_id: u256
+            _message_id: u256,
         ) -> u256;
         fn domain_hash(_origin: u32, _origin_merkle_tree_hook: u256) -> u256;
     }
@@ -22,24 +22,24 @@ pub mod checkpoint_lib {
 
     impl CheckpointLibImpl of CheckpointLib {
         /// Returns the digest validators are expected to sign when signing checkpoints.
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_origin` - The origin domain of the checkpoint.
-        /// * - `_origin_merkle_tree_hook` - The address of the origin merkle tree hook 
+        /// * - `_origin_merkle_tree_hook` - The address of the origin merkle tree hook
         /// * - `_checkpoint_root` -  The root of the checkpoint.
         /// * - `_checkpoint_index` - The index of the checkpoint.
         /// * - `_message_id` - The message ID of the checkpoint.
-        /// 
-        /// # Returns 
-        /// 
-        /// u256 - the digest 
+        ///
+        /// # Returns
+        ///
+        /// u256 - the digest
         fn digest(
             _origin: u32,
             _origin_merkle_tree_hook: u256,
             _checkpoint_root: u256,
             _checkpoint_index: u32,
-            _message_id: u256
+            _message_id: u256,
         ) -> u256 {
             let domain_hash = CheckpointLibImpl::domain_hash(_origin, _origin_merkle_tree_hook);
             let mut input: Array<ByteData> = array![
@@ -52,20 +52,20 @@ pub mod checkpoint_lib {
         }
 
         /// Returns the domain hash validators are expected to use when signing checkpoints.
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_origin` - The origin domain of the checkpoint.
-        /// * - `_origin_merkle_tree_hook` - The address of the origin merkle tree hook 
-        /// 
-        /// # Returns 
-        /// 
+        /// * - `_origin_merkle_tree_hook` - The address of the origin merkle tree hook
+        ///
+        /// # Returns
+        ///
         /// u256 -  The domain hash.
         fn domain_hash(_origin: u32, _origin_merkle_tree_hook: u256) -> u256 {
             let mut input: Array<ByteData> = array![
                 ByteData { value: _origin.into(), size: 4 },
                 ByteData { value: _origin_merkle_tree_hook.into(), size: 32 },
-                ByteData { value: HYPERLANE.into(), size: 9 }
+                ByteData { value: HYPERLANE.into(), size: 9 },
             ];
             reverse_endianness(compute_keccak(input.span()))
         }

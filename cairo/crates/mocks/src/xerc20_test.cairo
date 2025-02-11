@@ -15,7 +15,7 @@ pub trait IXERC20Test<TContractState> {
     fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
     fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
     fn transfer_from(
-        ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
+        ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256,
     ) -> bool;
     fn approve(ref self: TContractState, spender: ContractAddress, amount: u256) -> bool;
 }
@@ -23,6 +23,7 @@ pub trait IXERC20Test<TContractState> {
 #[starknet::contract]
 pub mod XERC20Test {
     use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
 
@@ -60,7 +61,7 @@ pub mod XERC20Test {
         }
 
         fn set_limits(
-            ref self: ContractState, address: starknet::ContractAddress, arg1: u256, arg2: u256
+            ref self: ContractState, address: starknet::ContractAddress, arg1: u256, arg2: u256,
         ) {
             assert!(false);
         }
@@ -70,13 +71,13 @@ pub mod XERC20Test {
         }
 
         fn burning_current_limit_of(
-            self: @ContractState, bridge: starknet::ContractAddress
+            self: @ContractState, bridge: starknet::ContractAddress,
         ) -> u256 {
             core::integer::BoundedInt::<u256>::max()
         }
 
         fn minting_current_limit_of(
-            self: @ContractState, bridge: starknet::ContractAddress
+            self: @ContractState, bridge: starknet::ContractAddress,
         ) -> u256 {
             core::integer::BoundedInt::<u256>::max()
         }
@@ -97,12 +98,12 @@ pub mod XERC20Test {
         fn allowance(
             self: @ContractState,
             owner: starknet::ContractAddress,
-            spender: starknet::ContractAddress
+            spender: starknet::ContractAddress,
         ) -> u256 {
             self.erc20.allowance(owner, spender)
         }
         fn transfer(
-            ref self: ContractState, recipient: starknet::ContractAddress, amount: u256
+            ref self: ContractState, recipient: starknet::ContractAddress, amount: u256,
         ) -> bool {
             self.erc20.transfer(recipient, amount)
         }
@@ -110,12 +111,12 @@ pub mod XERC20Test {
             ref self: ContractState,
             sender: starknet::ContractAddress,
             recipient: starknet::ContractAddress,
-            amount: u256
+            amount: u256,
         ) -> bool {
             self.erc20.transfer_from(sender, recipient, amount)
         }
         fn approve(
-            ref self: ContractState, spender: starknet::ContractAddress, amount: u256
+            ref self: ContractState, spender: starknet::ContractAddress, amount: u256,
         ) -> bool {
             self.erc20.approve(spender, amount)
         }

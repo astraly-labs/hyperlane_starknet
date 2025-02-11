@@ -9,6 +9,7 @@ pub trait ITestISM<TContractState> {
 #[starknet::contract]
 pub mod TestISM {
     use alexandria_bytes::Bytes;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use super::ITestISMDispatcher;
 
     #[storage]

@@ -1,4 +1,5 @@
-//! Modified from {https://github.com/0xHashstack/hashstack_contracts/blob/main/src/token/erc4626/erc4626component.cairo}
+//! Modified from
+//! {https://github.com/0xHashstack/hashstack_contracts/blob/main/src/token/erc4626/erc4626component.cairo}
 //! Modified from {https://github.com/nodeset-org/erc4626-cairo/blob/main/src/erc4626/erc4626.cairo}
 use starknet::ContractAddress;
 
@@ -7,23 +8,27 @@ pub mod ERC4626Component {
     use core::integer::BoundedInt;
     use openzeppelin::introspection::interface::{ISRC5Dispatcher, ISRC5DispatcherTrait};
     use openzeppelin::introspection::src5::{
-        SRC5Component, SRC5Component::SRC5Impl, SRC5Component::InternalTrait as SRC5INternalTrait
+        SRC5Component, SRC5Component::InternalTrait as SRC5INternalTrait, SRC5Component::SRC5Impl,
     };
     use openzeppelin::token::erc20::ERC20Component::InternalTrait as ERC20InternalTrait;
     use openzeppelin::token::erc20::interface::{
-        IERC20, IERC20Metadata, ERC20ABIDispatcher, ERC20ABIDispatcherTrait,
+        ERC20ABIDispatcher, ERC20ABIDispatcherTrait, IERC20, IERC20Metadata,
     };
     use openzeppelin::token::erc20::{
-        ERC20Component, ERC20HooksEmptyImpl, ERC20Component::Errors as ERC20Errors
+        ERC20Component, ERC20Component::Errors as ERC20Errors, ERC20HooksEmptyImpl,
+    };
+    use starknet::storage::{
+        Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
+        StoragePointerWriteAccess,
     };
     use starknet::{ContractAddress, get_caller_address, get_contract_address};
     use token::interfaces::ierc4626::{IERC4626, IERC4626Camel, IERC4626Metadata};
 
     #[storage]
-    struct Storage {
-        ERC4626_asset: ContractAddress,
-        ERC4626_underlying_decimals: u8,
-        ERC4626_offset: u8,
+    pub struct Storage {
+        pub ERC4626_asset: ContractAddress,
+        pub ERC4626_underlying_decimals: u8,
+        pub ERC4626_offset: u8,
     }
 
     #[event]
@@ -40,7 +45,7 @@ pub mod ERC4626Component {
         #[key]
         owner: ContractAddress,
         assets: u256,
-        shares: u256
+        shares: u256,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -52,7 +57,7 @@ pub mod ERC4626Component {
         #[key]
         owner: ContractAddress,
         assets: u256,
-        shares: u256
+        shares: u256,
     }
 
     pub mod Errors {
@@ -70,14 +75,14 @@ pub mod ERC4626Component {
             caller: ContractAddress,
             receiver: ContractAddress,
             assets: u256,
-            shares: u256
+            shares: u256,
         );
         fn after_deposit(
             ref self: ComponentState<TContractState>,
             caller: ContractAddress,
             receiver: ContractAddress,
             assets: u256,
-            shares: u256
+            shares: u256,
         );
 
         fn before_withdraw(
@@ -86,7 +91,7 @@ pub mod ERC4626Component {
             receiver: ContractAddress,
             owner: ContractAddress,
             assets: u256,
-            shares: u256
+            shares: u256,
         );
 
         fn after_withdraw(
@@ -95,7 +100,7 @@ pub mod ERC4626Component {
             receiver: ContractAddress,
             owner: ContractAddress,
             assets: u256,
-            shares: u256
+            shares: u256,
         );
     }
 
@@ -106,7 +111,7 @@ pub mod ERC4626Component {
         impl ERC20: ERC20Component::HasComponent<TContractState>,
         +ERC4626HooksTrait<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
-        +Drop<TContractState>
+        +Drop<TContractState>,
     > of IERC4626<ComponentState<TContractState>> {
         fn name(self: @ComponentState<TContractState>) -> ByteArray {
             let erc20_comp = get_dep_component!(ref self, ERC20);
@@ -133,14 +138,14 @@ pub mod ERC4626Component {
         }
 
         fn allowance(
-            self: @ComponentState<TContractState>, owner: ContractAddress, spender: ContractAddress
+            self: @ComponentState<TContractState>, owner: ContractAddress, spender: ContractAddress,
         ) -> u256 {
             let erc20_comp = get_dep_component!(ref self, ERC20);
             erc20_comp.allowance(owner, spender)
         }
 
         fn transfer(
-            ref self: ComponentState<TContractState>, recipient: ContractAddress, amount: u256
+            ref self: ComponentState<TContractState>, recipient: ContractAddress, amount: u256,
         ) -> bool {
             let mut erc20_comp_mut = get_dep_component_mut!(ref self, ERC20);
             erc20_comp_mut.transfer(recipient, amount)
@@ -150,14 +155,14 @@ pub mod ERC4626Component {
             ref self: ComponentState<TContractState>,
             sender: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) -> bool {
             let mut erc20_comp_mut = get_dep_component_mut!(ref self, ERC20);
             erc20_comp_mut.transfer_from(sender, recipient, amount)
         }
 
         fn approve(
-            ref self: ComponentState<TContractState>, spender: ContractAddress, amount: u256
+            ref self: ComponentState<TContractState>, spender: ContractAddress, amount: u256,
         ) -> bool {
             let mut erc20_comp_mut = get_dep_component_mut!(ref self, ERC20);
             erc20_comp_mut.approve(spender, amount)
@@ -176,7 +181,7 @@ pub mod ERC4626Component {
         }
 
         fn deposit(
-            ref self: ComponentState<TContractState>, assets: u256, receiver: ContractAddress
+            ref self: ComponentState<TContractState>, assets: u256, receiver: ContractAddress,
         ) -> u256 {
             let max_assets = self.max_deposit(receiver);
             assert(max_assets >= assets, Errors::EXCEEDED_MAX_DEPOSIT);
@@ -188,7 +193,7 @@ pub mod ERC4626Component {
         }
 
         fn mint(
-            ref self: ComponentState<TContractState>, shares: u256, receiver: ContractAddress
+            ref self: ComponentState<TContractState>, shares: u256, receiver: ContractAddress,
         ) -> u256 {
             let max_shares = self.max_mint(receiver);
             assert(max_shares >= shares, Errors::EXCEEDED_MAX_MINT);
@@ -238,7 +243,7 @@ pub mod ERC4626Component {
             ref self: ComponentState<TContractState>,
             shares: u256,
             receiver: ContractAddress,
-            owner: ContractAddress
+            owner: ContractAddress,
         ) -> u256 {
             let max_shares = self.max_redeem(owner);
             assert(shares <= max_shares, Errors::EXCEEDED_MAX_REDEEM);
@@ -258,7 +263,7 @@ pub mod ERC4626Component {
             ref self: ComponentState<TContractState>,
             assets: u256,
             receiver: ContractAddress,
-            owner: ContractAddress
+            owner: ContractAddress,
         ) -> u256 {
             let max_assets = self.max_withdraw(owner);
             assert(assets <= max_assets, Errors::EXCEEDED_MAX_WITHDRAW);
@@ -277,7 +282,7 @@ pub mod ERC4626Component {
         +HasComponent<TContractState>,
         impl ERC20: ERC20Component::HasComponent<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
-        +Drop<TContractState>
+        +Drop<TContractState>,
     > of IERC4626Metadata<ComponentState<TContractState>> {
         fn name(self: @ComponentState<TContractState>) -> ByteArray {
             let erc20_comp = get_dep_component!(ref self, ERC20);
@@ -299,7 +304,7 @@ pub mod ERC4626Component {
         +ERC20Component::HasComponent<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
         +ERC4626HooksTrait<TContractState>,
-        +Drop<TContractState>
+        +Drop<TContractState>,
     > of IERC4626Camel<ComponentState<TContractState>> {
         fn totalSupply(self: @ComponentState<TContractState>) -> u256 {
             self.total_supply()
@@ -311,7 +316,7 @@ pub mod ERC4626Component {
             ref self: ComponentState<TContractState>,
             sender: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) -> bool {
             self.transfer_from(sender, recipient, amount)
         }
@@ -390,14 +395,14 @@ pub mod ERC4626Component {
         impl ERC20: ERC20Component::HasComponent<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
         impl Hooks: ERC4626HooksTrait<TContractState>,
-        +Drop<TContractState>
+        +Drop<TContractState>,
     > of InternalImplTrait<TContractState> {
         fn initializer(
             ref self: ComponentState<TContractState>,
             asset: ContractAddress,
             name: ByteArray,
             symbol: ByteArray,
-            offset: u8
+            offset: u8,
         ) {
             let dispatcher = ERC20ABIDispatcher { contract_address: asset };
             self.ERC4626_offset.write(offset);
@@ -409,7 +414,7 @@ pub mod ERC4626Component {
         }
 
         fn _convert_to_assets(
-            self: @ComponentState<TContractState>, shares: u256, round: bool
+            self: @ComponentState<TContractState>, shares: u256, round: bool,
         ) -> u256 {
             let total_assets = self.total_assets() + 1;
             let total_shares = self.total_supply() + pow_256(10, self.ERC4626_offset.read());
@@ -422,7 +427,7 @@ pub mod ERC4626Component {
         }
 
         fn _convert_to_shares(
-            self: @ComponentState<TContractState>, assets: u256, round: bool
+            self: @ComponentState<TContractState>, assets: u256, round: bool,
         ) -> u256 {
             let total_assets = self.total_assets() + 1;
             let total_shares = self.total_supply() + pow_256(10, self.ERC4626_offset.read());
@@ -439,14 +444,14 @@ pub mod ERC4626Component {
             caller: ContractAddress,
             receiver: ContractAddress,
             assets: u256,
-            shares: u256
+            shares: u256,
         ) {
             Hooks::before_deposit(ref self, caller, receiver, assets, shares);
 
             let dispatcher = ERC20ABIDispatcher { contract_address: self.ERC4626_asset.read() };
             assert(
                 dispatcher.transfer_from(caller, get_contract_address(), assets),
-                Errors::ERC20_TRANSFER_FROM_FAILED
+                Errors::ERC20_TRANSFER_FROM_FAILED,
             );
             let mut erc20_comp_mut = get_dep_component_mut!(ref self, ERC20);
             erc20_comp_mut.mint(receiver, shares);
@@ -461,7 +466,7 @@ pub mod ERC4626Component {
             receiver: ContractAddress,
             owner: ContractAddress,
             assets: u256,
-            shares: u256
+            shares: u256,
         ) {
             Hooks::before_withdraw(ref self, caller, receiver, owner, assets, shares);
 
@@ -492,21 +497,21 @@ pub mod ERC4626Component {
 }
 
 pub impl ERC4626HooksEmptyImpl<
-    TContractState
+    TContractState,
 > of ERC4626Component::ERC4626HooksTrait<TContractState> {
     fn before_deposit(
         ref self: ERC4626Component::ComponentState<TContractState>,
         caller: ContractAddress,
         receiver: ContractAddress,
         assets: u256,
-        shares: u256
+        shares: u256,
     ) {}
     fn after_deposit(
         ref self: ERC4626Component::ComponentState<TContractState>,
         caller: ContractAddress,
         receiver: ContractAddress,
         assets: u256,
-        shares: u256
+        shares: u256,
     ) {}
 
     fn before_withdraw(
@@ -515,7 +520,7 @@ pub impl ERC4626HooksEmptyImpl<
         receiver: ContractAddress,
         owner: ContractAddress,
         assets: u256,
-        shares: u256
+        shares: u256,
     ) {}
     fn after_withdraw(
         ref self: ERC4626Component::ComponentState<TContractState>,
@@ -523,6 +528,6 @@ pub impl ERC4626HooksEmptyImpl<
         receiver: ContractAddress,
         owner: ContractAddress,
         assets: u256,
-        shares: u256
+        shares: u256,
     ) {}
 }

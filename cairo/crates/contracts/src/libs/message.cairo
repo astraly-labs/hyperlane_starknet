@@ -1,8 +1,8 @@
-use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
 use alexandria_math::BitShift;
 use contracts::utils::keccak256::{
-    reverse_endianness, compute_keccak, ByteData, u256_word_size, u64_word_size, ADDRESS_SIZE,
-    u128_mask,
+    ADDRESS_SIZE, ByteData, compute_keccak, reverse_endianness, u128_mask, u256_word_size,
+    u64_word_size,
 };
 use starknet::{ContractAddress, contract_address_const};
 
@@ -24,9 +24,9 @@ pub struct Message {
 #[generate_trait]
 pub impl MessageImpl of MessageTrait {
     /// Generate a default empty message
-    /// 
+    ///
     ///  # Returns
-    /// 
+    ///
     /// * An empty message structure
     fn default() -> Message {
         Message {
@@ -40,14 +40,14 @@ pub impl MessageImpl of MessageTrait {
         }
     }
 
-    /// Format an input message, using 
-    /// 
+    /// Format an input message, using
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `_message` - Message to hash
-    /// 
+    ///
     ///  # Returns
-    /// 
+    ///
     /// * u256 representing the hash of the message
     fn format_message(_message: Message) -> (u256, Message) {
         let mut input: Array<ByteData> = array![
@@ -60,13 +60,13 @@ pub impl MessageImpl of MessageTrait {
         ];
         let message_data = _message.clone().body.data();
         let finalized_input = MessageImpl::append_span_u128_to_byte_data(
-            input, message_data.span(), _message.clone().body.size()
+            input, message_data.span(), _message.clone().body.size(),
         );
         (reverse_endianness(compute_keccak(finalized_input)), _message)
     }
 
     fn append_span_u128_to_byte_data(
-        mut _input: Array<ByteData>, _to_append: Span<u128>, size: u32
+        mut _input: Array<ByteData>, _to_append: Span<u128>, size: u32,
     ) -> Span<ByteData> {
         let mut cur_idx = 0;
         let range = size / 16;
@@ -81,12 +81,12 @@ pub impl MessageImpl of MessageTrait {
                         .append(
                             ByteData {
                                 value: (BitShift::shr(
-                                    *_to_append.at(cur_idx), ((16 - remaining_size) * 8).into()
+                                    *_to_append.at(cur_idx), ((16 - remaining_size) * 8).into(),
                                 )
                                     & mask)
                                     .into(),
-                                size: remaining_size
-                            }
+                                size: remaining_size,
+                            },
                         );
                     break;
                 }
@@ -101,14 +101,14 @@ pub impl MessageImpl of MessageTrait {
 
 #[cfg(test)]
 mod tests {
-    use super::{MessageImpl, ByteData};
+    use super::{ByteData, MessageImpl};
 
     #[test]
     fn test_append_u128_to_byte_array() {
         let input: Array<u128> = array![
             0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
             0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,
-            0xcc000000000000000000000000000000
+            0xcc000000000000000000000000000000,
         ];
         let output_array = MessageImpl::append_span_u128_to_byte_data(array![], input.span(), 33);
         assert_eq!(
@@ -116,15 +116,15 @@ mod tests {
             array![
                 ByteData { value: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, size: 16 },
                 ByteData { value: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, size: 16 },
-                ByteData { value: 0xcc, size: 1 }
+                ByteData { value: 0xcc, size: 1 },
             ]
-                .span()
+                .span(),
         );
 
         let input: Array<u128> = array![
             0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
             0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,
-            0xcccccccccccccccccccccccccccccccc
+            0xcccccccccccccccccccccccccccccccc,
         ];
         let output_array = MessageImpl::append_span_u128_to_byte_data(array![], input.span(), 48);
         assert_eq!(
@@ -132,15 +132,15 @@ mod tests {
             array![
                 ByteData { value: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, size: 16 },
                 ByteData { value: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, size: 16 },
-                ByteData { value: 0xcccccccccccccccccccccccccccccccc, size: 16 }
+                ByteData { value: 0xcccccccccccccccccccccccccccccccc, size: 16 },
             ]
-                .span()
+                .span(),
         );
 
         let input: Array<u128> = array![
             0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
             0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,
-            0xcccccccccccccccccccccccccccccc00
+            0xcccccccccccccccccccccccccccccc00,
         ];
         let output_array = MessageImpl::append_span_u128_to_byte_data(array![], input.span(), 47);
         assert_eq!(
@@ -148,15 +148,15 @@ mod tests {
             array![
                 ByteData { value: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, size: 16 },
                 ByteData { value: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, size: 16 },
-                ByteData { value: 0xcccccccccccccccccccccccccccccc, size: 15 }
+                ByteData { value: 0xcccccccccccccccccccccccccccccc, size: 15 },
             ]
-                .span()
+                .span(),
         );
 
         let input: Array<u128> = array![
             0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
             0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,
-            0xcccccccccccccccccccccccccc000000
+            0xcccccccccccccccccccccccccc000000,
         ];
         let output_array = MessageImpl::append_span_u128_to_byte_data(array![], input.span(), 45);
         assert_eq!(
@@ -164,9 +164,9 @@ mod tests {
             array![
                 ByteData { value: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, size: 16 },
                 ByteData { value: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, size: 16 },
-                ByteData { value: 0xcccccccccccccccccccccccccc, size: 13 }
+                ByteData { value: 0xcccccccccccccccccccccccccc, size: 13 },
             ]
-                .span()
+                .span(),
         );
 
         let input: Array<u128> = array![0x12345678000000000000000000000000];

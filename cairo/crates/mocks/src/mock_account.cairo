@@ -3,7 +3,8 @@
 
 /// # Account Preset
 ///
-/// OpenZeppelin's upgradeable account which can change its public key and declare, deploy, or call contracts.
+/// OpenZeppelin's upgradeable account which can change its public key and declare, deploy, or call
+/// contracts.
 #[starknet::contract(account)]
 pub(crate) mod MockAccount {
     use openzeppelin::account::AccountComponent;
@@ -32,7 +33,7 @@ pub(crate) mod MockAccount {
         #[substorage(v0)]
         src5: SRC5Component::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -43,7 +44,7 @@ pub(crate) mod MockAccount {
         #[flat]
         SRC5Event: SRC5Component::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     #[constructor]

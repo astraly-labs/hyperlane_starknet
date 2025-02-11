@@ -3,25 +3,25 @@ pub mod validator_announce {
     use alexandria_bytes::{Bytes, BytesTrait};
     use alexandria_data_structures::array_ext::ArrayTraitExt;
     use contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
-        MailboxclientComponent::MailboxClientImpl,
+        MailboxclientComponent, MailboxclientComponent::MailboxClientImpl,
+        MailboxclientComponent::MailboxClientInternalImpl,
     };
     use contracts::interfaces::{
         IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IValidatorAnnounce,
     };
     use contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
     use contracts::utils::keccak256::{
-        reverse_endianness, to_eth_signature, compute_keccak, ByteData, u256_word_size,
-        u64_word_size, HASH_SIZE, bool_is_eth_signature_valid,
+        ByteData, HASH_SIZE, bool_is_eth_signature_valid, compute_keccak, reverse_endianness,
+        to_eth_signature, u256_word_size, u64_word_size,
     };
     use contracts::utils::store_arrays::StoreFelt252Array;
     use core::poseidon::poseidon_hash_span;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
     use starknet::{
-        ContractAddress, ClassHash, EthAddress, secp256_trait::{Signature, signature_from_vrs},
+        ClassHash, ContractAddress, EthAddress, secp256_trait::{Signature, signature_from_vrs},
     };
-    use starknet::storage::{StorageMapWriteAccess, StorageMapReadAccess, Map};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);

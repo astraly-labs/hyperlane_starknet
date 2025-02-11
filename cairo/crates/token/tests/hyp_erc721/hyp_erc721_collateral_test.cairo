@@ -6,9 +6,8 @@ use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTr
 use snforge_std::cheatcodes::contract_class::{ContractClass, ContractClassTrait};
 use starknet::ContractAddress;
 use super::common::{
-    setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
-    IHypErc721TestDispatcherTrait, ALICE, BOB, deploy_remote_token, perform_remote_transfer,
-    ZERO_ADDRESS
+    ALICE, BOB, DESTINATION, IHypErc721TestDispatcher, IHypErc721TestDispatcherTrait,
+    INITIAL_SUPPLY, Setup, ZERO_ADDRESS, deploy_remote_token, perform_remote_transfer, setup,
 };
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 
@@ -36,7 +35,9 @@ fn setup_erc721_collateral() -> Setup {
     setup
         .local_primary_token
         .transfer_from(
-            starknet::get_contract_address(), setup.local_token.contract_address, INITIAL_SUPPLY + 1
+            starknet::get_contract_address(),
+            setup.local_token.contract_address,
+            INITIAL_SUPPLY + 1,
         );
 
     setup
@@ -51,7 +52,7 @@ fn test_erc721_collateral_remote_transfer() {
     perform_remote_transfer(@setup, 2500, 0);
 
     assert_eq!(
-        setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY * 2 - 2
+        setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY * 2 - 2,
     );
 }
 

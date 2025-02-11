@@ -2,16 +2,16 @@
 pub mod domain_routing_ism {
     use alexandria_bytes::Bytes;
     use contracts::interfaces::{
-        IDomainRoutingIsm, IRoutingIsm, IInterchainSecurityModule, ModuleType,
-        IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
+        IDomainRoutingIsm, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+        IInterchainSecurityModuleDispatcherTrait, IRoutingIsm, ModuleType,
     };
     use contracts::libs::message::{Message, MessageTrait};
     use core::panic_with_felt252;
 
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use starknet::storage::{StorageMapWriteAccess, StorageMapReadAccess, Map};
-    use starknet::{ContractAddress, contract_address_const, ClassHash};
+    use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
+    use starknet::{ClassHash, ContractAddress, contract_address_const};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);

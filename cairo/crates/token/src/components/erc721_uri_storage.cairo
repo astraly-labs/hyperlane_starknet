@@ -10,8 +10,8 @@ pub mod ERC721URIStorageComponent {
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::interface::IERC721Metadata;
     use openzeppelin::token::erc721::{
-        ERC721Component, ERC721Component::InternalTrait as ERC721InternalTrait,
-        ERC721Component::ERC721HooksTrait, ERC721Component::ERC721MetadataImpl,
+        ERC721Component, ERC721Component::ERC721HooksTrait, ERC721Component::ERC721MetadataImpl,
+        ERC721Component::InternalTrait as ERC721InternalTrait,
     };
     use starknet::{storage::Map};
 

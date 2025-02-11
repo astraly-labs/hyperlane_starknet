@@ -1,7 +1,7 @@
 use mocks::enumerable_map_holder::{
     IEnumerableMapHolderDispatcher, IEnumerableMapHolderDispatcherTrait,
 };
-use snforge_std::{declare, DeclareResultTrait, ContractClassTrait};
+use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
 
 
 fn setup() -> IEnumerableMapHolderDispatcher {

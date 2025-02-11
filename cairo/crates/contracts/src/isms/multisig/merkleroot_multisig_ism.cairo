@@ -3,8 +3,8 @@ pub mod merkleroot_multisig_ism {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::hooks::merkle_tree_hook::merkle_tree_hook::MerkleInternalImpl;
     use contracts::interfaces::{
-        ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration,
+        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+        IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration, ModuleType,
     };
     use contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
     use contracts::libs::message::{Message, MessageTrait};
@@ -15,8 +15,8 @@ pub mod merkleroot_multisig_ism {
     use starknet::EthAddress;
     use starknet::secp256_trait::{Signature, signature_from_vrs};
     use starknet::storage::{
-        StoragePointerWriteAccess, StoragePointerReadAccess, StorageMapWriteAccess,
-        StorageMapReadAccess, Map,
+        Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
+        StoragePointerWriteAccess,
     };
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     #[abi(embed_v0)]

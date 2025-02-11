@@ -6,8 +6,8 @@ pub mod MailboxclientComponent {
         OwnableComponent, OwnableComponent::InternalImpl, OwnableComponent::OwnableImpl,
     };
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, contract_address_const};
-    use starknet::storage::{StoragePointerWriteAccess, StoragePointerReadAccess};
 
     #[storage]
     pub struct Storage {

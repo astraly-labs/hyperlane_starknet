@@ -1,11 +1,11 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::interfaces::IMessageRecipientDispatcherTrait;
 use contracts::interfaces::{
-    IMailboxDispatcher, IMailboxDispatcherTrait, ModuleType, IInterchainSecurityModuleDispatcher,
-    IInterchainSecurityModuleDispatcherTrait, IInterchainSecurityModule,
-    IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait,
+    IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+    IInterchainSecurityModuleDispatcherTrait, IMailboxDispatcher, IMailboxDispatcherTrait,
+    IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait, ModuleType,
 };
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
+use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
 use contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MerkleRootIsmMetadata;
 use contracts::utils::utils::U256TryIntoContractAddress;
 use core::array::ArrayTrait;
@@ -13,11 +13,11 @@ use core::array::SpanTrait;
 use core::option::OptionTrait;
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{cheat_caller_address, CheatSpan};
+use snforge_std::{CheatSpan, cheat_caller_address};
 use super::super::setup::{
-    setup_merkleroot_multisig_ism, OWNER, NEW_OWNER, VALIDATOR_ADDRESS_1, VALIDATOR_ADDRESS_2,
-    get_merkle_message_and_signature, LOCAL_DOMAIN, DESTINATION_DOMAIN, TEST_PROOF,
-    build_merkle_metadata, VALID_OWNER, VALID_RECIPIENT, build_fake_merkle_metadata,
+    DESTINATION_DOMAIN, LOCAL_DOMAIN, NEW_OWNER, OWNER, TEST_PROOF, VALIDATOR_ADDRESS_1,
+    VALIDATOR_ADDRESS_2, VALID_OWNER, VALID_RECIPIENT, build_fake_merkle_metadata,
+    build_merkle_metadata, get_merkle_message_and_signature, setup_merkleroot_multisig_ism,
 };
 
 

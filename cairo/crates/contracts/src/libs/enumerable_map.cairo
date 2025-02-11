@@ -3,9 +3,9 @@ use core::num::traits::Zero;
 use core::pedersen::PedersenTrait;
 use core::poseidon::poseidon_hash_span;
 use starknet::storage_access::{
-    StorageBaseAddress, storage_address_from_base, storage_base_address_from_felt252
+    StorageBaseAddress, storage_address_from_base, storage_base_address_from_felt252,
 };
-use starknet::{Store, SyscallResultTrait, SyscallResult};
+use starknet::{Store, SyscallResult, SyscallResultTrait};
 pub mod Err {
     pub const NOT_IMPLEMENTED: felt252 = 'Not implemented!';
     pub const INDEX_OUT_OF_BOUNDS: felt252 = 'Index out of bounds!';
@@ -15,18 +15,18 @@ pub mod Err {
 // Enumerable map
 // struct EnumerableMap {
 //   values: Map<K,V>
-//   keys: List<K>  
-//   positions: Map<K,u32>  
+//   keys: List<K>
+//   positions: Map<K,u32>
 // }
 #[derive(Copy, Drop)]
 pub struct EnumerableMap<K, V> {
     address_domain: u32,
-    base: StorageBaseAddress
+    base: StorageBaseAddress,
 }
 
 /// A storage interface for an `EnumerableMap` that allows reading and writing
 /// to a system store. This trait defines how to read, write, and handle storage
-/// for `EnumerableMap` structures. It also provides methods to handle reading 
+/// for `EnumerableMap` structures. It also provides methods to handle reading
 /// and writing at specific offsets in storage.
 ///
 /// # Parameters:
@@ -38,7 +38,7 @@ pub struct EnumerableMap<K, V> {
 /// let map = EnumerableMapStore::<K, V>::read(domain, address);
 /// ```
 pub impl EnumerableMapStore<
-    K, V, +Store<K>, +Drop<K>, +Store<V>, +Drop<V>
+    K, V, +Store<K>, +Drop<K>, +Store<V>, +Drop<V>,
 > of Store<EnumerableMap<K, V>> {
     /// Reads the `EnumerableMap` from storage at the given `base` address
     /// within the specified `address_domain`.
@@ -65,7 +65,7 @@ pub impl EnumerableMapStore<
     /// - `SyscallResult<()>`: Error indicating not implemented.
     #[inline(always)]
     fn write(
-        address_domain: u32, base: StorageBaseAddress, value: EnumerableMap<K, V>
+        address_domain: u32, base: StorageBaseAddress, value: EnumerableMap<K, V>,
     ) -> SyscallResult<()> {
         SyscallResult::Err(array![Err::NOT_IMPLEMENTED])
     }
@@ -81,7 +81,7 @@ pub impl EnumerableMapStore<
     /// - `SyscallResult<EnumerableMap<K, V>>`: Error indicating not implemented.
     #[inline(always)]
     fn read_at_offset(
-        address_domain: u32, base: StorageBaseAddress, offset: u8
+        address_domain: u32, base: StorageBaseAddress, offset: u8,
     ) -> SyscallResult<EnumerableMap<K, V>> {
         SyscallResult::Err(array![Err::NOT_IMPLEMENTED])
     }
@@ -99,7 +99,7 @@ pub impl EnumerableMapStore<
     /// - `SyscallResult<()>`: Error indicating not implemented.
     #[inline(always)]
     fn write_at_offset(
-        address_domain: u32, base: StorageBaseAddress, offset: u8, value: EnumerableMap<K, V>
+        address_domain: u32, base: StorageBaseAddress, offset: u8, value: EnumerableMap<K, V>,
     ) -> SyscallResult<()> {
         SyscallResult::Err(array![Err::NOT_IMPLEMENTED])
     }
@@ -117,7 +117,7 @@ pub impl EnumerableMapStore<
 }
 
 /// Trait defining basic operations for a key-value map where the keys are stored
-/// in an enumerable way. This provides functionality to get, set, check for keys, 
+/// in an enumerable way. This provides functionality to get, set, check for keys,
 /// and retrieve values.
 ///
 /// # Parameters:
@@ -256,7 +256,7 @@ pub impl EnumerableMapImpl<
 }
 
 /// Internal trait for managing the internal structures of an `EnumerableMap`.
-/// This trait handles reading and writing key-value pairs and their positions, 
+/// This trait handles reading and writing key-value pairs and their positions,
 /// as well as managing the array of keys for enumeration.
 ///
 /// # Parameters:
@@ -365,9 +365,9 @@ impl EnumerableMapInternalImpl<
         };
         let storage_address_val_felt = storage_address_val.finalize();
         Store::<
-            V
+            V,
         >::write(
-            self.address_domain, storage_base_address_from_felt252(storage_address_val_felt), val
+            self.address_domain, storage_base_address_from_felt252(storage_address_val_felt), val,
         )
             .unwrap_syscall();
     }
@@ -385,7 +385,7 @@ impl EnumerableMapInternalImpl<
         };
         let storage_address_val_felt = storage_address_val.finalize();
         Store::<
-            V
+            V,
         >::read(*self.address_domain, storage_base_address_from_felt252(storage_address_val_felt))
             .unwrap_syscall()
     }
@@ -403,9 +403,9 @@ impl EnumerableMapInternalImpl<
         };
         let storage_address_val_felt = storage_address_val.finalize();
         Store::<
-            u32
+            u32,
         >::write(
-            self.address_domain, storage_base_address_from_felt252(storage_address_val_felt), val
+            self.address_domain, storage_base_address_from_felt252(storage_address_val_felt), val,
         )
             .unwrap_syscall();
     }
@@ -423,7 +423,7 @@ impl EnumerableMapInternalImpl<
         };
         let storage_address_val_felt = storage_address_val.finalize();
         Store::<
-            u32
+            u32,
         >::read(*self.address_domain, storage_base_address_from_felt252(storage_address_val_felt))
             .unwrap_syscall()
     }
@@ -465,10 +465,10 @@ impl EnumerableMapInternalImpl<
     fn array_read(self: @EnumerableMap<K, V>, index: u32) -> K {
         let storage_base_felt: felt252 = storage_address_from_base(*self.base).into();
         let storage_address_felt = poseidon_hash_span(
-            array![storage_base_felt, index.into()].span()
+            array![storage_base_felt, index.into()].span(),
         );
         Store::<
-            K
+            K,
         >::read(*self.address_domain, storage_base_address_from_felt252(storage_address_felt))
             .unwrap_syscall()
     }
@@ -476,10 +476,10 @@ impl EnumerableMapInternalImpl<
     fn array_write(ref self: EnumerableMap<K, V>, index: u32, val: K) {
         let storage_base_felt: felt252 = storage_address_from_base(self.base).into();
         let storage_address_felt = poseidon_hash_span(
-            array![storage_base_felt, index.into()].span()
+            array![storage_base_felt, index.into()].span(),
         );
         Store::<
-            K
+            K,
         >::write(self.address_domain, storage_base_address_from_felt252(storage_address_felt), val)
             .unwrap_syscall();
     }

@@ -17,7 +17,7 @@ pub mod RateLimitedComponent {
         interface::IOwnable,
     };
     use starknet::ContractAddress;
-    use starknet::storage::{StoragePointerWriteAccess, StoragePointerReadAccess};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     // A day
     pub const DURATION: u64 = 60 * 60 * 24;
 

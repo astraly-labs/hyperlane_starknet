@@ -1,20 +1,20 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::hooks::merkle_tree_hook::merkle_tree_hook;
 use contracts::interfaces::{
-    Types, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait, IMerkleTreeHook,
-    IMailboxDispatcher, IMailboxDispatcherTrait, IMerkleTreeHookDispatcher,
-    IMerkleTreeHookDispatcherTrait,
+    IMailboxDispatcher, IMailboxDispatcherTrait, IMerkleTreeHook, IMerkleTreeHookDispatcher,
+    IMerkleTreeHookDispatcherTrait, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
+    Types,
 };
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
+use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
 use contracts::utils::keccak256::{ByteData, HASH_SIZE};
 use contracts::utils::utils::U256TryIntoContractAddress;
 use merkle_tree_hook::{InternalTrait};
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{cheat_caller_address, CheatSpan, EventSpyAssertionsTrait};
-use super::super::setup::{
-    setup_merkle_tree_hook, MAILBOX, LOCAL_DOMAIN, VALID_OWNER, VALID_RECIPIENT, DESTINATION_DOMAIN,
-};
+use snforge_std::{CheatSpan, EventSpyAssertionsTrait, cheat_caller_address};
 use starknet::storage::{StorageMapReadAccess, StoragePointerReadAccess};
+use super::super::setup::{
+    DESTINATION_DOMAIN, LOCAL_DOMAIN, MAILBOX, VALID_OWNER, VALID_RECIPIENT, setup_merkle_tree_hook,
+};
 #[test]
 fn test_merkle_tree_hook_type() {
     let (_, merkle_tree_hook, _) = setup_merkle_tree_hook();

@@ -16,12 +16,12 @@ mod ERC4626YieldSharingMock {
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
-    use starknet::{get_contract_address, get_caller_address, ContractAddress};
-    use token::interfaces::ierc4626::{IERC4626, IERC4626Camel};
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
         StoragePointerWriteAccess,
     };
+    use starknet::{ContractAddress, get_caller_address, get_contract_address};
+    use token::interfaces::ierc4626::{IERC4626, IERC4626Camel};
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);

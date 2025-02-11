@@ -20,11 +20,11 @@ pub mod HypERC20CollateralVaultDeposit {
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
     use token::components::{
+        hyp_erc20_collateral_component::HypErc20CollateralComponent,
         token_router::{
             TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
-            TokenRouterComponent::TokenRouterHooksTrait, TokenRouterTransferRemoteHookDefaultImpl
+            TokenRouterComponent::TokenRouterHooksTrait, TokenRouterTransferRemoteHookDefaultImpl,
         },
-        hyp_erc20_collateral_component::HypErc20CollateralComponent,
     };
     use token::interfaces::ierc4626::{ERC4626ABIDispatcher, ERC4626ABIDispatcherTrait};
 
@@ -34,7 +34,7 @@ pub mod HypERC20CollateralVaultDeposit {
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: TokenRouterComponent, storage: token_router, event: TokenRouterEvent);
     component!(
-        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent
+        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent,
     );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
@@ -82,7 +82,7 @@ pub mod HypERC20CollateralVaultDeposit {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -102,13 +102,13 @@ pub mod HypERC20CollateralVaultDeposit {
         TokenRouterEvent: TokenRouterComponent::Event,
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
-        ExcessSharesSwept: ExcessSharesSwept
+        ExcessSharesSwept: ExcessSharesSwept,
     }
 
     #[derive(Drop, starknet::Event)]
     struct ExcessSharesSwept {
         amount: u256,
-        assets_redeemed: u256
+        assets_redeemed: u256,
     }
 
     #[constructor]
@@ -118,7 +118,7 @@ pub mod HypERC20CollateralVaultDeposit {
         vault: ContractAddress,
         owner: ContractAddress,
         hook: ContractAddress,
-        interchain_security_module: ContractAddress
+        interchain_security_module: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self
@@ -132,13 +132,14 @@ pub mod HypERC20CollateralVaultDeposit {
     }
     #[abi(embed_v0)]
     impl HypERC20CollateralVaultDepositImpl of super::IHypERC20CollateralVaultDeposit<
-        ContractState
+        ContractState,
     > {
         /// Sweeps excess shares from the vault.
         ///
-        /// This function checks for excess shares in the vault, which are shares that exceed the amount
-        /// that was initially deposited. It redeems these excess shares and transfers the redeemed assets
-        /// to the contract owner. The function emits an `ExcessSharesSwept` event after completing the sweep.
+        /// This function checks for excess shares in the vault, which are shares that exceed the
+        /// amount that was initially deposited. It redeems these excess shares and transfers the
+        /// redeemed assets to the contract owner. The function emits an `ExcessSharesSwept` event
+        /// after completing the sweep.
         fn sweep(ref self: ContractState) {
             self.ownable.assert_only_owner();
             let this_address = starknet::get_contract_address();
@@ -149,14 +150,14 @@ pub mod HypERC20CollateralVaultDeposit {
                 .redeem(excess_shares, self.ownable.Ownable_owner.read(), this_address);
             self
                 .emit(
-                    ExcessSharesSwept { amount: excess_shares, assets_redeemed: assets_redeemed }
+                    ExcessSharesSwept { amount: excess_shares, assets_redeemed: assets_redeemed },
                 );
         }
 
         /// Returns the contract address of the vault.
         ///
-        /// This function retrieves the contract address of the vault that is being used for collateral
-        /// deposits and withdrawals.
+        /// This function retrieves the contract address of the vault that is being used for
+        /// collateral deposits and withdrawals.
         ///
         /// # Returns
         ///
@@ -167,8 +168,8 @@ pub mod HypERC20CollateralVaultDeposit {
 
         /// Returns the total amount of assets deposited in the vault.
         ///
-        /// This function returns the total amount of assets that have been deposited into the vault by
-        /// this contract.
+        /// This function returns the total amount of assets that have been deposited into the vault
+        /// by this contract.
         ///
         /// # Returns
         ///
@@ -180,11 +181,11 @@ pub mod HypERC20CollateralVaultDeposit {
 
     impl TokenRouterHooksTraitImpl of TokenRouterHooksTrait<ContractState> {
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256,
         ) -> Bytes {
             let metadata =
                 HypErc20CollateralComponent::TokenRouterHooksImpl::transfer_from_sender_hook(
-                ref self, amount_or_id
+                ref self, amount_or_id,
             );
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             contract_state._deposit_into_vault(amount_or_id);
@@ -195,12 +196,12 @@ pub mod HypERC20CollateralVaultDeposit {
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             contract_state
                 ._withdraw_from_vault(
-                    amount_or_id, recipient.try_into().expect('u256 to ContractAddress failed')
+                    amount_or_id, recipient.try_into().expect('u256 to ContractAddress failed'),
                 );
         }
     }
@@ -209,8 +210,8 @@ pub mod HypERC20CollateralVaultDeposit {
     impl InternalImpl of InternalTrait {
         /// Deposits the specified amount into the vault.
         ///
-        /// This internal function deposits the specified amount of assets into the vault and updates the
-        /// total amount of assets deposited by the contract.
+        /// This internal function deposits the specified amount of assets into the vault and
+        /// updates the total amount of assets deposited by the contract.
         ///
         /// # Arguments
         ///
@@ -223,8 +224,8 @@ pub mod HypERC20CollateralVaultDeposit {
 
         // Returns the total amount of assets deposited in the vault.
         ///
-        /// This function returns the total amount of assets that have been deposited into the vault by
-        /// this contract.
+        /// This function returns the total amount of assets that have been deposited into the vault
+        /// by this contract.
         ///
         /// # Returns
         ///

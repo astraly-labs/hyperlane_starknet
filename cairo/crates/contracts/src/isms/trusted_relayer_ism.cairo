@@ -2,12 +2,13 @@
 pub mod trusted_relayer_ism {
     use alexandria_bytes::Bytes;
     use contracts::interfaces::{
-        ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, IMailboxDispatcher, IMailboxDispatcherTrait,
+        ModuleType,
     };
     use contracts::libs::message::{Message, MessageTrait};
     use starknet::ContractAddress;
-    use starknet::storage::{StoragePointerWriteAccess, StoragePointerReadAccess};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     #[storage]
     struct Storage {
         mailbox: ContractAddress,

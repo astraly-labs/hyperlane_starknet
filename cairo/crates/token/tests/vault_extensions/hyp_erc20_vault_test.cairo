@@ -6,24 +6,24 @@ use mocks::mock_mailbox::{IMockMailboxDispatcher, IMockMailboxDispatcherTrait};
 use mocks::{test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait}};
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{
-    declare, ContractClassTrait, ContractClass, cheat_caller_address, CheatSpan, EventSpy,
-    EventSpyAssertionsTrait, spy_events, DeclareResultTrait, start_cheat_caller_address_global,
-    stop_cheat_caller_address_global,
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, EventSpy,
+    EventSpyAssertionsTrait, cheat_caller_address, declare, spy_events,
+    start_cheat_caller_address_global, stop_cheat_caller_address_global,
 };
 use starknet::ContractAddress;
-use super::super::hyp_erc20::common::{
-    Setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, ALICE, BOB, DANIEL, CAROL, E18,
-    REQUIRED_VALUE, DESTINATION, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait,
-    perform_remote_transfer_and_gas, enroll_remote_router, enroll_local_router,
-    perform_remote_transfer, handle_local_transfer, mint_and_approve, connect_routers,
-};
 use super::super::hyp_erc20::common;
+use super::super::hyp_erc20::common::{
+    ALICE, BOB, CAROL, DANIEL, DECIMALS, DESTINATION, E18, IHypERC20TestDispatcher,
+    IHypERC20TestDispatcherTrait, ORIGIN, REQUIRED_VALUE, Setup, TOTAL_SUPPLY, TRANSFER_AMT,
+    connect_routers, enroll_local_router, enroll_remote_router, handle_local_transfer,
+    mint_and_approve, perform_remote_transfer, perform_remote_transfer_and_gas,
+};
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 use token::extensions::{
+    hyp_erc20_vault::{IHypErc20VaultDispatcher, IHypErc20VaultDispatcherTrait},
     hyp_erc20_vault_collateral::{
         IHypErc20VaultCollateralDispatcher, IHypErc20VaultCollateralDispatcherTrait,
     },
-    hyp_erc20_vault::{IHypErc20VaultDispatcher, IHypErc20VaultDispatcherTrait},
 };
 use token::interfaces::ierc4626::{IERC4626Dispatcher, IERC4626DispatcherTrait};
 

@@ -8,21 +8,21 @@ pub mod ERC4626Component {
     use core::integer::BoundedInt;
     use openzeppelin::introspection::interface::{ISRC5Dispatcher, ISRC5DispatcherTrait};
     use openzeppelin::introspection::src5::{
-        SRC5Component, SRC5Component::SRC5Impl, SRC5Component::InternalTrait as SRC5INternalTrait,
+        SRC5Component, SRC5Component::InternalTrait as SRC5INternalTrait, SRC5Component::SRC5Impl,
     };
     use openzeppelin::token::erc20::ERC20Component::InternalTrait as ERC20InternalTrait;
     use openzeppelin::token::erc20::interface::{
-        IERC20, IERC20Metadata, ERC20ABIDispatcher, ERC20ABIDispatcherTrait,
+        ERC20ABIDispatcher, ERC20ABIDispatcherTrait, IERC20, IERC20Metadata,
     };
     use openzeppelin::token::erc20::{
-        ERC20Component, ERC20HooksEmptyImpl, ERC20Component::Errors as ERC20Errors,
+        ERC20Component, ERC20Component::Errors as ERC20Errors, ERC20HooksEmptyImpl,
     };
-    use starknet::{ContractAddress, get_caller_address, get_contract_address};
-    use token::interfaces::ierc4626::{IERC4626, IERC4626Camel, IERC4626Metadata};
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
         StoragePointerWriteAccess,
     };
+    use starknet::{ContractAddress, get_caller_address, get_contract_address};
+    use token::interfaces::ierc4626::{IERC4626, IERC4626Camel, IERC4626Metadata};
 
     #[storage]
     pub struct Storage {

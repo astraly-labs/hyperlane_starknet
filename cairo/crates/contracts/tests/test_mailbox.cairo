@@ -1,20 +1,20 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::interfaces::{
-    IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcherTrait,
-    ETH_ADDRESS,
+    ETH_ADDRESS, IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait,
+    IMessageRecipientDispatcherTrait,
 };
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
+use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
 use contracts::mailbox::mailbox;
 use contracts::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use openzeppelin::token::erc20::interface::{ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
-use snforge_std::{cheat_caller_address, CheatSpan, EventSpyAssertionsTrait};
+use snforge_std::{CheatSpan, EventSpyAssertionsTrait, cheat_caller_address};
 use super::setup::{
-    setup_mailbox, mock_setup, OWNER, LOCAL_DOMAIN, NEW_OWNER, DEFAULT_ISM, NEW_DEFAULT_ISM,
-    NEW_DEFAULT_HOOK, NEW_REQUIRED_HOOK, DESTINATION_DOMAIN, RECIPIENT_ADDRESS, MAILBOX,
-    DESTINATION_MAILBOX, setup_protocol_fee, setup_mock_hook, PROTOCOL_FEE, INITIAL_SUPPLY,
-    setup_mock_fee_hook,
+    DEFAULT_ISM, DESTINATION_DOMAIN, DESTINATION_MAILBOX, INITIAL_SUPPLY, LOCAL_DOMAIN, MAILBOX,
+    NEW_DEFAULT_HOOK, NEW_DEFAULT_ISM, NEW_OWNER, NEW_REQUIRED_HOOK, OWNER, PROTOCOL_FEE,
+    RECIPIENT_ADDRESS, mock_setup, setup_mailbox, setup_mock_fee_hook, setup_mock_hook,
+    setup_protocol_fee,
 };
 
 

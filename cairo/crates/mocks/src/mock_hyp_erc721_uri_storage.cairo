@@ -17,9 +17,8 @@ pub mod MockHypERC721URIStorage {
     use token::components::erc721_uri_storage::ERC721URIStorageComponent;
     use token::components::hyp_erc721_component::{HypErc721Component};
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-        TokenRouterComponent::MessageRecipientInternalHookImpl,
-        TokenRouterTransferRemoteHookDefaultImpl
+        TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+        TokenRouterComponent::TokenRouterHooksTrait, TokenRouterTransferRemoteHookDefaultImpl,
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -32,7 +31,7 @@ pub mod MockHypERC721URIStorage {
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(
-        path: ERC721URIStorageComponent, storage: erc721_uri_storage, event: ERC721UriStorageEvent
+        path: ERC721URIStorageComponent, storage: erc721_uri_storage, event: ERC721UriStorageEvent,
     );
 
     // Ownable
@@ -163,7 +162,7 @@ pub mod MockHypERC721URIStorage {
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256,
         ) -> Bytes {
             let contract_state = TokenRouterComponent::HasComponent::get_contract(@self);
             let token_owner = contract_state.erc721.owner_of(amount_or_id);
@@ -179,7 +178,7 @@ pub mod MockHypERC721URIStorage {
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let recipient_felt: felt252 = recipient.try_into().expect('u256 to felt failed');
             let recipient: ContractAddress = recipient_felt.try_into().unwrap();
@@ -196,18 +195,17 @@ pub mod MockHypERC721URIStorage {
     fn bytes_to_byte_array(self: Bytes) -> ByteArray {
         let mut res: ByteArray = Default::default();
         let mut offset = 0;
-        while offset < self
-            .size() {
-                if offset + 31 <= self.size() {
-                    let (new_offset, value) = self.read_bytes31(offset);
-                    res.append_word(value.into(), 31);
-                    offset = new_offset;
-                } else {
-                    let (new_offset, value) = self.read_u8(offset);
-                    res.append_byte(value);
-                    offset = new_offset;
-                }
-            };
+        while offset < self.size() {
+            if offset + 31 <= self.size() {
+                let (new_offset, value) = self.read_bytes31(offset);
+                res.append_word(value.into(), 31);
+                offset = new_offset;
+            } else {
+                let (new_offset, value) = self.read_u8(offset);
+                res.append_byte(value);
+                offset = new_offset;
+            }
+        };
         res
     }
 }

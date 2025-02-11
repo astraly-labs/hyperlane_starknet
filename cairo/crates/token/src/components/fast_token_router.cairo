@@ -25,8 +25,8 @@ pub mod FastTokenRouterComponent {
         GasRouterComponent, GasRouterComponent::GasRouterInternalImpl,
     };
     use contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
-        MailboxclientComponent::MailboxClient,
+        MailboxclientComponent, MailboxclientComponent::MailboxClient,
+        MailboxclientComponent::MailboxClientInternalImpl,
     };
     use contracts::client::router_component::{
         RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait,

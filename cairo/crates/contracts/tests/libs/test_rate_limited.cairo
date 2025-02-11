@@ -1,15 +1,15 @@
 use contracts::libs::rate_limited::{
-    RateLimitedComponent, IRateLimitedDispatcher, IRateLimitedDispatcherTrait,
-    IRateLimitedSafeDispatcher, IRateLimitedSafeDispatcherTrait,
+    IRateLimitedDispatcher, IRateLimitedDispatcherTrait, IRateLimitedSafeDispatcher,
+    IRateLimitedSafeDispatcherTrait, RateLimitedComponent,
     RateLimitedComponent::InternalTrait as RateLimitedInternalTrait,
 };
 use core::num::traits::Bounded;
-use core::num::traits::{Zero, One};
+use core::num::traits::{One, Zero};
 use core::ops::RemAssign;
 use snforge_std::{
-    declare, ContractClassTrait, cheat_caller_address, CheatSpan, cheat_block_timestamp, spy_events,
-    EventSpyAssertionsTrait, DeclareResultTrait, start_cheat_block_timestamp_global,
-    stop_cheat_block_timestamp_global,
+    CheatSpan, ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait,
+    cheat_block_timestamp, cheat_caller_address, declare, spy_events,
+    start_cheat_block_timestamp_global, stop_cheat_block_timestamp_global,
 };
 use starknet::ContractAddress;
 

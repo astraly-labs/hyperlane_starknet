@@ -11,14 +11,14 @@ pub trait IHypErc721Collateral<TState> {
 pub mod HypErc721CollateralComponent {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::client::{
-        gas_router_component::GasRouterComponent, router_component::RouterComponent,
-        mailboxclient_component::MailboxclientComponent
+        gas_router_component::GasRouterComponent, mailboxclient_component::MailboxclientComponent,
+        router_component::RouterComponent,
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait};
     use starknet::ContractAddress;
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
     };
 
     #[storage]
@@ -36,8 +36,8 @@ pub mod HypErc721CollateralComponent {
     > of super::IHypErc721Collateral<ComponentState<TContractState>> {
         /// Returns the owner of a given ERC721 token ID.
         ///
-        /// This function queries the wrapped ERC721 token contract to retrieve the address of the owner
-        /// of the specified `token_id`.
+        /// This function queries the wrapped ERC721 token contract to retrieve the address of the
+        /// owner of the specified `token_id`.
         ///
         /// # Arguments
         ///
@@ -52,12 +52,13 @@ pub mod HypErc721CollateralComponent {
 
         /// Returns the balance of ERC721 tokens held by a given account.
         ///
-        /// This function retrieves the number of ERC721 tokens held by the specified account by querying
-        /// the wrapped ERC721 token contract.
+        /// This function retrieves the number of ERC721 tokens held by the specified account by
+        /// querying the wrapped ERC721 token contract.
         ///
         /// # Arguments
         ///
-        /// * `account` - A `ContractAddress` representing the account whose balance is being queried.
+        /// * `account` - A `ContractAddress` representing the account whose balance is being
+        /// queried.
         ///
         /// # Returns
         ///
@@ -68,8 +69,8 @@ pub mod HypErc721CollateralComponent {
 
         /// Returns the contract address of the wrapped ERC721 token.
         ///
-        /// This function retrieves the contract address of the wrapped ERC721 token from the component's
-        /// storage.
+        /// This function retrieves the contract address of the wrapped ERC721 token from the
+        /// component's storage.
         ///
         /// # Returns
         ///
@@ -91,7 +92,7 @@ pub mod HypErc721CollateralComponent {
         +TokenRouterComponent::HasComponent<TContractState>,
     > of TokenRouterHooksTrait<TContractState> {
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256,
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let mut component_state = HasComponent::get_component_mut(ref contract_state);
@@ -100,7 +101,7 @@ pub mod HypErc721CollateralComponent {
                 .wrapped_token
                 .read()
                 .transfer_from(
-                    starknet::get_caller_address(), starknet::get_contract_address(), amount_or_id
+                    starknet::get_caller_address(), starknet::get_contract_address(), amount_or_id,
                 );
 
             BytesTrait::new_empty()
@@ -110,7 +111,7 @@ pub mod HypErc721CollateralComponent {
             ref self: TokenRouterComponent::ComponentState<TContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let mut component_state = HasComponent::get_component_mut(ref contract_state);
@@ -138,7 +139,7 @@ pub mod HypErc721CollateralComponent {
                     starknet::get_contract_address(),
                     recipient,
                     amount_or_id,
-                    metadata_array_felt252.span()
+                    metadata_array_felt252.span(),
                 );
         }
     }

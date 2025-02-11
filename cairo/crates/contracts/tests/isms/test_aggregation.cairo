@@ -1,21 +1,21 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::interfaces::{
-    ModuleType, IAggregationDispatcher, IAggregationDispatcherTrait,
-    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-    IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait,
+    IAggregationDispatcher, IAggregationDispatcherTrait, IInterchainSecurityModuleDispatcher,
+    IInterchainSecurityModuleDispatcherTrait, IValidatorConfigurationDispatcher,
+    IValidatorConfigurationDispatcherTrait, ModuleType,
 };
 use contracts::isms::aggregation::aggregation;
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
+use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
 use contracts::utils::utils::U256TryIntoContractAddress;
 
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{cheat_caller_address, CheatSpan};
+use snforge_std::{CheatSpan, cheat_caller_address};
 use starknet::ContractAddress;
 use super::super::setup::{
-    setup_aggregation, OWNER, setup_messageid_multisig_ism, get_message_and_signature, LOCAL_DOMAIN,
-    DESTINATION_DOMAIN, build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT, setup_noop_ism,
-    MODULES, CONTRACT_MODULES,
+    CONTRACT_MODULES, DESTINATION_DOMAIN, LOCAL_DOMAIN, MODULES, OWNER, VALID_OWNER,
+    VALID_RECIPIENT, build_messageid_metadata, get_message_and_signature, setup_aggregation,
+    setup_messageid_multisig_ism, setup_noop_ism,
 };
 
 #[test]

@@ -2,16 +2,16 @@ use core::integer::BoundedInt;
 use mocks::test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait};
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
 use snforge_std::{
-    declare, ContractClassTrait, ContractClass, cheat_caller_address, CheatSpan, EventSpy,
-    EventSpyAssertionsTrait, spy_events, DeclareResultTrait,
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, EventSpy,
+    EventSpyAssertionsTrait, cheat_caller_address, declare, spy_events,
 };
 use starknet::ContractAddress;
 use super::common::{
-    setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, DESTINATION, OWNER,
-    perform_remote_transfer_with_emit, perform_remote_transfer_and_gas, ALICE, BOB, E18,
-    IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, enroll_remote_router,
-    enroll_local_router, perform_remote_transfer, set_custom_gas_config, REQUIRED_VALUE, GAS_LIMIT,
-    Setup, handle_local_transfer,
+    ALICE, BOB, DECIMALS, DESTINATION, E18, GAS_LIMIT, IHypERC20TestDispatcher,
+    IHypERC20TestDispatcherTrait, ORIGIN, OWNER, REQUIRED_VALUE, Setup, TOTAL_SUPPLY, TRANSFER_AMT,
+    enroll_local_router, enroll_remote_router, handle_local_transfer, perform_remote_transfer,
+    perform_remote_transfer_and_gas, perform_remote_transfer_with_emit, set_custom_gas_config,
+    setup,
 };
 
 fn fiat_token_setup() -> Setup {

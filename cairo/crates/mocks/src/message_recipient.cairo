@@ -1,11 +1,10 @@
 #[starknet::contract]
 pub mod message_recipient {
-    use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+    use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
     use contracts::interfaces::{
         IMessageRecipient, IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait,
-        ModuleType, ISpecifiesInterchainSecurityModule,
-        ISpecifiesInterchainSecurityModuleDispatcher,
-        ISpecifiesInterchainSecurityModuleDispatcherTrait,
+        ISpecifiesInterchainSecurityModule, ISpecifiesInterchainSecurityModuleDispatcher,
+        ISpecifiesInterchainSecurityModuleDispatcherTrait, ModuleType,
     };
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};

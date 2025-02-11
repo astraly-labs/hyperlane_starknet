@@ -12,15 +12,14 @@ pub mod HypERC721URICollateral {
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait,};
+    use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait};
     use starknet::ContractAddress;
     use token::components::hyp_erc721_collateral_component::{
-        HypErc721CollateralComponent, IHypErc721Collateral
+        HypErc721CollateralComponent, IHypErc721Collateral,
     };
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-        TokenRouterComponent::MessageRecipientInternalHookImpl,
-        TokenRouterTransferRemoteHookDefaultImpl
+        TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+        TokenRouterComponent::TokenRouterHooksTrait, TokenRouterTransferRemoteHookDefaultImpl,
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -31,7 +30,7 @@ pub mod HypERC721URICollateral {
     component!(
         path: HypErc721CollateralComponent,
         storage: hyp_erc721_collateral,
-        event: HypErc721CollateralEvent
+        event: HypErc721CollateralEvent,
     );
 
     // HypERC721
@@ -76,7 +75,7 @@ pub mod HypERC721URICollateral {
         #[substorage(v0)]
         gas_router: GasRouterComponent::Storage,
         #[substorage(v0)]
-        hyp_erc721_collateral: HypErc721CollateralComponent::Storage
+        hyp_erc721_collateral: HypErc721CollateralComponent::Storage,
     }
 
     #[event]
@@ -93,7 +92,7 @@ pub mod HypERC721URICollateral {
         #[flat]
         GasRouterEvent: GasRouterComponent::Event,
         #[flat]
-        HypErc721CollateralEvent: HypErc721CollateralComponent::Event
+        HypErc721CollateralEvent: HypErc721CollateralComponent::Event,
     }
 
     #[constructor]
@@ -102,7 +101,7 @@ pub mod HypERC721URICollateral {
         erc721: ContractAddress,
         mailbox: ContractAddress,
         hook: ContractAddress,
-        owner: ContractAddress
+        owner: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self.mailboxclient.initialize(mailbox, Option::Some(hook), Option::None);
@@ -116,9 +115,10 @@ pub mod HypERC721URICollateral {
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
         /// Transfers the token from the sender and retrieves its metadata.
         ///
-        /// This hook handles the transfer of a token from the sender and appends its URI to the metadata.
-        /// It retrieves the token URI from the ERC721 contract and appends it to the metadata for processing
-        /// as part of the transfer message.
+        /// This hook handles the transfer of a token from the sender and appends its URI to the
+        /// metadata.
+        /// It retrieves the token URI from the ERC721 contract and appends it to the metadata for
+        /// processing as part of the transfer message.
         ///
         /// # Arguments
         ///
@@ -128,7 +128,7 @@ pub mod HypERC721URICollateral {
         ///
         /// A `Bytes` object containing the token's URI as metadata.
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256,
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             contract_state
@@ -136,7 +136,7 @@ pub mod HypERC721URICollateral {
                 .wrapped_token
                 .read()
                 .transfer_from(
-                    starknet::get_caller_address(), starknet::get_contract_address(), amount_or_id
+                    starknet::get_caller_address(), starknet::get_contract_address(), amount_or_id,
                 );
 
             let uri = contract_state
@@ -161,10 +161,10 @@ pub mod HypERC721URICollateral {
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             HypErc721CollateralComponent::TokenRouterHooksImpl::transfer_to_hook(
-                ref self, recipient, amount_or_id, metadata
+                ref self, recipient, amount_or_id, metadata,
             );
         }
     }

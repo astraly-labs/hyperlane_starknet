@@ -1,16 +1,16 @@
 use core::integer::BoundedInt;
-use mocks::xerc20_test::{XERC20Test, IXERC20TestDispatcher, IXERC20TestDispatcherTrait};
+use mocks::xerc20_test::{IXERC20TestDispatcher, IXERC20TestDispatcherTrait, XERC20Test};
 use mocks::{test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait}};
 use snforge_std::{
-    declare, ContractClassTrait, ContractClass, cheat_caller_address, CheatSpan, EventSpy,
-    EventSpyAssertionsTrait, spy_events, DeclareResultTrait,
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, EventSpy,
+    EventSpyAssertionsTrait, cheat_caller_address, declare, spy_events,
 };
 use starknet::ContractAddress;
 use super::common::{
-    Setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, ALICE, BOB, E18, REQUIRED_VALUE,
-    DESTINATION, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, setup,
-    perform_remote_transfer_and_gas, enroll_remote_router, enroll_local_router,
-    perform_remote_transfer, handle_local_transfer,
+    ALICE, BOB, DECIMALS, DESTINATION, E18, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait,
+    ORIGIN, REQUIRED_VALUE, Setup, TOTAL_SUPPLY, TRANSFER_AMT, enroll_local_router,
+    enroll_remote_router, handle_local_transfer, perform_remote_transfer,
+    perform_remote_transfer_and_gas, setup,
 };
 
 fn setup_xerc20() -> Setup {

@@ -33,13 +33,12 @@ pub trait IGasRouter<TState> {
 ///   interactions.
 #[starknet::component]
 pub mod GasRouterComponent {
-    use starknet::storage::{StorageMapWriteAccess, StorageMapReadAccess};
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::client::mailboxclient_component::{
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
     };
     use contracts::client::router_component::{
-        RouterComponent, RouterComponent::RouterComponentInternalImpl, IRouter,
+        IRouter, RouterComponent, RouterComponent::RouterComponentInternalImpl,
     };
     use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::StandardHookMetadata;
     use contracts::interfaces::{IMailboxClient};
@@ -48,6 +47,7 @@ pub mod GasRouterComponent {
     };
     use starknet::ContractAddress;
     use starknet::storage::{Map};
+    use starknet::storage::{StorageMapReadAccess, StorageMapWriteAccess};
 
 
     #[derive(Copy, Drop, Serde)]

@@ -1,20 +1,20 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::interfaces::{
-    ModuleType, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-    IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, IDomainRoutingIsmDispatcher,
-    IDomainRoutingIsmDispatcherTrait, IValidatorConfigurationDispatcher,
-    IValidatorConfigurationDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait,
-    IMailboxDispatcher, IMailboxDispatcherTrait,
+    IDomainRoutingIsmDispatcher, IDomainRoutingIsmDispatcherTrait,
+    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
+    IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IMailboxDispatcher,
+    IMailboxDispatcherTrait, IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait,
+    IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait, ModuleType,
 };
-use contracts::libs::message::{Message, HYPERLANE_VERSION};
+use contracts::libs::message::{HYPERLANE_VERSION, Message};
 use contracts::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{cheat_caller_address, CheatSpan, ContractClassTrait, declare, DeclareResultTrait};
+use snforge_std::{CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare};
 use starknet::{ContractAddress, contract_address_const};
 use super::super::setup::{
-    OWNER, setup_default_fallback_routing_ism, build_messageid_metadata, LOCAL_DOMAIN, VALID_OWNER,
-    VALID_RECIPIENT, DESTINATION_DOMAIN, setup_messageid_multisig_ism, get_message_and_signature,
-    setup_mailbox, MAILBOX,
+    DESTINATION_DOMAIN, LOCAL_DOMAIN, MAILBOX, OWNER, VALID_OWNER, VALID_RECIPIENT,
+    build_messageid_metadata, get_message_and_signature, setup_default_fallback_routing_ism,
+    setup_mailbox, setup_messageid_multisig_ism,
 };
 
 #[test]

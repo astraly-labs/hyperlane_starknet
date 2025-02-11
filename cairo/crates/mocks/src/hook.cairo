@@ -1,8 +1,8 @@
 #[starknet::contract]
 pub mod hook {
-    use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+    use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
     use contracts::interfaces::{
-        IPostDispatchHook, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait, Types
+        IPostDispatchHook, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait, Types,
     };
     use contracts::libs::message::Message;
 
@@ -20,7 +20,7 @@ pub mod hook {
         }
 
         fn post_dispatch(
-            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
+            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256,
         ) {}
 
         fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {

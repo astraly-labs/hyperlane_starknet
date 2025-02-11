@@ -1,16 +1,16 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::interfaces::{
-    Types, IProtocolFeeDispatcher, IProtocolFeeDispatcherTrait, IPostDispatchHookDispatcher,
-    IPostDispatchHookDispatcherTrait, ETH_ADDRESS,
+    ETH_ADDRESS, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
+    IProtocolFeeDispatcher, IProtocolFeeDispatcherTrait, Types,
 };
 use contracts::libs::message::{Message, MessageTrait};
 use contracts::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
-use snforge_std::{cheat_caller_address, CheatSpan};
+use snforge_std::{CheatSpan, cheat_caller_address};
 use super::super::setup::{
-    setup_protocol_fee, OWNER, MAX_PROTOCOL_FEE, BENEFICIARY, PROTOCOL_FEE, INITIAL_SUPPLY,
-    setup_mock_token,
+    BENEFICIARY, INITIAL_SUPPLY, MAX_PROTOCOL_FEE, OWNER, PROTOCOL_FEE, setup_mock_token,
+    setup_protocol_fee,
 };
 
 

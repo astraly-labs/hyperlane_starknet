@@ -1,9 +1,9 @@
 #[starknet::contract]
 pub mod ism {
-    use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+    use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
     use contracts::interfaces::{
         IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait, ModuleType
+        IInterchainSecurityModuleDispatcherTrait, ModuleType,
     };
     use contracts::libs::message::{Message, MessageTrait};
     use starknet::ContractAddress;
@@ -17,7 +17,7 @@ pub mod ism {
             ModuleType::MESSAGE_ID_MULTISIG(starknet::get_contract_address())
         }
 
-        fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
+        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
             true
         }
     }

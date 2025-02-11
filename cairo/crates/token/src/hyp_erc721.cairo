@@ -22,9 +22,8 @@ pub mod HypErc721 {
     use token::components::erc721_enumerable::ERC721EnumerableComponent;
     use token::components::hyp_erc721_component::HypErc721Component;
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-        TokenRouterComponent::MessageRecipientInternalHookImpl,
-        TokenRouterTransferRemoteHookDefaultImpl
+        TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+        TokenRouterComponent::TokenRouterHooksTrait, TokenRouterTransferRemoteHookDefaultImpl,
     };
     use token::interfaces::imessage_recipient::IMessageRecipient;
 
@@ -38,7 +37,7 @@ pub mod HypErc721 {
     component!(path: RouterComponent, storage: router, event: RouterEvent);
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(
-        path: ERC721EnumerableComponent, storage: erc721_enumerable, event: ERC721EnumerableEvent
+        path: ERC721EnumerableComponent, storage: erc721_enumerable, event: ERC721EnumerableEvent,
     );
     // ERC721 Mixin
     #[abi(embed_v0)]
@@ -104,7 +103,7 @@ pub mod HypErc721 {
         #[substorage(v0)]
         gas_router: GasRouterComponent::Storage,
         #[substorage(v0)]
-        erc721_enumerable: ERC721EnumerableComponent::Storage
+        erc721_enumerable: ERC721EnumerableComponent::Storage,
     }
 
     #[event]
@@ -129,7 +128,7 @@ pub mod HypErc721 {
         #[flat]
         GasRouterEvent: GasRouterComponent::Event,
         #[flat]
-        ERC721EnumerableEvent: ERC721EnumerableComponent::Event
+        ERC721EnumerableEvent: ERC721EnumerableComponent::Event,
     }
 
     #[constructor]
@@ -141,7 +140,7 @@ pub mod HypErc721 {
         mint_amount: u256,
         hook: ContractAddress,
         interchain_security_module: ContractAddress,
-        owner: ContractAddress
+        owner: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self
@@ -166,7 +165,7 @@ pub mod HypErc721 {
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256,
         ) -> Bytes {
             let contract_state = TokenRouterComponent::HasComponent::get_contract(@self);
             let token_owner = contract_state.erc721.owner_of(amount_or_id);
@@ -182,7 +181,7 @@ pub mod HypErc721 {
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let recipient_felt: felt252 = recipient.try_into().expect('u256 to felt failed');
             let recipient: ContractAddress = recipient_felt.try_into().unwrap();

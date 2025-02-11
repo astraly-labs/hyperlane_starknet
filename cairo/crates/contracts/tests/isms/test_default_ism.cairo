@@ -1,16 +1,16 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::interfaces::{
-    ModuleType, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
+    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IMailboxDispatcher, IMailboxDispatcherTrait, IPausableIsmDispatcher,
-    IPausableIsmDispatcherTrait,
+    IPausableIsmDispatcherTrait, ModuleType,
 };
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
+use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
 use contracts::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{cheat_caller_address, CheatSpan};
+use snforge_std::{CheatSpan, cheat_caller_address};
 use super::super::setup::{
-    setup_trusted_relayer_ism, setup_noop_ism, setup_pausable_ism, mock_setup, DESTINATION_DOMAIN,
-    OWNER, LOCAL_DOMAIN, DESTINATION_MAILBOX,
+    DESTINATION_DOMAIN, DESTINATION_MAILBOX, LOCAL_DOMAIN, OWNER, mock_setup, setup_noop_ism,
+    setup_pausable_ism, setup_trusted_relayer_ism,
 };
 
 

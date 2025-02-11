@@ -7,19 +7,19 @@ pub mod mock_validator_announce {
     };
     use contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
     use contracts::utils::keccak256::{
-        reverse_endianness, to_eth_signature, compute_keccak, ByteData, u256_word_size,
-        u64_word_size, HASH_SIZE, bool_is_eth_signature_valid,
+        ByteData, HASH_SIZE, bool_is_eth_signature_valid, compute_keccak, reverse_endianness,
+        to_eth_signature, u256_word_size, u64_word_size,
     };
     use contracts::utils::store_arrays::StoreFelt252Array;
     use core::poseidon::poseidon_hash_span;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use starknet::{
-        ContractAddress, ClassHash, EthAddress, secp256_trait::{Signature, signature_from_vrs},
-    };
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
         StoragePointerWriteAccess,
+    };
+    use starknet::{
+        ClassHash, ContractAddress, EthAddress, secp256_trait::{Signature, signature_from_vrs},
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);

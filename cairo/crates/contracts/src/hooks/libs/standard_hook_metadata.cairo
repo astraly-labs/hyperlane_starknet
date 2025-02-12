@@ -1,6 +1,5 @@
 pub mod standard_hook_metadata {
     use alexandria_bytes::{Bytes, BytesTrait};
-
     use starknet::ContractAddress;
     struct Metadata {
         variant: u16,
@@ -23,8 +22,7 @@ pub mod standard_hook_metadata {
     const GAS_LIMIT_OFFSET: u8 = 34;
     const REFUND_ADDRESS_OFFSET: u8 = 66;
     const MIN_METADATA_LENGTH: u256 = 98;
-    const U128_NUMBER_OF_BYTES: usize = 16;
-    pub const VARIANT: u8 = 1;
+    pub const VARIANT: u16 = 1;
 
     #[generate_trait]
     pub impl StandardHookMetadataImpl of StandardHookMetadata {
@@ -126,23 +124,13 @@ pub mod standard_hook_metadata {
             refund_address: ContractAddress,
             custom_metadata: Bytes
         ) -> Bytes {
-            // NOTE: sence ContractAddress might not fit into u128, we need to convert it to u256
-            // and then split it into low and high parts
-            let refund_address_felt: felt252 = refund_address.into();
-            let refund_address_u256: u256 = refund_address_felt.into();
-            let mut data: Array<u128> = array![
-                VARIANT.into(),
-                msg_value.low,
-                msg_value.high,
-                gas_limit.low,
-                gas_limit.high,
-                refund_address_u256.low,
-                refund_address_u256.high
-            ];
-
-            let mut formatted_metadata = BytesTrait::new(data.len() * U128_NUMBER_OF_BYTES, data);
-            formatted_metadata.concat(@custom_metadata);
-            formatted_metadata
+            let mut data = BytesTrait::new_empty();
+            data.append_u16(VARIANT);
+            data.append_u256(msg_value);
+            data.append_u256(gas_limit);
+            data.append_address(refund_address);
+            data.concat(@custom_metadata);
+            data
         }
 
         fn override_gas_limits(gas_limit: u256) -> Bytes {

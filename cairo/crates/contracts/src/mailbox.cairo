@@ -143,7 +143,7 @@ pub mod mailbox {
     ) {
         assert(_default_ism != contract_address_const::<0>(), Errors::ISM_CANNOT_BE_NULL);
         assert(_default_hook != contract_address_const::<0>(), Errors::HOOK_CANNOT_BE_NULL);
-        assert(_default_hook != contract_address_const::<0>(), Errors::HOOK_CANNOT_BE_NULL);
+        assert(_required_hook != contract_address_const::<0>(), Errors::HOOK_CANNOT_BE_NULL);
         assert(owner != contract_address_const::<0>(), Errors::OWNER_CANNOT_BE_NULL);
         self.local_domain.write(_local_domain);
         self.default_ism.write(_default_ism);

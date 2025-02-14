@@ -251,7 +251,13 @@ pub mod mailbox {
             _custom_hook: Option<ContractAddress>
         ) -> u256 {
             let hook = match _custom_hook {
-                Option::Some(hook) => hook,
+                Option::Some(hook) => {
+                    if hook != contract_address_const::<0>() {
+                        hook
+                    } else {
+                        self.default_hook.read()
+                    }
+                },
                 Option::None(()) => self.default_hook.read(),
             };
             let hook_metadata = match _custom_hook_metadata {

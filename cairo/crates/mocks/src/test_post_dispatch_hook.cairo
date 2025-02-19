@@ -13,7 +13,10 @@ pub trait ITestPostDispatchHook<TContractState> {
 
 #[starknet::contract]
 pub mod TestPostDispatchHook {
-    use alexandria_bytes::Bytes;
+    use alexandria_bytes::{Bytes, BytesTrait};
+    use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::{
+        StandardHookMetadata, VARIANT,
+    };
     use contracts::libs::message::{Message, MessageTrait};
     use core::keccak::keccak_u256s_le_inputs;
 
@@ -23,6 +26,10 @@ pub mod TestPostDispatchHook {
         message_dispatched: LegacyMap<u256, bool>,
     }
 
+    pub mod Errors {
+        pub const INVALID_METADATA_VARIANT: felt252 = 'Invalid metadata variant';
+    }
+
     #[abi(embed_v0)]
     impl TestPostDispatchHookImpl of super::ITestPostDispatchHook<ContractState> {
         fn hook_type(self: @ContractState) -> u8 {
@@ -30,7 +37,7 @@ pub mod TestPostDispatchHook {
         }
 
         fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
-            true
+            _metadata.size() == 0 || StandardHookMetadata::variant(_metadata) == VARIANT.into()
         }
 
         fn set_fee(ref self: ContractState, fee: u256) {
@@ -42,20 +49,13 @@ pub mod TestPostDispatchHook {
         }
 
         fn post_dispatch(ref self: ContractState, metadata: Bytes, message: Message) {
-            let hash = keccak_u256s_le_inputs(
-                array![
-                    message.nonce.into(),
-                    message.origin.into(),
-                    message.sender,
-                    message.destination.into(),
-                    message.recipient
-                ]
-                    .span()
-            );
+            assert(self.supports_metadata(metadata.clone()), Errors::INVALID_METADATA_VARIANT);
+            let (hash, _) = MessageTrait::format_message(message);
             self.message_dispatched.write(hash, true);
         }
 
         fn quote_dispatch(ref self: ContractState, metadata: Bytes, message: Message) -> u256 {
+            assert(self.supports_metadata(metadata.clone()), Errors::INVALID_METADATA_VARIANT);
             self.fee.read()
         }
     }

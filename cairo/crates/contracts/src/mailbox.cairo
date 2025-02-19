@@ -143,7 +143,7 @@ pub mod mailbox {
     ) {
         assert(_default_ism != contract_address_const::<0>(), Errors::ISM_CANNOT_BE_NULL);
         assert(_default_hook != contract_address_const::<0>(), Errors::HOOK_CANNOT_BE_NULL);
-        assert(_default_hook != contract_address_const::<0>(), Errors::HOOK_CANNOT_BE_NULL);
+        assert(_required_hook != contract_address_const::<0>(), Errors::HOOK_CANNOT_BE_NULL);
         assert(owner != contract_address_const::<0>(), Errors::OWNER_CANNOT_BE_NULL);
         self.local_domain.write(_local_domain);
         self.default_ism.write(_default_ism);
@@ -195,6 +195,7 @@ pub mod mailbox {
         /// * `_hook` - The new default ISM
         fn set_default_ism(ref self: ContractState, _module: ContractAddress) {
             self.ownable.assert_only_owner();
+            assert(_module != contract_address_const::<0>(), Errors::ISM_CANNOT_BE_NULL);
             self.default_ism.write(_module);
             self.emit(DefaultIsmSet { module: _module });
         }
@@ -207,6 +208,7 @@ pub mod mailbox {
         /// * `_hook` - The new default post dispatch hook. 
         fn set_default_hook(ref self: ContractState, _hook: ContractAddress) {
             self.ownable.assert_only_owner();
+            assert(_hook != contract_address_const::<0>(), Errors::HOOK_CANNOT_BE_NULL);
             self.default_hook.write(_hook);
             self.emit(DefaultHookSet { hook: _hook });
         }
@@ -219,6 +221,7 @@ pub mod mailbox {
         /// * `_hook` - The new required post dispatch hook. 
         fn set_required_hook(ref self: ContractState, _hook: ContractAddress) {
             self.ownable.assert_only_owner();
+            assert(_hook != contract_address_const::<0>(), Errors::HOOK_CANNOT_BE_NULL);
             self.required_hook.write(_hook);
             self.emit(RequiredHookSet { hook: _hook });
         }
@@ -248,7 +251,13 @@ pub mod mailbox {
             _custom_hook: Option<ContractAddress>
         ) -> u256 {
             let hook = match _custom_hook {
-                Option::Some(hook) => hook,
+                Option::Some(hook) => {
+                    if hook != contract_address_const::<0>() {
+                        hook
+                    } else {
+                        self.default_hook.read()
+                    }
+                },
                 Option::None(()) => self.default_hook.read(),
             };
             let hook_metadata = match _custom_hook_metadata {

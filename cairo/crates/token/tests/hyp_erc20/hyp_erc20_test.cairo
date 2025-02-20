@@ -1,4 +1,5 @@
 use alexandria_bytes::{Bytes, BytesTrait};
+use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
@@ -101,6 +102,7 @@ fn test_erc20_remote_transfer_with_custom_gas_config() {
 fn test_erc20_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
     let fee = fee % (TRANSFER_AMT / 10);
     let mut metadata_bytes = BytesTrait::new_empty();
+    metadata_bytes.append_u16(VARIANT);
     metadata_bytes.append_u256(metadata);
     let setup = setup();
     let erc20_token = setup.local_token;

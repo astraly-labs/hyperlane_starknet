@@ -1,5 +1,6 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
+use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use core::integer::BoundedInt;
 use mocks::test_erc721::{ITestERC721Dispatcher, ITestERC721DispatcherTrait};
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
@@ -59,6 +60,7 @@ fn test_erc721_collateral_remote_transfer() {
 fn test_erc721__collateral_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
     let fee = fee % FEE_CAP;
     let mut metadata_bytes = BytesTrait::new_empty();
+    metadata_bytes.append_u16(VARIANT);
     metadata_bytes.append_u256(metadata);
 
     let mut setup = setup_erc721_collateral();

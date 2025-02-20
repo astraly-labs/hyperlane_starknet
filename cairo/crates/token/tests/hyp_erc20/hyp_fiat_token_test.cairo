@@ -1,4 +1,5 @@
 use alexandria_bytes::{Bytes, BytesTrait};
+use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use core::integer::BoundedInt;
 use mocks::test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait};
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
@@ -91,6 +92,7 @@ fn test_fiat_token_remote_transfer_with_custom_gas_config() {
 fn test_fiat_token_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
     let fee = fee % (TRANSFER_AMT / 10);
     let mut metadata_bytes = BytesTrait::new_empty();
+    metadata_bytes.append_u16(VARIANT);
     metadata_bytes.append_u256(metadata);
     let setup = fiat_token_setup();
 

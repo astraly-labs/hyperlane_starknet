@@ -2,6 +2,7 @@ use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::client::gas_router_component::{
     GasRouterComponent::GasRouterConfig, IGasRouterDispatcher, IGasRouterDispatcherTrait
 };
+use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use contracts::utils::utils::U256TryIntoContractAddress;
 use core::integer::BoundedInt;
 use mocks::{
@@ -219,6 +220,7 @@ fn test_remote_transfer_with_custom_gas_config() {
 fn test_erc20_remote_transfer_collateral_with_hook_specified(mut fee: u256, metadata: u256) {
     let fee = fee % (TRANSFER_AMT / 10);
     let mut metadata_bytes = BytesTrait::new_empty();
+    metadata_bytes.append_u16(VARIANT);
     metadata_bytes.append_u256(metadata);
     let (collateral, setup) = setup_hyp_erc20_collateral();
 

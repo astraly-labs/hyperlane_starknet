@@ -1,4 +1,5 @@
 use alexandria_bytes::{Bytes, BytesTrait};
+use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use core::integer::BoundedInt;
 use mocks::xerc20_test::{XERC20Test, IXERC20TestDispatcher, IXERC20TestDispatcherTrait};
 use mocks::{
@@ -120,6 +121,7 @@ fn test_erc20_remote_transfer_with_custom_gas_config() {
 fn test_erc20_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
     let fee = fee % (TRANSFER_AMT / 10);
     let mut metadata_bytes = BytesTrait::new_empty();
+    metadata_bytes.append_u16(VARIANT);
     metadata_bytes.append_u256(metadata);
     let mut setup = setup_xerc20();
     let xerc20 = setup.local_token;

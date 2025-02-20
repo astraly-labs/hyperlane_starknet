@@ -1,5 +1,6 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::client::gas_router_component::GasRouterComponent::GasRouterConfig;
+use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use core::integer::BoundedInt;
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
 use mocks::{
@@ -219,6 +220,7 @@ pub fn perform_remote_transfer_erc20_lockbox_and_gas_with_hook(
 fn test_erc20_lockbox_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
     let fee = fee % (TRANSFER_AMT / 10);
     let mut metadata_bytes = BytesTrait::new_empty();
+    metadata_bytes.append_u16(VARIANT);
     metadata_bytes.append_u256(metadata);
     let (setup, xerc20lockbox) = setup_lockbox();
 

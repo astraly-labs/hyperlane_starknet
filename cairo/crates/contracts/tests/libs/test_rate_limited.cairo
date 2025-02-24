@@ -110,7 +110,7 @@ fn test_ctor_should_panic_when_low_capacity() {
     let rate_limited_contract = declare("MockRateLimited").unwrap();
     let owner = starknet::contract_address_const::<'OWNER'>();
     let mut ctor_calldata: Array<felt252> = array![];
-    (RateLimitedComponent::DURATION - 1).serialize(ref ctor_calldata);
+    (RateLimitedComponent::DURATION.into() - 1_u256).serialize(ref ctor_calldata);
     owner.serialize(ref ctor_calldata);
     rate_limited_contract.deploy(@ctor_calldata).unwrap();
 }

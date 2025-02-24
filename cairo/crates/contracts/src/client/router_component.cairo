@@ -263,7 +263,7 @@ pub mod RouterComponent {
                 fee_token_dispatcher.approve(mailbox_dispatcher.contract_address, value);
             }
 
-            let value = mailbox_dispatcher
+            mailbox_dispatcher
                 .dispatch(
                     destination_domain,
                     router,
@@ -271,8 +271,7 @@ pub mod RouterComponent {
                     value,
                     Option::Some(hook_metadata),
                     Option::Some(hook),
-                );
-            value
+                )
         }
 
         fn _Router_quote_dispatch(

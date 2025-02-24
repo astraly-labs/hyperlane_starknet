@@ -603,11 +603,11 @@ pub mod MockMailbox {
             );
 
             if (required_fee > 0) {
-                token_dispatcher.transferFrom(caller_address, required_hook_address, required_fee);
+                token_dispatcher.transfer_from(caller_address, required_hook_address, required_fee);
             }
             required_hook.post_dispatch(hook_metadata.clone(), message.clone());
             if (default_fee > 0) {
-                token_dispatcher.transferFrom(caller_address, hook, default_fee);
+                token_dispatcher.transfer_from(caller_address, hook, default_fee);
             }
             hook_dispatcher.post_dispatch(hook_metadata, message.clone());
             id

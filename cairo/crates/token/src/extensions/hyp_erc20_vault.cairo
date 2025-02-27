@@ -404,7 +404,7 @@ mod HypErc20Vault {
             recipient: ContractAddress,
             amount: u256
         ) -> bool {
-            self.erc20.transferFrom(sender, recipient, amount)
+            self.erc20.transfer_from(sender, recipient, amount)
         }
     }
 }

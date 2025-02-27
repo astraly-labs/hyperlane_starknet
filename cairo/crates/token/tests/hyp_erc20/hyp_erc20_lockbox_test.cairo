@@ -1,13 +1,18 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::client::gas_router_component::GasRouterComponent::GasRouterConfig;
+use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use core::integer::BoundedInt;
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
 use mocks::{
     test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},
     xerc20_lockbox_test::{IXERC20LockboxTestDispatcher, IXERC20LockboxTestDispatcherTrait},
-    xerc20_test::{IXERC20TestDispatcher, IXERC20TestDispatcherTrait}
+    xerc20_test::{IXERC20TestDispatcher, IXERC20TestDispatcherTrait},
+    test_post_dispatch_hook::{
+        ITestPostDispatchHookDispatcher, ITestPostDispatchHookDispatcherTrait
+    },
 };
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
+use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
     declare, ContractClassTrait, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn,
     start_prank, stop_prank, EventFetcher, event_name_hash
@@ -18,7 +23,6 @@ use super::common::{
     BOB, E18, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, enroll_local_router,
     set_custom_gas_config, REQUIRED_VALUE, GAS_LIMIT, DESTINATION, Setup, ZERO_SUPPLY
 };
-
 
 const MAX_INT: u256 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
@@ -106,11 +110,12 @@ fn setup_lockbox() -> (Setup, IHypERC20LockboxTestDispatcher) {
         .approve(xerc20.contract_address, BoundedInt::max());
     ERC20ABIDispatcher { contract_address: setup.eth_token.contract_address }
         .approve(lockbox.contract_address, BoundedInt::max());
+    ERC20ABIDispatcher { contract_address: setup.eth_token.contract_address }
+        .approve(xerc20lockbox.contract_address, BoundedInt::max());
     stop_prank(CheatTarget::One(setup.eth_token.contract_address));
 
     let remote_token_address: felt252 = setup.remote_token.contract_address.into();
     xerc20lockbox.enroll_remote_router(DESTINATION, remote_token_address.into());
-
     setup.primary_token = setup.erc20_token;
     setup.primary_token.transfer(ALICE(), 1000 * E18);
     enroll_remote_router(@setup, xerc20lockbox);
@@ -140,6 +145,104 @@ fn test_erc20_lockbox_transfer() {
     perform_remote_transfer_and_gas(@setup, xerc20lockbox, REQUIRED_VALUE, TRANSFER_AMT, 0);
 
     assert_eq!(xerc20lockbox.balance_of(ALICE()), balance_before - TRANSFER_AMT);
+}
+
+#[test]
+fn test_remote_transfer_with_custom_gas_config() {
+    let (setup, xerc20lockbox) = setup_lockbox();
+
+    start_prank(CheatTarget::One(setup.primary_token.contract_address), ALICE());
+    setup.primary_token.approve(xerc20lockbox.contract_address, TRANSFER_AMT);
+    stop_prank(CheatTarget::One(setup.primary_token.contract_address));
+
+    // Check balance before transfer
+    let balance_before = xerc20lockbox.balance_of(ALICE());
+    // Set custom gas config
+    xerc20lockbox.set_hook(setup.igp.contract_address);
+    let config = array![GasRouterConfig { domain: DESTINATION, gas: GAS_LIMIT }];
+    xerc20lockbox.set_destination_gas(Option::Some(config), Option::None, Option::None);
+    let gas_price = setup.igp.gas_price();
+    start_prank(CheatTarget::One(xerc20lockbox.contract_address), ALICE());
+    // Do a remote transfer
+    perform_remote_transfer_and_gas(
+        @setup, xerc20lockbox, REQUIRED_VALUE, TRANSFER_AMT, GAS_LIMIT * gas_price,
+    );
+
+    stop_prank(CheatTarget::One(xerc20lockbox.contract_address));
+    // Check balance after transfer
+    assert_eq!(
+        xerc20lockbox.balance_of(ALICE()),
+        balance_before - TRANSFER_AMT,
+        "Incorrect balance after transfer"
+    );
+    let eth_dispatcher = IERC20Dispatcher { contract_address: setup.eth_token.contract_address };
+    assert_eq!(
+        eth_dispatcher.balance_of(setup.igp.contract_address),
+        GAS_LIMIT * gas_price,
+        "Gas fee didnt transferred"
+    );
+}
+
+pub fn perform_remote_transfer_erc20_lockbox_and_gas_with_hook(
+    setup: @Setup,
+    local_token: IHypERC20LockboxTestDispatcher,
+    msg_value: u256,
+    amount: u256,
+    hook: ContractAddress,
+    hook_metadata: Bytes
+) -> u256 {
+    // Remote transfer
+    start_prank(CheatTarget::One(local_token.contract_address), ALICE());
+    let bob_felt: felt252 = BOB().into();
+    let bob_address: u256 = bob_felt.into();
+    let message_id = local_token
+        .transfer_remote(
+            DESTINATION,
+            bob_address,
+            amount,
+            msg_value,
+            Option::Some(hook_metadata),
+            Option::Some(hook)
+        );
+
+    process_transfers(setup, local_token, BOB(), amount);
+
+    let remote_token = IERC20Dispatcher {
+        contract_address: (*setup).remote_token.contract_address
+    };
+    assert_eq!(remote_token.balance_of(BOB()), amount);
+
+    stop_prank(CheatTarget::One(local_token.contract_address));
+    message_id
+}
+
+#[test]
+fn test_erc20_lockbox_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
+    let fee = fee % (TRANSFER_AMT / 10);
+    let mut metadata_bytes = BytesTrait::new_empty();
+    metadata_bytes.append_u16(VARIANT);
+    metadata_bytes.append_u256(metadata);
+    let (setup, xerc20lockbox) = setup_lockbox();
+
+    let (hook_address, _) = setup.test_post_dispatch_hook_contract.deploy(@array![]).unwrap();
+    let hook = ITestPostDispatchHookDispatcher { contract_address: hook_address };
+    hook.set_fee(fee);
+
+    start_prank(CheatTarget::One(setup.primary_token.contract_address), ALICE());
+    setup.primary_token.approve(xerc20lockbox.contract_address, TRANSFER_AMT);
+    stop_prank(CheatTarget::One(setup.primary_token.contract_address));
+
+    let balance_before = xerc20lockbox.balance_of(ALICE());
+
+    let message_id = perform_remote_transfer_erc20_lockbox_and_gas_with_hook(
+        @setup, xerc20lockbox, fee, TRANSFER_AMT, hook.contract_address, metadata_bytes
+    );
+
+    let balance_after = xerc20lockbox.balance_of(ALICE());
+    assert_eq!(balance_after, balance_before - TRANSFER_AMT);
+    let eth_dispatcher = IERC20Dispatcher { contract_address: setup.eth_token.contract_address };
+    assert_eq!(eth_dispatcher.balance_of(hook_address), fee, "fee didnt transferred");
+    assert!(hook.message_dispatched(message_id) == true, "Hook did not dispatch");
 }
 
 #[test]

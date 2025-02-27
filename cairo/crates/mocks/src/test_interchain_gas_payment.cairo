@@ -7,6 +7,7 @@ pub trait ITestInterchainGasPayment<TContractState> {
     fn get_default_gas_usage(self: @TContractState) -> u256;
     fn gas_price(self: @TContractState) -> u256;
     fn post_dispatch(ref self: TContractState, metadata: Bytes, message: Message);
+    fn quote_dispatch(ref self: TContractState, _metadata: Bytes, _message: Message) -> u256;
 }
 
 #[starknet::contract]
@@ -19,6 +20,8 @@ pub mod TestInterchainGasPayment {
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
+    pub const DEFAULT_GAS_LIMIT: u256 = 10_000;
 
     #[storage]
     struct Storage {
@@ -54,7 +57,12 @@ pub mod TestInterchainGasPayment {
         fn gas_price(self: @ContractState) -> u256 {
             self.gas_price.read()
         }
+
         fn post_dispatch(ref self: ContractState, metadata: Bytes, message: Message) {}
+
+        fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
+            self.quote_gas_payment(DEFAULT_GAS_LIMIT)
+        }
     }
 
     #[generate_trait]

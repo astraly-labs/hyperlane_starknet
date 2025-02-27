@@ -271,12 +271,43 @@ pub mod MockMailbox {
                 );
             self.emit(DispatchId { id });
 
+            // HOOKS
+
+            let required_hook_address = self.required_hook.read();
             let required_hook = ITestPostDispatchHookDispatcher {
-                contract_address: self.required_hook.read()
+                contract_address: required_hook_address
             };
+            let mut required_fee = required_hook
+                .quote_dispatch(hook_metadata.clone(), message.clone());
+            let hook_dispatcher = ITestPostDispatchHookDispatcher { contract_address: hook };
+            let default_fee = hook_dispatcher
+                .quote_dispatch(hook_metadata.clone(), message.clone());
+
+            assert(fee_amount >= required_fee + default_fee, Errors::NOT_ENOUGH_FEE_PROVIDED);
+
+            let caller_address = get_caller_address();
+            let contract_address = get_contract_address();
+
+            let token_dispatcher = ERC20ABIDispatcher { contract_address: self.eth_address.read() };
+            let user_balance = token_dispatcher.balanceOf(caller_address);
+            assert(user_balance >= required_fee + default_fee, Errors::INSUFFICIENT_BALANCE);
+
+            assert(
+                token_dispatcher.allowance(caller_address, contract_address) >= fee_amount,
+                Errors::INSUFFICIENT_ALLOWANCE
+            );
+
+            if (required_fee > 0) {
+                token_dispatcher.transferFrom(caller_address, required_hook_address, required_fee);
+            }
+
             required_hook.post_dispatch(hook_metadata.clone(), message.clone());
-            let hook = ITestPostDispatchHookDispatcher { contract_address: hook };
-            hook.post_dispatch(hook_metadata, message.clone());
+            if (default_fee > 0) {
+                token_dispatcher.transferFrom(caller_address, hook, default_fee);
+            }
+
+            hook_dispatcher.post_dispatch(hook_metadata, message.clone());
+
             let remote_mailbox = self.remote_mailboxes.read(destination_domain);
             assert!(remote_mailbox != contract_address_const::<0>());
             IMockMailboxDispatcher { contract_address: remote_mailbox }
@@ -538,79 +569,5 @@ pub mod MockMailbox {
                 body: _message_body
             }
         )
-    }
-    #[generate_trait]
-    impl Private of PrivateTrait {
-        fn _dispatch(
-            ref self: ContractState,
-            _destination_domain: u32,
-            _recipient_address: u256,
-            _message_body: Bytes,
-            _fee_amount: u256,
-            _custom_hook_metadata: Option<Bytes>,
-            _custom_hook: Option<ContractAddress>
-        ) -> u256 {
-            let hook = match _custom_hook {
-                Option::Some(hook) => hook,
-                Option::None(()) => self.default_hook.read(),
-            };
-            let hook_metadata = match _custom_hook_metadata {
-                Option::Some(hook_metadata) => { hook_metadata },
-                Option::None(()) => BytesTrait::new_empty()
-            };
-            let (id, message) = build_message(
-                @self, _destination_domain, _recipient_address, _message_body
-            );
-            self.latest_dispatched_id.write(id);
-            let current_nonce = self.nonce.read();
-            self.nonce.write(current_nonce + 1);
-            let caller: felt252 = get_caller_address().into();
-            self
-                .emit(
-                    Dispatch {
-                        sender: caller.into(),
-                        destination_domain: _destination_domain,
-                        recipient_address: _recipient_address,
-                        message: message.clone()
-                    }
-                );
-            self.emit(DispatchId { id: id });
-
-            // HOOKS
-
-            let required_hook_address = self.required_hook.read();
-            let required_hook = ITestPostDispatchHookDispatcher {
-                contract_address: required_hook_address
-            };
-            let mut required_fee = required_hook
-                .quote_dispatch(hook_metadata.clone(), message.clone());
-            let hook_dispatcher = ITestPostDispatchHookDispatcher { contract_address: hook };
-            let default_fee = hook_dispatcher
-                .quote_dispatch(hook_metadata.clone(), message.clone());
-
-            assert(_fee_amount >= required_fee + default_fee, Errors::NOT_ENOUGH_FEE_PROVIDED);
-
-            let caller_address = get_caller_address();
-            let contract_address = get_contract_address();
-
-            let token_dispatcher = ERC20ABIDispatcher { contract_address: self.eth_address.read() };
-            let user_balance = token_dispatcher.balanceOf(caller_address);
-            assert(user_balance >= required_fee + default_fee, Errors::INSUFFICIENT_BALANCE);
-
-            assert(
-                token_dispatcher.allowance(caller_address, contract_address) >= _fee_amount,
-                Errors::INSUFFICIENT_ALLOWANCE
-            );
-
-            if (required_fee > 0) {
-                token_dispatcher.transfer_from(caller_address, required_hook_address, required_fee);
-            }
-            required_hook.post_dispatch(hook_metadata.clone(), message.clone());
-            if (default_fee > 0) {
-                token_dispatcher.transfer_from(caller_address, hook, default_fee);
-            }
-            hook_dispatcher.post_dispatch(hook_metadata, message.clone());
-            id
-        }
     }
 }

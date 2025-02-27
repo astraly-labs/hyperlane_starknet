@@ -1,9 +1,12 @@
-use alexandria_bytes::Bytes;
+use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
+use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
+use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use starknet::ContractAddress;
 use super::common::{
     setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
-    IHypErc721TestDispatcherTrait, ALICE, BOB, deploy_remote_token, perform_remote_transfer
+    IHypErc721TestDispatcherTrait, ALICE, BOB, deploy_remote_token, perform_remote_transfer,
+    test_transfer_with_hook_specified, FEE_CAP
 };
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 
@@ -63,6 +66,27 @@ fn test_erc721_remote_transfer(is_collateral: u8) {
 
     let setup = deploy_remote_token(setup, is_collateral);
     perform_remote_transfer(@setup, 2500, 0);
+    assert_eq!(setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY - 1);
+}
+
+#[test]
+fn test_erc721_remote_transfer_with_hook_specified(
+    is_collateral: u8, mut fee: u256, metadata: u256
+) {
+    let is_collateral = if is_collateral % 2 == 0 {
+        true
+    } else {
+        false
+    };
+
+    let fee = fee % FEE_CAP;
+    let mut metadata_bytes = BytesTrait::new_empty();
+    metadata_bytes.append_u16(VARIANT);
+    metadata_bytes.append_u256(metadata);
+
+    let mut setup = hyp_erc721_setup();
+    let setup = deploy_remote_token(setup, is_collateral);
+    test_transfer_with_hook_specified(@setup, 0, fee, metadata_bytes);
     assert_eq!(setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY - 1);
 }
 

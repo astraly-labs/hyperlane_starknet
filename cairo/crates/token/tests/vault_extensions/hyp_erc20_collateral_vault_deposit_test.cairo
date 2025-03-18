@@ -121,11 +121,13 @@ fn erc4626_vault_deposit_remote_transfer_deposits_into_vault(
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_erc4626_vault_deposit_remote_transfer_deposits_into_vault(mut transfer_amount: u256) {
     erc4626_vault_deposit_remote_transfer_deposits_into_vault(transfer_amount);
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_erc4626_vault_deposit_remote_transfer_withdraws_from_vault(mut transfer_amount: u256) {
     transfer_amount %= TOTAL_SUPPLY + 1;
     let (mut setup, mut vault, mut erc20_collateral_vault_deposit) = setup_vault();
@@ -143,6 +145,7 @@ fn test_fuzz_erc4626_vault_deposit_remote_transfer_withdraws_from_vault(mut tran
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_erc4626_vault_deposit_remote_transfer_withdraw_less_shares(mut reward_amount: u256) {
     reward_amount %= TOTAL_SUPPLY + 1;
     if reward_amount < DUST_AMOUNT {
@@ -163,6 +166,7 @@ fn test_fuzz_erc4626_vault_deposit_remote_transfer_withdraw_less_shares(mut rewa
 }
 
 #[test]
+#[fuzzer]
 #[should_panic]
 fn test_fuzz_erc4626_vault_deposit_remote_transfer_sweep_revert_non_owner(mut reward_amount: u256) {
     reward_amount %= TOTAL_SUPPLY + 1;
@@ -180,6 +184,7 @@ fn test_fuzz_erc4626_vault_deposit_remote_transfer_sweep_revert_non_owner(mut re
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_erc4626_vault_deposit_remote_transfer_sweep_no_excess_shares(
     mut transfer_amount: u256,
 ) {
@@ -198,6 +203,7 @@ fn test_fuzz_erc4626_vault_deposit_remote_transfer_sweep_no_excess_shares(
 }
 
 #[test]
+#[fuzzer]
 fn test_erc4626_vault_deposit_remote_transfer_sweep_excess_shares_12312(mut reward_amount: u256) {
     reward_amount %= TOTAL_SUPPLY + 1;
     if reward_amount < DUST_AMOUNT {
@@ -220,6 +226,7 @@ fn test_erc4626_vault_deposit_remote_transfer_sweep_excess_shares_12312(mut rewa
 }
 
 #[test]
+#[fuzzer]
 fn test_erc4626_vault_deposit_remote_transfer_sweep_excess_shares_multiple_deposit(
     mut reward_amount: u256,
 ) {

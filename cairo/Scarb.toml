@@ -21,7 +21,7 @@ alexandria_storage = { git = "https://github.com/keep-starknet-strange/alexandri
 alexandria_data_structures = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1" }
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1" }
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.20.0" }
-snforge_std = "0.34.0"
+snforge_std = "0.38.3"
 
 [dev-dependencies]
 snforge_std.workspace = true

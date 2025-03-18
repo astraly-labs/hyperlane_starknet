@@ -146,6 +146,7 @@ fn test_should_panic_when_max_not_set() {
 }
 
 #[test]
+#[fuzzer]
 fn test_should_return_curreny_filled_level_any_time(mut time: u64) {
     let setup = setup();
     time = bound(time, DAY, 2 * DAY);
@@ -157,6 +158,7 @@ fn test_should_return_curreny_filled_level_any_time(mut time: u64) {
 }
 
 #[test]
+#[fuzzer]
 #[should_panic(expected: 'Caller is not the owner')]
 fn test_should_panic_when_caller_not_owner_when_set_limits(mut caller_u128: u128) {
     let setup = setup();
@@ -214,6 +216,7 @@ fn test_should_consume_filled_level_and_emit_events() {
 }
 
 #[test]
+#[fuzzer]
 fn test_should_never_return_gt_max_limit(mut new_amount: u256, mut new_time: u64) {
     let setup = setup();
 
@@ -286,6 +289,7 @@ fn test_replenishes_within_same_day() {
 }
 
 #[test]
+#[fuzzer]
 fn test_should_reset_limit_when_duration_exceeds(mut amount: u256) {
     let setup = setup();
 

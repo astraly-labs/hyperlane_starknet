@@ -17,6 +17,7 @@ fn test_initialize_empty_map() {
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_set(key: u32, val: u256) {
     let mut contract = setup();
     assert_eq!(contract.do_get_len(), 0, "EnumerableMap is not empty");
@@ -34,6 +35,7 @@ fn test_fuzz_set(key: u32, val: u256) {
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_contains(key: u32, val: u256, should_contain: u8) {
     let mut contract = setup();
     let should_contain: bool = should_contain % 2 == 1;
@@ -44,6 +46,7 @@ fn test_fuzz_contains(key: u32, val: u256, should_contain: u8) {
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_should_remove(key: u32, val: u256) {
     let mut contract = setup();
     contract.do_set_key(key, val);
@@ -65,6 +68,7 @@ fn test_fuzz_should_remove(key: u32, val: u256) {
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_get_keys(
     mut key1: u32, mut key2: u32, mut key3: u32, val1: u256, val2: u256, val3: u256,
 ) {

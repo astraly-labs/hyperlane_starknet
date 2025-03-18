@@ -52,6 +52,7 @@ fn test_erc721_local_transfer_invalid_token_id() {
 }
 
 #[test]
+#[fuzzer]
 fn test_erc721_remote_transfer(is_collateral: u8) {
     let mut setup = hyp_erc721_setup();
 

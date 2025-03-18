@@ -15,7 +15,8 @@ openzeppelin.workspace = true
 contracts = { path = "../contracts" }
 token = { path = "../token" }
 
-
+[dev.dependencies]
+snforge_std.workspace = true
 
 [tool]
 fmt.workspace = true

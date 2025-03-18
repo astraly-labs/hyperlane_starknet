@@ -18,7 +18,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: "2.9.2"
+          scarb-version: "2.10.1"
 
       - name: Build contracts
         run: |

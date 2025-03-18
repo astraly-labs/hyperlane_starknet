@@ -51,6 +51,7 @@ dependencies = [
  "alexandria_storage",
  "contracts",
  "openzeppelin",
+ "snforge_std",
  "token",
 ]
 

@@ -19,6 +19,7 @@ snforge_std.workspace = true
 
 [tool]
 fmt.workspace = true
+scarb.workspace = true
 
 [[target.starknet-contract]]
 allowed-libfuncs-list.name = "experimental"

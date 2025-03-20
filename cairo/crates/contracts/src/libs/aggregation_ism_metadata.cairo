@@ -1,5 +1,6 @@
 pub mod aggregation_ism_metadata {
     use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_math::{pow};
     use core::result::{Result, ResultTrait};
 
     pub trait AggregationIsmMetadata {
@@ -28,18 +29,45 @@ pub mod aggregation_ism_metadata {
         ///
         /// Bytes -  The metadata provided for the ISM at `_index`
         fn metadata_at(_metadata: Bytes, _index: u8) -> Bytes {
-            let (mut start, end) = match metadata_range(_metadata.clone(), _index) {
+            let mut padding = 0;
+            let sub_bytes_last_element_size = _metadata.size() % BYTES_PER_ELEMENT.into();
+            if sub_bytes_last_element_size > 0 {
+                padding = BYTES_PER_ELEMENT.into() - sub_bytes_last_element_size;
+            }
+
+            let mut padded_metadata = BytesTrait::new_empty();
+
+            if padding > 0 {
+                let _metadata_data = _metadata.clone().data();
+                for i in 0.._metadata_data.len() {
+                    if i == _metadata_data.len() - 1 {
+                        let d_128: u128 = *_metadata_data[i];
+                        let coeff = pow(16_u128, padding.into() * 2);
+
+                        let value = d_128 * coeff;
+                        padded_metadata.append_u128(value);
+                        break;
+                    }
+                    let d_128: u128 = *_metadata_data[i];
+                    padded_metadata.append_u128(d_128);
+                };
+            } else {
+                padded_metadata = _metadata.clone();
+            }
+
+            let (mut start, end) = match metadata_range(padded_metadata.clone(), _index) {
                 Result::Ok((start, end)) => (start, end),
                 Result::Err(_) => (0, 0),
             };
+
             let mut bytes_array = BytesTrait::new(496, array![]);
             loop {
                 if ((end - start) <= 16) {
-                    let (_, res) = _metadata.read_u128_packed(start, end - start);
+                    let (_, res) = padded_metadata.read_u128_packed(start, end - start);
                     bytes_array.append_u128(res);
                     break ();
                 }
-                let (_, res) = _metadata.read_u128_packed(start, BYTES_PER_ELEMENT.into());
+                let (_, res) = padded_metadata.read_u128_packed(start, BYTES_PER_ELEMENT.into());
                 bytes_array.append_u128(res);
                 start = start + BYTES_PER_ELEMENT.into()
             };
@@ -135,6 +163,22 @@ mod test {
                 0x7d806349eac6653e9190d11a1c,
             ],
         );
+
+        // let encoded_metadata = BytesTrait::new(
+        //     144,
+        //     array![
+        //         0x000000080000008d071e1b5e54086bbd,
+        //         0xe2b7a131a2c913f442485974c32df56e,
+        //         0xe47f9456b3270daebe22faba5bc0223a,
+        //         0x7e3077adcd04391f2ccdd2b2ad2eac2d,
+        //         0x71c3f04755d5d95d000000015dcbf07f,
+        //         0xa1898b0d8b64991f099e8478268fb36e,
+        //         0x0e5fe7832aa345da8b8888645622786d,
+        //         0x53d898c95d75d37a582de78deda23497,
+        //         0x7d806349eac6653e9190d11a1c000000,
+        //     ],
+        // );
+
         let mut expected_result = array![
             0x071E1B5E54086BBDE2B7A131A2C913F4_u256,
             0x42485974C32DF56EE47F9456B3270DAE_u256,
@@ -155,7 +199,7 @@ mod test {
             if (cur_idx == 9) {
                 break ();
             }
-            println!("result: {:?}", *BytesTrait::data(result.clone())[cur_idx]);
+            println!("result: {:x}", *BytesTrait::data(result.clone())[cur_idx]);
             cur_idx += 1;
         }
     }

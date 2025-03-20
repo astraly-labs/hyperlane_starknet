@@ -35,3 +35,6 @@ test = "snforge test"
 
 [workspace.tool.scarb]
 allow-prebuilt-plugins = ["snforge_std"]
+
+[profile.dev.cairo]
+unstable-add-statements-code-locations-debug-info = true

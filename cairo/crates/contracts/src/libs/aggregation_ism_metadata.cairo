@@ -6,6 +6,7 @@ pub mod aggregation_ism_metadata {
     pub trait AggregationIsmMetadata {
         fn metadata_at(_metadata: Bytes, _index: u8) -> Bytes;
         fn has_metadata(_metadata: Bytes, _index: u8) -> bool;
+        fn pad_bytes(_metadata: Bytes) -> Bytes;
     }
     /// * Format of metadata:
     /// *
@@ -29,6 +30,26 @@ pub mod aggregation_ism_metadata {
         ///
         /// Bytes -  The metadata provided for the ISM at `_index`
         fn metadata_at(_metadata: Bytes, _index: u8) -> Bytes {
+            let (mut start, end) = match metadata_range(_metadata.clone(), _index) {
+                Result::Ok((start, end)) => (start, end),
+                Result::Err(_) => (0, 0),
+            };
+
+            let mut bytes_array = BytesTrait::new(496, array![]);
+            loop {
+                if ((end - start) <= 16) {
+                    let (_, res) = _metadata.read_u128_packed(start, end - start);
+                    bytes_array.append_u128(res);
+                    break ();
+                }
+                let (_, res) = _metadata.read_u128_packed(start, BYTES_PER_ELEMENT.into());
+                bytes_array.append_u128(res);
+                start = start + BYTES_PER_ELEMENT.into()
+            };
+            bytes_array
+        }
+
+        fn pad_bytes(_metadata: Bytes) -> Bytes {
             let mut padding = 0;
             let sub_bytes_last_element_size = _metadata.size() % BYTES_PER_ELEMENT.into();
             if sub_bytes_last_element_size > 0 {
@@ -39,6 +60,7 @@ pub mod aggregation_ism_metadata {
 
             if padding > 0 {
                 let _metadata_data = _metadata.clone().data();
+
                 for i in 0.._metadata_data.len() {
                     if i == _metadata_data.len() - 1 {
                         let d_128: u128 = *_metadata_data[i];
@@ -54,24 +76,7 @@ pub mod aggregation_ism_metadata {
             } else {
                 padded_metadata = _metadata.clone();
             }
-
-            let (mut start, end) = match metadata_range(padded_metadata.clone(), _index) {
-                Result::Ok((start, end)) => (start, end),
-                Result::Err(_) => (0, 0),
-            };
-
-            let mut bytes_array = BytesTrait::new(496, array![]);
-            loop {
-                if ((end - start) <= 16) {
-                    let (_, res) = padded_metadata.read_u128_packed(start, end - start);
-                    bytes_array.append_u128(res);
-                    break ();
-                }
-                let (_, res) = padded_metadata.read_u128_packed(start, BYTES_PER_ELEMENT.into());
-                bytes_array.append_u128(res);
-                start = start + BYTES_PER_ELEMENT.into()
-            };
-            bytes_array
+            padded_metadata
         }
         /// Returns whether or not metadata was provided for the ISM at _index
         /// Dev: Callers must ensure _index is less than the number of metadatas provided

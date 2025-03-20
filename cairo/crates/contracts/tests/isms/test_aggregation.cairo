@@ -107,6 +107,7 @@ fn test_aggregation_verify() {
     concat_metadata.concat(@message_id_metadata);
     // dummy metadata for noop ism
     concat_metadata.concat(@message_id_metadata);
+
     assert(aggregation.verify(concat_metadata, message), 'Aggregation: verify failed');
 }
 

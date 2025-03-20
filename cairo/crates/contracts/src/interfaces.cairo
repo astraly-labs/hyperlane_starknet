@@ -245,6 +245,7 @@ pub trait IAggregation<TContractState> {
     ) -> (Span<ContractAddress>, u8);
 
     fn verify(self: @TContractState, _metadata: Bytes, _message: Message) -> bool;
+    fn verify_with_padding(self: @TContractState, _metadata: Bytes, _message: Message) -> bool;
 
     fn get_modules(self: @TContractState) -> Span<ContractAddress>;
 

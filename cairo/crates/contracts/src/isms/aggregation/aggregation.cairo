@@ -91,6 +91,11 @@ pub mod aggregation {
             (self.build_modules_span(), threshold)
         }
 
+        fn verify_with_padding(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
+            // This only works if the data was not created with `append`
+            let metadata_padded = AggregationIsmMetadata::pad_bytes(_metadata.clone());
+            self.verify(metadata_padded, _message)
+        }
 
         /// Requires that m-of-n ISMs verify the provided interchain message.
         /// Dev: Can change based on the content of _message

@@ -31,3 +31,6 @@ build-external-contracts = ["mocks::*"]
 
 [lib]
 name = "contracts"
+
+[profile.dev.cairo]
+unstable-add-statements-code-locations-debug-info = true

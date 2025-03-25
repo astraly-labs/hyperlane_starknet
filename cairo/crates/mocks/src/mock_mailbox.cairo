@@ -229,8 +229,14 @@ pub mod MockMailbox {
             hook: Option<ContractAddress>,
         ) -> u256 {
             let hook = match hook {
-                Option::Some(hook) => { hook },
-                Option::None(()) => { self.default_hook.read() },
+                Option::Some(hook) => {
+                    if hook != contract_address_const::<0>() {
+                        hook
+                    } else {
+                        self.default_hook.read()
+                    }
+                },
+                Option::None(()) => { self.default_hook.read() }
             };
             let hook_metadata = match metadata {
                 Option::Some(hook_metadata) => {

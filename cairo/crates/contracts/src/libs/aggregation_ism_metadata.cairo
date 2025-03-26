@@ -32,7 +32,7 @@ pub mod aggregation_ism_metadata {
                 Result::Ok((start, end)) => (start, end),
                 Result::Err(_) => (0, 0),
             };
-            let (_, res) = _metadata.read_bytes(start, end-start);
+            let (_, res) = _metadata.read_bytes(start, end - start);
             res
         }
         /// Returns whether or not metadata was provided for the ISM at _index
@@ -92,9 +92,7 @@ mod test {
                 0x00000000000000000000000000000000,
             ],
         );
-        let mut expected_result = array![
-            0xAAAAAAAAAAAAAAAABBBBCCCC00000000_u256
-        ];
+        let mut expected_result = array![0xAAAAAAAAAAAAAAAABBBBCCCC00000000_u256];
         let mut cur_idx = 0;
         loop {
             if (cur_idx == 1) {

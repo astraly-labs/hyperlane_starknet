@@ -236,7 +236,7 @@ pub mod MockMailbox {
                         self.default_hook.read()
                     }
                 },
-                Option::None(()) => { self.default_hook.read() }
+                Option::None(()) => { self.default_hook.read() },
             };
             let hook_metadata = match metadata {
                 Option::Some(hook_metadata) => {

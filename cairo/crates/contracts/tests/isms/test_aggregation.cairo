@@ -10,7 +10,10 @@ use contracts::utils::utils::U256TryIntoContractAddress;
 
 use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{cheatcodes::contract_class::ContractClass, ContractClassTrait, CheatSpan, cheat_caller_address, DeclareResultTrait, EventSpy, declare, spy_events};
+use snforge_std::{
+    CheatSpan, ContractClassTrait, DeclareResultTrait, EventSpy, cheat_caller_address,
+    cheatcodes::contract_class::ContractClass, declare, spy_events,
+};
 
 
 use starknet::ContractAddress;
@@ -120,8 +123,8 @@ fn test_aggregation_verify_e2e() {
     // MESSAGEID
     let message_body = BytesTrait::new(11, array![0x68656C6C6F20776F726C640000000000]);
     let metadata = BytesTrait::new(
-        144, 
-        array![  
+        144,
+        array![
             0x000000080000008d071e1b5e54086bbd,
             0xe2b7a131a2c913f442485974c32df56e,
             0xe47f9456b3270daebe22faba5bc0223a,
@@ -130,8 +133,8 @@ fn test_aggregation_verify_e2e() {
             0xa1898b0d8b64991f099e8478268fb36e,
             0x0e5fe7832aa345da8b8888645622786d,
             0x53d898c95d75d37a582de78deda23497,
-            0x7d806349eac6653e9190d11a1c000000
-        ]
+            0x7d806349eac6653e9190d11a1c000000,
+        ],
     );
     let message = Message {
         version: HYPERLANE_VERSION,
@@ -150,15 +153,20 @@ fn test_aggregation_verify_e2e() {
 
     // TODO
     // Deploy the messageid contract at a specific address
-    let specific_address: ContractAddress = 0x045133e4b0a40aa7992bfb5d7f552b767be1b070af81f0313adf8e01cf3ab32c.try_into().unwrap();
+    let specific_address: ContractAddress =
+        0x045133e4b0a40aa7992bfb5d7f552b767be1b070af81f0313adf8e01cf3ab32c
+        .try_into()
+        .unwrap();
     let messageid_class = declare("messageid_multisig_ism").unwrap().contract_class();
     let mut parameters = Default::default();
-    let owner: felt252 = 0xb3ff441a68610b30fd5e2abbf3a1548eb6ba6f3559f2862bf2dc757e5828ca.try_into().unwrap();
+    let owner: felt252 = 0xb3ff441a68610b30fd5e2abbf3a1548eb6ba6f3559f2862bf2dc757e5828ca
+        .try_into()
+        .unwrap();
     Serde::serialize(@owner, ref parameters);
     Serde::serialize(@validators_array.span(), ref parameters);
     Serde::serialize(@multisig_threshold, ref parameters);
     messageid_class.deploy_at(@parameters, specific_address);
-    
+
     let messageid_ism = IInterchainSecurityModuleDispatcher { contract_address: specific_address };
     // println!("E2E test messageid_ism: {}", messageid_ism.contract_address());
 

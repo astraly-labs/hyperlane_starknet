@@ -118,19 +118,19 @@ fn test_aggregation_verify_e2e() {
     let aggregation_threshold = 1;
 
     // MESSAGEID
-    let message_body = BytesTrait::new(11, array![0x68656c6c6f20776f726c64]);
+    let message_body = BytesTrait::new(11, array![0x68656C6C6F20776F726C640000000000]);
     let metadata = BytesTrait::new(
         144, 
         array![  
             0x000000080000008d071e1b5e54086bbd,
             0xe2b7a131a2c913f442485974c32df56e,
-            0xe47f9456b3270dae3be09baab9f68bf6,
-            0x84564f3f730b5665a90dec11d4f4bb54,
-            0xcb17a43f40eb8008000000007af22075,
-            0x893603b4d7eb8209c06d3dc7706e643d,
-            0xc397b048f7606e87ae568e6b35040fec,
-            0x706cab4d32d9eefebf8b9c286f209d6b,
-            0x39bed76a516766beaf165c9a1b000000
+            0xe47f9456b3270daebe22faba5bc0223a,
+            0x7e3077adcd04391f2ccdd2b2ad2eac2d,
+            0x71c3f04755d5d95d000000015dcbf07f,
+            0xa1898b0d8b64991f099e8478268fb36e,
+            0x0e5fe7832aa345da8b8888645622786d,
+            0x53d898c95d75d37a582de78deda23497,
+            0x7d806349eac6653e9190d11a1c000000
         ]
     );
     let message = Message {

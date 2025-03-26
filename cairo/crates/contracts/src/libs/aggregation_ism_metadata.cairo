@@ -32,18 +32,8 @@ pub mod aggregation_ism_metadata {
                 Result::Ok((start, end)) => (start, end),
                 Result::Err(_) => (0, 0),
             };
-            let mut bytes_array = BytesTrait::new(496, array![]);
-            loop {
-                if ((end - start) <= 16) {
-                    let (_, res) = _metadata.read_u128_packed(start, end - start);
-                    bytes_array.append_u128(res);
-                    break ();
-                }
-                let (_, res) = _metadata.read_u128_packed(start, BYTES_PER_ELEMENT.into());
-                bytes_array.append_u128(res);
-                start = start + BYTES_PER_ELEMENT.into()
-            };
-            bytes_array
+            let (_, res) = _metadata.read_bytes(start, end-start);
+            res
         }
         /// Returns whether or not metadata was provided for the ISM at _index
         /// Dev: Callers must ensure _index is less than the number of metadatas provided
@@ -103,11 +93,11 @@ mod test {
             ],
         );
         let mut expected_result = array![
-            0xAAAAAAAAAAAAAAAABBBBCCCC_u256, 0xDDDDDDDDEEEEEEEE_u256, 0xFFFFFFFF00000000_u256,
+            0xAAAAAAAAAAAAAAAABBBBCCCC00000000_u256
         ];
         let mut cur_idx = 0;
         loop {
-            if (cur_idx == 3) {
+            if (cur_idx == 1) {
                 break ();
             }
             let result = AggregationIsmMetadata::metadata_at(encoded_metadata.clone(), cur_idx);
@@ -155,7 +145,6 @@ mod test {
             if (cur_idx == 9) {
                 break ();
             }
-            println!("result: {:?}", *BytesTrait::data(result.clone())[cur_idx]);
             cur_idx += 1;
         }
     }

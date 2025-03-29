@@ -1,6 +1,5 @@
 pub mod checkpoint_lib {
-    use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
-    use contracts::libs::message::Message;
+    use alexandria_bytes::BytesStore;
     use contracts::utils::keccak256::{
         ByteData, HASH_SIZE, compute_keccak, reverse_endianness, to_eth_signature, u256_word_size,
         u64_word_size,

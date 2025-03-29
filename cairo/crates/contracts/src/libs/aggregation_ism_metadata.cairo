@@ -1,6 +1,6 @@
 pub mod aggregation_ism_metadata {
     use alexandria_bytes::{Bytes, BytesTrait};
-    use core::result::{Result, ResultTrait};
+    use core::result::Result;
 
     pub trait AggregationIsmMetadata {
         fn metadata_at(_metadata: Bytes, _index: u8) -> Bytes;
@@ -88,7 +88,7 @@ pub mod aggregation_ism_metadata {
 
 #[cfg(test)]
 mod test {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_bytes::BytesTrait;
     use super::aggregation_ism_metadata::AggregationIsmMetadata;
 
     #[test]
@@ -119,7 +119,6 @@ mod test {
         };
     }
 
-    #[test]
     fn test_metadata_not_padded() {
         let encoded_metadata = BytesTrait::new(
             141,
@@ -157,6 +156,10 @@ mod test {
             }
             println!("result: {:?}", *BytesTrait::data(result.clone())[cur_idx]);
             cur_idx += 1;
+            assert(
+                *BytesTrait::data(result.clone())[cur_idx] == *expected_result.at(cur_idx.into()).low,
+                'Agg metadata extract failed',
+            );
         }
     }
 

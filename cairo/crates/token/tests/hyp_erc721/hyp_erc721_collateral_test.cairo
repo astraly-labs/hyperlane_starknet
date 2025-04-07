@@ -1,4 +1,4 @@
-use alexandria_bytes::{Bytes, BytesTrait};
+use alexandria_bytes::BytesTrait;
 use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
 use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use core::integer::BoundedInt;

@@ -3,7 +3,7 @@ use contracts::interfaces::{
     ETH_ADDRESS, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
     IProtocolFeeDispatcher, IProtocolFeeDispatcherTrait, Types,
 };
-use contracts::libs::message::{Message, MessageTrait};
+use contracts::libs::message::MessageTrait;
 use contracts::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};

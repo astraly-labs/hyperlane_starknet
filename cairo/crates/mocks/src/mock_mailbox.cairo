@@ -44,7 +44,7 @@ pub trait IMockMailbox<TContractState> {
 pub mod MockMailbox {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::interfaces::{
-        ETH_ADDRESS, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
+        IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
         IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
         IMessageRecipientDispatcherTrait, ISpecifiesInterchainSecurityModuleDispatcher,
         ISpecifiesInterchainSecurityModuleDispatcherTrait,

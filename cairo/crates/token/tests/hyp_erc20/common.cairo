@@ -1,11 +1,10 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::client::gas_router_component::{
-    GasRouterComponent::GasRouterConfig, IGasRouterDispatcher, IGasRouterDispatcherTrait,
+    GasRouterComponent::GasRouterConfig,
 };
 use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
 use contracts::interfaces::{
-    ETH_ADDRESS, IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IMailboxDispatcher,
-    IMailboxDispatcherTrait, IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait,
+    ETH_ADDRESS, IMailboxClientDispatcher,
 };
 use core::integer::BoundedInt;
 use mocks::{
@@ -13,7 +12,7 @@ use mocks::{
     mock_mailbox::{IMockMailboxDispatcher, IMockMailboxDispatcherTrait},
     test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},
     test_interchain_gas_payment::{
-        ITestInterchainGasPaymentDispatcher, ITestInterchainGasPaymentDispatcherTrait,
+        ITestInterchainGasPaymentDispatcher,
     },
     test_post_dispatch_hook::{
         ITestPostDispatchHookDispatcher, ITestPostDispatchHookDispatcherTrait,

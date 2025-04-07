@@ -1,4 +1,4 @@
-use alexandria_bytes::{Bytes, BytesTrait};
+use alexandria_bytes::BytesTrait;
 use contracts::interfaces::{
     IDomainRoutingIsmDispatcher, IDomainRoutingIsmDispatcherTrait,
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,

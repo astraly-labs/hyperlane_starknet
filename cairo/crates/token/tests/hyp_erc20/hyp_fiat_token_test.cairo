@@ -5,15 +5,12 @@ use mocks::test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait};
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
-    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait,
+    CheatSpan, ContractClassTrait, DeclareResultTrait,
     EventSpyAssertionsTrait, cheat_caller_address, declare,
 };
-use starknet::ContractAddress;
 use super::common::{
-    setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, DESTINATION, OWNER,
-    perform_remote_transfer_with_emit, perform_remote_transfer_and_gas, ALICE, BOB, E18,
-    IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, enroll_remote_router,
-    enroll_local_router, perform_remote_transfer, set_custom_gas_config, REQUIRED_VALUE, GAS_LIMIT,
+    setup, TRANSFER_AMT, DESTINATION, perform_remote_transfer_and_gas, ALICE, E18,
+    IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, enroll_remote_router, set_custom_gas_config, REQUIRED_VALUE, GAS_LIMIT,
     Setup, handle_local_transfer, test_transfer_with_hook_specified
 };
 

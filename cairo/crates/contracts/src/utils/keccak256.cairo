@@ -429,8 +429,6 @@ pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
 
 #[cfg(test)]
 mod tests {
-    use alexandria_bytes::{Bytes, BytesTrait};
-    use starknet::contract_address_const;
     use super::{
         ADDRESS_SIZE, ByteData, HYPERLANE_ANNOUNCEMENT, compute_keccak, down_bytes,
         reverse_endianness, u64_word_size, up_bytes, zero_keccak_hash,

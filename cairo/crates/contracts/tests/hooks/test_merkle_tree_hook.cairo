@@ -9,11 +9,11 @@ use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
 use contracts::utils::keccak256::{ByteData, HASH_SIZE};
 use contracts::utils::utils::U256TryIntoContractAddress;
 use merkle_tree_hook::{InternalTrait};
-use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
+use openzeppelin::access::ownable::interface::IOwnableDispatcher;
 use snforge_std::{CheatSpan, EventSpyAssertionsTrait, cheat_caller_address};
 use starknet::storage::{StorageMapReadAccess, StoragePointerReadAccess};
 use super::super::setup::{
-    DESTINATION_DOMAIN, LOCAL_DOMAIN, MAILBOX, VALID_OWNER, VALID_RECIPIENT, setup_merkle_tree_hook,
+    DESTINATION_DOMAIN, MAILBOX, VALID_OWNER, VALID_RECIPIENT, setup_merkle_tree_hook,
 };
 #[test]
 fn test_merkle_tree_hook_type() {

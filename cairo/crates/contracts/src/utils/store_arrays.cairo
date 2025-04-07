@@ -5,16 +5,16 @@ use starknet::storage_access::{StorageBaseAddress, Store};
 
 // Code from https://book.starknet.io/ch02-07-01-02-million-dollar-homepage.html
 // Core lib imports.
-use starknet::{ContractAddress, SyscallResult};
+use starknet::SyscallResult;
 
 pub impl StoreFelt252Array of Store<Array<felt252>> {
     fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult<Array<felt252>> {
-        StoreFelt252Array::read_at_offset(address_domain, base, 0)
+        Self::read_at_offset(address_domain, base, 0)
     }
     fn write(
         address_domain: u32, base: StorageBaseAddress, value: Array<felt252>,
     ) -> SyscallResult<()> {
-        StoreFelt252Array::write_at_offset(address_domain, base, 0, value)
+        Self::write_at_offset(address_domain, base, 0, value)
     }
     fn read_at_offset(
         address_domain: u32, base: StorageBaseAddress, mut offset: u8,

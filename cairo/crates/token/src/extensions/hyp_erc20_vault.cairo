@@ -18,7 +18,6 @@ mod HypErc20Vault {
         RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait,
     };
     use contracts::libs::math;
-    use core::zeroable::NonZero;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{
         ERC20Component, ERC20HooksEmptyImpl, interface::{IERC20, IERC20CamelOnly},

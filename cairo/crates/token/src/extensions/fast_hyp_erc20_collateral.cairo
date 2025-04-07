@@ -5,7 +5,6 @@ pub trait IFastHypERC20<TState> {
 
 #[starknet::contract]
 pub mod FastHypERC20Collateral {
-    use alexandria_bytes::Bytes;
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;

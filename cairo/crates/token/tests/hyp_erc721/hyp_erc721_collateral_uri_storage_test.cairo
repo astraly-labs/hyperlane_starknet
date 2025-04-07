@@ -1,8 +1,8 @@
 use alexandria_bytes::BytesTrait;
 use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
-use mocks::test_erc721::{ITestERC721Dispatcher, ITestERC721DispatcherTrait};
+use mocks::test_erc721::ITestERC721DispatcherTrait;
 use snforge_std::{
-    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, declare,
+    ContractClassTrait, DeclareResultTrait, declare,
 };
 use super::common::{
     setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,

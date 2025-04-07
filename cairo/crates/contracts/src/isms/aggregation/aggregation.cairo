@@ -1,15 +1,15 @@
 #[starknet::contract]
 pub mod aggregation {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_bytes::Bytes;
     use contracts::interfaces::{
         IAggregation,
-        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+        IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, ModuleType,
     };
     use contracts::libs::aggregation_ism_metadata::aggregation_ism_metadata::AggregationIsmMetadata;
-    use contracts::libs::message::{Message, MessageTrait};
+    use contracts::libs::message::Message;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
         StoragePointerWriteAccess,

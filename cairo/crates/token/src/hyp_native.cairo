@@ -1,6 +1,5 @@
 #[starknet::contract]
 pub mod HypNative {
-    use alexandria_bytes::bytes::{Bytes, BytesTrait};
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;

@@ -14,11 +14,11 @@ use mocks::{
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
-    CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare, spy_events,
+    CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare,
 };
 use starknet::ContractAddress;
 use super::common::{
-    ALICE, BOB, DECIMALS, DESTINATION, E18, GAS_LIMIT, IHypERC20TestDispatcher,
+    ALICE, BOB, DECIMALS, DESTINATION, E18, GAS_LIMIT,
     IHypERC20TestDispatcherTrait, ORIGIN, REQUIRED_VALUE, Setup, TRANSFER_AMT,
     ZERO_SUPPLY, setup,
 };

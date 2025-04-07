@@ -13,7 +13,7 @@ pub trait ITestInterchainGasPayment<TContractState> {
 #[starknet::contract]
 pub mod TestInterchainGasPayment {
     use alexandria_bytes::Bytes;
-    use contracts::libs::message::{Message, MessageTrait};
+    use contracts::libs::message::Message;
     use openzeppelin::access::ownable::OwnableComponent;
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};

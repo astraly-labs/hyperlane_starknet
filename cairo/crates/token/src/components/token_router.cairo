@@ -1,4 +1,4 @@
-use alexandria_bytes::{Bytes, BytesTrait};
+use alexandria_bytes::Bytes;
 use contracts::client::gas_router_component::{
     GasRouterComponent, GasRouterComponent::InternalTrait as GasRouterComponentInternalTrait,
 };

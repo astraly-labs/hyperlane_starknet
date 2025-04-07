@@ -7,27 +7,22 @@ use contracts::utils::utils::U256TryIntoContractAddress;
 use core::integer::BoundedInt;
 use mocks::{
     mock_eth::{MockEthDispatcher, MockEthDispatcherTrait},
-    mock_mailbox::{IMockMailboxDispatcher, IMockMailboxDispatcherTrait},
-    test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},
-    test_interchain_gas_payment::{
-        ITestInterchainGasPaymentDispatcher, ITestInterchainGasPaymentDispatcherTrait,
-    },
+    mock_mailbox::IMockMailboxDispatcher,
+    test_erc20::ITestERC20DispatcherTrait,
+    test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait,
     test_post_dispatch_hook::{
         ITestPostDispatchHookDispatcher, ITestPostDispatchHookDispatcherTrait,
     },
 };
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
-    CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare, spy_events,
+    CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare,
 };
 use starknet::ContractAddress;
 use super::common::{
-    ALICE, BOB, DECIMALS, DESTINATION, E18, GAS_LIMIT, IHypERC20TestDispatcher,
-    IHypERC20TestDispatcherTrait, ORIGIN, REQUIRED_VALUE, Setup, TOTAL_SUPPLY, TRANSFER_AMT,
-    enroll_local_router, enroll_remote_router, perform_remote_transfer_and_gas,
-    perform_remote_transfer_with_emit, set_custom_gas_config, setup,
+    ALICE, BOB, DESTINATION, E18, GAS_LIMIT, IHypERC20TestDispatcher,
+    IHypERC20TestDispatcherTrait, ORIGIN, REQUIRED_VALUE, Setup, TRANSFER_AMT, setup,
 };
-use token::hyp_erc20_collateral::HypErc20Collateral;
 
 fn setup_hyp_erc20_collateral() -> (IHypERC20TestDispatcher, Setup) {
     let setup = setup();

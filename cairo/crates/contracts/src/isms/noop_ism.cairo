@@ -2,8 +2,8 @@
 pub mod noop_ism {
     use alexandria_bytes::Bytes;
     use contracts::interfaces::{
-        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait, ModuleType,
+        IInterchainSecurityModule,
+        ModuleType,
     };
     use contracts::libs::message::Message;
     #[storage]

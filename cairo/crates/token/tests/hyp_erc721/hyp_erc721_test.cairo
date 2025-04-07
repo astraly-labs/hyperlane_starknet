@@ -1,11 +1,10 @@
 use alexandria_bytes::BytesTrait;
 use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use super::common::{
-    setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
+    setup, DESTINATION, INITIAL_SUPPLY, Setup,
     IHypErc721TestDispatcherTrait, ALICE, BOB, deploy_remote_token, perform_remote_transfer,
     test_transfer_with_hook_specified, FEE_CAP
 };
-use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 
 fn hyp_erc721_setup() -> Setup {
     let mut setup = setup();

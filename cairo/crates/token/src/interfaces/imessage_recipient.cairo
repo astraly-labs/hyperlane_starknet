@@ -1,5 +1,4 @@
 use alexandria_bytes::Bytes;
-use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IMessageRecipient<TState> {

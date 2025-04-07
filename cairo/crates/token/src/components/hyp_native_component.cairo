@@ -1,5 +1,3 @@
-use starknet::ContractAddress;
-
 #[starknet::interface]
 pub trait IHypNative<TState> {
     fn receive(ref self: TState, amount: u256);

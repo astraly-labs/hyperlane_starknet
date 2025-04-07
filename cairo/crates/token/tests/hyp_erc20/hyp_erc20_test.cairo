@@ -98,7 +98,8 @@ fn test_erc20_remote_transfer_with_custom_gas_config() {
 }
 
 #[test]
-fn test_erc20_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
+#[fuzzer]
+fn test_fuzz_erc20_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
     let fee = fee % (TRANSFER_AMT / 10);
     let mut metadata_bytes = BytesTrait::new_empty();
     metadata_bytes.append_u16(VARIANT);

@@ -72,9 +72,8 @@ fn test_fiat_token_remote_transfer_with_custom_gas_config() {
 
     let gas_price = setup.igp.gas_price();
 
-    start_prank(CheatTarget::One((setup).primary_token.contract_address), ALICE());
+    cheat_caller_address(setup.primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     setup.primary_token.approve(setup.local_token.contract_address, TRANSFER_AMT);
-    stop_prank(CheatTarget::One(setup.primary_token.contract_address));
 
     let balance_before = setup.local_token.balance_of(ALICE());
     perform_remote_transfer_and_gas(@setup, REQUIRED_VALUE, TRANSFER_AMT, GAS_LIMIT * gas_price);
@@ -89,6 +88,7 @@ fn test_fiat_token_remote_transfer_with_custom_gas_config() {
 }
 
 #[test]
+#[fuzzer]
 fn test_fiat_token_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
     let fee = fee % (TRANSFER_AMT / 10);
     let mut metadata_bytes = BytesTrait::new_empty();
@@ -96,9 +96,8 @@ fn test_fiat_token_remote_transfer_with_hook_specified(mut fee: u256, metadata: 
     metadata_bytes.append_u256(metadata);
     let setup = fiat_token_setup();
 
-    start_prank(CheatTarget::One((setup).primary_token.contract_address), ALICE());
+    cheat_caller_address(setup.primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     setup.primary_token.approve(setup.local_token.contract_address, TRANSFER_AMT);
-    stop_prank(CheatTarget::One(setup.primary_token.contract_address));
 
     let balance_before = setup.local_token.balance_of(ALICE());
     test_transfer_with_hook_specified(@setup, fee, metadata_bytes);

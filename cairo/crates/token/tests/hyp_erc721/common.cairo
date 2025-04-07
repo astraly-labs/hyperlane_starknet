@@ -255,6 +255,7 @@ pub fn setup() -> Setup {
         eth_token,
         alice,
         bob,
+        test_post_dispatch_hook_contract: *test_post_dispatch_hook_contract,
     }
 }
 
@@ -317,6 +318,25 @@ pub fn perform_remote_transfer(setup: @Setup, msg_value: u256, token_id: u256) {
         );
     process_transfer(setup, (*setup).bob, token_id);
     assert_eq!((*setup).remote_token.balance_of((*setup).bob), 1);
+}
+
+pub fn perform_remote_transfer_and_gas_with_hook(
+    setup: @Setup, msg_value: u256, token_id: u256, hook: ContractAddress, hook_metadata: Bytes
+) -> u256 {
+    let alice_address: felt252 = (*setup).alice.into();
+    let message_id = (*setup)
+        .local_token
+        .transfer_remote(
+            DESTINATION,
+            alice_address.into(),
+            token_id,
+            msg_value,
+            Option::Some(hook_metadata),
+            Option::Some(hook)
+        );
+    process_transfer(setup, (*setup).bob, token_id);
+    assert_eq!((*setup).remote_token.balance_of((*setup).bob), 1);
+    message_id
 }
 
 pub fn test_transfer_with_hook_specified(

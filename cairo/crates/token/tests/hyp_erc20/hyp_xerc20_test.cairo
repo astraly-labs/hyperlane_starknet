@@ -9,7 +9,10 @@ use mocks::{
     },
 };
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
-use snforge_std::{declare, ContractClassTrait, CheatTarget, start_prank, stop_prank,};
+use snforge_std::{
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, EventSpy,
+    EventSpyAssertionsTrait, cheat_caller_address, declare, spy_events,
+};
 use starknet::ContractAddress;
 use super::common::{
     Setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, ALICE, BOB, E18, REQUIRED_VALUE, GAS_LIMIT,
@@ -43,8 +46,8 @@ fn setup_xerc20() -> Setup {
         )
         .unwrap();
     setup.local_token = IHypERC20TestDispatcher { contract_address: local_token };
-    cheat_caller_address(setup.eth_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
 
+    cheat_caller_address(setup.eth_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     ITestERC20Dispatcher { contract_address: setup.eth_token.contract_address }
         .approve(local_token, BoundedInt::max());
 
@@ -69,6 +72,7 @@ fn setup_xerc20() -> Setup {
 fn test_remote_transfer() {
     let mut setup = setup_xerc20();
     let xerc20 = setup.local_token;
+
     cheat_caller_address(
         (setup).primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1),
     );
@@ -119,6 +123,7 @@ fn test_erc20_remote_transfer_with_custom_gas_config() {
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_erc20_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
     let fee = fee % (TRANSFER_AMT / 10);
     let mut metadata_bytes = BytesTrait::new_empty();

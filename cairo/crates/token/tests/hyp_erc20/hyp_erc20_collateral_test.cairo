@@ -119,13 +119,12 @@ pub fn perform_remote_transfer_collateral_and_gas_with_hook(
     hook: ContractAddress,
     hook_metadata: Bytes
 ) -> u256 {
+    cheat_caller_address(*setup.primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     // Approve
-    start_prank(CheatTarget::One(*setup.primary_token.contract_address), ALICE());
     (*setup.primary_token).approve(*collateral.contract_address, amount);
-    stop_prank(CheatTarget::One(*setup.primary_token.contract_address));
 
     // Remote transfer
-    start_prank(CheatTarget::One(*collateral.contract_address), ALICE());
+    cheat_caller_address(*collateral.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     let bob_felt: felt252 = BOB().into();
     let bob_address: u256 = bob_felt.into();
     let message_id = (*collateral)
@@ -144,8 +143,6 @@ pub fn perform_remote_transfer_collateral_and_gas_with_hook(
         contract_address: (*setup).remote_token.contract_address
     };
     assert_eq!(remote_token.balance_of(BOB()), amount);
-
-    stop_prank(CheatTarget::One(*collateral.contract_address));
     message_id
 }
 
@@ -168,9 +165,8 @@ pub fn test_transfer_collateral_with_hook_specified(
 fn test_remote_transfer() {
     let (collateral, setup) = setup_hyp_erc20_collateral();
     let balance_before = collateral.balance_of(ALICE());
-    start_prank(CheatTarget::One(collateral.contract_address), ALICE());
+    cheat_caller_address(collateral.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     perform_remote_transfer_collateral(@setup, @collateral, REQUIRED_VALUE, TRANSFER_AMT, true);
-    stop_prank(CheatTarget::One(collateral.contract_address));
     // Check balance after transfer
     assert_eq!(
         collateral.balance_of(ALICE()),
@@ -183,9 +179,8 @@ fn test_remote_transfer() {
 #[should_panic]
 fn test_remote_transfer_invalid_allowance() {
     let (collateral, setup) = setup_hyp_erc20_collateral();
-    start_prank(CheatTarget::One(collateral.contract_address), ALICE());
+    cheat_caller_address(collateral.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     perform_remote_transfer_collateral(@setup, @collateral, REQUIRED_VALUE, TRANSFER_AMT, false);
-    stop_prank(CheatTarget::One(collateral.contract_address));
 }
 
 #[test]
@@ -220,7 +215,8 @@ fn test_remote_transfer_with_custom_gas_config() {
 }
 
 #[test]
-fn test_erc20_remote_transfer_collateral_with_hook_specified(mut fee: u256, metadata: u256) {
+#[fuzzer]
+fn test_fuzz_erc20_remote_transfer_collateral_with_hook_specified(mut fee: u256, metadata: u256) {
     let fee = fee % (TRANSFER_AMT / 10);
     let mut metadata_bytes = BytesTrait::new_empty();
     metadata_bytes.append_u16(VARIANT);

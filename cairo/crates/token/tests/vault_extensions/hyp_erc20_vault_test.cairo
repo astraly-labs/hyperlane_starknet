@@ -6,17 +6,15 @@ use mocks::mock_mailbox::{IMockMailboxDispatcher, IMockMailboxDispatcherTrait};
 use mocks::{test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait}};
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{
-    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, EventSpy,
-    EventSpyAssertionsTrait, cheat_caller_address, declare, spy_events,
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare,
     start_cheat_caller_address_global, stop_cheat_caller_address_global,
 };
 use starknet::ContractAddress;
 use super::super::hyp_erc20::common;
 use super::super::hyp_erc20::common::{
-    ALICE, BOB, CAROL, DANIEL, DECIMALS, DESTINATION, E18, IHypERC20TestDispatcher,
-    IHypERC20TestDispatcherTrait, ORIGIN, REQUIRED_VALUE, Setup, TOTAL_SUPPLY, TRANSFER_AMT,
-    connect_routers, enroll_local_router, enroll_remote_router, handle_local_transfer,
-    mint_and_approve, perform_remote_transfer, perform_remote_transfer_and_gas,
+    ALICE, BOB, CAROL, DANIEL, DESTINATION, E18, IHypERC20TestDispatcher,
+    IHypERC20TestDispatcherTrait, ORIGIN, Setup, TOTAL_SUPPLY, TRANSFER_AMT,
+    connect_routers,
 };
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 use token::extensions::{

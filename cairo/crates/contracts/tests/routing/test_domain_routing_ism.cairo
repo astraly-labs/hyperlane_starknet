@@ -3,8 +3,7 @@ use contracts::interfaces::{
     IDomainRoutingIsmDispatcher, IDomainRoutingIsmDispatcherTrait,
     IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
     IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IMailboxDispatcher,
-    IMailboxDispatcherTrait, IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait,
-    IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait, ModuleType,
+    IMailboxDispatcherTrait, IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, ModuleType,
 };
 use contracts::libs::message::{HYPERLANE_VERSION, Message};
 use contracts::utils::utils::U256TryIntoContractAddress;

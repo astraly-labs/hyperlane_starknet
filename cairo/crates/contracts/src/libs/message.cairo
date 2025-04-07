@@ -1,10 +1,8 @@
 use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
 use alexandria_math::BitShift;
 use contracts::utils::keccak256::{
-    ADDRESS_SIZE, ByteData, compute_keccak, reverse_endianness, u128_mask, u256_word_size,
-    u64_word_size,
+    ByteData, compute_keccak, reverse_endianness, u128_mask,
 };
-use starknet::{ContractAddress, contract_address_const};
 
 pub const HYPERLANE_VERSION: u8 = 3;
 

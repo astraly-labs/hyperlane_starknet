@@ -8,7 +8,7 @@ use contracts::interfaces::{
 };
 use contracts::libs::message::{HYPERLANE_VERSION, Message};
 use contracts::utils::utils::U256TryIntoContractAddress;
-use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
+use openzeppelin::access::ownable::interface::IOwnableDispatcher;
 use snforge_std::{CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare};
 use starknet::{ContractAddress, contract_address_const};
 use super::super::setup::{

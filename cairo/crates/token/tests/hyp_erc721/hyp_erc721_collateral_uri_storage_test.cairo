@@ -1,19 +1,15 @@
-use alexandria_bytes::{Bytes, BytesTrait};
-use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
+use alexandria_bytes::BytesTrait;
 use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use mocks::test_erc721::{ITestERC721Dispatcher, ITestERC721DispatcherTrait};
 use snforge_std::{
-    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, EventSpy,
-    EventSpyAssertionsTrait, cheat_caller_address, declare, spy_events,
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, declare,
 };
-use starknet::ContractAddress;
 use super::common::{
     setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
-    IHypErc721TestDispatcherTrait, ALICE, BOB, deploy_remote_token, perform_remote_transfer,
-    ZERO_ADDRESS, NAME, SYMBOL, URI, TRANSFER_ID, process_transfer, FEE_CAP,
+    IHypErc721TestDispatcherTrait, deploy_remote_token,
+    TRANSFER_ID, process_transfer, FEE_CAP,
     test_transfer_with_hook_specified
 };
-use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 
 fn setup_erc721_collateral_uri_storage() -> Setup {
     let mut setup = setup();

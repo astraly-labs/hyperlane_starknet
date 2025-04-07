@@ -18,7 +18,6 @@ pub mod TestPostDispatchHook {
         StandardHookMetadata, VARIANT,
     };
     use contracts::libs::message::{Message, MessageTrait};
-    use core::keccak::keccak_u256s_le_inputs;
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
         StoragePointerWriteAccess,

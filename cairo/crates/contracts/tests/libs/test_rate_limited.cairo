@@ -1,10 +1,9 @@
 use contracts::libs::rate_limited::{
     IRateLimitedDispatcher, IRateLimitedDispatcherTrait, IRateLimitedSafeDispatcher,
     IRateLimitedSafeDispatcherTrait, RateLimitedComponent,
-    RateLimitedComponent::InternalTrait as RateLimitedInternalTrait,
 };
 use core::num::traits::Bounded;
-use core::num::traits::{One, Zero};
+use core::num::traits::One;
 use core::ops::RemAssign;
 use snforge_std::{
     CheatSpan, ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait,

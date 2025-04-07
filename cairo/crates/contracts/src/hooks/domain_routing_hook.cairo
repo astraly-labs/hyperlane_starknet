@@ -6,7 +6,7 @@ pub mod domain_routing_hook {
     use contracts::client::mailboxclient_component::{
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
     };
-    use contracts::client::{mailboxclient};
+    use contracts::client::mailboxclient;
     use contracts::interfaces::{
         DomainRoutingHookConfig, IDomainRoutingHook, IPostDispatchHook, IPostDispatchHookDispatcher,
         IPostDispatchHookDispatcherTrait, Types,

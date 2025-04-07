@@ -7,7 +7,6 @@ pub mod ism {
     };
     use contracts::libs::message::{Message, MessageTrait};
     use starknet::ContractAddress;
-    use starknet::EthAddress;
 
     #[storage]
     struct Storage {}

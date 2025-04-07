@@ -2,9 +2,7 @@ use alexandria_math::BitShift;
 use contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
 use core::byte_array::{ByteArray, ByteArrayTrait};
 use core::integer::u128_byte_reverse;
-use core::keccak::cairo_keccak;
 use core::starknet::SyscallResultTrait;
-use core::to_byte_array::{AppendFormattedToByteArray, FormatAsByteArray};
 use starknet::{EthAddress, eth_signature::is_eth_signature_valid, secp256_trait::Signature};
 
 pub const ETH_SIGNED_MESSAGE: felt252 = '\x19Ethereum Signed Message:\n32';

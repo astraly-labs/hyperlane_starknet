@@ -1,4 +1,4 @@
-use alexandria_bytes::{Bytes, BytesTrait};
+use alexandria_bytes::BytesTrait;
 use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use core::integer::BoundedInt;
 use mocks::xerc20_test::{XERC20Test, IXERC20TestDispatcher, IXERC20TestDispatcherTrait};
@@ -10,14 +10,14 @@ use mocks::{
 };
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
-    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, EventSpy,
-    EventSpyAssertionsTrait, cheat_caller_address, declare, spy_events,
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait,
+    EventSpyAssertionsTrait, cheat_caller_address, declare,
 };
 use starknet::ContractAddress;
 use super::common::{
-    Setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, ALICE, BOB, E18, REQUIRED_VALUE, GAS_LIMIT,
+    Setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, ALICE, E18, REQUIRED_VALUE, GAS_LIMIT,
     DESTINATION, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, setup,
-    perform_remote_transfer_and_gas, enroll_remote_router, enroll_local_router,
+    perform_remote_transfer_and_gas,
     perform_remote_transfer, handle_local_transfer, test_transfer_with_hook_specified,
     set_custom_gas_config
 };

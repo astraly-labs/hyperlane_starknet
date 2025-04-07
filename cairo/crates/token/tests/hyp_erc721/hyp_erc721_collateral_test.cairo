@@ -8,7 +8,7 @@ use snforge_std::cheatcodes::contract_class::{ContractClass, ContractClassTrait}
 use starknet::ContractAddress;
 use super::common::{
     setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
-    IHypErc721TestDispatcherTrait, ALICE, BOB, deploy_remote_token, perform_remote_transfer,
+    IHypErc721TestDispatcherTrait, deploy_remote_token, perform_remote_transfer,
     ZERO_ADDRESS, test_transfer_with_hook_specified, FEE_CAP
 };
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};

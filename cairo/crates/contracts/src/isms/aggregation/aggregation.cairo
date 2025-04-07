@@ -2,7 +2,7 @@
 pub mod aggregation {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::interfaces::{
-        IAggregation, IAggregationDispatcher, IAggregationDispatcherTrait,
+        IAggregation,
         IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, ModuleType,
     };

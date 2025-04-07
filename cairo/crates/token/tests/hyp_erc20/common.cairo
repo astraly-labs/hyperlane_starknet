@@ -21,8 +21,7 @@ use mocks::{
 };
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
-    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, EventSpy,
-    EventSpyAssertionsTrait, cheat_caller_address, declare, spy_events,
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare
 };
 use starknet::ContractAddress;
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};

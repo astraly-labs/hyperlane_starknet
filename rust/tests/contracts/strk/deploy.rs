@@ -16,7 +16,7 @@ pub async fn deploy_core(
     domain: u32,
     default_ism: Ism,
     default_hook: Hook,
-    required_hook: Hook,
+    _required_hook: Hook,
 ) -> eyre::Result<CoreDeployments> {
     // set default ism, hook, igp
     println!("\n==> Deploying default ism, hook, igp");

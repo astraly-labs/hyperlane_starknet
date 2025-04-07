@@ -26,7 +26,7 @@ pub trait ITokenRouter<TState> {
 
 #[starknet::component]
 pub mod TokenRouterComponent {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_bytes::Bytes;
     use contracts::client::gas_router_component::{
         GasRouterComponent, GasRouterComponent::GasRouterInternalImpl,
     };

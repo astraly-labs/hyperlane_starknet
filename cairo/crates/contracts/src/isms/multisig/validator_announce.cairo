@@ -12,7 +12,7 @@ pub mod validator_announce {
     use contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
     use contracts::utils::keccak256::{
         ByteData, HASH_SIZE, bool_is_eth_signature_valid, compute_keccak, reverse_endianness,
-        to_eth_signature, u256_word_size, u64_word_size,
+        to_eth_signature, u256_word_size,
     };
     use contracts::utils::store_arrays::StoreFelt252Array;
     use core::poseidon::poseidon_hash_span;

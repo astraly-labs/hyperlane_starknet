@@ -6,10 +6,6 @@ mod mailboxClientProxy {
     use openzeppelin::access::ownable::ownable::OwnableComponent::InternalTrait;
     use openzeppelin::access::ownable::{OwnableComponent};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use starknet::storage::{
-        StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
-        StoragePointerWriteAccess,
-    };
     use starknet::{ClassHash, ContractAddress};
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);

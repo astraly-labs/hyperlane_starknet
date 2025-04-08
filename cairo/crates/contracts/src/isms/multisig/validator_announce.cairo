@@ -6,9 +6,7 @@ pub mod validator_announce {
         MailboxclientComponent, MailboxclientComponent::MailboxClientImpl,
         MailboxclientComponent::MailboxClientInternalImpl,
     };
-    use contracts::interfaces::{
-        IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IValidatorAnnounce,
-    };
+    use contracts::interfaces::IValidatorAnnounce;
     use contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
     use contracts::utils::keccak256::{
         ByteData, HASH_SIZE, bool_is_eth_signature_valid, compute_keccak, reverse_endianness,

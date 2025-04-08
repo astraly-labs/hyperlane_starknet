@@ -10,8 +10,7 @@ pub trait IPausableIsm<TContractState> {
 pub mod pausable_ism {
     use alexandria_bytes::Bytes;
     use contracts::interfaces::{
-        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait, ModuleType,
+        IInterchainSecurityModule, ModuleType,
     };
     use contracts::libs::message::Message;
     use openzeppelin::access::ownable::OwnableComponent;

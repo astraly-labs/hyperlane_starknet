@@ -1,17 +1,14 @@
 use alexandria_bytes::BytesTrait;
-use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
 use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use core::integer::BoundedInt;
-use mocks::test_erc721::{ITestERC721Dispatcher, ITestERC721DispatcherTrait};
+use mocks::test_erc721::ITestERC721DispatcherTrait;
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
-use snforge_std::cheatcodes::contract_class::{ContractClass, ContractClassTrait};
-use starknet::ContractAddress;
+use snforge_std::cheatcodes::contract_class::ContractClassTrait;
 use super::common::{
     setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
     IHypErc721TestDispatcherTrait, deploy_remote_token, perform_remote_transfer,
-    ZERO_ADDRESS, test_transfer_with_hook_specified, FEE_CAP
+    test_transfer_with_hook_specified, FEE_CAP
 };
-use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 
 fn setup_erc721_collateral() -> Setup {
     let mut setup = setup();

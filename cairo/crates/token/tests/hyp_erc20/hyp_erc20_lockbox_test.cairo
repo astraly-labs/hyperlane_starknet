@@ -4,9 +4,9 @@ use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARI
 use core::integer::BoundedInt;
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
 use mocks::{
-    test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},
-    xerc20_lockbox_test::{IXERC20LockboxTestDispatcher, IXERC20LockboxTestDispatcherTrait},
-    xerc20_test::{IXERC20TestDispatcher, IXERC20TestDispatcherTrait},
+    test_erc20::ITestERC20DispatcherTrait,
+    xerc20_lockbox_test::IXERC20LockboxTestDispatcher,
+    xerc20_test::IXERC20TestDispatcher,
     test_post_dispatch_hook::{
         ITestPostDispatchHookDispatcher, ITestPostDispatchHookDispatcherTrait
     },

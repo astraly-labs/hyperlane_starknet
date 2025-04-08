@@ -2,8 +2,7 @@
 pub mod trusted_relayer_ism {
     use alexandria_bytes::Bytes;
     use contracts::interfaces::{
-        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait, IMailboxDispatcher, IMailboxDispatcherTrait,
+        IInterchainSecurityModule, IMailboxDispatcher, IMailboxDispatcherTrait,
         ModuleType,
     };
     use contracts::libs::message::{Message, MessageTrait};

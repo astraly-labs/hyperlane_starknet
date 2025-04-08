@@ -3,8 +3,7 @@ use mocks::erc4626_yield_sharing_mock::{
     IERC4626YieldSharingDispatcher, IERC4626YieldSharingDispatcherTrait,
 };
 use mocks::mock_mailbox::{IMockMailboxDispatcher, IMockMailboxDispatcherTrait};
-use mocks::{test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait}};
-use openzeppelin::access::ownable::interface::IOwnableDispatcherTrait;
+use mocks::test_erc20::ITestERC20DispatcherTrait;
 use snforge_std::{
     CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare,
     start_cheat_caller_address_global, stop_cheat_caller_address_global,
@@ -12,7 +11,7 @@ use snforge_std::{
 use starknet::ContractAddress;
 use super::super::hyp_erc20::common;
 use super::super::hyp_erc20::common::{
-    ALICE, BOB, CAROL, DANIEL, DESTINATION, E18, IHypERC20TestDispatcher,
+    ALICE, BOB, CAROL, DANIEL, DESTINATION, E18,
     IHypERC20TestDispatcherTrait, ORIGIN, Setup, TOTAL_SUPPLY, TRANSFER_AMT,
     connect_routers,
 };

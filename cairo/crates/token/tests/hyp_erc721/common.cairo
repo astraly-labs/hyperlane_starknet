@@ -2,7 +2,6 @@ use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::client::gas_router_component::{
     GasRouterComponent::GasRouterConfig,
 };
-use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
 use contracts::interfaces::ETH_ADDRESS;
 use core::integer::BoundedInt;
 use mocks::{

@@ -45,9 +45,8 @@ pub mod MockMailbox {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::interfaces::{
         IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-        IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
-        IMessageRecipientDispatcherTrait, ISpecifiesInterchainSecurityModuleDispatcher,
-        ISpecifiesInterchainSecurityModuleDispatcherTrait,
+        IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
+        IMessageRecipientDispatcherTrait,
     };
     use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
     use contracts::utils::utils::U256TryIntoContractAddress;

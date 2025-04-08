@@ -57,7 +57,7 @@ pub impl MessageImpl of MessageTrait {
             ByteData { value: _message.recipient, size: 32 },
         ];
         let message_data = _message.clone().body.data();
-        let finalized_input = MessageImpl::append_span_u128_to_byte_data(
+        let finalized_input = Self::append_span_u128_to_byte_data(
             input, message_data.span(), _message.clone().body.size(),
         );
         (reverse_endianness(compute_keccak(finalized_input)), _message)

@@ -26,7 +26,7 @@ pub mod RouterComponent {
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
     };
     use contracts::interfaces::{
-        ETH_ADDRESS, IMailboxClient, IMailboxDispatcher, IMailboxDispatcherTrait,
+        ETH_ADDRESS, IMailboxDispatcherTrait,
     };
     use contracts::libs::enumerable_map::{EnumerableMap, EnumerableMapTrait};
     use openzeppelin::access::ownable::{
@@ -34,10 +34,7 @@ pub mod RouterComponent {
     };
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::ContractAddress;
-    use starknet::storage::{
-        StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
-        StoragePointerWriteAccess,
-    };
+    use starknet::storage::StoragePointerReadAccess;
 
     #[storage]
     pub struct Storage {

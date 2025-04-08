@@ -4,7 +4,6 @@ pub mod MailboxclientComponent {
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalImpl, OwnableComponent::OwnableImpl,
     };
-    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, contract_address_const};
 

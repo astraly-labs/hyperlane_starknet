@@ -2,15 +2,14 @@
 pub mod messageid_multisig_ism {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::interfaces::{
-        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration, ModuleType,
+        IInterchainSecurityModule, IValidatorConfiguration, ModuleType,
     };
     use contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
     use contracts::libs::message::{Message, MessageTrait};
     use contracts::libs::multisig::message_id_ism_metadata::message_id_ism_metadata::MessageIdIsmMetadata;
     use contracts::utils::keccak256::bool_is_eth_signature_valid;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
     use starknet::EthAddress;
     use starknet::secp256_trait::{Signature, signature_from_vrs};

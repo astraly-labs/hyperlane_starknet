@@ -1,5 +1,5 @@
 use alexandria_bytes::Bytes;
-use contracts::libs::message::{Message, MessageTrait};
+use contracts::libs::message::Message;
 
 #[starknet::interface]
 pub trait ITestPostDispatchHook<TContractState> {

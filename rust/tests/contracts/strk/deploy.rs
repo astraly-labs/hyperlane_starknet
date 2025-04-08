@@ -1,4 +1,4 @@
-use starknet::{accounts::Account, core::types::FieldElement};
+use starknet::{accounts::Account, core::types::Felt};
 
 use super::{
     bind::mailbox::mailbox,
@@ -56,7 +56,7 @@ pub async fn deploy_core(
         mailbox,
         default_ism,
         default_hook,
-        required_hook: FieldElement::ZERO,
+        required_hook: Felt::ZERO,
         msg_receiver,
     })
 }

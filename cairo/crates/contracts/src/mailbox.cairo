@@ -3,18 +3,14 @@ pub mod mailbox {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::interfaces::{
         ETH_ADDRESS, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-        IMailbox, IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
-        IMessageRecipientDispatcherTrait, IPostDispatchHookDispatcher,
-        IPostDispatchHookDispatcherTrait, ISpecifiesInterchainSecurityModuleDispatcher,
-        ISpecifiesInterchainSecurityModuleDispatcherTrait,
+        IMailbox, IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait,
+        IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
     };
     use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
     use contracts::utils::utils::U256TryIntoContractAddress;
     use core::starknet::event::EventEmitter;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{
-        ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait,
-    };
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
@@ -331,12 +327,12 @@ pub mod mailbox {
             );
 
             if (required_fee > 0) {
-                token_dispatcher.transferFrom(caller_address, required_hook_address, required_fee);
+                token_dispatcher.transfer_from(caller_address, required_hook_address, required_fee);
             }
             required_hook.post_dispatch(hook_metadata.clone(), message.clone(), required_fee);
 
             if (default_fee > 0) {
-                token_dispatcher.transferFrom(caller_address, hook, default_fee);
+                token_dispatcher.transfer_from(caller_address, hook, default_fee);
             }
             hook_dispatcher.post_dispatch(hook_metadata, message, default_fee);
 

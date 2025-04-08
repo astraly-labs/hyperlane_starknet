@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, path::PathBuf};
 
-use starknet::core::types::FieldElement;
+use starknet::core::types::Felt;
 
 use crate::validator::TestValidators;
 
@@ -43,7 +43,7 @@ pub async fn setup_env(domain: u32, validators: &[TestValidators]) -> eyre::Resu
     //     prepare_routing_ism(validators.iter().map(|v| (v.domain, v.clone())).collect());
     let default_ism = Ism::Mock;
 
-    let default_hook = Hook::mock(FieldElement::from(DEFAULT_GAS));
+    let default_hook = Hook::mock(Felt::from(DEFAULT_GAS));
 
     let required_hook = Hook::Aggregate {
         hooks: vec![Hook::Merkle {}],

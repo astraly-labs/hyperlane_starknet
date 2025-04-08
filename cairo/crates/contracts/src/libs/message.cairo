@@ -1,10 +1,6 @@
 use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
 use alexandria_math::BitShift;
-use contracts::utils::keccak256::{
-    ADDRESS_SIZE, ByteData, compute_keccak, reverse_endianness, u128_mask, u256_word_size,
-    u64_word_size,
-};
-use starknet::{ContractAddress, contract_address_const};
+use contracts::utils::keccak256::{ByteData, compute_keccak, reverse_endianness, u128_mask};
 
 pub const HYPERLANE_VERSION: u8 = 3;
 
@@ -59,7 +55,7 @@ pub impl MessageImpl of MessageTrait {
             ByteData { value: _message.recipient, size: 32 },
         ];
         let message_data = _message.clone().body.data();
-        let finalized_input = MessageImpl::append_span_u128_to_byte_data(
+        let finalized_input = Self::append_span_u128_to_byte_data(
             input, message_data.span(), _message.clone().body.size(),
         );
         (reverse_endianness(compute_keccak(finalized_input)), _message)

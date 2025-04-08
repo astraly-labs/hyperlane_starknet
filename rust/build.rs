@@ -54,8 +54,39 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
         String::from("contracts::client::mailboxclient_component::MailboxclientComponent::Event"),
         String::from("MailboxclientEvent"),
     );
+    // aliases.insert(
+    //     String::from("OwnableComponent::Event::OwnershipTransferred"),
+    //     String::from("OwnableOwnershipTransferred"),
+    // );
+    // aliases.insert(
+    //     String::from("OwnableComponent::Event::OwnershipTransferStarted"),
+    //     String::from("OwnableOwnershipTransferStarted"),
+    // );
+    // aliases.insert(
+    //     String::from("UpgradeableComponent::Event::Upgraded"),
+    //     String::from("UpgradeableUpgraded"),
+    // );
+    // aliases.insert(
+    //     String::from("Event"), 
+    //     format!("{}Event", name)
+    // );
+    // aliases.insert(
+    //     String::from("OwnableEvent"),
+    //     String::from("BoxedOwnableEvent"),
+    // );
+    // aliases.insert(
+    //     String::from("UpgradeableEvent"),
+    //     String::from("BoxedUpgradeableEvent"),
+    // );
+    // aliases.insert(
+    //     String::from("MailboxclientEvent"),
+    //     String::from("BoxedMailboxclientEvent"),
+    // );
+    
 
-    let abigen = cainome::rs::Abigen::new(name, abi_file).with_types_aliases(aliases);
+    let abigen = cainome::rs::Abigen::new(name, abi_file)
+        .with_derives(vec!["Debug".to_string()])
+        .with_types_aliases(aliases);
 
     abigen
         .generate()

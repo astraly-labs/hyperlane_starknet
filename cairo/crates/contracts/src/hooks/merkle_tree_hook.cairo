@@ -9,18 +9,15 @@ pub mod merkle_tree_hook {
     use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::{
         StandardHookMetadata, VARIANT,
     };
-    use contracts::interfaces::{
-        IMailboxClient, IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IMailboxDispatcher,
-        IMailboxDispatcherTrait, IMerkleTreeHook, IPostDispatchHook, Types,
-    };
+    use contracts::interfaces::{IMailboxClient, IMerkleTreeHook, IPostDispatchHook, Types};
     use contracts::libs::message::{Message, MessageTrait};
     use contracts::utils::keccak256::{ByteData, HASH_SIZE, compute_keccak, reverse_endianness};
     use openzeppelin::access::ownable::OwnableComponent;
+    use starknet::ContractAddress;
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
         StoragePointerWriteAccess,
     };
-    use starknet::{ClassHash, ContractAddress};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
 

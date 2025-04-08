@@ -1,5 +1,5 @@
 use alexandria_bytes::Bytes;
-use contracts::libs::message::{Message, MessageTrait};
+use contracts::libs::message::Message;
 
 #[starknet::interface]
 pub trait ITestPostDispatchHook<TContractState> {
@@ -18,7 +18,6 @@ pub mod TestPostDispatchHook {
         StandardHookMetadata, VARIANT,
     };
     use contracts::libs::message::{Message, MessageTrait};
-    use core::keccak::keccak_u256s_le_inputs;
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
         StoragePointerWriteAccess,
@@ -52,16 +51,6 @@ pub mod TestPostDispatchHook {
         }
 
         fn post_dispatch(ref self: ContractState, metadata: Bytes, message: Message) {
-            let hash = keccak_u256s_le_inputs(
-                array![
-                    message.nonce.into(),
-                    message.origin.into(),
-                    message.sender,
-                    message.destination.into(),
-                    message.recipient,
-                ]
-                    .span(),
-            );
             assert(self.supports_metadata(metadata.clone()), Errors::INVALID_METADATA_VARIANT);
             let (hash, _) = MessageTrait::format_message(message);
             self.message_dispatched.write(hash, true);

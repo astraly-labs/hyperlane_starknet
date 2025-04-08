@@ -1,12 +1,12 @@
 #[starknet::contract]
 pub mod HypFiatToken {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_bytes::Bytes;
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
     use contracts::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
+    use openzeppelin::token::erc20::interface::ERC20ABIDispatcher;
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;

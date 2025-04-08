@@ -13,7 +13,6 @@ pub mod HypErc20Component {
         interface::IERC20Metadata,
     };
 
-    use starknet::ContractAddress;
     use token::components::token_router::{
         TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
     };

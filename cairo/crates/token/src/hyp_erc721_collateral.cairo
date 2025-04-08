@@ -1,11 +1,10 @@
 #[starknet::contract]
 pub mod HypErc721Collateral {
-    use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait};
+    use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher};
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;

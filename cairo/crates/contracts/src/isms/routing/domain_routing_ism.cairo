@@ -5,7 +5,7 @@ pub mod domain_routing_ism {
         IDomainRoutingIsm, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, IRoutingIsm, ModuleType,
     };
-    use contracts::libs::message::{Message, MessageTrait};
+    use contracts::libs::message::Message;
     use core::panic_with_felt252;
 
     use openzeppelin::access::ownable::OwnableComponent;

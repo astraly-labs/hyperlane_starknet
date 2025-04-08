@@ -5,10 +5,9 @@ use contracts::interfaces::{
     IValidatorConfigurationDispatcherTrait, ModuleType,
 };
 use contracts::isms::aggregation::aggregation;
-use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
+use contracts::libs::message::{HYPERLANE_VERSION, Message};
 use contracts::utils::utils::U256TryIntoContractAddress;
 
-use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{
     CheatSpan, ContractClassTrait, DeclareResultTrait, EventSpy, cheat_caller_address,

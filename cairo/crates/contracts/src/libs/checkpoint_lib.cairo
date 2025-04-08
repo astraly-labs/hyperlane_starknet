@@ -1,9 +1,7 @@
 pub mod checkpoint_lib {
-    use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
-    use contracts::libs::message::Message;
+    use alexandria_bytes::BytesStore;
     use contracts::utils::keccak256::{
-        ByteData, HASH_SIZE, compute_keccak, reverse_endianness, to_eth_signature, u256_word_size,
-        u64_word_size,
+        ByteData, HASH_SIZE, compute_keccak, reverse_endianness, to_eth_signature,
     };
 
 
@@ -41,7 +39,7 @@ pub mod checkpoint_lib {
             _checkpoint_index: u32,
             _message_id: u256,
         ) -> u256 {
-            let domain_hash = CheckpointLibImpl::domain_hash(_origin, _origin_merkle_tree_hook);
+            let domain_hash = Self::domain_hash(_origin, _origin_merkle_tree_hook);
             let mut input: Array<ByteData> = array![
                 ByteData { value: domain_hash.into(), size: HASH_SIZE },
                 ByteData { value: _checkpoint_root.into(), size: 32 },

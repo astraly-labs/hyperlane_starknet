@@ -1,6 +1,6 @@
 pub mod aggregation_ism_metadata {
     use alexandria_bytes::{Bytes, BytesTrait};
-    use core::result::{Result, ResultTrait};
+    use core::result::Result;
 
     pub trait AggregationIsmMetadata {
         fn metadata_at(_metadata: Bytes, _index: u8) -> Bytes;
@@ -78,7 +78,7 @@ pub mod aggregation_ism_metadata {
 
 #[cfg(test)]
 mod test {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_bytes::BytesTrait;
     use super::aggregation_ism_metadata::AggregationIsmMetadata;
 
     #[test]

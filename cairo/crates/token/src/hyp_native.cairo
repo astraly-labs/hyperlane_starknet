@@ -1,6 +1,5 @@
 #[starknet::contract]
 pub mod HypNative {
-    use alexandria_bytes::bytes::{Bytes, BytesTrait};
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
@@ -13,7 +12,6 @@ pub mod HypNative {
     };
     use token::components::token_router::{
         TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
-        TokenRouterComponent::TokenRouterHooksTrait,
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);

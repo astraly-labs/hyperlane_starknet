@@ -1,16 +1,21 @@
+use alexandria_bytes::BytesTrait;
+use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use core::integer::BoundedInt;
 use mocks::xerc20_test::{IXERC20TestDispatcher, IXERC20TestDispatcherTrait, XERC20Test};
-use mocks::{test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait}};
-use snforge_std::{
-    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, EventSpy,
-    EventSpyAssertionsTrait, cheat_caller_address, declare, spy_events,
+use mocks::{
+    test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},
+    test_interchain_gas_payment::{
+        ITestInterchainGasPaymentDispatcher, ITestInterchainGasPaymentDispatcherTrait,
+    },
 };
+use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
+use snforge_std::{CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare};
 use starknet::ContractAddress;
 use super::common::{
-    ALICE, BOB, DECIMALS, DESTINATION, E18, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait,
-    ORIGIN, REQUIRED_VALUE, Setup, TOTAL_SUPPLY, TRANSFER_AMT, enroll_local_router,
-    enroll_remote_router, handle_local_transfer, perform_remote_transfer,
-    perform_remote_transfer_and_gas, setup,
+    ALICE, DECIMALS, DESTINATION, E18, GAS_LIMIT, IHypERC20TestDispatcher,
+    IHypERC20TestDispatcherTrait, ORIGIN, REQUIRED_VALUE, Setup, TOTAL_SUPPLY, TRANSFER_AMT,
+    handle_local_transfer, perform_remote_transfer, perform_remote_transfer_and_gas,
+    set_custom_gas_config, setup, test_transfer_with_hook_specified,
 };
 
 fn setup_xerc20() -> Setup {
@@ -37,8 +42,8 @@ fn setup_xerc20() -> Setup {
         )
         .unwrap();
     setup.local_token = IHypERC20TestDispatcher { contract_address: local_token };
-    cheat_caller_address(setup.eth_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
 
+    cheat_caller_address(setup.eth_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     ITestERC20Dispatcher { contract_address: setup.eth_token.contract_address }
         .approve(local_token, BoundedInt::max());
 
@@ -63,6 +68,7 @@ fn setup_xerc20() -> Setup {
 fn test_remote_transfer() {
     let mut setup = setup_xerc20();
     let xerc20 = setup.local_token;
+
     cheat_caller_address(
         (setup).primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1),
     );
@@ -90,4 +96,40 @@ fn test_handle() {
 
     assert_eq!(total_supply_after, total_supply_before + TRANSFER_AMT);
     assert_eq!(balance_after, balance_before + TRANSFER_AMT);
+}
+
+#[test]
+fn test_erc20_remote_transfer_with_custom_gas_config() {
+    let mut setup = setup_xerc20();
+    let xerc20 = setup.local_token;
+
+    set_custom_gas_config(@setup);
+
+    let gas_price = setup.igp.gas_price();
+    let balance_before = xerc20.balance_of(ALICE());
+    perform_remote_transfer_and_gas(@setup, REQUIRED_VALUE, TRANSFER_AMT, GAS_LIMIT * gas_price);
+    let balance_after = xerc20.balance_of(ALICE());
+    assert_eq!(balance_after, balance_before - TRANSFER_AMT);
+    let eth_dispatcher = IERC20Dispatcher { contract_address: setup.eth_token.contract_address };
+    assert_eq!(
+        eth_dispatcher.balance_of(setup.igp.contract_address),
+        GAS_LIMIT * gas_price,
+        "Gas fee didnt transferred",
+    );
+}
+
+#[test]
+#[fuzzer]
+fn test_fuzz_erc20_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
+    let fee = fee % (TRANSFER_AMT / 10);
+    let mut metadata_bytes = BytesTrait::new_empty();
+    metadata_bytes.append_u16(VARIANT);
+    metadata_bytes.append_u256(metadata);
+    let mut setup = setup_xerc20();
+    let xerc20 = setup.local_token;
+
+    let balance_before = xerc20.balance_of(ALICE());
+    test_transfer_with_hook_specified(@setup, fee, metadata_bytes);
+    let balance_after = xerc20.balance_of(ALICE());
+    assert_eq!(balance_after, balance_before - TRANSFER_AMT);
 }

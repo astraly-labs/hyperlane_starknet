@@ -25,7 +25,6 @@ pub mod HypErc721 {
         TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
         TokenRouterComponent::TokenRouterHooksTrait, TokenRouterTransferRemoteHookDefaultImpl,
     };
-    use token::interfaces::imessage_recipient::IMessageRecipient;
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);

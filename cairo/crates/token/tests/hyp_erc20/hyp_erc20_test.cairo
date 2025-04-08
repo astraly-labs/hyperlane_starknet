@@ -1,13 +1,15 @@
+use alexandria_bytes::BytesTrait;
+use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
+use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
-    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, EventSpy,
-    EventSpyAssertionsTrait, cheat_caller_address, declare, spy_events,
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, cheat_caller_address,
 };
 use super::common::{
-    ALICE, BOB, DECIMALS, E18, GAS_LIMIT, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait,
-    ORIGIN, REQUIRED_VALUE, TOTAL_SUPPLY, TRANSFER_AMT, enroll_local_router, enroll_remote_router,
-    perform_remote_transfer, perform_remote_transfer_and_gas, perform_remote_transfer_with_emit,
-    set_custom_gas_config, setup,
+    ALICE, BOB, DECIMALS, E18, GAS_LIMIT, IHypERC20TestDispatcherTrait, ORIGIN, REQUIRED_VALUE,
+    TOTAL_SUPPLY, TRANSFER_AMT, enroll_local_router, enroll_remote_router, perform_remote_transfer,
+    perform_remote_transfer_and_gas, set_custom_gas_config, setup,
+    test_transfer_with_hook_specified,
 };
 
 #[test]
@@ -84,6 +86,33 @@ fn test_erc20_remote_transfer_with_custom_gas_config() {
     let gas_price = setup.igp.gas_price();
     let balance_before = erc20_token.balance_of(ALICE());
     perform_remote_transfer_and_gas(@setup, REQUIRED_VALUE, TRANSFER_AMT, GAS_LIMIT * gas_price);
+    let balance_after = erc20_token.balance_of(ALICE());
+    assert_eq!(balance_after, balance_before - TRANSFER_AMT);
+    let eth_dispatcher = IERC20Dispatcher { contract_address: setup.eth_token.contract_address };
+    assert_eq!(
+        eth_dispatcher.balance_of(setup.igp.contract_address),
+        GAS_LIMIT * gas_price,
+        "Gas fee didnt transferred",
+    );
+}
+
+#[test]
+#[fuzzer]
+fn test_fuzz_erc20_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
+    let fee = fee % (TRANSFER_AMT / 10);
+    let mut metadata_bytes = BytesTrait::new_empty();
+    metadata_bytes.append_u16(VARIANT);
+    metadata_bytes.append_u256(metadata);
+    let setup = setup();
+    let erc20_token = setup.local_token;
+    enroll_remote_router(@setup);
+    enroll_local_router(@setup);
+
+    let local_token_address: felt252 = setup.local_token.contract_address.into();
+    setup.remote_token.enroll_remote_router(ORIGIN, local_token_address.into());
+
+    let balance_before = erc20_token.balance_of(ALICE());
+    test_transfer_with_hook_specified(@setup, fee, metadata_bytes);
     let balance_after = erc20_token.balance_of(ALICE());
     assert_eq!(balance_after, balance_before - TRANSFER_AMT);
 }

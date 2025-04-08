@@ -14,7 +14,6 @@ pub trait IRateLimited<TState> {
 pub mod RateLimitedComponent {
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalTrait as OwnableInternalTrait,
-        interface::IOwnable,
     };
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};

@@ -10,7 +10,7 @@ pub mod default_fallback_routing_ism {
         IInterchainSecurityModuleDispatcherTrait, IMailboxDispatcher, IMailboxDispatcherTrait,
         IRoutingIsm, ModuleType,
     };
-    use contracts::libs::message::{Message, MessageTrait};
+    use contracts::libs::message::Message;
     use core::panic_with_felt252;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};

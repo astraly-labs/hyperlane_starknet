@@ -18,7 +18,6 @@ mod HypErc20Vault {
         RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait,
     };
     use contracts::libs::math;
-    use core::zeroable::NonZero;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{
         ERC20Component, ERC20HooksEmptyImpl, interface::{IERC20, IERC20CamelOnly},
@@ -407,7 +406,7 @@ mod HypErc20Vault {
             recipient: ContractAddress,
             amount: u256,
         ) -> bool {
-            self.erc20.transferFrom(sender, recipient, amount)
+            self.erc20.transfer_from(sender, recipient, amount)
         }
     }
 }

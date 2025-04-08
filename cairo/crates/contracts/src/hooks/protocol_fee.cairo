@@ -4,13 +4,10 @@ pub mod protocol_fee {
     use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::{
         StandardHookMetadata, VARIANT,
     };
-    use contracts::interfaces::{ETH_ADDRESS, IPostDispatchHook, IProtocolFee, Types};
+    use contracts::interfaces::{IPostDispatchHook, IProtocolFee, Types};
     use contracts::libs::message::Message;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{
-        ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait,
-    };
-    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, contract_address_const, get_contract_address};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);

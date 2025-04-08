@@ -38,7 +38,7 @@ pub mod GasRouterComponent {
         MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
     };
     use contracts::client::router_component::{
-        IRouter, RouterComponent, RouterComponent::RouterComponentInternalImpl,
+        RouterComponent, RouterComponent::RouterComponentInternalImpl,
     };
     use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::StandardHookMetadata;
     use contracts::interfaces::{IMailboxClient};

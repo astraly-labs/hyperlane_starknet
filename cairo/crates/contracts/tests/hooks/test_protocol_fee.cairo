@@ -3,14 +3,13 @@ use contracts::interfaces::{
     ETH_ADDRESS, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
     IProtocolFeeDispatcher, IProtocolFeeDispatcherTrait, Types,
 };
-use contracts::libs::message::{Message, MessageTrait};
+use contracts::libs::message::MessageTrait;
 use contracts::utils::utils::U256TryIntoContractAddress;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 use snforge_std::{CheatSpan, cheat_caller_address};
 use super::super::setup::{
-    BENEFICIARY, INITIAL_SUPPLY, MAX_PROTOCOL_FEE, OWNER, PROTOCOL_FEE, setup_mock_token,
-    setup_protocol_fee,
+    BENEFICIARY, MAX_PROTOCOL_FEE, OWNER, PROTOCOL_FEE, setup_mock_token, setup_protocol_fee,
 };
 
 

@@ -1,11 +1,9 @@
 #[starknet::component]
 pub mod MailboxclientComponent {
-    use alexandria_bytes::Bytes;
     use contracts::interfaces::{IMailboxClient, IMailboxDispatcher, IMailboxDispatcherTrait};
     use openzeppelin::access::ownable::{
         OwnableComponent, OwnableComponent::InternalImpl, OwnableComponent::OwnableImpl,
     };
-    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, contract_address_const};
 

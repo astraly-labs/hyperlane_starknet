@@ -1,22 +1,21 @@
 use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
 
 use contracts::interfaces::{
-    DomainRoutingHookConfig, ETH_ADDRESS, IDomainRoutingHookDispatcher,
-    IDomainRoutingHookDispatcherTrait, IPostDispatchHookDispatcher,
-    IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcher, IProtocolFeeDispatcherTrait, Types,
+    DomainRoutingHookConfig, ETH_ADDRESS, IDomainRoutingHookDispatcherTrait,
+    IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait, Types,
 };
-use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
+use contracts::libs::message::{HYPERLANE_VERSION, Message};
 
 use contracts::utils::utils::U256TryIntoContractAddress;
 
-use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
+use openzeppelin::access::ownable::interface::{IOwnableDispatcher};
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 
 use snforge_std::{CheatSpan, ContractClass, cheat_caller_address, get_class_hash};
 
 use starknet::{ContractAddress, contract_address_const};
 use super::super::setup::{
-    NEW_OWNER, OWNER, PROTOCOL_FEE, setup_domain_routing_hook, setup_mock_token, setup_protocol_fee,
+    NEW_OWNER, OWNER, PROTOCOL_FEE, setup_domain_routing_hook, setup_protocol_fee,
 };
 
 #[test]

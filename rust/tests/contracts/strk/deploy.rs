@@ -1,4 +1,4 @@
-use starknet::{accounts::Account, core::types::FieldElement};
+use starknet::{accounts::Account, core::types::Felt};
 
 use super::{
     bind::mailbox::mailbox,
@@ -16,7 +16,7 @@ pub async fn deploy_core(
     domain: u32,
     default_ism: Ism,
     default_hook: Hook,
-    required_hook: Hook,
+    _required_hook: Hook,
 ) -> eyre::Result<CoreDeployments> {
     // set default ism, hook, igp
     println!("\n==> Deploying default ism, hook, igp");
@@ -56,7 +56,7 @@ pub async fn deploy_core(
         mailbox,
         default_ism,
         default_hook,
-        required_hook: FieldElement::ZERO,
+        required_hook: Felt::ZERO,
         msg_receiver,
     })
 }

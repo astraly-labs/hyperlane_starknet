@@ -22,7 +22,6 @@ pub mod standard_hook_metadata {
     const GAS_LIMIT_OFFSET: u8 = 34;
     const REFUND_ADDRESS_OFFSET: u8 = 66;
     const MIN_METADATA_LENGTH: u256 = 98;
-    const U128_NUMBER_OF_BYTES: usize = 16;
     pub const VARIANT: u16 = 1;
 
     #[generate_trait]
@@ -135,7 +134,7 @@ pub mod standard_hook_metadata {
         }
 
         fn override_gas_limits(gas_limit: u256) -> Bytes {
-            StandardHookMetadata::format_metadata(
+            Self::format_metadata(
                 0, gas_limit, starknet::get_caller_address(), BytesTrait::new_empty(),
             )
         }
@@ -145,7 +144,7 @@ pub mod standard_hook_metadata {
 
 #[cfg(test)]
 mod tests {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_bytes::BytesTrait;
     use starknet::{ContractAddress, contract_address_const};
     use super::standard_hook_metadata::StandardHookMetadata;
     #[test]

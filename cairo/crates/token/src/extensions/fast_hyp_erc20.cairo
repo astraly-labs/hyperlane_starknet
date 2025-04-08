@@ -1,6 +1,5 @@
 #[starknet::contract]
 pub mod FastHypERC20 {
-    use alexandria_bytes::Bytes;
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
@@ -16,11 +15,7 @@ pub mod FastHypERC20 {
             FastTokenRouterComponent::MessageRecipientInternalHookImpl,
         },
         hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl},
-        token_message::TokenMessageTrait,
-        token_router::{
-            TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-            TokenRouterTransferRemoteHookDefaultImpl,
-        },
+        token_router::{TokenRouterComponent, TokenRouterTransferRemoteHookDefaultImpl},
     };
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);

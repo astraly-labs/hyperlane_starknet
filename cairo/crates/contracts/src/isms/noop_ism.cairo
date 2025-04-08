@@ -1,10 +1,7 @@
 #[starknet::contract]
 pub mod noop_ism {
     use alexandria_bytes::Bytes;
-    use contracts::interfaces::{
-        IInterchainSecurityModule,
-        ModuleType,
-    };
+    use contracts::interfaces::{IInterchainSecurityModule, ModuleType};
     use contracts::libs::message::Message;
     #[storage]
     struct Storage {}

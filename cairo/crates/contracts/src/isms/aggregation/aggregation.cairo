@@ -2,9 +2,8 @@
 pub mod aggregation {
     use alexandria_bytes::Bytes;
     use contracts::interfaces::{
-        IAggregation,
-        IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait, ModuleType,
+        IAggregation, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
+        ModuleType,
     };
     use contracts::libs::aggregation_ism_metadata::aggregation_ism_metadata::AggregationIsmMetadata;
     use contracts::libs::message::Message;

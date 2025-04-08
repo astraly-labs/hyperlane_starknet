@@ -11,9 +11,8 @@ use snforge_std::{
 use starknet::ContractAddress;
 use super::super::hyp_erc20::common;
 use super::super::hyp_erc20::common::{
-    ALICE, BOB, CAROL, DANIEL, DESTINATION, E18,
-    IHypERC20TestDispatcherTrait, ORIGIN, Setup, TOTAL_SUPPLY, TRANSFER_AMT,
-    connect_routers,
+    ALICE, BOB, CAROL, DANIEL, DESTINATION, E18, IHypERC20TestDispatcherTrait, ORIGIN, Setup,
+    TOTAL_SUPPLY, TRANSFER_AMT, connect_routers,
 };
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 use token::extensions::{

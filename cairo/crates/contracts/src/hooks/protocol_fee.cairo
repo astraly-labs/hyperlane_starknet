@@ -7,9 +7,7 @@ pub mod protocol_fee {
     use contracts::interfaces::{IPostDispatchHook, IProtocolFee, Types};
     use contracts::libs::message::Message;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{
-        ERC20ABIDispatcher, ERC20ABIDispatcherTrait,
-    };
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, contract_address_const, get_contract_address};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);

@@ -2,15 +2,14 @@ use mocks::mock_mailbox::IMockMailboxDispatcherTrait;
 use mocks::test_erc20::ITestERC20DispatcherTrait;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{
-    CheatSpan, ContractClassTrait, DeclareResultTrait,
-    EventSpyAssertionsTrait, cheat_caller_address, declare,
+    CheatSpan, ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait,
+    cheat_caller_address, declare,
 };
 use starknet::ContractAddress;
 use super::super::hyp_erc20::common::{
-    ALICE, BOB, DESTINATION, E18, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait,
-    ORIGIN, Setup, TOTAL_SUPPLY, TRANSFER_AMT, 
-    handle_local_transfer, mint_and_approve, perform_remote_transfer,
-    setup,
+    ALICE, BOB, DESTINATION, E18, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, ORIGIN,
+    Setup, TOTAL_SUPPLY, TRANSFER_AMT, handle_local_transfer, mint_and_approve,
+    perform_remote_transfer, setup,
 };
 use token::extensions::hyp_erc20_collateral_vault_deposit::{
     IHypERC20CollateralVaultDepositDispatcher, IHypERC20CollateralVaultDepositDispatcherTrait,

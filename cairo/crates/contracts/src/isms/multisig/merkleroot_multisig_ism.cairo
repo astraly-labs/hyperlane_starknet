@@ -2,9 +2,7 @@
 pub mod merkleroot_multisig_ism {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::hooks::merkle_tree_hook::merkle_tree_hook::MerkleInternalImpl;
-    use contracts::interfaces::{
-        IInterchainSecurityModule, IValidatorConfiguration, ModuleType,
-    };
+    use contracts::interfaces::{IInterchainSecurityModule, IValidatorConfiguration, ModuleType};
     use contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
     use contracts::libs::message::{Message, MessageTrait};
     use contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MerkleRootIsmMetadata;

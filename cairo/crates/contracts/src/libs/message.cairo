@@ -1,8 +1,6 @@
 use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
 use alexandria_math::BitShift;
-use contracts::utils::keccak256::{
-    ByteData, compute_keccak, reverse_endianness, u128_mask,
-};
+use contracts::utils::keccak256::{ByteData, compute_keccak, reverse_endianness, u128_mask};
 
 pub const HYPERLANE_VERSION: u8 = 3;
 

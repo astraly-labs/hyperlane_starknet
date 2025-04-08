@@ -1,7 +1,5 @@
 use alexandria_bytes::{Bytes, BytesTrait};
-use contracts::client::gas_router_component::{
-    GasRouterComponent::GasRouterConfig,
-};
+use contracts::client::gas_router_component::{GasRouterComponent::GasRouterConfig};
 use contracts::interfaces::ETH_ADDRESS;
 use core::integer::BoundedInt;
 use mocks::{
@@ -14,13 +12,14 @@ use mocks::{
 };
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
-    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare,
 };
 use starknet::ContractAddress;
 
 pub const E18: u256 = 1_000_000_000_000_000_000;
 const PUB_KEY: felt252 = 0x1;
 const ZERO_SUPPLY: u256 = 0;
+const GAS_LIMIT: u256 = 10_000;
 pub fn ZERO_ADDRESS() -> ContractAddress {
     starknet::contract_address_const::<'0x0'>()
 }
@@ -130,7 +129,7 @@ pub struct Setup {
     pub eth_token: MockEthDispatcher,
     pub alice: ContractAddress,
     pub bob: ContractAddress,
-    pub test_post_dispatch_hook_contract: ContractClass
+    pub test_post_dispatch_hook_contract: ContractClass,
 }
 
 pub fn setup() -> Setup {
@@ -143,7 +142,9 @@ pub fn setup() -> Setup {
     let (remote_primary_token, _) = contract.deploy(@calldata).unwrap();
     let remote_primary_token = ITestERC721Dispatcher { contract_address: remote_primary_token };
 
-    let test_post_dispatch_hook_contract = declare("TestPostDispatchHook").unwrap().contract_class();
+    let test_post_dispatch_hook_contract = declare("TestPostDispatchHook")
+        .unwrap()
+        .contract_class();
     let (noop_hook, _) = test_post_dispatch_hook_contract.deploy(@array![]).unwrap();
     let noop_hook = ITestPostDispatchHookDispatcher { contract_address: noop_hook };
 
@@ -307,7 +308,7 @@ pub fn perform_remote_transfer(setup: @Setup, msg_value: u256, token_id: u256) {
 }
 
 pub fn perform_remote_transfer_and_gas_with_hook(
-    setup: @Setup, msg_value: u256, token_id: u256, hook: ContractAddress, hook_metadata: Bytes
+    setup: @Setup, msg_value: u256, token_id: u256, hook: ContractAddress, hook_metadata: Bytes,
 ) -> u256 {
     let alice_address: felt252 = (*setup).alice.into();
     let message_id = (*setup)
@@ -318,7 +319,7 @@ pub fn perform_remote_transfer_and_gas_with_hook(
             token_id,
             msg_value,
             Option::Some(hook_metadata),
-            Option::Some(hook)
+            Option::Some(hook),
         );
     process_transfer(setup, (*setup).bob, token_id);
     assert_eq!((*setup).remote_token.balance_of((*setup).bob), 1);
@@ -326,18 +327,18 @@ pub fn perform_remote_transfer_and_gas_with_hook(
 }
 
 pub fn test_transfer_with_hook_specified(
-    setup: @Setup, token_id: u256, fee: u256, metadata: Bytes
+    setup: @Setup, token_id: u256, fee: u256, metadata: Bytes,
 ) {
     let (hook_address, _) = setup.test_post_dispatch_hook_contract.deploy(@array![]).unwrap();
     let hook = ITestPostDispatchHookDispatcher { contract_address: hook_address };
     hook.set_fee(fee);
 
     let message_id = perform_remote_transfer_and_gas_with_hook(
-        setup, fee, token_id, hook.contract_address, metadata
+        setup, fee, token_id, hook.contract_address, metadata,
     );
     let eth_dispatcher = IERC20Dispatcher { contract_address: *setup.eth_token.contract_address };
     assert_eq!(eth_dispatcher.balance_of(hook_address), fee, "fee didnt transferred");
-    assert!(hook.message_dispatched(message_id) == true, "Hook did not dispatch");
+    assert!(hook.message_dispatched(message_id), "Hook did not dispatch");
 }
 
 #[test]

@@ -9,8 +9,7 @@ use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispa
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 use snforge_std::{CheatSpan, cheat_caller_address};
 use super::super::setup::{
-    BENEFICIARY, MAX_PROTOCOL_FEE, OWNER, PROTOCOL_FEE, setup_mock_token,
-    setup_protocol_fee,
+    BENEFICIARY, MAX_PROTOCOL_FEE, OWNER, PROTOCOL_FEE, setup_mock_token, setup_protocol_fee,
 };
 
 

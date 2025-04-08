@@ -235,7 +235,7 @@ pub mod MockMailbox {
                         self.default_hook.read()
                     }
                 },
-                Option::None(()) => { self.default_hook.read() }
+                Option::None(()) => { self.default_hook.read() },
             };
             let hook_metadata = match metadata {
                 Option::Some(hook_metadata) => {
@@ -277,7 +277,7 @@ pub mod MockMailbox {
 
             let required_hook_address = self.required_hook.read();
             let required_hook = ITestPostDispatchHookDispatcher {
-                contract_address: required_hook_address
+                contract_address: required_hook_address,
             };
             let mut required_fee = required_hook
                 .quote_dispatch(hook_metadata.clone(), message.clone());
@@ -296,7 +296,7 @@ pub mod MockMailbox {
 
             assert(
                 token_dispatcher.allowance(caller_address, contract_address) >= fee_amount,
-                Errors::INSUFFICIENT_ALLOWANCE
+                Errors::INSUFFICIENT_ALLOWANCE,
             );
 
             if (required_fee > 0) {

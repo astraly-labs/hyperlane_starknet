@@ -6,8 +6,7 @@ use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARI
 use contracts::utils::utils::U256TryIntoContractAddress;
 use core::integer::BoundedInt;
 use mocks::{
-    mock_eth::{MockEthDispatcher, MockEthDispatcherTrait},
-    mock_mailbox::IMockMailboxDispatcher,
+    mock_eth::{MockEthDispatcher, MockEthDispatcherTrait}, mock_mailbox::IMockMailboxDispatcher,
     test_erc20::ITestERC20DispatcherTrait,
     test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait,
     test_post_dispatch_hook::{
@@ -15,13 +14,11 @@ use mocks::{
     },
 };
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
-use snforge_std::{
-    CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare,
-};
+use snforge_std::{CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare};
 use starknet::ContractAddress;
 use super::common::{
-    ALICE, BOB, DESTINATION, E18, GAS_LIMIT, IHypERC20TestDispatcher,
-    IHypERC20TestDispatcherTrait, ORIGIN, REQUIRED_VALUE, Setup, TRANSFER_AMT, setup,
+    ALICE, BOB, DESTINATION, E18, GAS_LIMIT, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait,
+    ORIGIN, REQUIRED_VALUE, Setup, TRANSFER_AMT, setup,
 };
 
 fn setup_hyp_erc20_collateral() -> (IHypERC20TestDispatcher, Setup) {
@@ -112,7 +109,7 @@ pub fn perform_remote_transfer_collateral_and_gas_with_hook(
     msg_value: u256,
     amount: u256,
     hook: ContractAddress,
-    hook_metadata: Bytes
+    hook_metadata: Bytes,
 ) -> u256 {
     cheat_caller_address(*setup.primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     // Approve
@@ -129,31 +126,31 @@ pub fn perform_remote_transfer_collateral_and_gas_with_hook(
             amount,
             msg_value,
             Option::Some(hook_metadata),
-            Option::Some(hook)
+            Option::Some(hook),
         );
 
     process_transfers_collateral(setup, collateral, BOB(), amount);
 
     let remote_token = IERC20Dispatcher {
-        contract_address: (*setup).remote_token.contract_address
+        contract_address: (*setup).remote_token.contract_address,
     };
     assert_eq!(remote_token.balance_of(BOB()), amount);
     message_id
 }
 
 pub fn test_transfer_collateral_with_hook_specified(
-    setup: @Setup, collateral: @IHypERC20TestDispatcher, fee: u256, metadata: Bytes
+    setup: @Setup, collateral: @IHypERC20TestDispatcher, fee: u256, metadata: Bytes,
 ) {
     let (hook_address, _) = setup.test_post_dispatch_hook_contract.deploy(@array![]).unwrap();
     let hook = ITestPostDispatchHookDispatcher { contract_address: hook_address };
     hook.set_fee(fee);
 
     let message_id = perform_remote_transfer_collateral_and_gas_with_hook(
-        setup, collateral, fee, TRANSFER_AMT, hook.contract_address, metadata
+        setup, collateral, fee, TRANSFER_AMT, hook.contract_address, metadata,
     );
     let eth_dispatcher = IERC20Dispatcher { contract_address: *setup.eth_token.contract_address };
     assert_eq!(eth_dispatcher.balance_of(hook_address), fee, "fee didnt transferred");
-    assert!(hook.message_dispatched(message_id) == true, "Hook did not dispatch");
+    assert!(hook.message_dispatched(message_id), "Hook did not dispatch");
 }
 
 #[test]
@@ -166,7 +163,7 @@ fn test_remote_transfer() {
     assert_eq!(
         collateral.balance_of(ALICE()),
         balance_before - TRANSFER_AMT,
-        "Incorrect balance after transfer"
+        "Incorrect balance after transfer",
     );
 }
 
@@ -192,7 +189,7 @@ fn test_remote_transfer_with_custom_gas_config() {
     let gas_price = setup.igp.gas_price();
     // Do a remote transfer
     perform_remote_transfer_collateral(
-        @setup, @collateral, REQUIRED_VALUE + GAS_LIMIT * gas_price, TRANSFER_AMT, true
+        @setup, @collateral, REQUIRED_VALUE + GAS_LIMIT * gas_price, TRANSFER_AMT, true,
     );
 
     // Check balance after transfer
@@ -205,7 +202,7 @@ fn test_remote_transfer_with_custom_gas_config() {
     assert_eq!(
         eth_dispatcher.balance_of(setup.igp.contract_address),
         GAS_LIMIT * gas_price,
-        "Gas fee didnt transferred"
+        "Gas fee didnt transferred",
     );
 }
 

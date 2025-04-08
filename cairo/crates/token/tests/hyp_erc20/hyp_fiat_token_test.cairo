@@ -5,13 +5,14 @@ use mocks::test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait};
 use mocks::test_interchain_gas_payment::ITestInterchainGasPaymentDispatcherTrait;
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
-    CheatSpan, ContractClassTrait, DeclareResultTrait,
-    EventSpyAssertionsTrait, cheat_caller_address, declare,
+    CheatSpan, ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait,
+    cheat_caller_address, declare,
 };
 use super::common::{
-    setup, TRANSFER_AMT, DESTINATION, perform_remote_transfer_and_gas, ALICE, E18,
-    IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, enroll_remote_router, set_custom_gas_config, REQUIRED_VALUE, GAS_LIMIT,
-    Setup, handle_local_transfer, test_transfer_with_hook_specified
+    ALICE, DESTINATION, E18, GAS_LIMIT, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait,
+    REQUIRED_VALUE, Setup, TRANSFER_AMT, enroll_remote_router, handle_local_transfer,
+    perform_remote_transfer_and_gas, set_custom_gas_config, setup,
+    test_transfer_with_hook_specified,
 };
 
 fn fiat_token_setup() -> Setup {
@@ -80,13 +81,13 @@ fn test_fiat_token_remote_transfer_with_custom_gas_config() {
     assert_eq!(
         eth_dispatcher.balance_of(setup.igp.contract_address),
         GAS_LIMIT * gas_price,
-        "Gas fee didnt transferred"
+        "Gas fee didnt transferred",
     );
 }
 
 #[test]
 #[fuzzer]
-fn test_fiat_token_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
+fn test_fuzz_fiat_token_remote_transfer_with_hook_specified(mut fee: u256, metadata: u256) {
     let fee = fee % (TRANSFER_AMT / 10);
     let mut metadata_bytes = BytesTrait::new_empty();
     metadata_bytes.append_u16(VARIANT);

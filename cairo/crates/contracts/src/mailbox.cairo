@@ -3,17 +3,14 @@ pub mod mailbox {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::interfaces::{
         ETH_ADDRESS, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-        IMailbox, IMessageRecipientDispatcher,
-        IMessageRecipientDispatcherTrait, IPostDispatchHookDispatcher,
-        IPostDispatchHookDispatcherTrait,
+        IMailbox, IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait,
+        IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
     };
     use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
     use contracts::utils::utils::U256TryIntoContractAddress;
     use core::starknet::event::EventEmitter;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{
-        ERC20ABIDispatcher, ERC20ABIDispatcherTrait,
-    };
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,

@@ -1,4 +1,3 @@
-use starknet::storage_access::{StorageBaseAddress, Store};
 // *************************************************************************
 //                                  IMPORTS
 // *************************************************************************
@@ -6,6 +5,7 @@ use starknet::storage_access::{StorageBaseAddress, Store};
 // Code from https://book.starknet.io/ch02-07-01-02-million-dollar-homepage.html
 // Core lib imports.
 use starknet::SyscallResult;
+use starknet::storage_access::{StorageBaseAddress, Store};
 
 pub impl StoreFelt252Array of Store<Array<felt252>> {
     fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult<Array<felt252>> {

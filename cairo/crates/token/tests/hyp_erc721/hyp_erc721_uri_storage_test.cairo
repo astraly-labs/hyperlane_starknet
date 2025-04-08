@@ -1,11 +1,10 @@
 use alexandria_bytes::BytesTrait;
 use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
-use snforge_std::{
-    ContractClassTrait, DeclareResultTrait, declare
-};
+use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
 use super::common::{
-    setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
-    IHypErc721TestDispatcherTrait, deploy_remote_token, perform_remote_transfer, NAME, SYMBOL, URI, test_transfer_with_hook_specified, FEE_CAP
+    DESTINATION, FEE_CAP, IHypErc721TestDispatcher, IHypErc721TestDispatcherTrait, INITIAL_SUPPLY,
+    NAME, SYMBOL, Setup, URI, deploy_remote_token, perform_remote_transfer, setup,
+    test_transfer_with_hook_specified,
 };
 
 fn setup_erc721_uri_storage() -> Setup {

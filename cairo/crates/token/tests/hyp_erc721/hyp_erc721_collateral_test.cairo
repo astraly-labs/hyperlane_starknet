@@ -5,9 +5,8 @@ use mocks::test_erc721::ITestERC721DispatcherTrait;
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::cheatcodes::contract_class::ContractClassTrait;
 use super::common::{
-    setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
-    IHypErc721TestDispatcherTrait, deploy_remote_token, perform_remote_transfer,
-    test_transfer_with_hook_specified, FEE_CAP
+    DESTINATION, FEE_CAP, IHypErc721TestDispatcher, IHypErc721TestDispatcherTrait, INITIAL_SUPPLY,
+    Setup, deploy_remote_token, perform_remote_transfer, setup, test_transfer_with_hook_specified,
 };
 
 fn setup_erc721_collateral() -> Setup {
@@ -68,7 +67,7 @@ fn test_fuzz_erc721__collateral_remote_transfer_with_hook_specified(mut fee: u25
     setup.local_primary_token.approve(setup.local_token.contract_address, 0);
     test_transfer_with_hook_specified(@setup, 0, fee, metadata_bytes);
     assert_eq!(
-        setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY * 2 - 2
+        setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY * 2 - 2,
     );
 }
 

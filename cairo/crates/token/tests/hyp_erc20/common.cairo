@@ -1,26 +1,20 @@
 use alexandria_bytes::{Bytes, BytesTrait};
-use contracts::client::gas_router_component::{
-    GasRouterComponent::GasRouterConfig,
-};
+use contracts::client::gas_router_component::{GasRouterComponent::GasRouterConfig};
 use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
-use contracts::interfaces::{
-    ETH_ADDRESS, IMailboxClientDispatcher,
-};
+use contracts::interfaces::{ETH_ADDRESS, IMailboxClientDispatcher};
 use core::integer::BoundedInt;
 use mocks::{
     mock_eth::{MockEthDispatcher, MockEthDispatcherTrait},
     mock_mailbox::{IMockMailboxDispatcher, IMockMailboxDispatcherTrait},
     test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},
-    test_interchain_gas_payment::{
-        ITestInterchainGasPaymentDispatcher,
-    },
+    test_interchain_gas_payment::{ITestInterchainGasPaymentDispatcher},
     test_post_dispatch_hook::{
         ITestPostDispatchHookDispatcher, ITestPostDispatchHookDispatcherTrait,
     },
 };
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
-    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare,
 };
 use starknet::ContractAddress;
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
@@ -131,14 +125,16 @@ pub struct Setup {
     pub erc20_token: ITestERC20Dispatcher,
     pub eth_token: MockEthDispatcher,
     pub mock_mailbox_contract: ContractClass,
-    pub test_post_dispatch_hook_contract: ContractClass
+    pub test_post_dispatch_hook_contract: ContractClass,
 }
 
 pub fn setup() -> Setup {
     let contract = declare("TestISM").unwrap().contract_class();
     let (default_ism, _) = contract.deploy(@array![]).unwrap();
 
-    let test_post_dispatch_hook_contract = declare("TestPostDispatchHook").unwrap().contract_class();
+    let test_post_dispatch_hook_contract = declare("TestPostDispatchHook")
+        .unwrap()
+        .contract_class();
     let (noop_hook, _) = test_post_dispatch_hook_contract.deploy(@array![]).unwrap();
     let noop_hook = ITestPostDispatchHookDispatcher { contract_address: noop_hook };
 
@@ -261,7 +257,7 @@ pub fn setup() -> Setup {
         erc20_token,
         eth_token,
         mock_mailbox_contract: *mock_mailbox_contract,
-        test_post_dispatch_hook_contract: *test_post_dispatch_hook_contract
+        test_post_dispatch_hook_contract: *test_post_dispatch_hook_contract,
     }
 }
 
@@ -408,18 +404,20 @@ pub fn test_transfer_with_hook_specified(setup: @Setup, fee: u256, metadata: Byt
     let hook = ITestPostDispatchHookDispatcher { contract_address: hook_address };
     hook.set_fee(fee);
 
-    cheat_caller_address((*setup).primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
+    cheat_caller_address(
+        (*setup).primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1),
+    );
     let primary_token = IERC20Dispatcher {
-        contract_address: (*setup).primary_token.contract_address
+        contract_address: (*setup).primary_token.contract_address,
     };
     primary_token.approve((*setup).local_token.contract_address, TRANSFER_AMT);
 
     let message_id = perform_remote_transfer_and_gas_with_hook(
-        setup, fee, TRANSFER_AMT, hook.contract_address, metadata
+        setup, fee, TRANSFER_AMT, hook.contract_address, metadata,
     );
     let eth_dispatcher = IERC20Dispatcher { contract_address: *setup.eth_token.contract_address };
     assert_eq!(eth_dispatcher.balance_of(hook_address), fee, "fee didnt transferred");
-    assert!(hook.message_dispatched(message_id) == true, "Hook did not dispatch");
+    assert!(hook.message_dispatched(message_id), "Hook did not dispatch");
 }
 
 // NOTE: Not applicable on Starknet

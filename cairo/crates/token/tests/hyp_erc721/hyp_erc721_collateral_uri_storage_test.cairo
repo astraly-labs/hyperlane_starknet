@@ -1,14 +1,11 @@
 use alexandria_bytes::BytesTrait;
 use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use mocks::test_erc721::ITestERC721DispatcherTrait;
-use snforge_std::{
-    ContractClassTrait, DeclareResultTrait, declare,
-};
+use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
 use super::common::{
-    setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
-    IHypErc721TestDispatcherTrait, deploy_remote_token,
-    TRANSFER_ID, process_transfer, FEE_CAP,
-    test_transfer_with_hook_specified
+    DESTINATION, FEE_CAP, IHypErc721TestDispatcher, IHypErc721TestDispatcherTrait, INITIAL_SUPPLY,
+    Setup, TRANSFER_ID, deploy_remote_token, process_transfer, setup,
+    test_transfer_with_hook_specified,
 };
 
 fn setup_erc721_collateral_uri_storage() -> Setup {
@@ -63,7 +60,7 @@ fn test_erc721_collateral_uri_storage_remote_transfer_revert_burned() {
 #[test]
 #[fuzzer]
 fn test_fuzz_erc721_collateral_uri_storage_remote_transfer_with_hook_specified(
-    mut fee: u256, metadata: u256
+    mut fee: u256, metadata: u256,
 ) {
     let fee = fee % FEE_CAP;
     let mut metadata_bytes = BytesTrait::new_empty();
@@ -75,7 +72,7 @@ fn test_fuzz_erc721_collateral_uri_storage_remote_transfer_with_hook_specified(
     setup.local_primary_token.approve(setup.local_token.contract_address, 0);
     test_transfer_with_hook_specified(@setup, 0, fee, metadata_bytes);
     assert_eq!(
-        setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY * 2 - 2
+        setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY * 2 - 2,
     );
 }
 

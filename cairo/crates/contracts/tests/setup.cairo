@@ -1,12 +1,8 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::interfaces::{
-    ETH_ADDRESS, IAggregationDispatcher, IAggregationDispatcherTrait, IDomainRoutingHookDispatcher,
-    IDomainRoutingHookDispatcherTrait, IDomainRoutingIsmDispatcher,
-    IDomainRoutingIsmDispatcherTrait, IInterchainSecurityModule,
-    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-    IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IMailboxDispatcher,
-    IMailboxDispatcherTrait, IMerkleTreeHookDispatcher, IMerkleTreeHookDispatcherTrait,
-    IMessageRecipientDispatcher, IMessageRecipientDispatcherTrait, IMockValidatorAnnounceDispatcher,
+    ETH_ADDRESS, IAggregationDispatcher, IDomainRoutingHookDispatcher, IDomainRoutingIsmDispatcher,
+    IInterchainSecurityModuleDispatcher, IMailboxClientDispatcher, IMailboxDispatcher,
+    IMerkleTreeHookDispatcher, IMessageRecipientDispatcher, IMockValidatorAnnounceDispatcher,
     IPausableIsmDispatcher, IPausableIsmDispatcherTrait, IPostDispatchHookDispatcher,
     IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcher, IProtocolFeeDispatcherTrait,
     IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, ISpecifiesInterchainSecurityModuleDispatcher,

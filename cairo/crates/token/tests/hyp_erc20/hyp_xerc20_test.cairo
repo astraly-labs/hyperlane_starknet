@@ -1,25 +1,21 @@
 use alexandria_bytes::BytesTrait;
 use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
 use core::integer::BoundedInt;
-use mocks::xerc20_test::{XERC20Test, IXERC20TestDispatcher, IXERC20TestDispatcherTrait};
+use mocks::xerc20_test::{IXERC20TestDispatcher, IXERC20TestDispatcherTrait, XERC20Test};
 use mocks::{
     test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},
     test_interchain_gas_payment::{
-        ITestInterchainGasPaymentDispatcher, ITestInterchainGasPaymentDispatcherTrait
+        ITestInterchainGasPaymentDispatcher, ITestInterchainGasPaymentDispatcherTrait,
     },
 };
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
-use snforge_std::{
-    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait,
-    EventSpyAssertionsTrait, cheat_caller_address, declare,
-};
+use snforge_std::{CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare};
 use starknet::ContractAddress;
 use super::common::{
-    Setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, ALICE, E18, REQUIRED_VALUE, GAS_LIMIT,
-    DESTINATION, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait, setup,
-    perform_remote_transfer_and_gas,
-    perform_remote_transfer, handle_local_transfer, test_transfer_with_hook_specified,
-    set_custom_gas_config
+    ALICE, DECIMALS, DESTINATION, E18, GAS_LIMIT, IHypERC20TestDispatcher,
+    IHypERC20TestDispatcherTrait, ORIGIN, REQUIRED_VALUE, Setup, TOTAL_SUPPLY, TRANSFER_AMT,
+    handle_local_transfer, perform_remote_transfer, perform_remote_transfer_and_gas,
+    set_custom_gas_config, setup, test_transfer_with_hook_specified,
 };
 
 fn setup_xerc20() -> Setup {
@@ -118,7 +114,7 @@ fn test_erc20_remote_transfer_with_custom_gas_config() {
     assert_eq!(
         eth_dispatcher.balance_of(setup.igp.contract_address),
         GAS_LIMIT * gas_price,
-        "Gas fee didnt transferred"
+        "Gas fee didnt transferred",
     );
 }
 

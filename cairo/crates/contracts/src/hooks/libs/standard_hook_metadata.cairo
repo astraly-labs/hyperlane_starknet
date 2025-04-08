@@ -122,7 +122,7 @@ pub mod standard_hook_metadata {
             msg_value: u256,
             gas_limit: u256,
             refund_address: ContractAddress,
-            custom_metadata: Bytes
+            custom_metadata: Bytes,
         ) -> Bytes {
             let mut data = BytesTrait::new_empty();
             data.append_u16(VARIANT);
@@ -135,7 +135,7 @@ pub mod standard_hook_metadata {
 
         fn override_gas_limits(gas_limit: u256) -> Bytes {
             Self::format_metadata(
-                0, gas_limit, starknet::get_caller_address(), BytesTrait::new_empty()
+                0, gas_limit, starknet::get_caller_address(), BytesTrait::new_empty(),
             )
         }
     }

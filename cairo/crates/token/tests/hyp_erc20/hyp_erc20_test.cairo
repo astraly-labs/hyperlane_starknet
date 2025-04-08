@@ -6,10 +6,10 @@ use snforge_std::{
     CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, cheat_caller_address,
 };
 use super::common::{
-    ALICE, BOB, DECIMALS, E18, GAS_LIMIT, IHypERC20TestDispatcherTrait,
-    ORIGIN, REQUIRED_VALUE, TOTAL_SUPPLY, TRANSFER_AMT, enroll_local_router, enroll_remote_router,
-    perform_remote_transfer, perform_remote_transfer_and_gas, 
-    set_custom_gas_config, setup, test_transfer_with_hook_specified
+    ALICE, BOB, DECIMALS, E18, GAS_LIMIT, IHypERC20TestDispatcherTrait, ORIGIN, REQUIRED_VALUE,
+    TOTAL_SUPPLY, TRANSFER_AMT, enroll_local_router, enroll_remote_router, perform_remote_transfer,
+    perform_remote_transfer_and_gas, set_custom_gas_config, setup,
+    test_transfer_with_hook_specified,
 };
 
 #[test]
@@ -92,7 +92,7 @@ fn test_erc20_remote_transfer_with_custom_gas_config() {
     assert_eq!(
         eth_dispatcher.balance_of(setup.igp.contract_address),
         GAS_LIMIT * gas_price,
-        "Gas fee didnt transferred"
+        "Gas fee didnt transferred",
     );
 }
 

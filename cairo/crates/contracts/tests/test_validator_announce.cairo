@@ -1,10 +1,8 @@
-use alexandria_bytes::{Bytes, BytesIndex, BytesTrait};
+use alexandria_bytes::{BytesIndex, BytesTrait};
 use contracts::interfaces::{
-    IMockValidatorAnnounceDispatcher, IMockValidatorAnnounceDispatcherTrait,
-    IValidatorAnnounceDispatcher, IValidatorAnnounceDispatcherTrait,
+    IMockValidatorAnnounceDispatcherTrait, IValidatorAnnounceDispatcherTrait,
 };
 use contracts::isms::multisig::validator_announce::validator_announce;
-use contracts::libs::checkpoint_lib::checkpoint_lib::{HYPERLANE_ANNOUNCEMENT};
 use snforge_std::cheatcodes::events::EventSpyAssertionsTrait;
 use starknet::{EthAddress, contract_address_const};
 use super::setup::{setup_mock_validator_announce, setup_validator_announce};

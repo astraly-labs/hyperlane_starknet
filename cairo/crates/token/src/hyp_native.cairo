@@ -12,7 +12,6 @@ pub mod HypNative {
     };
     use token::components::token_router::{
         TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
-        TokenRouterComponent::TokenRouterHooksTrait,
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);

@@ -43,11 +43,11 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
 
     let mut aliases = HashMap::new();
     aliases.insert(
-        String::from("openzeppelin_access::ownable::ownable::OwnableComponent::Event"),
+        String::from("openzeppelin::access::ownable::ownable::OwnableComponent::Event"),
         String::from("OwnableCptEvent"),
     );
     aliases.insert(
-        String::from("openzeppelin_upgrades::upgradeable::UpgradeableComponent::Event"),
+        String::from("openzeppelin::upgrades::upgradeable::UpgradeableComponent::Event"),
         String::from("UpgradeableCptEvent"),
     );
     aliases.insert(
@@ -58,38 +58,9 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
         String::from("contracts::mailbox::mailbox::Event"),
         String::from("MailboxEvent"),
     );
-    // aliases.insert(
-    //     String::from("OwnableComponent::Event::OwnershipTransferred"),
-    //     String::from("OwnableOwnershipTransferred"),
-    // );
-    // aliases.insert(
-    //     String::from("OwnableComponent::Event::OwnershipTransferStarted"),
-    //     String::from("OwnableOwnershipTransferStarted"),
-    // );
-    // aliases.insert(
-    //     String::from("UpgradeableComponent::Event::Upgraded"),
-    //     String::from("UpgradeableUpgraded"),
-    // );
-    // aliases.insert(
-    //     String::from("Event"), 
-    //     format!("{}Event", name)
-    // );
-    // aliases.insert(
-    //     String::from("OwnableEvent"),
-    //     String::from("BoxedOwnableEvent"),
-    // );
-    // aliases.insert(
-    //     String::from("UpgradeableEvent"),
-    //     String::from("BoxedUpgradeableEvent"),
-    // );
-    // aliases.insert(
-    //     String::from("MailboxclientEvent"),
-    //     String::from("BoxedMailboxclientEvent"),
-    // );
-    
 
     let abigen = cainome::rs::Abigen::new(name, abi_file)
-        // .with_derives(vec!["Debug".to_string()])
+        .with_derives(vec!["Debug".to_string(), "serde::Serialize".to_string(), "serde::Deserialize".to_string()])
         .with_types_aliases(aliases);
 
     abigen

@@ -43,16 +43,20 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
 
     let mut aliases = HashMap::new();
     aliases.insert(
-        String::from("openzeppelin::access::ownable::ownable::OwnableComponent::Event"),
+        String::from("openzeppelin_access::ownable::ownable::OwnableComponent::Event"),
         String::from("OwnableCptEvent"),
     );
     aliases.insert(
-        String::from("openzeppelin::upgrades::upgradeable::UpgradeableComponent::Event"),
+        String::from("openzeppelin_upgrades::upgradeable::UpgradeableComponent::Event"),
         String::from("UpgradeableCptEvent"),
     );
     aliases.insert(
         String::from("contracts::client::mailboxclient_component::MailboxclientComponent::Event"),
         String::from("MailboxclientEvent"),
+    );
+    aliases.insert(
+        String::from("contracts::mailbox::mailbox::Event"),
+        String::from("MailboxEvent"),
     );
     // aliases.insert(
     //     String::from("OwnableComponent::Event::OwnershipTransferred"),
@@ -85,7 +89,7 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
     
 
     let abigen = cainome::rs::Abigen::new(name, abi_file)
-        .with_derives(vec!["Debug".to_string()])
+        // .with_derives(vec!["Debug".to_string()])
         .with_types_aliases(aliases);
 
     abigen

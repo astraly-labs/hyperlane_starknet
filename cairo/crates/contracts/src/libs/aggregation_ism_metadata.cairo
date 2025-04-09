@@ -128,7 +128,7 @@ mod test {
             0x000000015dcbf07fa1898b0d8b64991f_u256,
             0x099e8478268fb36e0e5fe7832aa345da_u256,
             0x8B8888645622786D53D898C95D75D37A_u256,
-            0x582de78deda234977d806349eac6653e_u256,
+            0x582DE78DEDA234970000007D806349EA_u256,
             0xC6653E91900000000000000000000000_u256,
         ];
         let result = AggregationIsmMetadata::metadata_at(encoded_metadata.clone(), 0);

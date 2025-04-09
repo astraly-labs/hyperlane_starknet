@@ -46,7 +46,7 @@ jobs:
 
       - name: Run evm -> strk test
         run: |
-          cd rust && cargo test -- test_mailbox_evm_to_strk
+          cd rust && rm -rf tests/contracts/strk/bind/* && git restore tests/contracts/strk/bind/mod.rs && cargo test -- test_mailbox_evm_to_strk
 
       - name: Kill katana
         run: |

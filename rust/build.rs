@@ -60,7 +60,7 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
     );
 
     let abigen = cainome::rs::Abigen::new(name, abi_file)
-        .with_derives(vec!["Debug".to_string(), "serde::Serialize".to_string(), "serde::Deserialize".to_string()])
+        .with_derives(vec!["serde::Serialize".to_string(), "serde::Deserialize".to_string()])
         .with_types_aliases(aliases);
 
     abigen

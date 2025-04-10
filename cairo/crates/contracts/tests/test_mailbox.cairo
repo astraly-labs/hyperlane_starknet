@@ -158,14 +158,14 @@ fn test_dispatch() {
     let (message_id, _) = MessageTrait::format_message(message.clone());
     mailbox
         .dispatch(
-            DESTINATION_DOMAIN, RECIPIENT_ADDRESS(), message_body, 0, Option::None, Option::None,
+            DESTINATION_DOMAIN, RECIPIENT_ADDRESS(), @message_body, 0, Option::None, Option::None,
         );
     let expected_event = mailbox::Event::Dispatch(
         mailbox::Dispatch {
             sender: OWNER(),
             destination_domain: DESTINATION_DOMAIN,
             recipient_address: RECIPIENT_ADDRESS(),
-            message: message,
+            message: @message,
         },
     );
     let expected_event_id = mailbox::Event::DispatchId(mailbox::DispatchId { id: message_id });
@@ -223,7 +223,7 @@ fn test_dispatch_with_protocol_fee_hook() {
         .dispatch(
             DESTINATION_DOMAIN,
             RECIPIENT_ADDRESS(),
-            message_body,
+            @message_body,
             PROTOCOL_FEE,
             Option::None,
             Option::None,
@@ -233,7 +233,7 @@ fn test_dispatch_with_protocol_fee_hook() {
             sender: OWNER(),
             destination_domain: DESTINATION_DOMAIN,
             recipient_address: RECIPIENT_ADDRESS(),
-            message: message,
+            message: @message,
         },
     );
     let expected_event_id = mailbox::Event::DispatchId(mailbox::DispatchId { id: message_id });
@@ -295,7 +295,7 @@ fn test_dispatch_with_two_fee_hook() {
         .dispatch(
             DESTINATION_DOMAIN,
             RECIPIENT_ADDRESS(),
-            message_body,
+            @message_body,
             5 * PROTOCOL_FEE,
             Option::None,
             Option::None,
@@ -305,7 +305,7 @@ fn test_dispatch_with_two_fee_hook() {
             sender: OWNER(),
             destination_domain: DESTINATION_DOMAIN,
             recipient_address: RECIPIENT_ADDRESS(),
-            message: message,
+            message: @message,
         },
     );
     let expected_event_id = mailbox::Event::DispatchId(mailbox::DispatchId { id: message_id });
@@ -368,7 +368,7 @@ fn test_dispatch_with_two_fee_hook_fails_if_greater_than_required_and_lower_than
         .dispatch(
             DESTINATION_DOMAIN,
             RECIPIENT_ADDRESS(),
-            message_body,
+            @message_body,
             3 * PROTOCOL_FEE,
             Option::None,
             Option::None,
@@ -378,7 +378,7 @@ fn test_dispatch_with_two_fee_hook_fails_if_greater_than_required_and_lower_than
             sender: OWNER(),
             destination_domain: DESTINATION_DOMAIN,
             recipient_address: RECIPIENT_ADDRESS(),
-            message: message,
+            message: @message,
         },
     );
     let expected_event_id = mailbox::Event::DispatchId(mailbox::DispatchId { id: message_id });
@@ -428,12 +428,11 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_provided_fee_lower_than_require
         0x01020304050607080910000000000000,
     ];
 
-    let message_body = BytesTrait::new(42, array);
     mailbox
         .dispatch(
             DESTINATION_DOMAIN,
             RECIPIENT_ADDRESS(),
-            message_body,
+            @BytesTrait::new(42, array),
             PROTOCOL_FEE - 10,
             Option::None,
             Option::None,
@@ -481,7 +480,7 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_user_balance_lower_than_fee_amo
         .dispatch(
             DESTINATION_DOMAIN,
             RECIPIENT_ADDRESS(),
-            message_body,
+            @message_body,
             PROTOCOL_FEE,
             Option::None,
             Option::None,
@@ -530,7 +529,7 @@ fn test_dispatch_with_protocol_fee_hook_fails_if_insufficient_allowance() {
         .dispatch(
             DESTINATION_DOMAIN,
             RECIPIENT_ADDRESS(),
-            message_body,
+            @message_body,
             PROTOCOL_FEE,
             Option::None,
             Option::None,
@@ -566,7 +565,7 @@ fn test_process() {
     };
     let (message_id, _) = MessageTrait::format_message(message.clone());
     let metadata = message_body;
-    mailbox.process(metadata.clone(), message);
+    mailbox.process(@metadata, message);
     let expected_event = mailbox::Event::Process(
         mailbox::Process { origin: LOCAL_DOMAIN, sender: OWNER(), recipient: recipient.into() },
     );
@@ -616,7 +615,7 @@ fn test_process_fails_if_version_mismatch() {
         body: message_body.clone(),
     };
     let metadata = message_body;
-    mailbox.process(metadata.clone(), message);
+    mailbox.process(@metadata, message);
 }
 
 #[test]
@@ -647,7 +646,7 @@ fn test_process_fails_if_destination_domain_does_not_match_local_domain() {
         body: message_body.clone(),
     };
     let metadata = message_body;
-    mailbox.process(metadata.clone(), message);
+    mailbox.process(@metadata, message);
 }
 
 #[test]
@@ -679,9 +678,9 @@ fn test_process_fails_if_already_delivered() {
         body: message_body.clone(),
     };
     let metadata = message_body;
-    mailbox.process(metadata.clone(), message.clone());
+    mailbox.process(@metadata, message.clone());
     let (message_id, _) = MessageTrait::format_message(message.clone());
     assert(mailbox.delivered(message_id), 'Delivered status did not change');
-    mailbox.process(metadata.clone(), message);
+    mailbox.process(@metadata, message);
 }
 

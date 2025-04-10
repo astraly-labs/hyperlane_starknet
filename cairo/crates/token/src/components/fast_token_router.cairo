@@ -184,7 +184,7 @@ pub mod FastTokenRouterComponent {
             let message_body = TokenMessageTrait::format(recipient, amount_or_id, metadata);
             let hook = mailbox_comp.get_hook();
             let message_id = gas_router_comp
-                ._Gas_router_dispatch(destination, value, message_body, hook);
+                ._Gas_router_dispatch(destination, value, @message_body, hook);
 
             token_router_comp
                 .emit(

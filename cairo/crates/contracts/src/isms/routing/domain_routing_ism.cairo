@@ -6,6 +6,7 @@ pub mod domain_routing_ism {
         IInterchainSecurityModuleDispatcherTrait, IRoutingIsm, ModuleType,
     };
     use contracts::libs::message::Message;
+    use contracts::utils::utils::{SerdeSnapshotBytes, SerdeSnapshotMessage};
     use core::panic_with_felt252;
 
     use openzeppelin::access::ownable::OwnableComponent;
@@ -86,7 +87,7 @@ pub mod domain_routing_ism {
             let mut cur_idx = 0;
             loop {
                 if (cur_idx == _domains.len()) {
-                    break ();
+                    break;
                 }
                 assert(
                     *_modules.at(cur_idx) != contract_address_const::<0>(),
@@ -135,7 +136,7 @@ pub mod domain_routing_ism {
                 let next_domain = self.domains.read(current_domain);
                 if next_domain == 0 {
                     domains.append(current_domain);
-                    break ();
+                    break;
                 }
                 domains.append(current_domain);
                 current_domain = next_domain;
@@ -171,8 +172,8 @@ pub mod domain_routing_ism {
         /// # Returns
         ///
         /// ContractAddress - the ISM contract address
-        fn route(self: @ContractState, _message: Message) -> ContractAddress {
-            self.module(_message.origin)
+        fn route(self: @ContractState, _message: @Message) -> ContractAddress {
+            self.module(*_message.origin)
         }
     }
 
@@ -194,8 +195,8 @@ pub mod domain_routing_ism {
         /// # Returns
         ///
         /// boolean - wheter the verification succeed or not.
-        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
-            let ism_address = self.route(_message.clone());
+        fn verify(self: @ContractState, _metadata: @Bytes, _message: @Message) -> bool {
+            let ism_address = self.route(_message);
             let ism_dispatcher = IInterchainSecurityModuleDispatcher {
                 contract_address: ism_address,
             };

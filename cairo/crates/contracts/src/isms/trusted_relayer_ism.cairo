@@ -5,6 +5,7 @@ pub mod trusted_relayer_ism {
         IInterchainSecurityModule, IMailboxDispatcher, IMailboxDispatcherTrait, ModuleType,
     };
     use contracts::libs::message::{Message, MessageTrait};
+    use contracts::utils::utils::{SerdeSnapshotBytes, SerdeSnapshotMessage};
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     #[storage]
@@ -38,9 +39,9 @@ pub mod trusted_relayer_ism {
         /// # Returns
         ///
         /// boolean - wheter the verification succeed or not.
-        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
+        fn verify(self: @ContractState, _metadata: @Bytes, _message: @Message) -> bool {
             let mailbox = IMailboxDispatcher { contract_address: self.mailbox.read() };
-            let (id, _) = MessageTrait::format_message(_message);
+            let (id, _) = MessageTrait::format_message(_message.clone());
             mailbox.processor(id) == self.trusted_relayer.read()
         }
     }

@@ -3,10 +3,10 @@ pub mod message_id_ism_metadata {
 
 
     pub trait MessageIdIsmMetadata {
-        fn origin_merkle_tree_hook(_metadata: Bytes) -> u256;
-        fn root(_metadata: Bytes) -> u256;
-        fn index(_metadata: Bytes) -> u32;
-        fn signature_at(_metadata: Bytes, _index: u32) -> (u8, u256, u256);
+        fn origin_merkle_tree_hook(_metadata: @Bytes) -> u256;
+        fn root(_metadata: @Bytes) -> u256;
+        fn index(_metadata: @Bytes) -> u32;
+        fn signature_at(_metadata: @Bytes, _index: u32) -> (u8, u256, u256);
     }
 
 
@@ -31,7 +31,7 @@ pub mod message_id_ism_metadata {
         /// # Returns
         ///
         /// u256 -   Origin merkle tree hook of the signed checkpoint
-        fn origin_merkle_tree_hook(_metadata: Bytes) -> u256 {
+        fn origin_merkle_tree_hook(_metadata: @Bytes) -> u256 {
             let (_, felt) = _metadata.read_u256(ORIGIN_MERKLE_TREE_HOOK_OFFSET);
             felt
         }
@@ -45,7 +45,7 @@ pub mod message_id_ism_metadata {
         /// # Returns
         ///
         /// u256 -    Merkle root of the signed checkpoint
-        fn root(_metadata: Bytes) -> u256 {
+        fn root(_metadata: @Bytes) -> u256 {
             let (_, felt) = _metadata.read_u256(ROOT_OFFSET);
             felt
         }
@@ -58,7 +58,7 @@ pub mod message_id_ism_metadata {
         /// # Returns
         ///
         /// u32 -   Merkle index of the signed checkpoint
-        fn index(_metadata: Bytes) -> u32 {
+        fn index(_metadata: @Bytes) -> u32 {
             let (_, felt) = _metadata.read_u32(INDEX_OFFSET);
             felt
         }
@@ -76,7 +76,7 @@ pub mod message_id_ism_metadata {
         /// # Returns
         ///
         /// (u8, u256, u256) -  The validator ECDSA signature at `_index`.
-        fn signature_at(_metadata: Bytes, _index: u32) -> (u8, u256, u256) {
+        fn signature_at(_metadata: @Bytes, _index: u32) -> (u8, u256, u256) {
             // signature length set to 80 because u128 padding from the v param
             let (index_r, r) = _metadata.read_u256(SIGNATURE_OFFSET + SIGNATURE_LENGTH * _index);
             let (index_s, s) = _metadata.read_u256(index_r);

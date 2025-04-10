@@ -182,7 +182,7 @@ mod HypErc20VaultCollateral {
                     message_id = contract_state
                         .router
                         ._Router_dispatch(
-                            destination, value, token_message, hook_metadata, hook.unwrap(),
+                            destination, value, @token_message, hook_metadata, hook.unwrap(),
                         );
                 },
                 Option::None => {
@@ -192,7 +192,7 @@ mod HypErc20VaultCollateral {
                     let hook = contract_state.mailbox.get_hook();
                     message_id = contract_state
                         .router
-                        ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
+                        ._Router_dispatch(destination, value, @token_message, hook_metadata, hook);
                 },
             }
 

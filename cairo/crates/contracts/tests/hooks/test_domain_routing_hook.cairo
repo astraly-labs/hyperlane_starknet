@@ -29,7 +29,7 @@ fn test_supports_metadata_for_domain_routing_hook() {
     let (routing_hook_addrs, _) = setup_domain_routing_hook();
 
     let metadata = BytesTrait::new_empty();
-    assert_eq!(routing_hook_addrs.supports_metadata(metadata), true);
+    assert_eq!(routing_hook_addrs.supports_metadata(@metadata), true);
 }
 
 #[test]
@@ -112,7 +112,7 @@ fn hook_not_set_for_destination_should_fail() {
     };
     let metadata = BytesTrait::new_empty();
     let protocol_fee = 12_u256;
-    routing_hook_addrs.post_dispatch(metadata, message, protocol_fee);
+    routing_hook_addrs.post_dispatch(@metadata, @message, protocol_fee);
 }
 
 #[test]
@@ -193,10 +193,10 @@ fn hook_set_for_destination_post_dispatch() {
     cheat_caller_address(
         ownable.contract_address, NEW_OWNER().try_into().unwrap(), CheatSpan::TargetCalls(2),
     );
-    routing_hook_addrs.post_dispatch(metadata.clone(), message_1, PROTOCOL_FEE);
+    routing_hook_addrs.post_dispatch(@metadata, @message_1, PROTOCOL_FEE);
     assert_eq!(fee_token_instance.balance_of(NEW_OWNER().try_into().unwrap()), new_protocol_fee);
 
-    routing_hook_addrs.post_dispatch(metadata, message_2, new_protocol_fee);
+    routing_hook_addrs.post_dispatch(@metadata, @message_2, new_protocol_fee);
     assert_eq!(fee_token_instance.balance_of(NEW_OWNER().try_into().unwrap()), 0);
 }
 
@@ -228,7 +228,7 @@ fn test_post_dispatch_insufficient_fee() {
 
     // This should panic with 'Amount does not cover quote fee'
     // Assuming PROTOCOL_FEE is smaller than the required quote
-    routing_hook_addrs.post_dispatch(metadata, message, PROTOCOL_FEE / 2);
+    routing_hook_addrs.post_dispatch(@metadata, @message, PROTOCOL_FEE / 2);
 }
 
 #[test]
@@ -280,7 +280,7 @@ fn test_transfer_routing_fee_insufficient_balance() {
     cheat_caller_address(
         ownable.contract_address, NEW_OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
     );
-    routing_hook_addrs.post_dispatch(metadata.clone(), message_1, PROTOCOL_FEE);
+    routing_hook_addrs.post_dispatch(@metadata, @message_1, PROTOCOL_FEE);
 }
 
 #[test]
@@ -335,7 +335,7 @@ fn test_transfer_routing_fee_insufficient_allowance() {
     cheat_caller_address(
         ownable.contract_address, NEW_OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
     );
-    routing_hook_addrs.post_dispatch(metadata.clone(), message_1, PROTOCOL_FEE);
+    routing_hook_addrs.post_dispatch(@metadata, @message_1, PROTOCOL_FEE);
 }
 
 #[test]
@@ -385,6 +385,6 @@ fn hook_set_for_destination_quote_dispatch() {
         body: BytesTrait::new_empty(),
     };
     let metadata = BytesTrait::new_empty();
-    assert_eq!(routing_hook_addrs.quote_dispatch(metadata.clone(), message_1), PROTOCOL_FEE);
-    assert_eq!(routing_hook_addrs.quote_dispatch(metadata, message_2), new_protocol_fee);
+    assert_eq!(routing_hook_addrs.quote_dispatch(@metadata, @message_1), PROTOCOL_FEE);
+    assert_eq!(routing_hook_addrs.quote_dispatch(@metadata, @message_2), new_protocol_fee);
 }

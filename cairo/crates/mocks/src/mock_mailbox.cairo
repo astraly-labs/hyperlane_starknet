@@ -325,7 +325,7 @@ pub mod MockMailbox {
         fn process_next_inbound_message(ref self: ContractState) {
             let message = self.inbound_messages.read(self.inbound_processed_nonce.read());
             IMailboxDispatcher { contract_address: starknet::get_contract_address() }
-                .process(BytesTrait::new_empty(), message);
+                .process(@BytesTrait::new_empty(), message);
             self.inbound_processed_nonce.write(self.inbound_processed_nonce.read() + 1);
         }
         fn get_local_domain(self: @ContractState) -> u32 {
@@ -444,7 +444,7 @@ pub mod MockMailbox {
                 );
             self.emit(ProcessId { id: id });
 
-            assert(ism.verify(_metadata, _message.clone()), Errors::ISM_VERIFICATION_FAILED);
+            assert(ism.verify(@_metadata, @_message), Errors::ISM_VERIFICATION_FAILED);
 
             let message_recipient = IMessageRecipientDispatcher {
                 contract_address: _message.recipient.try_into().unwrap(),

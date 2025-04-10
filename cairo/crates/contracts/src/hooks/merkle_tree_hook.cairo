@@ -11,7 +11,7 @@ pub mod merkle_tree_hook {
     };
     use contracts::interfaces::{IMailboxClient, IMerkleTreeHook, IPostDispatchHook, Types};
     use contracts::libs::message::{Message, MessageTrait};
-    use contracts::utils::keccak256::{ByteData, HASH_SIZE, compute_keccak, reverse_endianness};
+    use contracts::utils::{keccak256::{ByteData, HASH_SIZE, compute_keccak, reverse_endianness}, utils::{SerdeSnapshotBytes, SerdeSnapshotMessage}};
     use openzeppelin::access::ownable::OwnableComponent;
     use starknet::ContractAddress;
     use starknet::storage::{
@@ -116,7 +116,7 @@ pub mod merkle_tree_hook {
         /// # Returns
         ///
         /// boolean - whether the hook supports metadata
-        fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
+        fn supports_metadata(self: @ContractState, _metadata: @Bytes) -> bool {
             _metadata.size() == 0 || StandardHookMetadata::variant(_metadata) == VARIANT.into()
         }
 
@@ -129,9 +129,9 @@ pub mod merkle_tree_hook {
         /// * - `_message` - the message passed from the Mailbox.dispatch() call
         /// * - `_fee_amount` - the payment provided for sending the message
         fn post_dispatch(
-            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256,
+            ref self: ContractState, _metadata: @Bytes, _message: @Message, _fee_amount: u256,
         ) {
-            assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
+            assert(self.supports_metadata(_metadata), Errors::INVALID_METADATA_VARIANT);
             self._post_dispatch(_metadata, _message, _fee_amount);
         }
 
@@ -146,8 +146,8 @@ pub mod merkle_tree_hook {
         /// # Returns
         ///
         /// u256 - Quoted payment for the postDispatch call
-        fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
-            assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
+        fn quote_dispatch(ref self: ContractState, _metadata: @Bytes, _message: @Message) -> u256 {
+            assert(self.supports_metadata(_metadata), Errors::INVALID_METADATA_VARIANT);
             self._quote_dispatch(_metadata, _message)
         }
     }
@@ -155,9 +155,9 @@ pub mod merkle_tree_hook {
     #[generate_trait]
     pub impl MerkleInternalImpl of InternalTrait {
         fn _post_dispatch(
-            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256,
+            ref self: ContractState, _metadata: @Bytes, _message: @Message, _fee_amount: u256,
         ) {
-            let (id, _) = MessageTrait::format_message(_message);
+            let (id, _) = MessageTrait::format_message(_message.clone());
             // ensure messages which were not dispatched are not inserted into the tree
             assert(self.mailboxclient._is_latest_dispatched(id), Errors::MESSAGE_NOT_DISPATCHING);
             let index = self.count();
@@ -313,7 +313,7 @@ pub mod merkle_tree_hook {
             tree
         }
 
-        fn _quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
+        fn _quote_dispatch(ref self: ContractState, _metadata: @Bytes, _message: @Message) -> u256 {
             0_u256
         }
 

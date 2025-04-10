@@ -7,7 +7,7 @@ pub mod mailbox {
         IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
     };
     use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
-    use contracts::utils::utils::U256TryIntoContractAddress;
+    use contracts::utils::utils::{U256TryIntoContractAddress, SerdeSnapshotBytes, SerdeSnapshotMessage};
     use core::starknet::event::EventEmitter;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
@@ -106,7 +106,7 @@ pub mod mailbox {
         pub sender: u256,
         pub destination_domain: u32,
         pub recipient_address: u256,
-        pub message: Message,
+        pub message: @Message,
     }
 
     #[derive(starknet::Event, Drop)]
@@ -247,7 +247,7 @@ pub mod mailbox {
             ref self: ContractState,
             _destination_domain: u32,
             _recipient_address: u256,
-            _message_body: Bytes,
+            _message_body: @Bytes,
             _fee_amount: u256,
             _custom_hook_metadata: Option<Bytes>,
             _custom_hook: Option<ContractAddress>,
@@ -275,9 +275,9 @@ pub mod mailbox {
                 Option::None(()) => BytesTrait::new_empty(),
             };
             let mut sanitized_bytes_message_body = BytesTrait::new_empty();
-            sanitized_bytes_message_body.concat(@_message_body);
+            sanitized_bytes_message_body.concat(_message_body);
             assert(
-                sanitized_bytes_message_body == _message_body,
+                @sanitized_bytes_message_body == _message_body,
                 Errors::SIZE_DOES_NOT_MATCH_MESSAGE_BODY,
             );
             let (id, message) = build_message(
@@ -293,7 +293,7 @@ pub mod mailbox {
                         sender: caller.into(),
                         destination_domain: _destination_domain,
                         recipient_address: _recipient_address,
-                        message: message.clone(),
+                        message: @message,
                     },
                 );
             self.emit(DispatchId { id: id });
@@ -305,13 +305,13 @@ pub mod mailbox {
                 contract_address: required_hook_address,
             };
             let mut required_fee = required_hook
-                .quote_dispatch(hook_metadata.clone(), message.clone());
+                .quote_dispatch(@hook_metadata, @message);
 
             let hook_dispatcher = IPostDispatchHookDispatcher { contract_address: hook };
             let default_fee = hook_dispatcher
-                .quote_dispatch(hook_metadata.clone(), message.clone());
+                .quote_dispatch(@hook_metadata, @message);
 
-            assert(_fee_amount >= required_fee + default_fee, Errors::NOT_ENOUGH_FEE_PROVIDED);
+        assert(_fee_amount >= required_fee + default_fee, Errors::NOT_ENOUGH_FEE_PROVIDED);
 
             let caller_address = get_caller_address();
             let contract_address = get_contract_address();
@@ -329,12 +329,12 @@ pub mod mailbox {
             if (required_fee > 0) {
                 token_dispatcher.transfer_from(caller_address, required_hook_address, required_fee);
             }
-            required_hook.post_dispatch(hook_metadata.clone(), message.clone(), required_fee);
+            required_hook.post_dispatch(@hook_metadata, @message, required_fee);
 
             if (default_fee > 0) {
                 token_dispatcher.transfer_from(caller_address, hook, default_fee);
             }
-            hook_dispatcher.post_dispatch(hook_metadata, message, default_fee);
+            hook_dispatcher.post_dispatch(@hook_metadata, @message, default_fee);
 
             id
         }
@@ -363,10 +363,10 @@ pub mod mailbox {
         ///
         /// * `_metadata` - Metadata used by the ISM to verify `_message`.
         /// * `_message` -  Formatted Hyperlane message (ref: message.cairo)
-        fn process(ref self: ContractState, _metadata: Bytes, _message: Message) {
+        fn process(ref self: ContractState, _metadata: @Bytes, _message: Message) {
             let mut sanitized_bytes_metadata = BytesTrait::new_empty();
-            sanitized_bytes_metadata.concat(@_metadata);
-            assert(sanitized_bytes_metadata == _metadata, Errors::SIZE_DOES_NOT_MATCH_METADATA);
+            sanitized_bytes_metadata.concat(_metadata);
+            assert(@sanitized_bytes_metadata == _metadata, Errors::SIZE_DOES_NOT_MATCH_METADATA);
             let mut sanitized_bytes_message_body = BytesTrait::new_empty();
             sanitized_bytes_message_body.concat(@_message.body);
             assert(
@@ -398,7 +398,7 @@ pub mod mailbox {
                 );
             self.emit(ProcessId { id: id });
 
-            assert(ism.verify(_metadata, _message.clone()), Errors::ISM_VERIFICATION_FAILED);
+            assert(ism.verify(_metadata, @_message), Errors::ISM_VERIFICATION_FAILED);
 
             let message_recipient = IMessageRecipientDispatcher {
                 contract_address: _message.recipient.try_into().unwrap(),
@@ -423,7 +423,7 @@ pub mod mailbox {
             self: @ContractState,
             _destination_domain: u32,
             _recipient_address: u256,
-            _message_body: Bytes,
+            _message_body: @Bytes,
             _custom_hook_metadata: Option<Bytes>,
             _custom_hook: Option<ContractAddress>,
         ) -> u256 {
@@ -436,15 +436,15 @@ pub mod mailbox {
                 Option::None(()) => BytesTrait::new_empty(),
             };
             let (_, message) = build_message(
-                self, _destination_domain, _recipient_address, _message_body.clone(),
+                self, _destination_domain, _recipient_address, _message_body,
             );
             let required_hook_address = self.required_hook.read();
             let required_hook = IPostDispatchHookDispatcher {
                 contract_address: required_hook_address,
             };
             let hook = IPostDispatchHookDispatcher { contract_address: hook_address };
-            required_hook.quote_dispatch(hook_metadata.clone(), message.clone())
-                + hook.quote_dispatch(hook_metadata, message)
+            required_hook.quote_dispatch(@hook_metadata, @message)
+                + hook.quote_dispatch(@hook_metadata, @message)
         }
 
         /// Returns the ISM to use for the recipient, defaulting to the default ISM if none is
@@ -511,7 +511,7 @@ pub mod mailbox {
         self: @ContractState,
         _destination_domain: u32,
         _recipient_address: u256,
-        _message_body: Bytes,
+        _message_body: @Bytes,
     ) -> (u256, Message) {
         let nonce = self.nonce.read();
         let local_domain = self.local_domain.read();
@@ -524,7 +524,7 @@ pub mod mailbox {
                 sender: caller.into(),
                 destination: _destination_domain,
                 recipient: _recipient_address,
-                body: _message_body,
+                body: _message_body.clone(),
             },
         )
     }

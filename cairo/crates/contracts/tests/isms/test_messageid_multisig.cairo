@@ -15,7 +15,7 @@ use openzeppelin::access::ownable::OwnableComponent;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use snforge_std::{CheatSpan, cheat_caller_address};
 use super::super::setup::{
-    DESTINATION_DOMAIN, LOCAL_DOMAIN, NEW_OWNER, OWNER, RECIPIENT_ADDRESS, VALIDATOR_ADDRESS_1,
+    DESTINATION_DOMAIN, LOCAL_DOMAIN, OWNER, VALIDATOR_ADDRESS_1,
     VALIDATOR_ADDRESS_2, VALID_OWNER, VALID_RECIPIENT, build_fake_messageid_metadata,
     build_messageid_metadata, get_message_and_signature, setup_messageid_multisig_ism,
 };
@@ -63,11 +63,11 @@ fn test_message_id_ism_metadata() {
     let (_, _, signatures) = get_message_and_signature();
     let metadata = build_messageid_metadata(origin_merkle_tree, root, index);
     assert(
-        MessageIdIsmMetadata::origin_merkle_tree_hook(metadata.clone()) == origin_merkle_tree,
+        MessageIdIsmMetadata::origin_merkle_tree_hook(@metadata) == origin_merkle_tree,
         'wrong merkle tree hook',
     );
-    assert(MessageIdIsmMetadata::root(metadata.clone()) == root, 'wrong root');
-    assert(MessageIdIsmMetadata::index(metadata.clone()) == index, 'wrong index');
+    assert(MessageIdIsmMetadata::root(@metadata) == root, 'wrong root');
+    assert(MessageIdIsmMetadata::index(@metadata) == index, 'wrong index');
     let mut cur_idx = 0;
     loop {
         if (cur_idx == signatures.len()) {
@@ -75,7 +75,7 @@ fn test_message_id_ism_metadata() {
         }
         assert(
             MessageIdIsmMetadata::signature_at(
-                metadata.clone(), cur_idx,
+                @metadata, cur_idx,
             ) == (y_parity, *signatures.at(cur_idx).r, *signatures.at(cur_idx).s),
             'wrong signature ',
         );
@@ -119,7 +119,7 @@ fn test_message_id_multisig_verify_with_4_valid_signatures() {
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;
     let metadata = build_messageid_metadata(origin_merkle_tree, root, index);
-    assert(messageid.verify(metadata, message) == true, 'verification failed');
+    assert(messageid.verify(@metadata, @message), 'verification failed');
 }
 
 
@@ -150,7 +150,7 @@ fn test_message_id_multisig_verify_with_insufficient_valid_signatures() {
     let mut metadata = build_messageid_metadata(origin_merkle_tree, root, index);
     // introduce an error for the signature
     metadata.update_at(80, 0);
-    assert(messageid.verify(metadata, message) == true, 'verification failed');
+    assert(messageid.verify(@metadata, @message), 'verification failed');
 }
 
 
@@ -176,7 +176,7 @@ fn test_message_id_multisig_verify_with_empty_metadata() {
     let (_, validators_address, _) = get_message_and_signature();
     let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
     let bytes_metadata = BytesTrait::new_empty();
-    assert(messageid.verify(bytes_metadata, message) == true, 'verification failed');
+    assert(messageid.verify(@bytes_metadata, @message), 'verification failed');
 }
 
 
@@ -205,5 +205,5 @@ fn test_message_id_multisig_verify_with_4_valid_signatures_fails_if_duplicate_si
     let root: u256 = 'root'.try_into().unwrap();
     let index = 1;
     let metadata = build_fake_messageid_metadata(origin_merkle_tree, root, index);
-    assert(messageid.verify(metadata, message) == true, 'verification failed');
+    assert(messageid.verify(@metadata, @message), 'verification failed');
 }

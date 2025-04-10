@@ -247,7 +247,7 @@ pub mod RouterComponent {
             self: @ComponentState<TContractState>,
             destination_domain: u32,
             value: u256,
-            message_body: Bytes,
+            message_body: @Bytes,
             hook_metadata: Bytes,
             hook: ContractAddress,
         ) -> u256 {
@@ -279,7 +279,7 @@ pub mod RouterComponent {
         fn _Router_quote_dispatch(
             self: @ComponentState<TContractState>,
             destination_domain: u32,
-            message_body: Bytes,
+            message_body: @Bytes,
             hook_metadata: Bytes,
             hook: ContractAddress,
         ) -> u256 {

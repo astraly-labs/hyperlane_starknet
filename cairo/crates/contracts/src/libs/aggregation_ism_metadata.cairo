@@ -3,8 +3,8 @@ pub mod aggregation_ism_metadata {
     use core::result::Result;
 
     pub trait AggregationIsmMetadata {
-        fn metadata_at(_metadata: Bytes, _index: u8) -> Bytes;
-        fn has_metadata(_metadata: Bytes, _index: u8) -> bool;
+        fn metadata_at(_metadata: @Bytes, _index: u8) -> Bytes;
+        fn has_metadata(_metadata: @Bytes, _index: u8) -> bool;
     }
     /// * Format of metadata:
     /// *
@@ -27,8 +27,8 @@ pub mod aggregation_ism_metadata {
         /// # Returns
         ///
         /// Bytes -  The metadata provided for the ISM at `_index`
-        fn metadata_at(_metadata: Bytes, _index: u8) -> Bytes {
-            let (mut start, end) = match metadata_range(_metadata.clone(), _index) {
+        fn metadata_at(_metadata: @Bytes, _index: u8) -> Bytes {
+            let (mut start, end) = match metadata_range(_metadata, _index) {
                 Result::Ok((start, end)) => (start, end),
                 Result::Err(_) => (0, 0),
             };
@@ -46,7 +46,7 @@ pub mod aggregation_ism_metadata {
         /// # Returns
         ///
         /// boolean -  Whether or not metadata was provided for the ISM at `_index`
-        fn has_metadata(_metadata: Bytes, _index: u8) -> bool {
+        fn has_metadata(_metadata: @Bytes, _index: u8) -> bool {
             match metadata_range(_metadata, _index) {
                 Result::Ok((start, _)) => start > 0,
                 Result::Err(_) => false,
@@ -66,7 +66,7 @@ pub mod aggregation_ism_metadata {
     ///
     /// Result<u32, u32), u8> -  Result on whether or not metadata was provided for the ISM at
     /// `_index`
-    fn metadata_range(_metadata: Bytes, _index: u8) -> Result<(u32, u32), u8> {
+    fn metadata_range(_metadata: @Bytes, _index: u8) -> Result<(u32, u32), u8> {
         let start = _index.into() * RANGE_SIZE * 2;
         let mid = start + RANGE_SIZE;
         let (_, mid_metadata) = _metadata.read_u32(mid.into());
@@ -95,7 +95,7 @@ mod test {
         let mut expected_result = array![0xAAAAAAAAAAAAAAAABBBBCCCC00000000_u256];
         let mut cur_idx = 0;
         while (cur_idx != 1) {
-            let result = AggregationIsmMetadata::metadata_at(encoded_metadata.clone(), 0);
+            let result = AggregationIsmMetadata::metadata_at(@encoded_metadata, 0);
             assert(
                 *BytesTrait::data(result.clone())[0] == *expected_result.at(cur_idx).low,
                 'Agg metadata extract failed',
@@ -131,7 +131,7 @@ mod test {
             0x582DE78DEDA234970000007D806349EA_u256,
             0xC6653E91900000000000000000000000_u256,
         ];
-        let result = AggregationIsmMetadata::metadata_at(encoded_metadata.clone(), 0);
+        let result = AggregationIsmMetadata::metadata_at(@encoded_metadata, 0);
 
         let mut cur_idx = 0;
         while (cur_idx != 9) {
@@ -154,7 +154,7 @@ mod test {
                 0x00000000000000000000000000000000,
             ],
         );
-        assert_eq!(AggregationIsmMetadata::has_metadata(encoded_metadata.clone(), 0), true);
-        assert_eq!(AggregationIsmMetadata::has_metadata(encoded_metadata.clone(), 1), false);
+        assert_eq!(AggregationIsmMetadata::has_metadata(@encoded_metadata, 0), true);
+        assert_eq!(AggregationIsmMetadata::has_metadata(@encoded_metadata, 1), false);
     }
 }

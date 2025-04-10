@@ -11,6 +11,7 @@ pub mod pausable_ism {
     use alexandria_bytes::Bytes;
     use contracts::interfaces::{IInterchainSecurityModule, ModuleType};
     use contracts::libs::message::Message;
+    use contracts::utils::utils::{SerdeSnapshotBytes, SerdeSnapshotMessage};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::security::pausable::PausableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
@@ -75,7 +76,7 @@ pub mod pausable_ism {
         /// # Returns
         ///
         /// boolean - wheter the verification succeed or not.
-        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
+        fn verify(self: @ContractState, _metadata: @Bytes, _message: @Message) -> bool {
             self.pausable.assert_not_paused();
             true
         }

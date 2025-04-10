@@ -2,12 +2,12 @@ pub mod merkleroot_ism_metadata {
     use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
 
     pub trait MerkleRootIsmMetadata {
-        fn origin_merkle_tree_hook(_metadata: Bytes) -> u256;
-        fn message_index(_metadata: Bytes) -> u32;
-        fn signed_index(_metadata: Bytes) -> u32;
-        fn signed_message_id(_metadata: Bytes) -> u256;
-        fn proof(_metadata: Bytes) -> Span<u256>;
-        fn signature_at(_metadata: Bytes, _index: u32) -> (u8, u256, u256);
+        fn origin_merkle_tree_hook(_metadata: @Bytes) -> u256;
+        fn message_index(_metadata: @Bytes) -> u32;
+        fn signed_index(_metadata: @Bytes) -> u32;
+        fn signed_message_id(_metadata: @Bytes) -> u256;
+        fn proof(_metadata: @Bytes) -> Span<u256>;
+        fn signature_at(_metadata: @Bytes, _index: u32) -> (u8, u256, u256);
     }
 
     ///
@@ -39,7 +39,7 @@ pub mod merkleroot_ism_metadata {
         /// # Returns
         ///
         /// u256 -   Origin merkle tree hook of the signed checkpoint
-        fn origin_merkle_tree_hook(_metadata: Bytes) -> u256 {
+        fn origin_merkle_tree_hook(_metadata: @Bytes) -> u256 {
             let (_, felt) = _metadata.read_u256(ORIGIN_MERKLE_TREE_OFFSET);
             felt
         }
@@ -53,7 +53,7 @@ pub mod merkleroot_ism_metadata {
         /// # Returns
         ///
         /// u32 -   Index of the target message in the merkle tree.
-        fn message_index(_metadata: Bytes) -> u32 {
+        fn message_index(_metadata: @Bytes) -> u32 {
             let (_, felt) = _metadata.read_u32(MESSAGE_INDEX_OFFSET);
             felt
         }
@@ -67,7 +67,7 @@ pub mod merkleroot_ism_metadata {
         /// # Returns
         ///
         /// u32 -   Index of the signed checkpoint
-        fn signed_index(_metadata: Bytes) -> u32 {
+        fn signed_index(_metadata: @Bytes) -> u32 {
             let (_, felt) = _metadata.read_u32(SIGNED_INDEX_OFFSET);
             felt
         }
@@ -80,7 +80,7 @@ pub mod merkleroot_ism_metadata {
         /// # Returns
         ///
         /// u256 -   Message ID of the signed checkpoint
-        fn signed_message_id(_metadata: Bytes) -> u256 {
+        fn signed_message_id(_metadata: @Bytes) -> u256 {
             let (_, felt) = _metadata.read_u256(MESSAGE_ID_OFFSET);
             felt
         }
@@ -93,7 +93,7 @@ pub mod merkleroot_ism_metadata {
         /// # Returns
         ///
         /// Span<u256> -  Merkle proof branch of the message.
-        fn proof(_metadata: Bytes) -> Span<u256> {
+        fn proof(_metadata: @Bytes) -> Span<u256> {
             let mut bytes_arr = array![];
             let mut cur_idx = 0;
             loop {
@@ -119,7 +119,7 @@ pub mod merkleroot_ism_metadata {
         /// # Returns
         ///
         /// (u8, u256, u256) -  The validator ECDSA signature at `_index`.
-        fn signature_at(_metadata: Bytes, _index: u32) -> (u8, u256, u256) {
+        fn signature_at(_metadata: @Bytes, _index: u32) -> (u8, u256, u256) {
             // the first signer index is 0
             let (index_r, r) = _metadata.read_u256(SIGNATURES_OFFSET + SIGNATURE_LENGTH * _index);
             let (index_s, s) = _metadata.read_u256(index_r);

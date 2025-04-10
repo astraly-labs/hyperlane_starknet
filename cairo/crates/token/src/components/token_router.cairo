@@ -267,14 +267,14 @@ pub impl TokenRouterTransferRemoteHookDefaultImpl<
 
                 message_id = router_comp
                     ._Router_dispatch(
-                        destination, value, token_message, hook_metadata, hook.unwrap(),
+                        destination, value, @token_message, hook_metadata, hook.unwrap(),
                     );
             },
             Option::None => {
                 let hook_metadata = gas_router_comp._Gas_router_hook_metadata(destination);
                 let hook = mailbox_comp.get_hook();
                 message_id = router_comp
-                    ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
+                    ._Router_dispatch(destination, value, @token_message, hook_metadata, hook);
             },
         }
 

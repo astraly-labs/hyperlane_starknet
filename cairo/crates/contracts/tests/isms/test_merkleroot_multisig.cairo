@@ -67,21 +67,21 @@ fn test_merkleroot_ism_metadata() {
     let proof = TEST_PROOF();
     let (_, _, signatures) = get_merkle_message_and_signature();
     assert(
-        MerkleRootIsmMetadata::origin_merkle_tree_hook(metadata.clone()) == origin_merkle_tree_hook,
+        MerkleRootIsmMetadata::origin_merkle_tree_hook(@metadata) == origin_merkle_tree_hook,
         'wrong merkle tree hook',
     );
     assert(
-        MerkleRootIsmMetadata::message_index(metadata.clone()) == message_index,
+        MerkleRootIsmMetadata::message_index(@metadata) == message_index,
         'wrong message_index',
     );
     assert(
-        MerkleRootIsmMetadata::signed_index(metadata.clone()) == signed_index, 'wrong signed index',
+        MerkleRootIsmMetadata::signed_index(@metadata) == signed_index, 'wrong signed index',
     );
     assert(
-        MerkleRootIsmMetadata::signed_message_id(metadata.clone()) == signed_message_id,
+        MerkleRootIsmMetadata::signed_message_id(@metadata) == signed_message_id,
         'wrong signed_message_id',
     );
-    assert(MerkleRootIsmMetadata::proof(metadata.clone()) == proof, 'wrong proof');
+    assert(MerkleRootIsmMetadata::proof(@metadata) == proof, 'wrong proof');
     let y_parity = 0x01;
     let mut cur_idx = 0;
     loop {
@@ -90,7 +90,7 @@ fn test_merkleroot_ism_metadata() {
         }
         assert(
             MerkleRootIsmMetadata::signature_at(
-                metadata.clone(), cur_idx,
+                @metadata, cur_idx,
             ) == (y_parity, *signatures.at(cur_idx).r, *signatures.at(cur_idx).s),
             'wrong signature ',
         );
@@ -140,7 +140,7 @@ fn test_merkle_root_multisig_verify_with_4_valid_signatures() {
     let metadata = build_merkle_metadata(
         origin_merkle_tree_hook, message_index, signed_index, signed_message_id,
     );
-    assert(merkleroot_ism.verify(metadata, message) == true, 'verification failed');
+    assert(merkleroot_ism.verify(@metadata, @message), 'verification failed');
 }
 
 
@@ -173,7 +173,7 @@ fn test_merkle_root_multisig_verify_with_insufficient_valid_signatures() {
         origin_merkle_tree_hook, message_index, signed_index, signed_message_id,
     );
     metadata.update_at(1100, 0);
-    assert(merkleroot_ism.verify(metadata, message) == true, 'verification failed');
+    assert(merkleroot_ism.verify(@metadata, @message), 'verification failed');
 }
 
 
@@ -199,7 +199,7 @@ fn test_merkle_root_multisig_verify_with_empty_metadata() {
     let (_, validators_address, _) = get_merkle_message_and_signature();
     let (merkle_root_ism, _) = setup_merkleroot_multisig_ism(validators_address.span(), threshold);
     let bytes_metadata = BytesTrait::new_empty();
-    assert(merkle_root_ism.verify(bytes_metadata, message) == true, 'verification failed');
+    assert(merkle_root_ism.verify(@bytes_metadata, @message), 'verification failed');
 }
 
 
@@ -232,5 +232,5 @@ fn test_merkle_root_multisig_verify_with_4_valid_signatures_fails_if_duplicate_s
     let metadata = build_fake_merkle_metadata(
         origin_merkle_tree_hook, message_index, signed_index, signed_message_id,
     );
-    assert(merkleroot_ism.verify(metadata, message) == true, 'verification failed');
+    assert(merkleroot_ism.verify(@metadata, @message), 'verification failed');
 }

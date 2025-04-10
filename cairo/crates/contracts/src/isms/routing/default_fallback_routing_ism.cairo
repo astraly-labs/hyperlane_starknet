@@ -11,6 +11,7 @@ pub mod default_fallback_routing_ism {
         IRoutingIsm, ModuleType,
     };
     use contracts::libs::message::Message;
+    use contracts::utils::utils::{SerdeSnapshotBytes, SerdeSnapshotMessage};
     use core::panic_with_felt252;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
@@ -180,8 +181,8 @@ pub mod default_fallback_routing_ism {
         /// # Returns
         ///
         /// ContractAddress - The ISM address to use to verify _message
-        fn route(self: @ContractState, _message: Message) -> ContractAddress {
-            self.module(_message.origin)
+        fn route(self: @ContractState, _message: @Message) -> ContractAddress {
+            self.module(*_message.origin)
         }
     }
 
@@ -204,8 +205,8 @@ pub mod default_fallback_routing_ism {
         /// # Returns
         ///
         /// boolean - wheter the verification succeed or not.
-        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
-            let ism_address = self.route(_message.clone());
+        fn verify(self: @ContractState, _metadata: @Bytes, _message: @Message) -> bool {
+            let ism_address = self.route(_message);
             let ism_dispatcher = IInterchainSecurityModuleDispatcher {
                 contract_address: ism_address,
             };

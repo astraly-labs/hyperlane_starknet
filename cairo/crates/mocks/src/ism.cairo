@@ -5,8 +5,8 @@ pub mod ism {
         IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
         IInterchainSecurityModuleDispatcherTrait, ModuleType,
     };
-    use contracts::libs::message::{Message, MessageTrait};
-    use starknet::ContractAddress;
+    use contracts::libs::message::Message;
+    use contracts::utils::utils::{SerdeSnapshotBytes, SerdeSnapshotMessage};
 
     #[storage]
     struct Storage {}
@@ -16,7 +16,7 @@ pub mod ism {
             ModuleType::MESSAGE_ID_MULTISIG(starknet::get_contract_address())
         }
 
-        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
+        fn verify(self: @ContractState, _metadata: @Bytes, _message: @Message) -> bool {
             true
         }
     }

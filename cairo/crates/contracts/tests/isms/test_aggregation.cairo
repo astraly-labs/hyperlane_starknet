@@ -111,7 +111,7 @@ fn test_aggregation_verify() {
     concat_metadata.concat(@message_id_metadata);
     // dummy metadata for noop ism
     concat_metadata.concat(@message_id_metadata);
-    assert(aggregation.verify(concat_metadata, message), 'Aggregation: verify failed');
+    assert(aggregation.verify(@concat_metadata, @message), 'Aggregation: verify failed');
 }
 
 
@@ -174,6 +174,6 @@ fn test_aggregation_verify_e2e() {
         aggregation_threshold.try_into().unwrap(),
     );
 
-    assert(aggregation.verify(metadata, message), 'Aggregation: verify failed');
+    assert(aggregation.verify(@metadata, @message), 'Aggregation: verify failed');
 }
 

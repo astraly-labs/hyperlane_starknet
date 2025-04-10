@@ -139,7 +139,7 @@ pub mod GasRouterComponent {
         ) -> u256 {
             let mailbox_comp = get_dep_component!(self, MailBoxClient);
             let hook = mailbox_comp.get_hook();
-            self._Gas_router_quote_dispatch(destination_domain, BytesTrait::new_empty(), hook)
+            self._Gas_router_quote_dispatch(destination_domain, @BytesTrait::new_empty(), hook)
         }
     }
 
@@ -165,7 +165,7 @@ pub mod GasRouterComponent {
             ref self: ComponentState<TContractState>,
             destination: u32,
             value: u256,
-            message_body: Bytes,
+            message_body: @Bytes,
             hook: ContractAddress,
         ) -> u256 {
             let mut router_comp = get_dep_component_mut!(ref self, Router);
@@ -182,7 +182,7 @@ pub mod GasRouterComponent {
         fn _Gas_router_quote_dispatch(
             self: @ComponentState<TContractState>,
             destination: u32,
-            message_body: Bytes,
+            message_body: @Bytes,
             hook: ContractAddress,
         ) -> u256 {
             let mut router_comp = get_dep_component!(self, Router);

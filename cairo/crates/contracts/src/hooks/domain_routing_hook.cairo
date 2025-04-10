@@ -11,6 +11,7 @@ pub mod domain_routing_hook {
         IPostDispatchHookDispatcherTrait, Types,
     };
     use contracts::libs::message::Message;
+    use contracts::utils::utils::{SerdeSnapshotBytes, SerdeSnapshotMessage};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
@@ -105,7 +106,7 @@ pub mod domain_routing_hook {
         /// # Returns
         ///
         /// boolean - whether the hook supports the metadata
-        fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
+        fn supports_metadata(self: @ContractState, _metadata: @Bytes) -> bool {
             true
         }
 
@@ -124,17 +125,17 @@ pub mod domain_routing_hook {
         /// Reverts with `AMOUNT_DOES_NOT_COVER_HOOK_QUOTE` if the fee amount does not cover the
         /// hook quote
         fn post_dispatch(
-            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256,
+            ref self: ContractState, _metadata: @Bytes, _message: @Message, _fee_amount: u256,
         ) {
             // We should check that the fee_amount is enough for the desired hook to work before
             // actually send the amount We assume that the fee token is the same across the hooks
 
-            let required_amount = self.quote_dispatch(_metadata.clone(), _message.clone());
+            let required_amount = self.quote_dispatch(_metadata, _message);
             assert(_fee_amount >= required_amount, Errors::AMOUNT_DOES_NOT_COVER_HOOK_QUOTE);
 
             let caller = get_caller_address();
             let configured_hook_address: ContractAddress = self
-                ._get_configured_hook(_message.clone())
+                ._get_configured_hook(_message)
                 .contract_address;
 
             if (required_amount > 0) {
@@ -144,7 +145,7 @@ pub mod domain_routing_hook {
                     );
             };
             self
-                ._get_configured_hook(_message.clone())
+                ._get_configured_hook(_message)
                 .post_dispatch(_metadata, _message, required_amount);
         }
 
@@ -159,8 +160,8 @@ pub mod domain_routing_hook {
         /// # Returns
         ///
         /// u256 - The quoted fee for dispatching the message
-        fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
-            self._get_configured_hook(_message.clone()).quote_dispatch(_metadata, _message)
+        fn quote_dispatch(ref self: ContractState, _metadata: @Bytes, _message: @Message) -> u256 {
+            self._get_configured_hook(_message).quote_dispatch(_metadata, _message)
         }
     }
 
@@ -223,9 +224,9 @@ pub mod domain_routing_hook {
         ///
         /// Reverts with `INVALID_DESTINATION` if no hook is configured for the destination
         fn _get_configured_hook(
-            self: @ContractState, _message: Message,
+            self: @ContractState, _message: @Message,
         ) -> IPostDispatchHookDispatcher {
-            let dispatcher_instance = self.hooks.read(_message.destination);
+            let dispatcher_instance = self.hooks.read(*_message.destination);
             assert(
                 dispatcher_instance.contract_address != contract_address_const::<0>(),
                 Errors::INVALID_DESTINATION,

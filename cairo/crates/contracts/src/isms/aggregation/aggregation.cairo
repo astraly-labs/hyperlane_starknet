@@ -7,6 +7,7 @@ pub mod aggregation {
     };
     use contracts::libs::aggregation_ism_metadata::aggregation_ism_metadata::AggregationIsmMetadata;
     use contracts::libs::message::Message;
+    use contracts::utils::utils::{SerdeSnapshotMessage, SerdeSnapshotBytes};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::storage::{
@@ -83,7 +84,7 @@ pub mod aggregation {
         /// Span<ContractAddress> - The array of ISM addresses
         /// threshold - The number of ISMs needed to verify
         fn modules_and_threshold(
-            self: @ContractState, _message: Message,
+            self: @ContractState, _message: @Message,
         ) -> (Span<ContractAddress>, u8) {
             // THE USER CAN DEFINE HERE CONDITIONS FOR THE MODULE AND THRESHOLD SELECTION
             let threshold = self.threshold.read();
@@ -103,20 +104,20 @@ pub mod aggregation {
         /// # Returns
         ///
         /// boolean - wheter the verification succeed or not.
-        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
-            let (isms, mut threshold) = self.modules_and_threshold(_message.clone());
+        fn verify(self: @ContractState, _metadata: @Bytes, _message: @Message) -> bool {
+            let (isms, mut threshold) = self.modules_and_threshold(_message);
 
             assert(threshold != 0, Errors::THRESHOLD_NOT_SET);
             let modules = self.build_modules_span();
             let mut cur_idx: u8 = 0;
             loop {
                 if (threshold == 0) {
-                    break ();
+                    break;
                 }
                 if (cur_idx.into() == isms.len()) {
-                    break ();
+                    break;
                 }
-                if (!AggregationIsmMetadata::has_metadata(_metadata.clone(), cur_idx)) {
+                if (!AggregationIsmMetadata::has_metadata(_metadata, cur_idx)) {
                     cur_idx += 1;
                     continue;
                 }
@@ -124,8 +125,8 @@ pub mod aggregation {
                     contract_address: *modules.at(cur_idx.into()),
                 };
 
-                let metadata = AggregationIsmMetadata::metadata_at(_metadata.clone(), cur_idx);
-                assert(ism.verify(metadata, _message.clone()), Errors::VERIFICATION_FAILED);
+                let metadata = AggregationIsmMetadata::metadata_at(_metadata, cur_idx);
+                assert(ism.verify(@metadata, _message), Errors::VERIFICATION_FAILED);
                 threshold -= 1;
                 cur_idx += 1;
             };
@@ -157,7 +158,7 @@ pub mod aggregation {
             let mut cur_idx = 0;
             loop {
                 if (cur_idx == _modules.len()) {
-                    break ();
+                    break;
                 }
                 let module: ContractAddress = (*_modules.at(cur_idx)).try_into().unwrap();
                 assert(
@@ -199,7 +200,7 @@ pub mod aggregation {
             loop {
                 let next_address = self.modules.read(cur_address);
                 if (next_address == contract_address_const::<0>()) {
-                    break ();
+                    break;
                 }
                 modules.append(next_address);
                 cur_address = next_address

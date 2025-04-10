@@ -256,7 +256,7 @@ fn test_route_ism() {
         ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
     );
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
-    assert_eq!(ism.route(message), *_modules.at(0));
+    assert_eq!(ism.route(@message), *_modules.at(0));
     message =
         Message {
             version: 3_u8,
@@ -267,7 +267,7 @@ fn test_route_ism() {
             recipient: 'RECIPIENT'.try_into().unwrap(),
             body: BytesTrait::new_empty(),
         };
-    assert_eq!(ism.route(message), *_modules.at(1));
+    assert_eq!(ism.route(@message), *_modules.at(1));
     message =
         Message {
             version: 3_u8,
@@ -278,7 +278,7 @@ fn test_route_ism() {
             recipient: 'RECIPIENT'.try_into().unwrap(),
             body: BytesTrait::new_empty(),
         };
-    assert_eq!(ism.route(message), *_modules.at(2));
+    assert_eq!(ism.route(@message), *_modules.at(2));
     message =
         Message {
             version: 3_u8,
@@ -290,7 +290,7 @@ fn test_route_ism() {
             body: BytesTrait::new_empty(),
         };
     let mailbox_dispatcher = IMailboxDispatcher { contract_address: MAILBOX() };
-    assert_eq!(ism.route(message), mailbox_dispatcher.get_default_ism());
+    assert_eq!(ism.route(@message), mailbox_dispatcher.get_default_ism());
 }
 
 
@@ -310,7 +310,6 @@ fn test_verify() {
         0x01020304050607080910111213141516,
         0x01020304050607080910000000000000,
     ];
-    let message_body = BytesTrait::new(42, array);
     let message = Message {
         version: HYPERLANE_VERSION,
         nonce: 0,
@@ -318,7 +317,7 @@ fn test_verify() {
         sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
         recipient: VALID_RECIPIENT(),
-        body: message_body.clone(),
+        body: BytesTrait::new(42, array),
     };
     let (_, validators_address, _) = get_message_and_signature();
     let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
@@ -340,5 +339,5 @@ fn test_verify() {
         ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
     );
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
-    assert_eq!(ism.verify(metadata, message), true);
+    assert_eq!(ism.verify(@metadata, @message), true);
 }

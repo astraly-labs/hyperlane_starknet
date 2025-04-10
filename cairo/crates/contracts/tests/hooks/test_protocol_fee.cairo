@@ -106,13 +106,13 @@ fn test_collect_protocol_fee_fails_if_insufficient_balance() {
 fn test_supports_metadata() {
     let mut metadata = BytesTrait::new_empty();
     let (_, post_dispatch_hook) = setup_protocol_fee(Option::None);
-    assert_eq!(post_dispatch_hook.supports_metadata(metadata.clone()), true);
+    assert_eq!(post_dispatch_hook.supports_metadata(@metadata), true);
     let variant = 1;
     metadata.append_u16(variant);
-    assert_eq!(post_dispatch_hook.supports_metadata(metadata), true);
+    assert_eq!(post_dispatch_hook.supports_metadata(@metadata), true);
     metadata = BytesTrait::new_empty();
     metadata.append_u16(variant + 1);
-    assert_eq!(post_dispatch_hook.supports_metadata(metadata), false);
+    assert_eq!(post_dispatch_hook.supports_metadata(@metadata), false);
 }
 
 
@@ -133,7 +133,7 @@ fn test_post_dispatch_fails_if_invalid_variant() {
     cheat_caller_address(
         ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
     );
-    post_dispatch_hook.post_dispatch(metadata, message, PROTOCOL_FEE);
+    post_dispatch_hook.post_dispatch(@metadata, @message, PROTOCOL_FEE);
 }
 
 
@@ -144,7 +144,7 @@ fn test_quote_dispatch() {
     let variant = 1;
     let message = MessageTrait::default();
     metadata.append_u16(variant);
-    assert_eq!(post_dispatch_hook.quote_dispatch(metadata, message), PROTOCOL_FEE);
+    assert_eq!(post_dispatch_hook.quote_dispatch(@metadata, @message), PROTOCOL_FEE);
 }
 
 
@@ -156,5 +156,5 @@ fn test_quote_dispatch_fails_if_invalid_variant() {
     let variant = 2;
     metadata.append_u16(variant);
     let message = MessageTrait::default();
-    post_dispatch_hook.quote_dispatch(metadata, message);
+    post_dispatch_hook.quote_dispatch(@metadata, @message);
 }

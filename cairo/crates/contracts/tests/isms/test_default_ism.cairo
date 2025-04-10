@@ -19,7 +19,7 @@ fn test_verify_noop_ism() {
     let noop_ism = setup_noop_ism();
     let message = MessageTrait::default();
     let metadata = BytesTrait::new_empty();
-    assert_eq!(noop_ism.verify(metadata, message), true);
+    assert_eq!(noop_ism.verify(@metadata, @message), true);
     assert_eq!(noop_ism.module_type(), ModuleType::NULL(()));
 }
 
@@ -52,8 +52,8 @@ fn test_verify_trusted_relayer_ism() {
         body: message_body.clone(),
     };
     let metadata = message_body;
-    mailbox.process(metadata.clone(), message.clone());
-    assert_eq!(trusted_ism.verify(metadata, message), true);
+    mailbox.process(@metadata, message.clone());
+    assert_eq!(trusted_ism.verify(@metadata, @message), true);
     assert_eq!(trusted_ism.module_type(), ModuleType::NULL(()));
 }
 
@@ -88,7 +88,7 @@ fn test_verify_pausable_ism() {
     let (pausable_ism, _) = setup_pausable_ism();
     let message = MessageTrait::default();
     let metadata = BytesTrait::new_empty();
-    assert_eq!(pausable_ism.verify(metadata, message), true);
+    assert_eq!(pausable_ism.verify(@metadata, @message), true);
     assert_eq!(pausable_ism.module_type(), ModuleType::NULL(()));
 }
 
@@ -103,5 +103,5 @@ fn test_veriy_pausable_ism_fails_if_paused() {
         ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
     );
     pausable.pause();
-    ism.verify(metadata, message);
+    ism.verify(@metadata, @message);
 }

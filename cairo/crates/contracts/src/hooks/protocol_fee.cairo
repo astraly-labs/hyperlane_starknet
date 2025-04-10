@@ -6,6 +6,7 @@ pub mod protocol_fee {
     };
     use contracts::interfaces::{IPostDispatchHook, IProtocolFee, Types};
     use contracts::libs::message::Message;
+    use contracts::utils::utils::{SerdeSnapshotBytes, SerdeSnapshotMessage};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
@@ -80,7 +81,7 @@ pub mod protocol_fee {
         /// # Returns
         ///
         /// boolean - whether the hook supports metadata
-        fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
+        fn supports_metadata(self: @ContractState, _metadata: @Bytes) -> bool {
             _metadata.size() == 0 || StandardHookMetadata::variant(_metadata) == VARIANT.into()
         }
 
@@ -93,9 +94,9 @@ pub mod protocol_fee {
         /// * - `_message` - the message passed from the Mailbox.dispatch() call
         /// * - `_fee_amount` - the payment provided for sending the message
         fn post_dispatch(
-            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256,
+            ref self: ContractState, _metadata: @Bytes, _message: @Message, _fee_amount: u256,
         ) {
-            assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
+            assert(self.supports_metadata(_metadata), Errors::INVALID_METADATA_VARIANT);
             self._post_dispatch(_metadata, _message, _fee_amount);
         }
 
@@ -110,8 +111,8 @@ pub mod protocol_fee {
         /// # Returns
         ///
         /// u256 - Quoted payment for the postDispatch call
-        fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
-            assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
+        fn quote_dispatch(ref self: ContractState, _metadata: @Bytes, _message: @Message) -> u256 {
+            assert(self.supports_metadata(_metadata), Errors::INVALID_METADATA_VARIANT);
             self._quote_dispatch(_metadata, _message)
         }
     }
@@ -169,7 +170,7 @@ pub mod protocol_fee {
         /// * - `_message` - the message passed from the Mailbox.dispatch() call
         /// * - `_fee_amount` - the payment provided for sending the message
         fn _post_dispatch(
-            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256,
+            ref self: ContractState, _metadata: @Bytes, _message: @Message, _fee_amount: u256,
         ) { // Since payment is exact, no need for further operation
         }
 
@@ -183,7 +184,7 @@ pub mod protocol_fee {
         /// # Returns
         ///
         /// u256 - Quoted payment for the postDispatch call
-        fn _quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
+        fn _quote_dispatch(ref self: ContractState, _metadata: @Bytes, _message: @Message) -> u256 {
             self.protocol_fee.read()
         }
 

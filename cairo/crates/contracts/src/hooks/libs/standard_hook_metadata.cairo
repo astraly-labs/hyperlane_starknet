@@ -35,7 +35,7 @@ pub mod standard_hook_metadata {
         /// # Returns
         ///
         /// u16 -  variant of the metadata
-        fn variant(_metadata: Bytes) -> u16 {
+        fn variant(_metadata: @Bytes) -> u16 {
             if (_metadata.size() < VARIANT_OFFSET.into() + 2) {
                 return 0;
             }
@@ -53,7 +53,7 @@ pub mod standard_hook_metadata {
         /// # Returns
         ///
         /// u256 -  Value for the message
-        fn msg_value(_metadata: Bytes, _default: u256) -> u256 {
+        fn msg_value(_metadata: @Bytes, _default: u256) -> u256 {
             if (_metadata.size() < MSG_VALUE_OFFSET.into() + 32) {
                 return _default;
             }
@@ -71,7 +71,7 @@ pub mod standard_hook_metadata {
         /// # Returns
         ///
         /// u256 -  Gas limit for the message
-        fn gas_limit(_metadata: Bytes, _default: u256) -> u256 {
+        fn gas_limit(_metadata: @Bytes, _default: u256) -> u256 {
             if (_metadata.size() < GAS_LIMIT_OFFSET.into() + 32) {
                 return _default;
             }
@@ -89,7 +89,7 @@ pub mod standard_hook_metadata {
         /// # Returns
         ///
         /// ContractAddress -  Refund address for the message
-        fn refund_address(_metadata: Bytes, _default: ContractAddress) -> ContractAddress {
+        fn refund_address(_metadata: @Bytes, _default: ContractAddress) -> ContractAddress {
             if (_metadata.size() < REFUND_ADDRESS_OFFSET.into() + 32) {
                 return _default;
             }
@@ -106,7 +106,7 @@ pub mod standard_hook_metadata {
         /// # Returns
         ///
         /// Bytes -  Custom metadata.
-        fn get_custom_metadata(_metadata: Bytes) -> Bytes {
+        fn get_custom_metadata(_metadata: @Bytes) -> Bytes {
             if (_metadata.size().into() < MIN_METADATA_LENGTH) {
                 return BytesTrait::new_empty();
             }
@@ -150,19 +150,19 @@ mod tests {
     #[test]
     fn test_standard_hook_metadata_default_value() {
         let mut metadata = BytesTrait::new_empty();
-        assert_eq!(0, StandardHookMetadata::variant(metadata.clone()));
+        assert_eq!(0, StandardHookMetadata::variant(@metadata));
         let variant = 1;
         metadata.append_u16(variant);
-        assert_eq!(123, StandardHookMetadata::msg_value(metadata.clone(), 123));
+        assert_eq!(123, StandardHookMetadata::msg_value(@metadata, 123));
         let msg_value = 0x123123123;
         metadata.append_u256(msg_value);
-        assert_eq!(4567, StandardHookMetadata::gas_limit(metadata.clone(), 4567));
+        assert_eq!(4567, StandardHookMetadata::gas_limit(@metadata, 4567));
         let gas_limit = 0x456456456;
         metadata.append_u256(gas_limit);
         let other_refunded_address = 'other_refunded'.try_into().unwrap();
         assert_eq!(
             other_refunded_address,
-            StandardHookMetadata::refund_address(metadata.clone(), other_refunded_address),
+            StandardHookMetadata::refund_address(@metadata, other_refunded_address),
         );
         let refund_address: ContractAddress = 'refund_address'.try_into().unwrap();
         metadata.append_address(refund_address);
@@ -185,15 +185,15 @@ mod tests {
         let mut expected_custom_metadata = BytesTrait::new_empty();
         expected_custom_metadata.append_u256(*custom_metadata.at(0));
         expected_custom_metadata.append_u256(*custom_metadata.at(1));
-        assert_eq!(variant, StandardHookMetadata::variant(metadata.clone()));
-        assert_eq!(msg_value, StandardHookMetadata::msg_value(metadata.clone(), 0));
-        assert_eq!(gas_limit, StandardHookMetadata::gas_limit(metadata.clone(), 0));
+        assert_eq!(variant, StandardHookMetadata::variant(@metadata));
+        assert_eq!(msg_value, StandardHookMetadata::msg_value(@metadata, 0));
+        assert_eq!(gas_limit, StandardHookMetadata::gas_limit(@metadata, 0));
         assert_eq!(
             refund_address,
-            StandardHookMetadata::refund_address(metadata.clone(), contract_address_const::<0>()),
+            StandardHookMetadata::refund_address(@metadata, contract_address_const::<0>()),
         );
         assert(
-            expected_custom_metadata == StandardHookMetadata::get_custom_metadata(metadata.clone()),
+            expected_custom_metadata == StandardHookMetadata::get_custom_metadata(@metadata),
             'SHM: custom metadata mismatch',
         );
     }

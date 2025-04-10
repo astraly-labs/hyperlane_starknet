@@ -6,7 +6,7 @@ pub mod merkleroot_multisig_ism {
     use contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
     use contracts::libs::message::{Message, MessageTrait};
     use contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MerkleRootIsmMetadata;
-    use contracts::utils::keccak256::{ByteData, HASH_SIZE, bool_is_eth_signature_valid};
+    use contracts::utils::{keccak256::{ByteData, HASH_SIZE, bool_is_eth_signature_valid}, utils::{SerdeSnapshotBytes, SerdeSnapshotMessage}};
     use openzeppelin::access::ownable::OwnableComponent;
     use starknet::ContractAddress;
     use starknet::EthAddress;
@@ -77,9 +77,9 @@ pub mod merkleroot_multisig_ism {
         /// # Returns
         ///
         /// boolean - wheter the verification succeed or not.
-        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
-            assert(_metadata.clone().size() > 0, Errors::EMPTY_METADATA);
-            let digest = self.digest(_metadata.clone(), _message.clone());
+        fn verify(self: @ContractState, _metadata: @Bytes, _message: @Message) -> bool {
+            assert(_metadata.size() > 0, Errors::EMPTY_METADATA);
+            let digest = self.digest(_metadata, _message);
             let (validators, threshold) = self.validators_and_threshold(_message);
             assert(threshold > 0, Errors::NO_MULTISIG_THRESHOLD_FOR_MESSAGE);
             let mut validator_index = 0;
@@ -87,9 +87,9 @@ pub mod merkleroot_multisig_ism {
             // Assumes that signatures are ordered by validator
             loop {
                 if (i == threshold) {
-                    break ();
+                    break;
                 }
-                let signature = self.get_signature_at(_metadata.clone(), i);
+                let signature = self.get_signature_at(_metadata, i);
                 // we loop on the validators list public key in order to find a match
                 let is_signer_in_list = loop {
                     if (validator_index == validators.len()) {
@@ -133,7 +133,7 @@ pub mod merkleroot_multisig_ism {
         /// Span<EthAddress> - a span of ethereum validator addresses
         /// u32  - The number of validator signatures needed
         fn validators_and_threshold(
-            self: @ContractState, _message: Message,
+            self: @ContractState, _message: @Message,
         ) -> (Span<EthAddress>, u32) {
             // USER CONTRACT DEFINITION HERE
             // USER CAN SPECIFY VALIDATORS SELECTION CONDITIONS
@@ -155,26 +155,26 @@ pub mod merkleroot_multisig_ism {
         /// # Returns
         ///
         /// u256 - The digest to be signed by validators
-        fn digest(self: @ContractState, _metadata: Bytes, _message: Message) -> u256 {
+        fn digest(self: @ContractState, _metadata: @Bytes, _message: @Message) -> u256 {
             assert(
                 MerkleRootIsmMetadata::message_index(
-                    _metadata.clone(),
-                ) <= MerkleRootIsmMetadata::signed_index(_metadata.clone()),
+                    _metadata,
+                ) <= MerkleRootIsmMetadata::signed_index(_metadata),
                 Errors::INVALID_MERKLE_INDEX,
             );
             let origin_merkle_tree_hook = MerkleRootIsmMetadata::origin_merkle_tree_hook(
-                _metadata.clone(),
+                _metadata,
             );
-            let signed_index = MerkleRootIsmMetadata::signed_index(_metadata.clone());
-            let signed_message_id = MerkleRootIsmMetadata::signed_message_id(_metadata.clone());
+            let signed_index = MerkleRootIsmMetadata::signed_index(_metadata);
+            let signed_message_id = MerkleRootIsmMetadata::signed_message_id(_metadata);
             let (id, _) = MessageTrait::format_message(_message.clone());
-            let proof = MerkleRootIsmMetadata::proof(_metadata.clone());
-            let message_index = MerkleRootIsmMetadata::message_index(_metadata.clone());
+            let proof = MerkleRootIsmMetadata::proof(_metadata);
+            let message_index = MerkleRootIsmMetadata::message_index(_metadata);
             let mut cur_idx = 0;
             let mut formatted_proof = array![];
             loop {
                 if (cur_idx == proof.len()) {
-                    break ();
+                    break;
                 }
                 formatted_proof.append(ByteData { value: *proof.at(cur_idx), size: HASH_SIZE });
                 cur_idx += 1;
@@ -185,7 +185,7 @@ pub mod merkleroot_multisig_ism {
                 message_index.into(),
             );
             CheckpointLib::digest(
-                _message.origin,
+                *_message.origin,
                 origin_merkle_tree_hook.into(),
                 signed_root.into(),
                 signed_index,
@@ -203,7 +203,7 @@ pub mod merkleroot_multisig_ism {
         /// # Returns
         ///
         /// Signature  - A formatted signature (see Signature structure)
-        fn get_signature_at(self: @ContractState, _metadata: Bytes, _index: u32) -> Signature {
+        fn get_signature_at(self: @ContractState, _metadata: @Bytes, _index: u32) -> Signature {
             let (v, r, s) = MerkleRootIsmMetadata::signature_at(_metadata, _index);
             signature_from_vrs(v.into(), r, s)
         }
@@ -215,7 +215,7 @@ pub mod merkleroot_multisig_ism {
             loop {
                 let validator = self.validators.read(cur_idx);
                 if (validator == 0.try_into().unwrap()) {
-                    break ();
+                    break;
                 }
                 validators.append(validator);
                 cur_idx += 1;
@@ -236,7 +236,7 @@ pub mod merkleroot_multisig_ism {
 
             loop {
                 if (cur_idx == _validators.len()) {
-                    break ();
+                    break;
                 }
                 let validator: EthAddress = (*_validators.at(cur_idx)).try_into().unwrap();
                 assert(

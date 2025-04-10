@@ -5,7 +5,7 @@ pub mod messageid_multisig_ism {
     use contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
     use contracts::libs::message::{Message, MessageTrait};
     use contracts::libs::multisig::message_id_ism_metadata::message_id_ism_metadata::MessageIdIsmMetadata;
-    use contracts::utils::keccak256::bool_is_eth_signature_valid;
+    use contracts::utils::{keccak256::bool_is_eth_signature_valid, utils::{SerdeSnapshotBytes, SerdeSnapshotMessage}};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
@@ -81,9 +81,9 @@ pub mod messageid_multisig_ism {
         /// # Returns
         ///
         /// boolean - wheter the verification succeed or not.
-        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
-            assert(_metadata.clone().size() > 0, Errors::EMPTY_METADATA);
-            let digest = self.digest(_metadata.clone(), _message.clone());
+        fn verify(self: @ContractState, _metadata: @Bytes, _message: @Message) -> bool {
+            assert(_metadata.size() > 0, Errors::EMPTY_METADATA);
+            let digest = self.digest(_metadata, _message);
             let (validators, threshold) = self.validators_and_threshold(_message);
             assert(threshold > 0, Errors::NO_MULTISIG_THRESHOLD_FOR_MESSAGE);
             let mut validator_index = 0;
@@ -91,9 +91,9 @@ pub mod messageid_multisig_ism {
             // for each couple (sig_s, sig_r) extracted from the metadata
             loop {
                 if (i == threshold) {
-                    break ();
+                    break;
                 }
-                let signature = self.get_signature_at(_metadata.clone(), i);
+                let signature = self.get_signature_at(_metadata, i);
                 // we loop on the validators list public key in order to find a match
                 let is_signer_in_list = loop {
                     if (validator_index == validators.len()) {
@@ -137,7 +137,7 @@ pub mod messageid_multisig_ism {
         /// Span<EthAddress> - a span of ethereum validator addresses
         /// u32  - The number of validator signatures needed
         fn validators_and_threshold(
-            self: @ContractState, _message: Message,
+            self: @ContractState, _message: @Message,
         ) -> (Span<EthAddress>, u32) {
             // USER CONTRACT DEFINITION HERE
             // USER CAN SPECIFY VALIDATORS SELECTION CONDITIONS
@@ -158,15 +158,15 @@ pub mod messageid_multisig_ism {
         /// # Returns
         ///
         /// u256 - The digest to be signed by validators
-        fn digest(self: @ContractState, _metadata: Bytes, _message: Message) -> u256 {
+        fn digest(self: @ContractState, _metadata: @Bytes, _message: @Message) -> u256 {
             let origin_merkle_tree_hook = MessageIdIsmMetadata::origin_merkle_tree_hook(
-                _metadata.clone(),
+                _metadata,
             );
-            let root = MessageIdIsmMetadata::root(_metadata.clone());
-            let index = MessageIdIsmMetadata::index(_metadata.clone());
+            let root = MessageIdIsmMetadata::root(_metadata);
+            let index = MessageIdIsmMetadata::index(_metadata);
             let (format_message, _) = MessageTrait::format_message(_message.clone());
             CheckpointLib::digest(
-                _message.origin, origin_merkle_tree_hook.into(), root.into(), index, format_message,
+                *_message.origin, origin_merkle_tree_hook.into(), root.into(), index, format_message,
             )
         }
 
@@ -180,7 +180,7 @@ pub mod messageid_multisig_ism {
         /// # Returns
         ///
         /// Signature  - A formatted signature (see Signature structure)
-        fn get_signature_at(self: @ContractState, _metadata: Bytes, _index: u32) -> Signature {
+        fn get_signature_at(self: @ContractState, _metadata: @Bytes, _index: u32) -> Signature {
             let (v, r, s) = MessageIdIsmMetadata::signature_at(_metadata, _index);
             signature_from_vrs(v.into(), r, s)
         }
@@ -192,7 +192,7 @@ pub mod messageid_multisig_ism {
             loop {
                 let validator = self.validators.read(cur_idx);
                 if (validator == 0.try_into().unwrap()) {
-                    break ();
+                    break;
                 }
                 validators.append(validator);
                 cur_idx += 1;
@@ -213,7 +213,7 @@ pub mod messageid_multisig_ism {
             let mut cur_idx = 0;
             loop {
                 if (cur_idx == _validators.len()) {
-                    break ();
+                    break;
                 }
                 let validator: EthAddress = (*_validators.at(cur_idx)).try_into().unwrap();
                 assert(

@@ -1,10 +1,12 @@
 use alexandria_bytes::Bytes;
 use contracts::libs::message::Message;
+use contracts::utils::utils::SerdeSnapshotBytes;
+
 
 #[starknet::interface]
 pub trait ITestPostDispatchHook<TContractState> {
     fn hook_type(self: @TContractState) -> u8;
-    fn supports_metadata(self: @TContractState, _metadata: Bytes) -> bool;
+    fn supports_metadata(self: @TContractState, _metadata: @Bytes) -> bool;
     fn set_fee(ref self: TContractState, fee: u256);
     fn message_dispatched(self: @TContractState, message_id: u256) -> bool;
     fn post_dispatch(ref self: TContractState, metadata: Bytes, message: Message);
@@ -13,11 +15,12 @@ pub trait ITestPostDispatchHook<TContractState> {
 
 #[starknet::contract]
 pub mod TestPostDispatchHook {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use super::*;
+    use alexandria_bytes::BytesTrait;
     use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::{
         StandardHookMetadata, VARIANT,
     };
-    use contracts::libs::message::{Message, MessageTrait};
+    use contracts::libs::message::MessageTrait;
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
         StoragePointerWriteAccess,
@@ -38,7 +41,7 @@ pub mod TestPostDispatchHook {
             0
         }
 
-        fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
+        fn supports_metadata(self: @ContractState, _metadata: @Bytes) -> bool {
             _metadata.size() == 0 || StandardHookMetadata::variant(_metadata) == VARIANT.into()
         }
 
@@ -51,13 +54,13 @@ pub mod TestPostDispatchHook {
         }
 
         fn post_dispatch(ref self: ContractState, metadata: Bytes, message: Message) {
-            assert(self.supports_metadata(metadata.clone()), Errors::INVALID_METADATA_VARIANT);
+            assert(self.supports_metadata(@metadata), Errors::INVALID_METADATA_VARIANT);
             let (hash, _) = MessageTrait::format_message(message);
             self.message_dispatched.write(hash, true);
         }
 
         fn quote_dispatch(ref self: ContractState, metadata: Bytes, message: Message) -> u256 {
-            assert(self.supports_metadata(metadata.clone()), Errors::INVALID_METADATA_VARIANT);
+            assert(self.supports_metadata(@metadata), Errors::INVALID_METADATA_VARIANT);
             self.fee.read()
         }
     }

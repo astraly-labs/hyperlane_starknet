@@ -25,13 +25,13 @@ fn test_merkle_tree_hook_type() {
 fn test_supports_metadata() {
     let mut metadata = BytesTrait::new_empty();
     let (_, merkle_tree_hook, _) = setup_merkle_tree_hook();
-    assert_eq!(merkle_tree_hook.supports_metadata(metadata.clone()), true);
+    assert_eq!(merkle_tree_hook.supports_metadata(@metadata), true);
     let variant = 1;
     metadata.append_u16(variant);
-    assert_eq!(merkle_tree_hook.supports_metadata(metadata), true);
+    assert_eq!(merkle_tree_hook.supports_metadata(@metadata), true);
     metadata = BytesTrait::new_empty();
     metadata.append_u16(variant + 1);
-    assert_eq!(merkle_tree_hook.supports_metadata(metadata), false);
+    assert_eq!(merkle_tree_hook.supports_metadata(@metadata), false);
 }
 
 #[test]
@@ -46,7 +46,7 @@ fn test_post_dispatch() {
         .dispatch(
             DESTINATION_DOMAIN,
             VALID_RECIPIENT(),
-            BytesTrait::new_empty(),
+            @BytesTrait::new_empty(),
             0,
             Option::None,
             Option::None,
@@ -67,7 +67,7 @@ fn test_post_dispatch() {
         recipient: VALID_RECIPIENT(),
         body: BytesTrait::new_empty(),
     };
-    post_dispatch_hook.post_dispatch(metadata, message, 0);
+    post_dispatch_hook.post_dispatch(@metadata, @message, 0);
     let expected_event = merkle_tree_hook::Event::InsertedIntoTree(
         merkle_tree_hook::InsertedIntoTree { id: id, index: count.try_into().unwrap() },
     );
@@ -91,7 +91,7 @@ fn test_post_dispatch_fails_if_message_not_dispatching() {
         recipient: VALID_RECIPIENT(),
         body: BytesTrait::new_empty(),
     };
-    post_dispatch_hook.post_dispatch(metadata, message, 0);
+    post_dispatch_hook.post_dispatch(@metadata, @message, 0);
 }
 #[test]
 #[should_panic(expected: ('Invalid metadata variant',))]
@@ -101,7 +101,7 @@ fn test_post_dispatch_fails_if_invalid_variant() {
     let variant = 2;
     metadata.append_u16(variant);
     let message = MessageTrait::default();
-    post_dispatch_hook.post_dispatch(metadata, message, 0);
+    post_dispatch_hook.post_dispatch(@metadata, @message, 0);
 }
 
 #[test]
@@ -111,7 +111,7 @@ fn test_quote_dispatch() {
     let variant = 1;
     metadata.append_u16(variant);
     let message = MessageTrait::default();
-    assert_eq!(post_dispatch_hook.quote_dispatch(metadata, message), 0);
+    assert_eq!(post_dispatch_hook.quote_dispatch(@metadata, @message), 0);
 }
 
 #[test]
@@ -122,7 +122,7 @@ fn test_quote_dispatch_fails_if_invalid_variant() {
     let variant = 2;
     metadata.append_u16(variant);
     let message = MessageTrait::default();
-    post_dispatch_hook.quote_dispatch(metadata, message);
+    post_dispatch_hook.quote_dispatch(@metadata, @message);
 }
 
 #[test]

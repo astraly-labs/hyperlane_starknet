@@ -1,3 +1,4 @@
+use cainome::rs::ExecutionVersion;
 use ethers::prelude::Abigen;
 use std::{
     collections::HashMap,
@@ -64,6 +65,7 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
         .with_types_aliases(aliases);
 
     abigen
+        .with_execution_version(ExecutionVersion::V3)
         .generate()
         .expect("Fail to generate bindings")
         .write_to_file(bind_out.to_str().expect("valid utf8 path"))

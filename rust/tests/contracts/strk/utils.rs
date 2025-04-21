@@ -2,12 +2,11 @@ use std::future::Future;
 use std::sync::Arc;
 
 use starknet::{
-    accounts::{Account, ConnectedAccount, SingleOwnerAccount},
+    accounts::{Account, ConnectedAccount, RawDeclarationV3, SingleOwnerAccount, AccountError, ExecutionEncoding},
     contract::ContractFactory,
     core::types::{
-        contract::{CompiledClass, SierraClass},
-        BlockId, BlockTag, ExecutionResult, Felt, FlattenedSierraClass,
-        InvokeTransactionResult, TransactionReceiptWithBlockInfo, StarknetError,
+        contract::{CompiledClass, SierraClass}, BlockId, BlockTag, ExecutionResult, Felt, FlattenedSierraClass, InvokeTransactionResult, StarknetError, TransactionReceiptWithBlockInfo,
+        ResourceBounds, ResourceBoundsMapping,
     },
     macros::felt,
     providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, ProviderError, Url},
@@ -18,24 +17,24 @@ use super::{types::Codes, StarknetAccount};
 
 const BUILD_PATH_PREFIX: &str = "../cairo/target/dev/contracts_";
 
-const KATANA_RPC_URL: &str = "http://localhost:5050";
+const DEVNET_RPC_URL: &str = "http://localhost:5050";
 
-const KATANA_PREFUNDED_ACCOUNTS: [(&str, &str); 3] = [
+const DEVNET_PREFUNDED_ACCOUNTS: [(&str, &str); 3] = [
     (
-        "0x359b9068eadcaaa449c08b79a367c6fdfba9448c29e96934e3552dab0fdd950",
-        "0x2bbf4f9fd0bbb2e60b0316c1fe0b76cf7a4d0198bd493ced9b8df2a3a24d68a",
+        "0x02d46e52e82a5a7a0af173b7348bfec38b7a3c89157866e41f972e922fd9e199",
+        "0x0000000000000000000000000000000083d958eab4eb9a3f4bccc1609a2c2894",
     ),
     (
-        "0x17cc6ca902ed4e8baa8463a7009ff18cc294fa85a94b4ce6ac30a9ebd6057c7",
-        "0x14d6672dcb4b77ca36a887e9a11cd9d637d5012468175829e9c6e770c61642",
+        "0x067ed86288f4ab013e36af039222758a3f3433a53fa83fed7913e9aa9cf93d83",
+        "0x00000000000000000000000000000000e66c2483a6e1bec037c40e45e7d2c516",
     ),
     (
-        "0x127fd5f1fe78a71f8bcd1fec63e3fe2f0486b6ecd5c86a0466c3a21fa5cfcec",
-        "0xc5b2fcab997346f3ea1c00b002ecf6f382c5f9c9659a3894eb783c5320f912",
+        "0x064333cabc89b19a9d36385414ac49628db4702bf813f198ca90a4eefab00488",
+        "0x00000000000000000000000000000000f811d6c433e6f2dbc7f815c4291d0d67",
     ),
 ];
 
-const KATANA_CHAIN_ID: u64 = 82743958523457;
+const DEVNET_CHAIN_ID: u64 = 82743958523457;
 
 pub async fn assert_poll<F, Fut>(f: F, polling_time_ms: u64, max_poll_count: u32)
 where
@@ -71,9 +70,9 @@ pub async fn get_transaction_receipt(
     rpc.get_transaction_receipt(transaction_hash).await
 }
 
-/// Returns a pre-funded account for a local katana chain.
+/// Returns a pre-funded account for a local devnet chain.
 pub fn get_dev_account(index: u32) -> StarknetAccount {
-    let (address, private_key) = *KATANA_PREFUNDED_ACCOUNTS
+    let (address, private_key) = *DEVNET_PREFUNDED_ACCOUNTS
         .get(index as usize)
         .expect("Invalid index");
 
@@ -82,11 +81,11 @@ pub fn get_dev_account(index: u32) -> StarknetAccount {
     ));
 
     let mut account = build_single_owner_account(
-        &Url::parse(KATANA_RPC_URL).expect("Invalid rpc url"),
+        &Url::parse(DEVNET_RPC_URL).expect("Invalid rpc url"),
         signer,
         &Felt::from_hex(address).unwrap(),
         false,
-        KATANA_CHAIN_ID,
+        DEVNET_CHAIN_ID,
     );
 
     // `SingleOwnerAccount` defaults to checking nonce and estimating fees against the latest
@@ -220,8 +219,7 @@ async fn declare_contract(
     // Declare the contract class if it is not already declared.
     if !is_already_declared(account.provider(), &class_hash).await? {
         println!("\n==> Declaring Contract: {contract_name}");
-        account
-            .declare_v3(Arc::new(flattened_class), compiled_class_hash)
+        account.declare_v3(Arc::new(flattened_class), compiled_class_hash)
             .send()
             .await?;
         println!("Declared Class Hash: {}", format!("{:#064x}", class_hash));

@@ -22,15 +22,15 @@ const KATANA_RPC_URL: &str = "http://localhost:5050";
 
 const KATANA_PREFUNDED_ACCOUNTS: [(&str, &str); 3] = [
     (
-        "0xb3ff441a68610b30fd5e2abbf3a1548eb6ba6f3559f2862bf2dc757e5828ca",
+        "0x359b9068eadcaaa449c08b79a367c6fdfba9448c29e96934e3552dab0fdd950",
         "0x2bbf4f9fd0bbb2e60b0316c1fe0b76cf7a4d0198bd493ced9b8df2a3a24d68a",
     ),
     (
-        "0xe29882a1fcba1e7e10cad46212257fea5c752a4f9b1b1ec683c503a2cf5c8a",
+        "0x17cc6ca902ed4e8baa8463a7009ff18cc294fa85a94b4ce6ac30a9ebd6057c7",
         "0x14d6672dcb4b77ca36a887e9a11cd9d637d5012468175829e9c6e770c61642",
     ),
     (
-        "0x29873c310fbefde666dc32a1554fea6bb45eecc84f680f8a2b0a8fbb8cb89af",
+        "0x127fd5f1fe78a71f8bcd1fec63e3fe2f0486b6ecd5c86a0466c3a21fa5cfcec",
         "0xc5b2fcab997346f3ea1c00b002ecf6f382c5f9c9659a3894eb783c5320f912",
     ),
 ];
@@ -221,7 +221,7 @@ async fn declare_contract(
     if !is_already_declared(account.provider(), &class_hash).await? {
         println!("\n==> Declaring Contract: {contract_name}");
         account
-            .declare(Arc::new(flattened_class), compiled_class_hash)
+            .declare_v3(Arc::new(flattened_class), compiled_class_hash)
             .send()
             .await?;
         println!("Declared Class Hash: {}", format!("{:#064x}", class_hash));

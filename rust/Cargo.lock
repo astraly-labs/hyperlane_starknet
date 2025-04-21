@@ -369,8 +369,9 @@ dependencies = [
 
 [[package]]
 name = "cainome"
-version = "0.5.0"
-source = "git+https://github.com/cartridge-gg/cainome?tag=v0.5.0#deed7504bd9a486995e5ed5b60435652e5ae2508"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d5d94fa57317b42e011a2715a07ce8cadeb80ca2a471167cbd85f48ea4d0934"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -396,7 +397,8 @@ dependencies = [
 [[package]]
 name = "cainome-cairo-serde"
 version = "0.1.0"
-source = "git+https://github.com/cartridge-gg/cainome?tag=v0.5.0#deed7504bd9a486995e5ed5b60435652e5ae2508"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2b487395a270c6f683a72ecb1f7848cfae81a269015a4a9328fbfa012448fe9"
 dependencies = [
  "num-bigint",
  "serde",
@@ -408,7 +410,8 @@ dependencies = [
 [[package]]
 name = "cainome-cairo-serde-derive"
 version = "0.1.0"
-source = "git+https://github.com/cartridge-gg/cainome?tag=v0.5.0#deed7504bd9a486995e5ed5b60435652e5ae2508"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d272424141f0ced49ca5f40bc4b756235ee6e7c9cf6ab01f7ef5ac010f5f8864"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -418,8 +421,9 @@ dependencies = [
 
 [[package]]
 name = "cainome-parser"
-version = "0.1.0"
-source = "git+https://github.com/cartridge-gg/cainome?tag=v0.5.0#deed7504bd9a486995e5ed5b60435652e5ae2508"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8053124dfe40eacb6c78ffe44e4199fc0547b22b3a1e506431b1cd554812ef1c"
 dependencies = [
  "convert_case 0.6.0",
  "quote",
@@ -432,7 +436,8 @@ dependencies = [
 [[package]]
 name = "cainome-rs"
 version = "0.1.0"
-source = "git+https://github.com/cartridge-gg/cainome?tag=v0.5.0#deed7504bd9a486995e5ed5b60435652e5ae2508"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0e16da812c3df59d3093df7dd7cfe7fd1ff051c870aae3807dee2180c511557"
 dependencies = [
  "anyhow",
  "cainome-cairo-serde",
@@ -450,7 +455,8 @@ dependencies = [
 [[package]]
 name = "cainome-rs-macro"
 version = "0.1.0"
-source = "git+https://github.com/cartridge-gg/cainome?tag=v0.5.0#deed7504bd9a486995e5ed5b60435652e5ae2508"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71009b935b7b3056c8032c2369d022beb629ea903f167e37bff0a2c84dd43675"
 dependencies = [
  "anyhow",
  "cainome-cairo-serde",

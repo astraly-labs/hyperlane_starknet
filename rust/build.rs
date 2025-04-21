@@ -43,11 +43,11 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
 
     let mut aliases = HashMap::new();
     aliases.insert(
-        String::from("openzeppelin::access::ownable::ownable::OwnableComponent::Event"),
+        String::from("openzeppelin_access::ownable::ownable::OwnableComponent::Event"),
         String::from("OwnableCptEvent"),
     );
     aliases.insert(
-        String::from("openzeppelin::upgrades::upgradeable::UpgradeableComponent::Event"),
+        String::from("openzeppelin_upgrades::upgradeable::UpgradeableComponent::Event"),
         String::from("UpgradeableCptEvent"),
     );
     aliases.insert(

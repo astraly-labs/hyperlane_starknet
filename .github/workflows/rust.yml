@@ -37,7 +37,7 @@ jobs:
 
       - name: Run starknet-devnet
         run: |
-          starknet-devnet --seed 0
+          starknet-devnet --seed 0 &
 
       - name: Run evm -> strk test
         run: |

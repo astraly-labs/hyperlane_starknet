@@ -17,6 +17,8 @@ use starknet::{
     signers::{LocalWallet, SigningKey},
 };
 
+use rand::Rng;
+
 use super::{types::Codes, StarknetAccount};
 
 const BUILD_PATH_PREFIX: &str = "../cairo/target/dev/contracts_";
@@ -160,9 +162,14 @@ pub async fn deploy_contract(
     deployer: &StarknetAccount,
 ) -> (Felt, InvokeTransactionResult) {
     let contract_factory = ContractFactory::new(class_hash, deployer);
-    let salt = felt!("0");
 
-    let deployment = contract_factory.deploy(constructor_calldata, salt, false);
+    // Generate a random salt
+    let random_bytes: [u8; 32] = rand::thread_rng().gen();
+    let salt = Felt::from_bytes_be(&random_bytes);
+    println!("Using random salt for deployment: {:#x}", salt);
+
+    // Using deploy as per the user's last state, but with the random salt
+    let deployment = contract_factory.deploy_v3(constructor_calldata, salt, false);
 
     tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
     let deploy_res = deployment.send().await.expect("Failed to deploy contract");

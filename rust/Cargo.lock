@@ -2014,6 +2014,7 @@ dependencies = [
  "futures",
  "k256",
  "num-bigint",
+ "rand",
  "rstest",
  "serde",
  "serde_json",

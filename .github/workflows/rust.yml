@@ -39,10 +39,10 @@ jobs:
         run: |
           starknet-devnet --seed 0 &
 
-      - name: Run evm -> strk test
+      - name: Run evm <> strk test
         run: |
-          cd rust && cargo test -- test_mailbox_evm_to_strk
+          cd rust && cargo test
 
-      - name: Run strk -> evm test
+      - name: Kill starknet-devnet
         run: |
-          cd rust && cargo test -- test_mailbox_strk_to_evm
+          pkill starknet-devnet

@@ -2,11 +2,15 @@ use std::future::Future;
 use std::sync::Arc;
 
 use starknet::{
-    accounts::{Account, ConnectedAccount, RawDeclarationV3, SingleOwnerAccount, AccountError, ExecutionEncoding},
+    accounts::{
+        Account, AccountError, ConnectedAccount, ExecutionEncoding, RawDeclarationV3,
+        SingleOwnerAccount,
+    },
     contract::ContractFactory,
     core::types::{
-        contract::{CompiledClass, SierraClass}, BlockId, BlockTag, ExecutionResult, Felt, FlattenedSierraClass, InvokeTransactionResult, StarknetError, TransactionReceiptWithBlockInfo,
-        ResourceBounds, ResourceBoundsMapping,
+        contract::{CompiledClass, SierraClass},
+        BlockId, BlockTag, ExecutionResult, Felt, FlattenedSierraClass, InvokeTransactionResult,
+        ResourceBounds, ResourceBoundsMapping, StarknetError, TransactionReceiptWithBlockInfo,
     },
     macros::felt,
     providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, ProviderError, Url},
@@ -21,20 +25,20 @@ const DEVNET_RPC_URL: &str = "http://localhost:5050";
 
 const DEVNET_PREFUNDED_ACCOUNTS: [(&str, &str); 3] = [
     (
-        "0x02d46e52e82a5a7a0af173b7348bfec38b7a3c89157866e41f972e922fd9e199",
-        "0x0000000000000000000000000000000083d958eab4eb9a3f4bccc1609a2c2894",
+        "0x064b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691",
+        "0x0000000000000000000000000000000071d7bb07b9a64f6f78ac4c816aff4da9",
     ),
     (
-        "0x067ed86288f4ab013e36af039222758a3f3433a53fa83fed7913e9aa9cf93d83",
-        "0x00000000000000000000000000000000e66c2483a6e1bec037c40e45e7d2c516",
+        "0x078662e7352d062084b0010068b99288486c2d8b914f6e2a55ce945f8792c8b1",
+        "0x000000000000000000000000000000000e1406455b7d66b1690803be066cbe5e",
     ),
     (
-        "0x064333cabc89b19a9d36385414ac49628db4702bf813f198ca90a4eefab00488",
-        "0x00000000000000000000000000000000f811d6c433e6f2dbc7f815c4291d0d67",
+        "0x049dfb8ce986e21d354ac93ea65e6a11f639c1934ea253e5ff14ca62eca0f38e",
+        "0x00000000000000000000000000000000a20a02f0ac53692d144b20cb371a60d7",
     ),
 ];
 
-const DEVNET_CHAIN_ID: u64 = 82743958523457;
+const DEVNET_CHAIN_ID: u128 = 393402133025997798000961;
 
 pub async fn assert_poll<F, Fut>(f: F, polling_time_ms: u64, max_poll_count: u32)
 where
@@ -109,7 +113,7 @@ pub fn build_single_owner_account(
     signer: LocalWallet,
     account_address: &Felt,
     is_legacy: bool,
-    chain_id: u64,
+    chain_id: u128,
 ) -> StarknetAccount {
     let rpc_client =
         AnyProvider::JsonRpcHttp(JsonRpcClient::new(HttpTransport::new(rpc_url.clone())));
@@ -208,10 +212,7 @@ where
 /// * `contract_name` - The contract name.
 /// # Returns
 /// The contract class hash.
-async fn declare_contract(
-    account: &StarknetAccount,
-    contract_name: &str,
-) -> eyre::Result<Felt> {
+async fn declare_contract(account: &StarknetAccount, contract_name: &str) -> eyre::Result<Felt> {
     // Load the contract artifact.
     let (flattened_class, compiled_class_hash) = contract_artifacts(contract_name)?;
     let class_hash = flattened_class.class_hash();
@@ -219,7 +220,8 @@ async fn declare_contract(
     // Declare the contract class if it is not already declared.
     if !is_already_declared(account.provider(), &class_hash).await? {
         println!("\n==> Declaring Contract: {contract_name}");
-        account.declare_v3(Arc::new(flattened_class), compiled_class_hash)
+        account
+            .declare_v3(Arc::new(flattened_class), compiled_class_hash)
             .send()
             .await?;
         println!("Declared Class Hash: {}", format!("{:#064x}", class_hash));

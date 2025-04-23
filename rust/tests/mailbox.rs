@@ -161,7 +161,7 @@ where
             match &dispatch_receipt.receipt {
                 starknet::core::types::TransactionReceipt::Invoke(invoke_receipt) => {
                     parse_dispatch_from_res(&invoke_receipt.events)
-                }
+                },
                 _ => return Err(eyre::eyre!("Unexpected pending receipt type")),
             }
         }
@@ -170,10 +170,10 @@ where
             match &dispatch_receipt.receipt {
                 starknet::core::types::TransactionReceipt::Invoke(invoke_receipt) => {
                     parse_dispatch_from_res(&invoke_receipt.events)
-                }
+                },
                 _ => return Err(eyre::eyre!("Unexpected confirmed receipt type")),
             }
-        }
+        },
     };
 
     // println!("\nDispatched: {:?}", dispatch);

@@ -1,6 +1,7 @@
 pub mod hyp_erc20 {
     pub mod common;
     pub mod hyp_erc20_collateral_test;
+    pub mod hyp_erc20_dex_collateral_test;
     pub mod hyp_erc20_lockbox_test;
     pub mod hyp_erc20_test;
     pub mod hyp_fiat_token_test;

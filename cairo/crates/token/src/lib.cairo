@@ -7,6 +7,7 @@ pub mod extensions {
     pub mod fast_hyp_erc20;
     pub mod fast_hyp_erc20_collateral;
     pub mod hyp_erc20_collateral_vault_deposit;
+    pub mod hyp_erc20_dex_collateral;
     pub mod hyp_erc20_vault;
     pub mod hyp_erc20_vault_collateral;
     pub mod hyp_erc721_URI_collateral;

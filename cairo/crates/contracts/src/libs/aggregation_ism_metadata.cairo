@@ -32,18 +32,8 @@ pub mod aggregation_ism_metadata {
                 Result::Ok((start, end)) => (start, end),
                 Result::Err(_) => (0, 0),
             };
-            let mut bytes_array = BytesTrait::new(496, array![]);
-            loop {
-                if ((end - start) <= 16) {
-                    let (_, res) = _metadata.read_u128_packed(start, end - start);
-                    bytes_array.append_u128(res);
-                    break ();
-                }
-                let (_, res) = _metadata.read_u128_packed(start, BYTES_PER_ELEMENT.into());
-                bytes_array.append_u128(res);
-                start = start + BYTES_PER_ELEMENT.into()
-            };
-            bytes_array
+            let (_, res) = _metadata.read_bytes(start, end - start);
+            res
         }
         /// Returns whether or not metadata was provided for the ISM at _index
         /// Dev: Callers must ensure _index is less than the number of metadatas provided
@@ -102,21 +92,55 @@ mod test {
                 0x00000000000000000000000000000000,
             ],
         );
-        let mut expected_result = array![
-            0xAAAAAAAAAAAAAAAABBBBCCCC_u256, 0xDDDDDDDDEEEEEEEE_u256, 0xFFFFFFFF00000000_u256,
-        ];
+        let mut expected_result = array![0xAAAAAAAAAAAAAAAABBBBCCCC00000000_u256];
         let mut cur_idx = 0;
-        loop {
-            if (cur_idx == 3) {
-                break ();
-            }
-            let result = AggregationIsmMetadata::metadata_at(encoded_metadata.clone(), cur_idx);
+        while (cur_idx != 1) {
+            let result = AggregationIsmMetadata::metadata_at(encoded_metadata.clone(), 0);
             assert(
-                *BytesTrait::data(result.clone())[0] == *expected_result.at(cur_idx.into()).low,
+                *BytesTrait::data(result.clone())[0] == *expected_result.at(cur_idx).low,
                 'Agg metadata extract failed',
             );
             cur_idx += 1;
         };
+    }
+
+    #[test]
+    fn test_metadata_not_padded() {
+        let encoded_metadata = BytesTrait::new(
+            141,
+            array![
+                0x000000080000008d071e1b5e54086bbd,
+                0xe2b7a131a2c913f442485974c32df56e,
+                0xe47f9456b3270daebe22faba5bc0223a,
+                0x7e3077adcd04391f2ccdd2b2ad2eac2d,
+                0x71c3f04755d5d95d000000015dcbf07f,
+                0xa1898b0d8b64991f099e8478268fb36e,
+                0x0e5fe7832aa345da8b8888645622786d,
+                0x53d898c95d75d37a582de78deda23497,
+                0x7d806349eac6653e9190d11a1c,
+            ],
+        );
+        let mut expected_result = array![
+            0x071E1B5E54086BBDE2B7A131A2C913F4_u256,
+            0x42485974C32DF56EE47F9456B3270DAE_u256,
+            0xbe22faba5bc0223a7e3077adcd04391f_u256,
+            0x2ccdd2b2ad2eac2d71c3f04755d5d95d_u256,
+            0x000000015dcbf07fa1898b0d8b64991f_u256,
+            0x099e8478268fb36e0e5fe7832aa345da_u256,
+            0x8B8888645622786D53D898C95D75D37A_u256,
+            0x582DE78DEDA234970000007D806349EA_u256,
+            0xC6653E91900000000000000000000000_u256,
+        ];
+        let result = AggregationIsmMetadata::metadata_at(encoded_metadata.clone(), 0);
+
+        let mut cur_idx = 0;
+        while (cur_idx != 9) {
+            assert(
+                *BytesTrait::data(result.clone())[cur_idx] == *expected_result.at(cur_idx).low,
+                'Agg metadata extract failed',
+            );
+            cur_idx += 1;
+        }
     }
 
     #[test]

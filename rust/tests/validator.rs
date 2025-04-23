@@ -1,11 +1,10 @@
 use cainome::cairo_serde::EthAddress;
-use ethers::types::{Address, H160};
 use ethers::utils::hex::FromHex;
 use k256::{
     ecdsa::{RecoveryId, SigningKey, VerifyingKey},
     elliptic_curve::rand_core::OsRng,
 };
-use starknet::core::types::FieldElement;
+use starknet::core::types::Felt;
 
 #[derive(Clone)]
 pub struct TestValidator {
@@ -37,14 +36,14 @@ impl TestValidator {
         let mut bytes = [0u8; 20];
         bytes.copy_from_slice(&hash.as_slice()[12..]);
 
-        EthAddress(FieldElement::from_byte_slice_be(&bytes).unwrap())
+        EthAddress(Felt::from_bytes_be_slice(&bytes))
     }
 
-    pub fn sign(&self, digest: [u8; 32]) -> (FieldElement, RecoveryId) {
+    pub fn sign(&self, digest: [u8; 32]) -> (Felt, RecoveryId) {
         let (sign, recov_id) = self.priv_key.sign_prehash_recoverable(&digest).unwrap();
 
         (
-            FieldElement::from_byte_slice_be(sign.to_bytes().as_slice()).unwrap(),
+            Felt::from_bytes_be_slice(sign.to_bytes().as_slice()),
             recov_id,
         )
     }

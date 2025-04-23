@@ -1,25 +1,25 @@
 use contracts::interfaces::{IMailboxClientDispatcher, IMailboxClientDispatcherTrait};
 use mocks::erc4626_yield_sharing_mock::{
-    IERC4626YieldSharingDispatcher, IERC4626YieldSharingDispatcherTrait
+    IERC4626YieldSharingDispatcher, IERC4626YieldSharingDispatcherTrait,
 };
 use mocks::mock_mailbox::{IMockMailboxDispatcher, IMockMailboxDispatcherTrait};
-use mocks::{test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},};
-use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{declare, CheatTarget, start_prank, stop_prank, ContractClass, ContractClassTrait};
-use starknet::ContractAddress;
-use super::super::hyp_erc20::common::{
-    Setup, TOTAL_SUPPLY, DECIMALS, ORIGIN, TRANSFER_AMT, ALICE, BOB, DANIEL, CAROL, E18,
-    REQUIRED_VALUE, DESTINATION, IHypERC20TestDispatcher, IHypERC20TestDispatcherTrait,
-    perform_remote_transfer_and_gas, enroll_remote_router, enroll_local_router,
-    perform_remote_transfer, handle_local_transfer, mint_and_approve, connect_routers
+use mocks::test_erc20::ITestERC20DispatcherTrait;
+use snforge_std::{
+    CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare,
+    start_cheat_caller_address_global, stop_cheat_caller_address_global,
 };
+use starknet::ContractAddress;
 use super::super::hyp_erc20::common;
+use super::super::hyp_erc20::common::{
+    ALICE, BOB, CAROL, DANIEL, DESTINATION, E18, IHypERC20TestDispatcherTrait, ORIGIN, Setup,
+    TOTAL_SUPPLY, TRANSFER_AMT, connect_routers,
+};
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 use token::extensions::{
+    hyp_erc20_vault::{IHypErc20VaultDispatcher, IHypErc20VaultDispatcherTrait},
     hyp_erc20_vault_collateral::{
-        IHypErc20VaultCollateralDispatcher, IHypErc20VaultCollateralDispatcherTrait
+        IHypErc20VaultCollateralDispatcher, IHypErc20VaultCollateralDispatcherTrait,
     },
-    hyp_erc20_vault::{IHypErc20VaultDispatcher, IHypErc20VaultDispatcherTrait}
 };
 use token::interfaces::ierc4626::{IERC4626Dispatcher, IERC4626DispatcherTrait};
 
@@ -35,7 +35,7 @@ fn setup_vault() -> (
     IERC4626Dispatcher,
     IERC4626Dispatcher,
     IERC4626YieldSharingDispatcher,
-    IMockMailboxDispatcher
+    IMockMailboxDispatcher,
 ) {
     let mut setup = common::setup();
     // multi-synthetic setup
@@ -48,8 +48,8 @@ fn setup_vault() -> (
                 PEER_DESTINATION.into(),
                 default_ism.into(),
                 setup.noop_hook.contract_address.into(),
-                setup.eth_token.contract_address.into()
-            ]
+                setup.eth_token.contract_address.into(),
+            ],
         )
         .unwrap();
 
@@ -59,7 +59,7 @@ fn setup_vault() -> (
     peer_mailbox_dispatcher.add_remote_mail_box(DESTINATION, setup.remote_mailbox.contract_address);
     peer_mailbox_dispatcher.add_remote_mail_box(ORIGIN, setup.local_mailbox.contract_address);
 
-    let contract = declare("ERC4626YieldSharingMock").unwrap();
+    let contract = declare("ERC4626YieldSharingMock").unwrap().contract_class();
     let mut calldata: Array<felt252> = array![];
     setup.primary_token.contract_address.serialize(ref calldata);
     let name: ByteArray = "Regular Vault";
@@ -67,11 +67,12 @@ fn setup_vault() -> (
     name.serialize(ref calldata);
     symbol.serialize(ref calldata);
     YIELD_FEES.serialize(ref calldata);
-    start_prank(CheatTarget::All, DANIEL());
-    let (vault, _) = contract.deploy(@calldata).unwrap();
-    stop_prank(CheatTarget::All);
 
-    let contract = declare("HypErc20VaultCollateral").unwrap();
+    start_cheat_caller_address_global(DANIEL());
+    let (vault, _) = contract.deploy(@calldata).unwrap();
+    stop_cheat_caller_address_global();
+
+    let contract = declare("HypErc20VaultCollateral").unwrap().contract_class();
     let (local_token, _) = contract
         .deploy(
             @array![
@@ -79,14 +80,14 @@ fn setup_vault() -> (
                 vault.into(),
                 starknet::get_contract_address().into(),
                 setup.noop_hook.contract_address.into(),
-                default_ism.into()
-            ]
+                default_ism.into(),
+            ],
         )
         .unwrap();
 
     let dummy_name: ByteArray = "Dummy Name";
     let dummy_symbol: ByteArray = "DUM";
-    let contract = declare("HypErc20Vault").unwrap();
+    let contract = declare("HypErc20Vault").unwrap().contract_class();
     let mut calldata: Array<felt252> = array![];
     setup.primary_token.decimals().serialize(ref calldata);
     setup.remote_mailbox.contract_address.serialize(ref calldata);
@@ -122,7 +123,7 @@ fn setup_vault() -> (
     let addresses_u256 = array![
         Into::<ContractAddress, felt252>::into(local_token).into(),
         Into::<ContractAddress, felt252>::into(remote_token).into(),
-        Into::<ContractAddress, felt252>::into(peer_token).into()
+        Into::<ContractAddress, felt252>::into(peer_token).into(),
     ];
 
     connect_routers(@setup, domains.span(), addresses_u256.span());
@@ -133,7 +134,7 @@ fn setup_vault() -> (
         remote_rebasing_token,
         peer_rebasing_token,
         IERC4626YieldSharingDispatcher { contract_address: vault },
-        peer_mailbox_dispatcher
+        peer_mailbox_dispatcher,
     )
 }
 
@@ -144,18 +145,18 @@ fn test_collateral_domain() {
         IHypErc20VaultDispatcher { contract_address: remote_rebasing_token.contract_address }
             .get_collateral_domain(),
         IMailboxClientDispatcher { contract_address: local_rebasing_token.contract_address }
-            .get_local_domain()
+            .get_local_domain(),
     );
 }
 
 #[test]
 fn test_remote_transfer_rebase_after() {
     let (
-        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _
+        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _,
     ) =
         setup_vault();
     _perform_remote_transfer_without_expectation(
-        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT
+        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT,
     );
     assert_eq!(remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT);
 
@@ -167,25 +168,25 @@ fn test_remote_transfer_rebase_after() {
 
     assert_eq!(
         remote_rebasing_token.balance_of(BOB()),
-        TRANSFER_AMT + _discounted_yield(yield_sharing_vault)
+        TRANSFER_AMT + _discounted_yield(yield_sharing_vault),
     );
 }
 
 #[test]
 fn test_rebase_with_transfer() {
     let (
-        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _
+        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _,
     ) =
         setup_vault();
     _perform_remote_transfer_without_expectation(
-        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT
+        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT,
     );
     assert_eq!(remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT);
 
     _accrue_yield(@setup, yield_sharing_vault.contract_address);
 
     _perform_remote_transfer_without_expectation(
-        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT
+        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT,
     );
 
     assert_approx_eq_rel(
@@ -198,38 +199,39 @@ fn test_rebase_with_transfer() {
 #[test]
 fn test_synthetic_transfers_with_rebase() {
     let (
-        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _
+        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _,
     ) =
         setup_vault();
     _perform_remote_transfer_without_expectation(
-        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT
+        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT,
     );
     assert_eq!(remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT);
 
     _accrue_yield(@setup, yield_sharing_vault.contract_address);
 
     _perform_remote_transfer_without_expectation(
-        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT
+        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT,
     );
-    start_prank(CheatTarget::All, BOB());
+    start_cheat_caller_address_global(BOB());
     remote_rebasing_token.transfer(CAROL(), TRANSFER_AMT);
-    stop_prank(CheatTarget::All);
+    stop_cheat_caller_address_global();
+
     assert_approx_eq_rel(
         remote_rebasing_token.balance_of(BOB()),
         TRANSFER_AMT + _discounted_yield(yield_sharing_vault),
         E14,
     );
-    assert_approx_eq_rel(remote_rebasing_token.balance_of(CAROL()), TRANSFER_AMT, E14,);
+    assert_approx_eq_rel(remote_rebasing_token.balance_of(CAROL()), TRANSFER_AMT, E14);
 }
 
 #[test]
 fn test_withdrawal_without_yield() {
     let (mut setup, mut local_rebasing_token, remote_rebasing_token, _, _, _) = setup_vault();
     _perform_remote_transfer_without_expectation(
-        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT
+        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT,
     );
     assert_eq!(remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT);
-    start_prank(CheatTarget::One(remote_rebasing_token.contract_address), BOB());
+    cheat_caller_address(remote_rebasing_token.contract_address, BOB(), CheatSpan::TargetCalls(1));
     ITokenRouterDispatcher { contract_address: remote_rebasing_token.contract_address }
         .transfer_remote(
             ORIGIN,
@@ -237,9 +239,8 @@ fn test_withdrawal_without_yield() {
             TRANSFER_AMT,
             0,
             Option::None,
-            Option::None
+            Option::None,
         );
-    stop_prank(CheatTarget::One(remote_rebasing_token.contract_address));
 
     setup.local_mailbox.process_next_inbound_message();
     assert_eq!(setup.primary_token.balance_of(BOB()), TRANSFER_AMT);
@@ -248,17 +249,17 @@ fn test_withdrawal_without_yield() {
 #[test]
 fn test_withdrawal_with_yield() {
     let (
-        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _
+        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _,
     ) =
         setup_vault();
     _perform_remote_transfer_without_expectation(
-        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT
+        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT,
     );
     assert_eq!(remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT);
 
     _accrue_yield(@setup, yield_sharing_vault.contract_address);
+    cheat_caller_address(remote_rebasing_token.contract_address, BOB(), CheatSpan::TargetCalls(1));
 
-    start_prank(CheatTarget::One(remote_rebasing_token.contract_address), BOB());
     ITokenRouterDispatcher { contract_address: remote_rebasing_token.contract_address }
         .transfer_remote(
             ORIGIN,
@@ -266,9 +267,8 @@ fn test_withdrawal_with_yield() {
             TRANSFER_AMT,
             0,
             Option::None,
-            Option::None
+            Option::None,
         );
-    stop_prank(CheatTarget::One(remote_rebasing_token.contract_address));
 
     setup.local_mailbox.process_next_inbound_message();
     // BOB gets the yield even though it didn't rebase
@@ -282,11 +282,11 @@ fn test_withdrawal_with_yield() {
 #[test]
 fn test_withdrawal_after_yield() {
     let (
-        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _
+        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _,
     ) =
         setup_vault();
     _perform_remote_transfer_without_expectation(
-        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT
+        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT,
     );
     assert_eq!(remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT);
 
@@ -297,8 +297,8 @@ fn test_withdrawal_after_yield() {
 
     // Use balance here since it might be off by <1bp
     let bob_balance_remote = remote_rebasing_token.balance_of(BOB());
+    cheat_caller_address(remote_rebasing_token.contract_address, BOB(), CheatSpan::TargetCalls(1));
 
-    start_prank(CheatTarget::One(remote_rebasing_token.contract_address), BOB());
     ITokenRouterDispatcher { contract_address: remote_rebasing_token.contract_address }
         .transfer_remote(
             ORIGIN,
@@ -306,13 +306,12 @@ fn test_withdrawal_after_yield() {
             bob_balance_remote,
             0,
             Option::None,
-            Option::None
+            Option::None,
         );
-    stop_prank(CheatTarget::One(remote_rebasing_token.contract_address));
     setup.local_mailbox.process_next_inbound_message();
     let bob_balance_primary = setup.primary_token.balance_of(BOB());
     assert_approx_eq_rel(
-        bob_balance_primary, TRANSFER_AMT + _discounted_yield(yield_sharing_vault), E14
+        bob_balance_primary, TRANSFER_AMT + _discounted_yield(yield_sharing_vault), E14,
     );
     assert_eq!(yield_sharing_vault.accumulated_fees(), YIELD / 10);
 }
@@ -320,19 +319,19 @@ fn test_withdrawal_after_yield() {
 #[test]
 fn test_withdrawal_in_flight() {
     let (
-        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _
+        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _,
     ) =
         setup_vault();
     _perform_remote_transfer_without_expectation(
-        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT
+        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT,
     );
     assert_eq!(remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT);
 
     setup.primary_token.mint(CAROL(), TRANSFER_AMT);
-    start_prank(CheatTarget::One(setup.primary_token.contract_address), CAROL());
+    cheat_caller_address(setup.primary_token.contract_address, CAROL(), CheatSpan::TargetCalls(1));
     setup.primary_token.approve(local_rebasing_token.contract_address, TRANSFER_AMT);
-    stop_prank(CheatTarget::One(setup.primary_token.contract_address));
-    start_prank(CheatTarget::One(local_rebasing_token.contract_address), CAROL());
+    cheat_caller_address(local_rebasing_token.contract_address, CAROL(), CheatSpan::TargetCalls(1));
+
     ITokenRouterDispatcher { contract_address: local_rebasing_token.contract_address }
         .transfer_remote(
             DESTINATION,
@@ -340,9 +339,8 @@ fn test_withdrawal_in_flight() {
             TRANSFER_AMT,
             0,
             Option::None,
-            Option::None
+            Option::None,
         );
-    stop_prank(CheatTarget::One(local_rebasing_token.contract_address));
 
     setup.remote_mailbox.process_next_inbound_message();
 
@@ -350,7 +348,10 @@ fn test_withdrawal_in_flight() {
     _accrue_yield(@setup, yield_sharing_vault.contract_address); // earning 2x yield to be split
 
     local_rebasing_token.rebase(DESTINATION, 0);
-    start_prank(CheatTarget::One(remote_rebasing_token.contract_address), CAROL());
+    cheat_caller_address(
+        remote_rebasing_token.contract_address, CAROL(), CheatSpan::TargetCalls(1),
+    );
+
     ITokenRouterDispatcher { contract_address: remote_rebasing_token.contract_address }
         .transfer_remote(
             ORIGIN,
@@ -358,14 +359,13 @@ fn test_withdrawal_in_flight() {
             TRANSFER_AMT,
             0,
             Option::None,
-            Option::None
+            Option::None,
         );
-    stop_prank(CheatTarget::One(remote_rebasing_token.contract_address));
 
     setup.local_mailbox.process_next_inbound_message();
 
     let claimable_fees = IERC4626YieldSharingDispatcher {
-        contract_address: yield_sharing_vault.contract_address
+        contract_address: yield_sharing_vault.contract_address,
     }
         .get_claimable_fees();
     let carol_balance_primary = setup.primary_token.balance_of(CAROL());
@@ -375,7 +375,7 @@ fn test_withdrawal_in_flight() {
     assert_eq!(remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT);
     setup.remote_mailbox.process_next_inbound_message();
     assert_approx_eq_rel(
-        remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT + YIELD - (claimable_fees / 2), E14
+        remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT + YIELD - (claimable_fees / 2), E14,
     );
 
     assert_eq!(yield_sharing_vault.accumulated_fees(), YIELD / 5); // 0.1 * 2 * yield
@@ -384,28 +384,30 @@ fn test_withdrawal_in_flight() {
 #[test]
 fn test_withdrawal_after_drawdown() {
     let (
-        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _
+        mut setup, mut local_rebasing_token, remote_rebasing_token, _, mut yield_sharing_vault, _,
     ) =
         setup_vault();
     _perform_remote_transfer_without_expectation(
-        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT
+        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT,
     );
     assert_eq!(remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT);
 
     // decrease collateral in vault by 10%
     let drawdown = 5 * E18;
-    start_prank(
-        CheatTarget::One(setup.primary_token.contract_address), yield_sharing_vault.contract_address
+    cheat_caller_address(
+        setup.primary_token.contract_address,
+        yield_sharing_vault.contract_address,
+        CheatSpan::TargetCalls(1),
     );
     setup.primary_token.burn(drawdown);
-    stop_prank(CheatTarget::One(setup.primary_token.contract_address));
 
     local_rebasing_token.rebase(DESTINATION, 0);
     setup.remote_mailbox.process_next_inbound_message();
 
     // Use balance here since it might be off by <1bp
     let bob_balance_remote = remote_rebasing_token.balance_of(BOB());
-    start_prank(CheatTarget::One(remote_rebasing_token.contract_address), BOB());
+    cheat_caller_address(remote_rebasing_token.contract_address, BOB(), CheatSpan::TargetCalls(1));
+
     ITokenRouterDispatcher { contract_address: remote_rebasing_token.contract_address }
         .transfer_remote(
             ORIGIN,
@@ -413,9 +415,8 @@ fn test_withdrawal_after_drawdown() {
             bob_balance_remote,
             0,
             Option::None,
-            Option::None
+            Option::None,
         );
-    stop_prank(CheatTarget::One(remote_rebasing_token.contract_address));
     setup.local_mailbox.process_next_inbound_message();
     assert_approx_eq_rel(setup.primary_token.balance_of(BOB()), TRANSFER_AMT - drawdown, E14);
 }
@@ -428,11 +429,11 @@ fn test_exchange_rate_set_only_by_collateral() {
         remote_rebasing_token,
         peer_rebasing_token,
         mut yield_sharing_vault,
-        mut peer_mailbox
+        mut peer_mailbox,
     ) =
         setup_vault();
     _perform_remote_transfer_without_expectation(
-        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT
+        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT,
     );
     assert_eq!(remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT);
 
@@ -440,8 +441,8 @@ fn test_exchange_rate_set_only_by_collateral() {
 
     local_rebasing_token.rebase(DESTINATION, 0);
     setup.remote_mailbox.process_next_inbound_message();
+    cheat_caller_address(remote_rebasing_token.contract_address, BOB(), CheatSpan::TargetCalls(1));
 
-    start_prank(CheatTarget::One(remote_rebasing_token.contract_address), BOB());
     ITokenRouterDispatcher { contract_address: remote_rebasing_token.contract_address }
         .transfer_remote(
             PEER_DESTINATION,
@@ -449,20 +450,19 @@ fn test_exchange_rate_set_only_by_collateral() {
             TRANSFER_AMT,
             0,
             Option::None,
-            Option::None
+            Option::None,
         );
-    stop_prank(CheatTarget::One(remote_rebasing_token.contract_address));
     peer_mailbox.process_next_inbound_message();
 
     assert_eq!(
         IHypErc20VaultDispatcher { contract_address: remote_rebasing_token.contract_address }
             .get_exchange_rate(),
-        10_450_000_000
+        10_450_000_000,
     ); // 5 * 0.9 = 4.5% yield
     assert_eq!(
         IHypErc20VaultDispatcher { contract_address: peer_rebasing_token.contract_address }
             .get_exchange_rate(),
-        E10
+        E10,
     ); // asserting that transfers by the synthetic variant don't impact the exchang rate
 
     local_rebasing_token.rebase(PEER_DESTINATION, 0);
@@ -471,7 +471,7 @@ fn test_exchange_rate_set_only_by_collateral() {
     assert_eq!(
         IHypErc20VaultDispatcher { contract_address: peer_rebasing_token.contract_address }
             .get_exchange_rate(),
-        10_450_000_000
+        10_450_000_000,
     ); // asserting that the exchange rate is set finally by the collateral variant
 }
 
@@ -484,11 +484,11 @@ fn test_cyclic_transfers() {
         remote_rebasing_token,
         peer_rebasing_token,
         mut yield_sharing_vault,
-        mut peer_mailbox
+        mut peer_mailbox,
     ) =
         setup_vault();
     _perform_remote_transfer_without_expectation(
-        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT
+        @setup, local_rebasing_token.contract_address, 0, TRANSFER_AMT,
     );
     assert_eq!(remote_rebasing_token.balance_of(BOB()), TRANSFER_AMT);
 
@@ -497,7 +497,7 @@ fn test_cyclic_transfers() {
     local_rebasing_token.rebase(DESTINATION, 0); // yield is added
     setup.remote_mailbox.process_next_inbound_message();
     // BOB: remote -> peer(BOB) (yield is leftover)
-    start_prank(CheatTarget::One(remote_rebasing_token.contract_address), BOB());
+    cheat_caller_address(remote_rebasing_token.contract_address, BOB(), CheatSpan::TargetCalls(1));
     ITokenRouterDispatcher { contract_address: remote_rebasing_token.contract_address }
         .transfer_remote(
             PEER_DESTINATION,
@@ -505,16 +505,16 @@ fn test_cyclic_transfers() {
             TRANSFER_AMT,
             0,
             Option::None,
-            Option::None
+            Option::None,
         );
-    stop_prank(CheatTarget::One(remote_rebasing_token.contract_address));
     peer_mailbox.process_next_inbound_message();
 
     local_rebasing_token.rebase(PEER_DESTINATION, 0);
     peer_mailbox.process_next_inbound_message();
 
     // BOB: peer -> local(CAROL)
-    start_prank(CheatTarget::One(peer_rebasing_token.contract_address), BOB());
+    cheat_caller_address(peer_rebasing_token.contract_address, BOB(), CheatSpan::TargetCalls(1));
+
     ITokenRouterDispatcher { contract_address: peer_rebasing_token.contract_address }
         .transfer_remote(
             ORIGIN,
@@ -522,13 +522,12 @@ fn test_cyclic_transfers() {
             TRANSFER_AMT,
             0,
             Option::None,
-            Option::None
+            Option::None,
         );
-    stop_prank(CheatTarget::One(peer_rebasing_token.contract_address));
     setup.local_mailbox.process_next_inbound_message();
 
     assert_approx_eq_rel(
-        remote_rebasing_token.balance_of(BOB()), _discounted_yield(yield_sharing_vault), E14
+        remote_rebasing_token.balance_of(BOB()), _discounted_yield(yield_sharing_vault), E14,
     );
     assert_eq!(peer_rebasing_token.balance_of(BOB()), 0);
     assert_approx_eq_rel(setup.primary_token.balance_of(CAROL()), TRANSFER_AMT, E14);
@@ -549,13 +548,15 @@ fn test_benchmark_overhead_gas_usage() {}
 
 /// ALICE: local -> remote(BOB)
 fn _perform_remote_transfer_without_expectation(
-    setup: @Setup, local_token: ContractAddress, msg_value: u256, amount: u256
+    setup: @Setup, local_token: ContractAddress, msg_value: u256, amount: u256,
 ) {
-    start_prank(CheatTarget::One((*setup).primary_token.contract_address), ALICE());
+    cheat_caller_address(
+        (*setup).primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1),
+    );
     (*setup).primary_token.approve(local_token, TRANSFER_AMT);
-    stop_prank(CheatTarget::One((*setup).primary_token.contract_address));
 
-    start_prank(CheatTarget::One(local_token), ALICE());
+    cheat_caller_address(local_token, ALICE(), CheatSpan::TargetCalls(1));
+
     ITokenRouterDispatcher { contract_address: local_token }
         .transfer_remote(
             DESTINATION,
@@ -563,10 +564,8 @@ fn _perform_remote_transfer_without_expectation(
             amount,
             msg_value,
             Option::None,
-            Option::None
+            Option::None,
         );
-
-    stop_prank(CheatTarget::One(local_token));
 
     (*setup).remote_mailbox.process_next_inbound_message();
 }
@@ -579,7 +578,8 @@ fn _discounted_yield(vault: IERC4626YieldSharingDispatcher) -> u256 {
     YIELD - vault.get_claimable_fees()
 }
 
-/// see {https://github.com/foundry-rs/foundry/blob/e16a75b615f812db6127ea22e23c3ee65504c1f1/crates/cheatcodes/src/test/assert.rs#L533}
+/// see
+/// {https://github.com/foundry-rs/foundry/blob/e16a75b615f812db6127ea22e23c3ee65504c1f1/crates/cheatcodes/src/test/assert.rs#L533}
 fn assert_approx_eq_rel(lhs: u256, rhs: u256, max_delta: u256) {
     if lhs == 0 {
         if rhs == 0 {
@@ -604,7 +604,7 @@ fn assert_approx_eq_rel(lhs: u256, rhs: u256, max_delta: u256) {
             lhs,
             rhs,
             max_delta,
-            delta
+            delta,
         );
     }
 }

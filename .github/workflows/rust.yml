@@ -18,7 +18,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: "2.6.5"
+          scarb-version: "2.10.1"
 
       - name: Build contracts
         run: |
@@ -28,34 +28,25 @@ jobs:
         run: |
           cd rust && cargo build --release
 
-      - name: Install dojoup
+      - name: Install starknet-devnet
         run: |
-          curl -L https://install.dojoengine.org | bash
-
-      - name: Install dojo
-        run: |-
-          /home/runner/.config/.dojo/bin/dojoup -v 0.7.0-alpha.2
-          sudo mv /home/runner/.config/.dojo/bin/katana /usr/local/bin/
+          cargo install starknet-devnet --locked
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
-      - name: Run katana
+      - name: Run starknet-devnet
         run: |
-          katana -b 1000 &
+          starknet-devnet --seed 0 &
 
       - name: Run evm -> strk test
         run: |
           cd rust && cargo test -- test_mailbox_evm_to_strk
 
-      - name: Kill katana
-        run: |
-          pkill katana
-
-      - name: run katana
-        run: |
-          katana -b 1000 &
-
       - name: Run strk -> evm test
         run: |
           cd rust && cargo test -- test_mailbox_strk_to_evm
+
+      - name: Kill starknet-devnet
+        run: |
+          pkill starknet-devnet

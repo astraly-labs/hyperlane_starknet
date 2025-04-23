@@ -1,15 +1,18 @@
 #[starknet::contract]
 pub mod aggregation {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_bytes::Bytes;
     use contracts::interfaces::{
-        IAggregationDispatcher, IAggregation, IAggregationDispatcherTrait, ModuleType,
-        IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait,
+        IAggregation, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
+        ModuleType,
     };
     use contracts::libs::aggregation_ism_metadata::aggregation_ism_metadata::AggregationIsmMetadata;
-    use contracts::libs::message::{Message, MessageTrait};
+    use contracts::libs::message::Message;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
+    use starknet::storage::{
+        Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
+        StoragePointerWriteAccess,
+    };
     use starknet::{ContractAddress, contract_address_const};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -21,7 +24,7 @@ pub mod aggregation {
 
     #[storage]
     struct Storage {
-        modules: LegacyMap::<ContractAddress, ContractAddress>,
+        modules: Map::<ContractAddress, ContractAddress>,
         threshold: u8,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
@@ -52,7 +55,7 @@ pub mod aggregation {
 
     #[constructor]
     fn constructor(
-        ref self: ContractState, _owner: ContractAddress, _modules: Span<felt252>, _threshold: u8
+        ref self: ContractState, _owner: ContractAddress, _modules: Span<felt252>, _threshold: u8,
     ) {
         self.ownable.initializer(_owner);
         assert(_threshold <= 255, Errors::THRESHOLD_TOO_HIGH);
@@ -68,19 +71,19 @@ pub mod aggregation {
         }
 
 
-        /// Returns the set of ISMs responsible for verifying _message and the number of ISMs that must verify
-        /// Dev: Can change based on the content of _message
-        /// 
+        /// Returns the set of ISMs responsible for verifying _message and the number of ISMs that
+        /// must verify Dev: Can change based on the content of _message
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_message` - the message to consider
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// Span<ContractAddress> - The array of ISM addresses
         /// threshold - The number of ISMs needed to verify
         fn modules_and_threshold(
-            self: @ContractState, _message: Message
+            self: @ContractState, _message: Message,
         ) -> (Span<ContractAddress>, u8) {
             // THE USER CAN DEFINE HERE CONDITIONS FOR THE MODULE AND THRESHOLD SELECTION
             let threshold = self.threshold.read();
@@ -91,16 +94,16 @@ pub mod aggregation {
         /// Requires that m-of-n ISMs verify the provided interchain message.
         /// Dev: Can change based on the content of _message
         /// Dev: Reverts if threshold is not set
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - encoded metadata (see aggregation_ism_metadata.cairo)
         /// * - `_message` - message structure containing relevant information (see message.cairo)
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// boolean - wheter the verification succeed or not.
-        fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
+        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
             let (isms, mut threshold) = self.modules_and_threshold(_message.clone());
 
             assert(threshold != 0, Errors::THRESHOLD_NOT_SET);
@@ -118,7 +121,7 @@ pub mod aggregation {
                     continue;
                 }
                 let ism = IInterchainSecurityModuleDispatcher {
-                    contract_address: *modules.at(cur_idx.into())
+                    contract_address: *modules.at(cur_idx.into()),
                 };
 
                 let metadata = AggregationIsmMetadata::metadata_at(_metadata.clone(), cur_idx);
@@ -143,11 +146,11 @@ pub mod aggregation {
         /// Sets the ISM modules responsible for the verification
         /// Dev: reverts if module address is null or if empty array
         /// Dev: Callable only once during initialization
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_modules` - a span of module contract addresses
-        /// 
+        ///
         fn set_modules(ref self: ContractState, _modules: Span<felt252>) {
             assert(_modules.len() != 0, Errors::NO_MODULES_PROVIDED);
             let mut last_module = contract_address_const::<0>();
@@ -158,7 +161,7 @@ pub mod aggregation {
                 }
                 let module: ContractAddress = (*_modules.at(cur_idx)).try_into().unwrap();
                 assert(
-                    module != contract_address_const::<0>(), Errors::MODULE_ADDRESS_CANNOT_BE_NULL
+                    module != contract_address_const::<0>(), Errors::MODULE_ADDRESS_CANNOT_BE_NULL,
                 );
                 self.modules.write(last_module, module);
                 cur_idx += 1;
@@ -166,12 +169,12 @@ pub mod aggregation {
             }
         }
         /// Helper:  finds the index associated to a module in the legacy map
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// Option<ContractAddress> - the contract if found, else None
         fn find_module_index(
-            self: @ContractState, _module: ContractAddress
+            self: @ContractState, _module: ContractAddress,
         ) -> Option<ContractAddress> {
             let mut current_module: ContractAddress = 0.try_into().unwrap();
             loop {
@@ -186,9 +189,9 @@ pub mod aggregation {
         }
 
         /// Helper:  Build a module span out of a storage map
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// Span<ContractAddress> - a span of module addresses
         fn build_modules_span(self: @ContractState) -> Span<ContractAddress> {
             let mut cur_address = contract_address_const::<0>();

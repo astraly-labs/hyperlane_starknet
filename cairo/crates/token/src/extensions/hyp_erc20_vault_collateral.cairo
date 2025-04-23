@@ -1,7 +1,7 @@
 #[starknet::interface]
 pub trait IHypErc20VaultCollateral<TContractState> {
     fn rebase(ref self: TContractState, destination_domain: u32, value: u256);
-    // getters 
+    // getters
     fn get_vault(self: @TContractState) -> starknet::ContractAddress;
     fn get_precision(self: @TContractState) -> u256;
     fn get_null_recipient(self: @TContractState) -> u256;
@@ -22,11 +22,11 @@ mod HypErc20VaultCollateral {
     use starknet::ContractAddress;
     use token::components::token_message::TokenMessageTrait;
     use token::components::{
+        hyp_erc20_collateral_component::HypErc20CollateralComponent,
         token_router::{
             TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
-            TokenRouterComponent::{TokenRouterHooksTrait, TokenRouterTransferRemoteHookTrait}
+            TokenRouterComponent::{TokenRouterHooksTrait, TokenRouterTransferRemoteHookTrait},
         },
-        hyp_erc20_collateral_component::HypErc20CollateralComponent,
     };
     use token::interfaces::ierc4626::{ERC4626ABIDispatcher, ERC4626ABIDispatcherTrait};
 
@@ -36,7 +36,7 @@ mod HypErc20VaultCollateral {
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: TokenRouterComponent, storage: token_router, event: TokenRouterEvent);
     component!(
-        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent
+        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent,
     );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
@@ -88,7 +88,7 @@ mod HypErc20VaultCollateral {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -107,7 +107,7 @@ mod HypErc20VaultCollateral {
         #[flat]
         TokenRouterEvent: TokenRouterComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     #[constructor]
@@ -117,7 +117,7 @@ mod HypErc20VaultCollateral {
         vault: ContractAddress,
         owner: ContractAddress,
         hook: ContractAddress,
-        interchain_security_module: ContractAddress
+        interchain_security_module: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self
@@ -132,9 +132,12 @@ mod HypErc20VaultCollateral {
     impl TokenRouterTransferRemoteHookImpl of TokenRouterTransferRemoteHookTrait<ContractState> {
         /// Initiates a remote token transfer with optional hooks and metadata.
         ///
-        /// This function handles the process of transferring tokens to a recipient on a remote domain.
-        /// It deposits the token amount into the vault, calculates the exchange rate, and appends it to the token metadata.
-        /// The transfer is then dispatched to the specified destination domain using the provided hook and metadata.
+        /// This function handles the process of transferring tokens to a recipient on a remote
+        /// domain.
+        /// It deposits the token amount into the vault, calculates the exchange rate, and appends
+        /// it to the token metadata.
+        /// The transfer is then dispatched to the specified destination domain using the provided
+        /// hook and metadata.
         ///
         /// # Arguments
         ///
@@ -143,7 +146,8 @@ mod HypErc20VaultCollateral {
         /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
         /// * `value` - A `u256` representing the value associated with the transfer.
         /// * `hook_metadata` - An optional `Bytes` object containing metadata for the hook.
-        /// * `hook` - An optional `ContractAddress` representing the hook for additional processing.
+        /// * `hook` - An optional `ContractAddress` representing the hook for additional
+        /// processing.
         ///
         /// # Returns
         ///
@@ -155,7 +159,7 @@ mod HypErc20VaultCollateral {
             amount_or_id: u256,
             value: u256,
             hook_metadata: Option<Bytes>,
-            hook: Option<ContractAddress>
+            hook: Option<ContractAddress>,
         ) -> u256 {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             TokenRouterHooksTraitImpl::transfer_from_sender_hook(ref self, amount_or_id);
@@ -178,7 +182,7 @@ mod HypErc20VaultCollateral {
                     message_id = contract_state
                         .router
                         ._Router_dispatch(
-                            destination, value, token_message, hook_metadata, hook.unwrap()
+                            destination, value, token_message, hook_metadata, hook.unwrap(),
                         );
                 },
                 Option::None => {
@@ -189,14 +193,14 @@ mod HypErc20VaultCollateral {
                     message_id = contract_state
                         .router
                         ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
-                }
+                },
             }
 
             self
                 .emit(
                     TokenRouterComponent::SentTransferRemote {
                         destination, recipient, amount: amount_or_id,
-                    }
+                    },
                 );
             message_id
         }
@@ -205,9 +209,10 @@ mod HypErc20VaultCollateral {
     impl TokenRouterHooksTraitImpl of TokenRouterHooksTrait<ContractState> {
         /// Transfers tokens from the sender and generates metadata.
         ///
-        /// This hook is invoked during the transfer of tokens from the sender as part of the token router process.
-        /// It generates metadata for the token transfer based on the amount or token ID provided and processes the
-        /// transfer by depositing the amount into the vault.
+        /// This hook is invoked during the transfer of tokens from the sender as part of the token
+        /// router process.
+        /// It generates metadata for the token transfer based on the amount or token ID provided
+        /// and processes the transfer by depositing the amount into the vault.
         ///
         /// # Arguments
         ///
@@ -217,18 +222,18 @@ mod HypErc20VaultCollateral {
         ///
         /// A `Bytes` object representing the metadata associated with the token transfer.
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256,
         ) -> Bytes {
             HypErc20CollateralComponent::TokenRouterHooksImpl::transfer_from_sender_hook(
-                ref self, amount_or_id
+                ref self, amount_or_id,
             )
         }
 
         /// Processes a token transfer to a recipient.
         ///
-        /// This hook handles the transfer of tokens to the recipient as part of the token router process. It withdraws
-        /// the specified amount from the vault and transfers it to the recipient's address. The hook also processes any
-        /// associated metadata.
+        /// This hook handles the transfer of tokens to the recipient as part of the token router
+        /// process. It withdraws the specified amount from the vault and transfers it to the
+        /// recipient's address. The hook also processes any associated metadata.
         ///
         /// # Arguments
         ///
@@ -239,7 +244,7 @@ mod HypErc20VaultCollateral {
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let recipient: ContractAddress = recipient.try_into().unwrap();
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
@@ -250,7 +255,7 @@ mod HypErc20VaultCollateral {
                 .redeem(
                     amount_or_id,
                     recipient.try_into().expect('u256 to ContractAddress failed'),
-                    starknet::get_contract_address()
+                    starknet::get_contract_address(),
                 );
         }
     }
@@ -264,7 +269,8 @@ mod HypErc20VaultCollateral {
         ///
         /// # Arguments
         ///
-        /// * `destination_domain` - A `u32` representing the destination domain to which the rebase message is sent.
+        /// * `destination_domain` - A `u32` representing the destination domain to which the rebase
+        /// message is sent.
         /// * `value` - A `u256` representing the value to be used for the rebase operation.
         fn rebase(ref self: ContractState, destination_domain: u32, value: u256) {
             TokenRouterTransferRemoteHookImpl::_transfer_remote(
@@ -280,7 +286,8 @@ mod HypErc20VaultCollateral {
 
         /// Returns the contract address of the vault.
         ///
-        /// This function retrieves the vault's contract address where the ERC20 collateral is stored.
+        /// This function retrieves the vault's contract address where the ERC20 collateral is
+        /// stored.
         ///
         /// # Returns
         ///
@@ -303,8 +310,8 @@ mod HypErc20VaultCollateral {
 
         /// Returns the null recipient used in rebase operations.
         ///
-        /// This function retrieves the null recipient, which is a constant used in certain vault operations,
-        /// particularly during rebase operations.
+        /// This function retrieves the null recipient, which is a constant used in certain vault
+        /// operations, particularly during rebase operations.
         ///
         /// # Returns
         ///

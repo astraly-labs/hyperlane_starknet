@@ -1,21 +1,20 @@
 #[starknet::contract]
 pub mod HypFiatToken {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_bytes::Bytes;
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
     use contracts::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
+    use openzeppelin::token::erc20::interface::ERC20ABIDispatcher;
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
     use token::components::{
         hyp_erc20_collateral_component::HypErc20CollateralComponent,
         token_router::{
-            TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-            TokenRouterComponent::MessageRecipientInternalHookImpl,
-            TokenRouterTransferRemoteHookDefaultImpl
+            TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+            TokenRouterComponent::TokenRouterHooksTrait, TokenRouterTransferRemoteHookDefaultImpl,
         },
     };
     use token::interfaces::ifiat_token::{IFiatTokenDispatcher, IFiatTokenDispatcherTrait};
@@ -26,7 +25,7 @@ pub mod HypFiatToken {
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: TokenRouterComponent, storage: token_router, event: TokenRouterEvent);
     component!(
-        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent
+        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent,
     );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
@@ -75,7 +74,7 @@ pub mod HypFiatToken {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -94,7 +93,7 @@ pub mod HypFiatToken {
         #[flat]
         TokenRouterEvent: TokenRouterComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     #[constructor]
@@ -104,7 +103,7 @@ pub mod HypFiatToken {
         mailbox: ContractAddress,
         hook: ContractAddress,
         interchain_security_module: ContractAddress,
-        owner: ContractAddress
+        owner: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self
@@ -129,8 +128,10 @@ pub mod HypFiatToken {
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
         /// Transfers tokens from the sender and burns them.
         ///
-        /// This hook transfers tokens from the sender and then burns the corresponding amount of the fiat token.
-        /// It retrieves the token metadata and ensures that the correct amount is transferred from the sender.
+        /// This hook transfers tokens from the sender and then burns the corresponding amount of
+        /// the fiat token.
+        /// It retrieves the token metadata and ensures that the correct amount is transferred from
+        /// the sender.
         ///
         /// # Arguments
         ///
@@ -140,7 +141,7 @@ pub mod HypFiatToken {
         ///
         /// A `Bytes` object containing the metadata for the transfer.
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256,
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let metadata = contract_state.collateral._transfer_from_sender(amount_or_id);
@@ -151,8 +152,9 @@ pub mod HypFiatToken {
 
         /// Transfers tokens to the recipient and mints new fiat tokens.
         ///
-        /// This hook transfers tokens to the recipient and mints the corresponding amount of fiat tokens
-        /// based on the provided amount or token ID. It ensures that the mint operation is successful.
+        /// This hook transfers tokens to the recipient and mints the corresponding amount of fiat
+        /// tokens based on the provided amount or token ID. It ensures that the mint operation is
+        /// successful.
         ///
         /// # Arguments
         ///
@@ -163,16 +165,16 @@ pub mod HypFiatToken {
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let token: ERC20ABIDispatcher = contract_state.collateral.wrapped_token.read();
             assert!(
                 IFiatTokenDispatcher { contract_address: token.contract_address }
                     .mint(
-                        recipient.try_into().expect('u256 to ContractAddress failed'), amount_or_id
+                        recipient.try_into().expect('u256 to ContractAddress failed'), amount_or_id,
                     ),
-                "FiatToken mint failed"
+                "FiatToken mint failed",
             );
         }
     }

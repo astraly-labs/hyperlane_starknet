@@ -2,21 +2,21 @@
 name = "xerc20"
 version = "0.1.0"
 edition = "2024_07"
-cairo-version = "2.9.2"
+cairo-version = "2.10.1"
 
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
 [dependencies]
-starknet = "2.9.2"
-openzeppelin_access = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.20.0" }
-openzeppelin_token = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.20.0" }
-openzeppelin_utils = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.20.0" }
-openzeppelin_account = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.20.0" }
-openzeppelin_upgrades = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.20.0" }
-openzeppelin_introspection = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.20.0" }
+starknet = "2.10.1"
+openzeppelin_access = "0.20.0"
+openzeppelin_token = "0.20.0"
+openzeppelin_utils = "0.20.0"
+openzeppelin_account = "0.20.0"
+openzeppelin_upgrades = "0.20.0"
+openzeppelin_introspection = "0.20.0"
 
 [dev-dependencies]
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v0.34.0" }
+snforge_std = "0.38.3"
 
 [[target.starknet-contract]]
 sierra = true
@@ -27,6 +27,9 @@ sort-module-level-items = true
 
 [scripts]
 test = "snforge test"
+
+[tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]
 
 [[tool.snforge.fork]]
 name = "mainnet"

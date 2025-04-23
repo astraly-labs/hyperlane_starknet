@@ -16,7 +16,11 @@ mod ERC4626YieldSharingMock {
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
-    use starknet::{get_contract_address, get_caller_address, ContractAddress};
+    use starknet::storage::{
+        Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
+        StoragePointerWriteAccess,
+    };
+    use starknet::{ContractAddress, get_caller_address, get_contract_address};
     use token::interfaces::ierc4626::{IERC4626, IERC4626Camel};
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
@@ -51,7 +55,7 @@ mod ERC4626YieldSharingMock {
         #[substorage(v0)]
         src5: SRC5Component::Storage,
         #[substorage(v0)]
-        ownable: OwnableComponent::Storage
+        ownable: OwnableComponent::Storage,
     }
 
     #[event]
@@ -64,7 +68,7 @@ mod ERC4626YieldSharingMock {
         #[flat]
         SRC5Event: SRC5Component::Event,
         #[flat]
-        OwnableEvent: OwnableComponent::Event
+        OwnableEvent: OwnableComponent::Event,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -74,7 +78,7 @@ mod ERC4626YieldSharingMock {
         #[key]
         owner: ContractAddress,
         assets: u256,
-        shares: u256
+        shares: u256,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -86,7 +90,7 @@ mod ERC4626YieldSharingMock {
         #[key]
         owner: ContractAddress,
         assets: u256,
-        shares: u256
+        shares: u256,
     }
 
     #[constructor]
@@ -95,7 +99,7 @@ mod ERC4626YieldSharingMock {
         asset: ContractAddress,
         name: ByteArray,
         symbol: ByteArray,
-        initial_fee: u256
+        initial_fee: u256,
     ) {
         let dispatcher = ERC20ABIDispatcher { contract_address: asset };
         self.ERC4626_offset.write(0);
@@ -116,7 +120,7 @@ mod ERC4626YieldSharingMock {
 
         fn get_claimable_fees(self: @ContractState) -> u256 {
             let new_vault_balance = ERC20ABIDispatcher {
-                contract_address: self.ERC4626_asset.read()
+                contract_address: self.ERC4626_asset.read(),
             }
                 .balance_of(get_contract_address());
             let last_vault_balance = self.last_vault_balance.read();
@@ -165,7 +169,7 @@ mod ERC4626YieldSharingMock {
         }
 
         fn allowance(
-            self: @ContractState, owner: ContractAddress, spender: ContractAddress
+            self: @ContractState, owner: ContractAddress, spender: ContractAddress,
         ) -> u256 {
             self.erc20.allowance(owner, spender)
         }
@@ -178,7 +182,7 @@ mod ERC4626YieldSharingMock {
             ref self: ContractState,
             sender: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) -> bool {
             self.erc20.transfer_from(sender, recipient, amount)
         }
@@ -258,7 +262,10 @@ mod ERC4626YieldSharingMock {
         }
         // Overriden
         fn redeem(
-            ref self: ContractState, shares: u256, receiver: ContractAddress, owner: ContractAddress
+            ref self: ContractState,
+            shares: u256,
+            receiver: ContractAddress,
+            owner: ContractAddress,
         ) -> u256 {
             self._accrue_yield();
             let max_shares = self.max_redeem(owner);
@@ -276,7 +283,10 @@ mod ERC4626YieldSharingMock {
         }
 
         fn withdraw(
-            ref self: ContractState, assets: u256, receiver: ContractAddress, owner: ContractAddress
+            ref self: ContractState,
+            assets: u256,
+            receiver: ContractAddress,
+            owner: ContractAddress,
         ) -> u256 {
             let max_assets = self.max_withdraw(owner);
             assert(assets <= max_assets, Errors::EXCEEDED_MAX_WITHDRAW);
@@ -301,7 +311,7 @@ mod ERC4626YieldSharingMock {
             ref self: ContractState,
             sender: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) -> bool {
             ERC4626Impl::transfer_from(ref self, sender, recipient, amount)
         }
@@ -376,7 +386,7 @@ mod ERC4626YieldSharingMock {
     impl InternalImpl of InternalTrait {
         fn _accrue_yield(ref self: ContractState) {
             let new_vault_balance = ERC20ABIDispatcher {
-                contract_address: self.ERC4626_asset.read()
+                contract_address: self.ERC4626_asset.read(),
             }
                 .balance_of(get_contract_address());
             let last_vault_balance = self.last_vault_balance.read();
@@ -418,7 +428,7 @@ mod ERC4626YieldSharingMock {
             caller: ContractAddress,
             receiver: ContractAddress,
             assets: u256,
-            shares: u256
+            shares: u256,
         ) {
             let dispatcher = ERC20ABIDispatcher { contract_address: self.ERC4626_asset.read() };
             dispatcher.transfer_from(caller, get_contract_address(), assets);
@@ -432,7 +442,7 @@ mod ERC4626YieldSharingMock {
             receiver: ContractAddress,
             owner: ContractAddress,
             assets: u256,
-            shares: u256
+            shares: u256,
         ) {
             if (caller != owner) {
                 let allowance = self.erc20.allowance(owner, caller);

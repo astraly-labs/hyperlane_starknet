@@ -6,15 +6,14 @@ pub mod HypXERC20 {
     use contracts::client::router_component::RouterComponent;
     use contracts::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
+    use openzeppelin::token::erc20::interface::ERC20ABIDispatcher;
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
     use token::components::hyp_erc20_collateral_component::HypErc20CollateralComponent;
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-        TokenRouterComponent::MessageRecipientInternalHookImpl,
-        TokenRouterTransferRemoteHookDefaultImpl
+        TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+        TokenRouterComponent::TokenRouterHooksTrait, TokenRouterTransferRemoteHookDefaultImpl,
     };
     use token::interfaces::ixerc20::{IXERC20Dispatcher, IXERC20DispatcherTrait};
 
@@ -26,7 +25,7 @@ pub mod HypXERC20 {
     component!(
         path: HypErc20CollateralComponent,
         storage: hyp_erc20_collateral,
-        event: HypErc20CollateralEvent
+        event: HypErc20CollateralEvent,
     );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
@@ -73,7 +72,7 @@ pub mod HypXERC20 {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -92,7 +91,7 @@ pub mod HypXERC20 {
         #[flat]
         TokenRouterEvent: TokenRouterComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     #[constructor]
@@ -102,7 +101,7 @@ pub mod HypXERC20 {
         wrapped_token: ContractAddress,
         owner: ContractAddress,
         hook: ContractAddress,
-        interchain_security_module: ContractAddress
+        interchain_security_module: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self
@@ -127,8 +126,8 @@ pub mod HypXERC20 {
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
         /// Transfers tokens from the sender, burns the xERC20 tokens, and returns metadata.
         ///
-        /// This hook transfers tokens from the sender, burns the corresponding xERC20 tokens, and returns any metadata
-        /// associated with the transfer.
+        /// This hook transfers tokens from the sender, burns the corresponding xERC20 tokens, and
+        /// returns any metadata associated with the transfer.
         ///
         /// # Arguments
         ///
@@ -138,7 +137,7 @@ pub mod HypXERC20 {
         ///
         /// A `Bytes` object representing the metadata associated with the transfer.
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256,
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let token: ERC20ABIDispatcher = contract_state
@@ -152,8 +151,8 @@ pub mod HypXERC20 {
 
         /// Mints xERC20 tokens for the recipient and returns the transferred amount.
         ///
-        /// This hook mints xERC20 tokens for the recipient based on the transferred amount of tokens and updates the
-        /// corresponding ERC20 balances.
+        /// This hook mints xERC20 tokens for the recipient based on the transferred amount of
+        /// tokens and updates the corresponding ERC20 balances.
         ///
         /// # Arguments
         ///
@@ -164,7 +163,7 @@ pub mod HypXERC20 {
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let token: ERC20ABIDispatcher = contract_state

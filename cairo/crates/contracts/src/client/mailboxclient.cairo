@@ -1,12 +1,12 @@
 #[starknet::contract]
 mod mailboxClientProxy {
     use contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
+        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
     };
     use openzeppelin::access::ownable::ownable::OwnableComponent::InternalTrait;
-    use openzeppelin::access::ownable::{OwnableComponent,};
+    use openzeppelin::access::ownable::{OwnableComponent};
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-    use starknet::{ContractAddress, ClassHash};
+    use starknet::{ClassHash, ContractAddress};
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -27,7 +27,7 @@ mod mailboxClientProxy {
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
         #[substorage(v0)]
-        mailboxclient: MailboxclientComponent::Storage,
+        pub mailboxclient: MailboxclientComponent::Storage,
     }
 
     #[constructor]
@@ -36,7 +36,7 @@ mod mailboxClientProxy {
         _mailbox: ContractAddress,
         _owner: ContractAddress,
         _hook: ContractAddress,
-        _interchain_security_module: ContractAddress
+        _interchain_security_module: ContractAddress,
     ) {
         self.ownable.initializer(_owner);
         self
@@ -58,7 +58,7 @@ mod mailboxClientProxy {
     impl Upgradeable of IUpgradeable<ContractState> {
         /// Upgrades the contract to a new implementation.
         /// Callable only by the owner
-        /// 
+        ///
         /// # Arguments
         ///
         /// * `new_class_hash` - The class hash of the new implementation.

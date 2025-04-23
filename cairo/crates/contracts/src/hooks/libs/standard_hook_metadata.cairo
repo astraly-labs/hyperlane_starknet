@@ -5,7 +5,7 @@ pub mod standard_hook_metadata {
         variant: u16,
         msg_value: u256,
         gas_limit: u256,
-        refund_address: ContractAddress
+        refund_address: ContractAddress,
     }
 
 
@@ -27,13 +27,13 @@ pub mod standard_hook_metadata {
     #[generate_trait]
     pub impl StandardHookMetadataImpl of StandardHookMetadata {
         /// Returns the variant of the metadata.
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - encoded standard hook metadata
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// u16 -  variant of the metadata
         fn variant(_metadata: Bytes) -> u16 {
             if (_metadata.size() < VARIANT_OFFSET.into() + 2) {
@@ -44,14 +44,14 @@ pub mod standard_hook_metadata {
         }
 
         /// Returns the specified value for the message.
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - encoded standard hook metadata
         /// * - `_default` - Default fallback value.
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// u256 -  Value for the message
         fn msg_value(_metadata: Bytes, _default: u256) -> u256 {
             if (_metadata.size() < MSG_VALUE_OFFSET.into() + 32) {
@@ -62,14 +62,14 @@ pub mod standard_hook_metadata {
         }
 
         /// Returns the specified gas limit for the message.
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - encoded standard hook metadata
         /// * - `_default` - Default fallback gas limit.
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// u256 -  Gas limit for the message
         fn gas_limit(_metadata: Bytes, _default: u256) -> u256 {
             if (_metadata.size() < GAS_LIMIT_OFFSET.into() + 32) {
@@ -80,14 +80,14 @@ pub mod standard_hook_metadata {
         }
 
         /// Returns the specified refund address for the message.
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - encoded standard hook metadata
         /// * - `_default` - Default fallback refund address.
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// ContractAddress -  Refund address for the message
         fn refund_address(_metadata: Bytes, _default: ContractAddress) -> ContractAddress {
             if (_metadata.size() < REFUND_ADDRESS_OFFSET.into() + 32) {
@@ -98,13 +98,13 @@ pub mod standard_hook_metadata {
         }
 
         ///Returns any custom metadata.
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - encoded standard hook metadata
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// Bytes -  Custom metadata.
         fn get_custom_metadata(_metadata: Bytes) -> Bytes {
             if (_metadata.size().into() < MIN_METADATA_LENGTH) {
@@ -113,7 +113,7 @@ pub mod standard_hook_metadata {
             let (_, res) = _metadata
                 .read_bytes(
                     MIN_METADATA_LENGTH.try_into().unwrap(),
-                    _metadata.size() - MIN_METADATA_LENGTH.try_into().unwrap()
+                    _metadata.size() - MIN_METADATA_LENGTH.try_into().unwrap(),
                 );
             res
         }
@@ -122,7 +122,7 @@ pub mod standard_hook_metadata {
             msg_value: u256,
             gas_limit: u256,
             refund_address: ContractAddress,
-            custom_metadata: Bytes
+            custom_metadata: Bytes,
         ) -> Bytes {
             let mut data = BytesTrait::new_empty();
             data.append_u16(VARIANT);
@@ -134,8 +134,8 @@ pub mod standard_hook_metadata {
         }
 
         fn override_gas_limits(gas_limit: u256) -> Bytes {
-            StandardHookMetadata::format_metadata(
-                0, gas_limit, starknet::get_caller_address(), BytesTrait::new_empty()
+            Self::format_metadata(
+                0, gas_limit, starknet::get_caller_address(), BytesTrait::new_empty(),
             )
         }
     }
@@ -144,7 +144,7 @@ pub mod standard_hook_metadata {
 
 #[cfg(test)]
 mod tests {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_bytes::BytesTrait;
     use starknet::{ContractAddress, contract_address_const};
     use super::standard_hook_metadata::StandardHookMetadata;
     #[test]
@@ -162,7 +162,7 @@ mod tests {
         let other_refunded_address = 'other_refunded'.try_into().unwrap();
         assert_eq!(
             other_refunded_address,
-            StandardHookMetadata::refund_address(metadata.clone(), other_refunded_address)
+            StandardHookMetadata::refund_address(metadata.clone(), other_refunded_address),
         );
         let refund_address: ContractAddress = 'refund_address'.try_into().unwrap();
         metadata.append_address(refund_address);
@@ -190,11 +190,11 @@ mod tests {
         assert_eq!(gas_limit, StandardHookMetadata::gas_limit(metadata.clone(), 0));
         assert_eq!(
             refund_address,
-            StandardHookMetadata::refund_address(metadata.clone(), contract_address_const::<0>())
+            StandardHookMetadata::refund_address(metadata.clone(), contract_address_const::<0>()),
         );
         assert(
             expected_custom_metadata == StandardHookMetadata::get_custom_metadata(metadata.clone()),
-            'SHM: custom metadata mismatch'
+            'SHM: custom metadata mismatch',
         );
     }
 }

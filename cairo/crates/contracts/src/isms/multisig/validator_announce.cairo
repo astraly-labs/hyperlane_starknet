@@ -3,25 +3,23 @@ pub mod validator_announce {
     use alexandria_bytes::{Bytes, BytesTrait};
     use alexandria_data_structures::array_ext::ArrayTraitExt;
     use contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
-        MailboxclientComponent::MailboxClientImpl
+        MailboxclientComponent, MailboxclientComponent::MailboxClientImpl,
+        MailboxclientComponent::MailboxClientInternalImpl,
     };
-    use contracts::interfaces::{
-        IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IValidatorAnnounce
-    };
+    use contracts::interfaces::IValidatorAnnounce;
     use contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
     use contracts::utils::keccak256::{
-        reverse_endianness, to_eth_signature, compute_keccak, ByteData, u256_word_size,
-        u64_word_size, HASH_SIZE, bool_is_eth_signature_valid
+        ByteData, HASH_SIZE, bool_is_eth_signature_valid, compute_keccak, reverse_endianness,
+        to_eth_signature, u256_word_size,
     };
     use contracts::utils::store_arrays::StoreFelt252Array;
     use core::poseidon::poseidon_hash_span;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
     use starknet::{
-        ContractAddress, ClassHash, EthAddress, secp256_trait::{Signature, signature_from_vrs}
+        ClassHash, ContractAddress, EthAddress, secp256_trait::{Signature, signature_from_vrs},
     };
-
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(path: MailboxclientComponent, storage: mailboxclient, event: MailboxclientEvent);
@@ -39,10 +37,10 @@ pub mod validator_announce {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
-        storage_location_len: LegacyMap::<EthAddress, u256>,
-        storage_locations: LegacyMap::<(EthAddress, u256), Array<felt252>>,
-        replay_protection: LegacyMap::<felt252, bool>,
-        validators: LegacyMap::<EthAddress, EthAddress>,
+        storage_location_len: Map::<EthAddress, u256>,
+        storage_locations: Map::<(EthAddress, u256), Array<felt252>>,
+        replay_protection: Map::<felt252, bool>,
+        validators: Map::<EthAddress, EthAddress>,
     }
 
 
@@ -61,7 +59,7 @@ pub mod validator_announce {
     #[derive(starknet::Event, Drop)]
     pub struct ValidatorAnnouncement {
         pub validator: EthAddress,
-        pub storage_location: Span<felt252>
+        pub storage_location: Span<felt252>,
     }
 
     pub mod Errors {
@@ -80,7 +78,7 @@ pub mod validator_announce {
     impl Upgradeable of IUpgradeable<ContractState> {
         /// Upgrades the contract to a new implementation.
         /// Callable only by the owner
-        /// 
+        ///
         /// # Arguments
         ///
         /// * `new_class_hash` - The class hash of the new implementation.
@@ -94,21 +92,21 @@ pub mod validator_announce {
     impl IValidatorAnnonceImpl of IValidatorAnnounce<ContractState> {
         /// Announces a validator signature storage location
         /// Dev: reverts if announce already occured or if wrong signer
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_validator` - The validator to consider
         /// * - `_storage_location` - Information encoding the location of signed
         /// * - `_signature` -The signed validator announcement
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// boolean -  True upon success
         fn announce(
             ref self: ContractState,
             _validator: EthAddress,
             _storage_location: Array<felt252>,
-            _signature: Bytes
+            _signature: Bytes,
         ) -> bool {
             let felt252_validator: felt252 = _validator.into();
             let mut _input: Array<u256> = array![felt252_validator.into()];
@@ -123,21 +121,21 @@ pub mod validator_announce {
                 cur_idx += 1;
             };
             let replay_id = poseidon_hash_span(
-                array![felt252_validator].concat(@_storage_location).span()
+                array![felt252_validator].concat(@_storage_location).span(),
             );
             assert(!self.replay_protection.read(replay_id), Errors::REPLAY_PROTECTION_ERROR);
             let announcement_digest = self.get_announcement_digest(u256_storage_location);
             let signature: Signature = convert_to_signature(_signature);
             assert(
                 bool_is_eth_signature_valid(announcement_digest, signature, _validator),
-                Errors::WRONG_SIGNER
+                Errors::WRONG_SIGNER,
             );
             match self.find_validators_index(_validator) {
                 Option::Some => {},
                 Option::None => {
                     let last_validator = self.find_last_validator();
                     self.validators.write(last_validator, _validator);
-                }
+                },
             };
             let mut validator_len = self.storage_location_len.read(_validator);
             self.storage_locations.write((_validator, validator_len), _storage_location);
@@ -146,24 +144,24 @@ pub mod validator_announce {
             self
                 .emit(
                     ValidatorAnnouncement {
-                        validator: _validator, storage_location: span_storage_location
-                    }
+                        validator: _validator, storage_location: span_storage_location,
+                    },
                 );
             true
         }
 
 
         /// Returns a list of all announced storage locations
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_validators` - The span of validators to get registrations for
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// Span<Span<felt252>> -  A list of registered storage metadata
         fn get_announced_storage_locations(
-            self: @ContractState, mut _validators: Span<EthAddress>
+            self: @ContractState, mut _validators: Span<EthAddress>,
         ) -> Span<Span<Array<felt252>>> {
             let mut metadata = array![];
             loop {
@@ -182,7 +180,7 @@ pub mod validator_announce {
                         };
                         metadata.append(validator_metadata.span())
                     },
-                    Option::None => { break (); }
+                    Option::None => { break (); },
                 }
             };
             metadata.span()
@@ -195,16 +193,16 @@ pub mod validator_announce {
 
 
         /// Returns the digest validators are expected to sign when signing announcements.
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_storage_location` - Storage location as array of u256
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// u256 -  The digest of the announcement.
         fn get_announcement_digest(
-            self: @ContractState, mut _storage_location: Array<u256>
+            self: @ContractState, mut _storage_location: Array<u256>,
         ) -> u256 {
             let domain_hash = self.domain_hash();
             let mut byte_data_storage_location = array![];
@@ -213,18 +211,18 @@ pub mod validator_announce {
                     Option::Some(storage) => {
                         byte_data_storage_location
                             .append(
-                                ByteData { value: storage, size: u256_word_size(storage).into() }
+                                ByteData { value: storage, size: u256_word_size(storage).into() },
                             );
                     },
-                    Option::None => { break (); }
+                    Option::None => { break (); },
                 }
             };
             let hash = reverse_endianness(
                 compute_keccak(
                     array![ByteData { value: domain_hash.into(), size: HASH_SIZE }]
                         .concat(@byte_data_storage_location)
-                        .span()
-                )
+                        .span(),
+                ),
             );
             to_eth_signature(hash)
         }
@@ -238,23 +236,23 @@ pub mod validator_announce {
             let mut input: Array<ByteData> = array![
                 ByteData { value: self.mailboxclient.get_local_domain().into(), size: 4 },
                 ByteData { value: mailbox_address.try_into().unwrap(), size: 32 },
-                ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 }
+                ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 },
             ];
             reverse_endianness(compute_keccak(input.span()))
         }
 
         /// Helper: finds the index associated to a given validator, if found
         /// Dev: Chained list (EthereumAddress -> EthereumAddress)
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_validator` - The validator to consider
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// EthAddress - the index of the validator in the Storage Map
         fn find_validators_index(
-            self: @ContractState, _validator: EthAddress
+            self: @ContractState, _validator: EthAddress,
         ) -> Option<EthAddress> {
             let mut current_validator: EthAddress = 0.try_into().unwrap();
             loop {
@@ -298,13 +296,13 @@ pub mod validator_announce {
     }
 
     /// Converts a byte signature into a standard singature format (see Signature structure)
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * - ` _signature` - The byte encoded Signature
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Signature - Standardized signature
     fn convert_to_signature(_signature: Bytes) -> Signature {
         let (_, r) = _signature.read_u256(0);

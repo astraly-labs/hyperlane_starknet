@@ -1,5 +1,3 @@
-use starknet::ContractAddress;
-
 #[starknet::interface]
 pub trait IHypNative<TState> {
     fn receive(ref self: TState, amount: u256);
@@ -9,15 +7,15 @@ pub trait IHypNative<TState> {
 pub mod HypNativeComponent {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::client::{
-        gas_router_component::GasRouterComponent, router_component::RouterComponent,
-        mailboxclient_component::MailboxclientComponent
+        gas_router_component::GasRouterComponent, mailboxclient_component::MailboxclientComponent,
+        router_component::RouterComponent,
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use starknet::ContractAddress;
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait, ITokenRouter,
-        TokenRouterTransferRemoteHookDefaultImpl
+        ITokenRouter, TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
+        TokenRouterTransferRemoteHookDefaultImpl,
     };
 
     #[storage]
@@ -59,9 +57,9 @@ pub mod HypNativeComponent {
                     .native_token
                     .read()
                     .transfer_from(
-                        starknet::get_caller_address(), starknet::get_contract_address(), amount
+                        starknet::get_caller_address(), starknet::get_contract_address(), amount,
                     ),
-                Errors::NATIVE_TOKEN_TRANSFER_FROM_FAILED
+                Errors::NATIVE_TOKEN_TRANSFER_FROM_FAILED,
             );
 
             self.emit(Donation { sender: starknet::get_caller_address(), amount });
@@ -79,7 +77,7 @@ pub mod HypNativeComponent {
         +TokenRouterComponent::HasComponent<TContractState>,
     > of TokenRouterHooksTrait<TContractState> {
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256,
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let mut component_state = HasComponent::get_component_mut(ref contract_state);
@@ -90,7 +88,7 @@ pub mod HypNativeComponent {
             ref self: TokenRouterComponent::ComponentState<TContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let mut component_state = HasComponent::get_component_mut(ref contract_state);
@@ -116,7 +114,7 @@ pub mod HypNativeComponent {
             amount_or_id: u256,
             value: u256,
             hook_metadata: Option<Bytes>,
-            hook: Option<ContractAddress>
+            hook: Option<ContractAddress>,
         ) -> u256 {
             assert!(value >= amount_or_id, "Native: amount exceeds msg.value");
             let hook_payment = value - amount_or_id;
@@ -129,7 +127,7 @@ pub mod HypNativeComponent {
                 amount_or_id,
                 hook_payment,
                 Option::None,
-                Option::None
+                Option::None,
             )
         }
     }
@@ -155,9 +153,9 @@ pub mod HypNativeComponent {
                     .native_token
                     .read()
                     .transfer_from(
-                        starknet::get_caller_address(), starknet::get_contract_address(), amount
+                        starknet::get_caller_address(), starknet::get_contract_address(), amount,
                     ),
-                Errors::NATIVE_TOKEN_TRANSFER_FROM_FAILED
+                Errors::NATIVE_TOKEN_TRANSFER_FROM_FAILED,
             );
             BytesTrait::new_empty()
         }
@@ -167,7 +165,7 @@ pub mod HypNativeComponent {
             let recipient: ContractAddress = recipient_felt.try_into().unwrap();
             assert(
                 self.native_token.read().transfer(recipient, amount),
-                Errors::NATIVE_TOKEN_TRANSFER_FAILED
+                Errors::NATIVE_TOKEN_TRANSFER_FAILED,
             );
         }
     }

@@ -5,7 +5,6 @@ pub trait IFastHypERC20<TState> {
 
 #[starknet::contract]
 pub mod FastHypERC20Collateral {
-    use alexandria_bytes::Bytes;
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
@@ -16,15 +15,15 @@ pub mod FastHypERC20Collateral {
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
     use token::components::{
+        fast_token_router::{
+            FastTokenRouterComponent, FastTokenRouterComponent::FastTokenRouterHooksTrait,
+            FastTokenRouterComponent::MessageRecipientInternalHookImpl,
+        },
         hyp_erc20_collateral_component::{
-            HypErc20CollateralComponent, HypErc20CollateralComponent::TokenRouterHooksImpl
+            HypErc20CollateralComponent, HypErc20CollateralComponent::TokenRouterHooksImpl,
         },
         token_message::TokenMessageTrait,
         token_router::{TokenRouterComponent, TokenRouterTransferRemoteHookDefaultImpl},
-        fast_token_router::{
-            FastTokenRouterComponent, FastTokenRouterComponent::FastTokenRouterHooksTrait,
-            FastTokenRouterComponent::MessageRecipientInternalHookImpl
-        }
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -33,10 +32,10 @@ pub mod FastHypERC20Collateral {
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: TokenRouterComponent, storage: token_router, event: TokenRouterEvent);
     component!(
-        path: FastTokenRouterComponent, storage: fast_token_router, event: FastTokenRouterEvent
+        path: FastTokenRouterComponent, storage: fast_token_router, event: FastTokenRouterEvent,
     );
     component!(
-        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent
+        path: HypErc20CollateralComponent, storage: collateral, event: HypErc20CollateralEvent,
     );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
@@ -91,7 +90,7 @@ pub mod FastHypERC20Collateral {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -112,7 +111,7 @@ pub mod FastHypERC20Collateral {
         #[flat]
         FastTokenRouterEvent: FastTokenRouterComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     #[constructor]
@@ -122,7 +121,7 @@ pub mod FastHypERC20Collateral {
         wrapped_token: ContractAddress,
         hook: ContractAddress,
         interchain_security_module: ContractAddress,
-        owner: ContractAddress
+        owner: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self
@@ -134,12 +133,13 @@ pub mod FastHypERC20Collateral {
     impl FastHypERC20Impl of super::IFastHypERC20<ContractState> {
         /// Returns the balance of the specified account for the wrapped ERC20 token.
         ///
-        /// This function retrieves the balance of the wrapped ERC20 token for a given account by calling
-        /// the `balance_of` function on the `HypErc20CollateralComponent`.
+        /// This function retrieves the balance of the wrapped ERC20 token for a given account by
+        /// calling the `balance_of` function on the `HypErc20CollateralComponent`.
         ///
         /// # Arguments
         ///
-        /// * `account` - A `ContractAddress` representing the account whose token balance is being queried.
+        /// * `account` - A `ContractAddress` representing the account whose token balance is being
+        /// queried.
         ///
         /// # Returns
         ///
@@ -165,8 +165,9 @@ pub mod FastHypERC20Collateral {
     pub impl FastTokenRouterHooksImpl of FastTokenRouterHooksTrait<ContractState> {
         /// Transfers tokens to the recipient as part of the fast token router process.
         ///
-        /// This function handles the fast token transfer process by invoking the `transfer` method of the
-        /// wrapped token from the `HypErc20CollateralComponent`. The recipient receives the transferred amount.
+        /// This function handles the fast token transfer process by invoking the `transfer` method
+        /// of the wrapped token from the `HypErc20CollateralComponent`. The recipient receives the
+        /// transferred amount.
         ///
         /// # Arguments
         ///
@@ -175,10 +176,10 @@ pub mod FastHypERC20Collateral {
         fn fast_transfer_to_hook(
             ref self: FastTokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
-            amount: u256
+            amount: u256,
         ) {
             let mut contract_state = FastTokenRouterComponent::HasComponent::get_contract_mut(
-                ref self
+                ref self,
             );
             assert(
                 contract_state
@@ -186,16 +187,16 @@ pub mod FastHypERC20Collateral {
                     .wrapped_token
                     .read()
                     .transfer(
-                        recipient.try_into().expect('u256 to ContractAddress failed'), amount
+                        recipient.try_into().expect('u256 to ContractAddress failed'), amount,
                     ),
-                'ERC20 transfer failed'
+                'ERC20 transfer failed',
             );
         }
 
         /// Receives tokens from the sender as part of the fast token router process.
         ///
-        /// This function handles the receipt of tokens from the sender by calling the `transfer_from` method
-        /// of the wrapped token within the `HypErc20CollateralComponent`.
+        /// This function handles the receipt of tokens from the sender by calling the
+        /// `transfer_from` method of the wrapped token within the `HypErc20CollateralComponent`.
         ///
         /// # Arguments
         ///
@@ -204,10 +205,10 @@ pub mod FastHypERC20Collateral {
         fn fast_receive_from_hook(
             ref self: FastTokenRouterComponent::ComponentState<ContractState>,
             sender: ContractAddress,
-            amount: u256
+            amount: u256,
         ) {
             let mut contract_state = FastTokenRouterComponent::HasComponent::get_contract_mut(
-                ref self
+                ref self,
             );
             assert(
                 contract_state
@@ -215,7 +216,7 @@ pub mod FastHypERC20Collateral {
                     .wrapped_token
                     .read()
                     .transfer_from(sender, starknet::get_contract_address(), amount),
-                'ERC20 transfer_from failed'
+                'ERC20 transfer_from failed',
             );
         }
     }

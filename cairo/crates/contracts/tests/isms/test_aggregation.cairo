@@ -1,21 +1,15 @@
-use alexandria_bytes::{Bytes, BytesTrait};
-use contracts::interfaces::{
-    ModuleType, IAggregationDispatcher, IAggregationDispatcherTrait,
-    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-    IValidatorConfigurationDispatcher, IValidatorConfigurationDispatcherTrait,
-};
+use alexandria_bytes::BytesTrait;
+use contracts::interfaces::{IAggregationDispatcherTrait, ModuleType};
 use contracts::isms::aggregation::aggregation;
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
+use contracts::libs::message::{HYPERLANE_VERSION, Message};
 use contracts::utils::utils::U256TryIntoContractAddress;
 
-use openzeppelin::access::ownable::OwnableComponent;
-use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{start_prank, CheatTarget};
-use starknet::ContractAddress;
+use openzeppelin::access::ownable::interface::IOwnableDispatcher;
+use snforge_std::{CheatSpan, cheat_caller_address};
 use super::super::setup::{
-    setup_aggregation, OWNER, setup_messageid_multisig_ism, get_message_and_signature, LOCAL_DOMAIN,
-    DESTINATION_DOMAIN, build_messageid_metadata, VALID_OWNER, VALID_RECIPIENT, setup_noop_ism,
-    MODULES, CONTRACT_MODULES
+    CONTRACT_MODULES, DESTINATION_DOMAIN, LOCAL_DOMAIN, MODULES, OWNER, VALID_OWNER,
+    VALID_RECIPIENT, build_messageid_metadata, get_message_and_signature, setup_aggregation,
+    setup_messageid_multisig_ism, setup_noop_ism,
 };
 
 #[test]
@@ -24,7 +18,7 @@ fn test_aggregation_module_type() {
     let aggregation = setup_aggregation(MODULES(), threshold);
     assert(
         aggregation.module_type() == ModuleType::AGGREGATION(aggregation.contract_address),
-        'Aggregation: Wrong module type'
+        'Aggregation: Wrong module type',
     );
 }
 
@@ -58,7 +52,9 @@ fn test_get_modules() {
     let threshold = 2;
     let aggregation = setup_aggregation(MODULES(), threshold);
     let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     assert(aggregation.get_modules() == CONTRACT_MODULES(), 'set modules failed');
 }
 
@@ -67,12 +63,12 @@ fn test_get_modules() {
 fn test_aggregation_verify() {
     let threshold = 2;
 
-    // MESSAGEID 
+    // MESSAGEID
 
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
-        0x01020304050607080910000000000000
+        0x01020304050607080910000000000000,
     ];
     let message_body = BytesTrait::new(42, array);
     let message = Message {
@@ -82,7 +78,7 @@ fn test_aggregation_verify() {
         sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
         recipient: VALID_RECIPIENT(),
-        body: message_body.clone()
+        body: message_body.clone(),
     };
     let (_, validators_address, _) = get_message_and_signature();
     let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
@@ -93,11 +89,13 @@ fn test_aggregation_verify() {
     // Noop ism
     let noop_ism = setup_noop_ism();
     let aggregation = setup_aggregation(
-        array![messageid.contract_address.into(), noop_ism.contract_address.into(),].span(),
-        threshold.try_into().unwrap()
+        array![messageid.contract_address.into(), noop_ism.contract_address.into()].span(),
+        threshold.try_into().unwrap(),
     );
     let ownable = IOwnableDispatcher { contract_address: aggregation.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     let mut concat_metadata = BytesTrait::new_empty();
     concat_metadata.append_u128(0x00000010000001A0000001A0000001A9);
     concat_metadata.concat(@message_id_metadata);

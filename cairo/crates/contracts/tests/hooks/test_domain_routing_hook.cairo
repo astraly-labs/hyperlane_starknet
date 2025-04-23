@@ -1,22 +1,21 @@
-use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
 
 use contracts::interfaces::{
-    Types, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
-    IDomainRoutingHookDispatcher, IDomainRoutingHookDispatcherTrait, DomainRoutingHookConfig,
-    IProtocolFeeDispatcher, IProtocolFeeDispatcherTrait, ETH_ADDRESS
+    DomainRoutingHookConfig, ETH_ADDRESS, IDomainRoutingHookDispatcherTrait,
+    IPostDispatchHookDispatcherTrait, IProtocolFeeDispatcherTrait, Types,
 };
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
+use contracts::libs::message::{HYPERLANE_VERSION, Message};
 
 use contracts::utils::utils::U256TryIntoContractAddress;
 
-use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
+use openzeppelin::access::ownable::interface::{IOwnableDispatcher};
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 
-use snforge_std::{start_prank, get_class_hash, ContractClass, CheatTarget, stop_prank};
+use snforge_std::{CheatSpan, ContractClass, cheat_caller_address, get_class_hash};
 
-use starknet::{get_caller_address, contract_address_const, ContractAddress};
+use starknet::{ContractAddress, contract_address_const};
 use super::super::setup::{
-    setup_domain_routing_hook, OWNER, setup_mock_token, setup_protocol_fee, PROTOCOL_FEE, NEW_OWNER
+    NEW_OWNER, OWNER, PROTOCOL_FEE, setup_domain_routing_hook, setup_protocol_fee,
 };
 
 #[test]
@@ -37,7 +36,10 @@ fn test_supports_metadata_for_domain_routing_hook() {
 fn test_domain_rounting_set_hook() {
     let (_, set_routing_hook_addrs) = setup_domain_routing_hook();
     let ownable = IOwnableDispatcher { contract_address: set_routing_hook_addrs.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     let destination: u32 = 12;
     let hook: ContractAddress = contract_address_const::<1>();
     set_routing_hook_addrs.set_hook(destination, hook);
@@ -57,7 +59,9 @@ fn test_set_hook_fails_if_not_owner() {
 fn test_domain_rounting_set_hook_array() {
     let (_, set_routing_hook_addrs) = setup_domain_routing_hook();
     let ownable = IOwnableDispatcher { contract_address: set_routing_hook_addrs.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     let mut hook_config_arr = ArrayTrait::<DomainRoutingHookConfig>::new();
     let config_1 = DomainRoutingHookConfig { destination: 1, hook: contract_address_const::<2>() };
     let config_2 = DomainRoutingHookConfig { destination: 2, hook: contract_address_const::<3>() };
@@ -90,7 +94,9 @@ fn test_set_hook_array_fails_if_not_owner() {
 fn hook_not_set_for_destination_should_fail() {
     let (routing_hook_addrs, set_routing_hook_addrs) = setup_domain_routing_hook();
     let ownable = IOwnableDispatcher { contract_address: set_routing_hook_addrs.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     let destination: u32 = 12;
     let hook: ContractAddress = contract_address_const::<1>();
     set_routing_hook_addrs.set_hook(destination, hook);
@@ -114,8 +120,9 @@ fn hook_set_for_destination_post_dispatch() {
     let (routing_hook_addrs, set_routing_hook_addrs) = setup_domain_routing_hook();
     let fee_token_instance = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
     let ownable = IOwnableDispatcher { contract_address: set_routing_hook_addrs.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
-
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(2),
+    );
     // We define a first destination
     let destination: u32 = 18;
     let (protocol_fee, _) = setup_protocol_fee(Option::None);
@@ -130,11 +137,12 @@ fn hook_set_for_destination_post_dispatch() {
     let new_protocol_fee = 3 * PROTOCOL_FEE;
     // We change the configuration
     let protocol_ownable = IOwnableDispatcher {
-        contract_address: second_protocol_fee.contract_address
+        contract_address: second_protocol_fee.contract_address,
     };
-    start_prank(CheatTarget::One(protocol_ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        protocol_ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(2),
+    );
     second_protocol_fee.set_protocol_fee(new_protocol_fee);
-    stop_prank(CheatTarget::One(protocol_ownable.contract_address));
 
     set_routing_hook_addrs.set_hook(second_destination, second_protocol_fee.contract_address);
 
@@ -159,29 +167,32 @@ fn hook_set_for_destination_post_dispatch() {
     let metadata = BytesTrait::new_empty();
 
     let erc20Ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(erc20Ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        erc20Ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     fee_token_instance.transfer(NEW_OWNER().try_into().unwrap(), PROTOCOL_FEE + new_protocol_fee);
-    stop_prank(CheatTarget::One(erc20Ownable.contract_address));
 
     assert_eq!(
         fee_token_instance.balance_of(NEW_OWNER().try_into().unwrap()),
-        PROTOCOL_FEE + new_protocol_fee
+        PROTOCOL_FEE + new_protocol_fee,
     );
-    start_prank(CheatTarget::One(erc20Ownable.contract_address), NEW_OWNER().try_into().unwrap());
+    cheat_caller_address(
+        erc20Ownable.contract_address, NEW_OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     fee_token_instance
         .approve(routing_hook_addrs.contract_address, PROTOCOL_FEE + new_protocol_fee);
     assert(
         fee_token_instance
             .allowance(
-                NEW_OWNER().try_into().unwrap(), routing_hook_addrs.contract_address
+                NEW_OWNER().try_into().unwrap(), routing_hook_addrs.contract_address,
             ) == PROTOCOL_FEE
             + new_protocol_fee,
-        'Approve failed'
+        'Approve failed',
     );
-    stop_prank(CheatTarget::One(erc20Ownable.contract_address));
-    stop_prank(CheatTarget::One(ownable.contract_address));
-    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER().try_into().unwrap());
 
+    cheat_caller_address(
+        ownable.contract_address, NEW_OWNER().try_into().unwrap(), CheatSpan::TargetCalls(2),
+    );
     routing_hook_addrs.post_dispatch(metadata.clone(), message_1, PROTOCOL_FEE);
     assert_eq!(fee_token_instance.balance_of(NEW_OWNER().try_into().unwrap()), new_protocol_fee);
 
@@ -191,13 +202,14 @@ fn hook_set_for_destination_post_dispatch() {
 
 
 #[test]
-#[should_panic(expected: 'Amount does not cover quote fee',)]
+#[should_panic(expected: 'Amount does not cover quote fee')]
 fn test_post_dispatch_insufficient_fee() {
     let (routing_hook_addrs, set_routing_hook_addrs) = setup_domain_routing_hook();
     let ownable = IOwnableDispatcher { contract_address: set_routing_hook_addrs.contract_address };
 
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
-
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     // Set up a destination with a specific hook
     let destination: u32 = 18;
     let (protocol_fee, _) = setup_protocol_fee(Option::None);
@@ -220,12 +232,14 @@ fn test_post_dispatch_insufficient_fee() {
 }
 
 #[test]
-#[should_panic(expected: 'Insufficient balance',)]
+#[should_panic(expected: 'Insufficient balance')]
 fn test_transfer_routing_fee_insufficient_balance() {
     let (routing_hook_addrs, set_routing_hook_addrs) = setup_domain_routing_hook();
     let ownable = IOwnableDispatcher { contract_address: set_routing_hook_addrs.contract_address };
 
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     // We define a first destination
     let destination: u32 = 18;
     let (protocol_fee, _) = setup_protocol_fee(Option::None);
@@ -246,36 +260,40 @@ fn test_transfer_routing_fee_insufficient_balance() {
     let metadata = BytesTrait::new_empty();
 
     let erc20Ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(erc20Ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        erc20Ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     // We transfer insufficient amount
     fee_token_instance.transfer(NEW_OWNER().try_into().unwrap(), PROTOCOL_FEE / 2);
-    stop_prank(CheatTarget::One(erc20Ownable.contract_address));
 
-    start_prank(CheatTarget::One(erc20Ownable.contract_address), NEW_OWNER().try_into().unwrap());
+    cheat_caller_address(
+        erc20Ownable.contract_address, NEW_OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     fee_token_instance.approve(routing_hook_addrs.contract_address, PROTOCOL_FEE);
     assert(
         fee_token_instance
             .allowance(
-                NEW_OWNER().try_into().unwrap(), routing_hook_addrs.contract_address
+                NEW_OWNER().try_into().unwrap(), routing_hook_addrs.contract_address,
             ) == PROTOCOL_FEE,
-        'Approve failed'
+        'Approve failed',
     );
-    stop_prank(CheatTarget::One(erc20Ownable.contract_address));
-    stop_prank(CheatTarget::One(ownable.contract_address));
-    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER().try_into().unwrap());
-
+    cheat_caller_address(
+        ownable.contract_address, NEW_OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     routing_hook_addrs.post_dispatch(metadata.clone(), message_1, PROTOCOL_FEE);
 }
 
 #[test]
-#[should_panic(expected: 'Insufficient allowance',)]
+#[should_panic(expected: 'Insufficient allowance')]
 fn test_transfer_routing_fee_insufficient_allowance() {
     let (routing_hook_addrs, set_routing_hook_addrs) = setup_domain_routing_hook();
     // We define a first destination
     let destination: u32 = 18;
     let (protocol_fee, _) = setup_protocol_fee(Option::None);
     let ownable = IOwnableDispatcher { contract_address: set_routing_hook_addrs.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     set_routing_hook_addrs.set_hook(destination, protocol_fee.contract_address);
 
     let fee_token_instance = ERC20ABIDispatcher { contract_address: ETH_ADDRESS() };
@@ -293,26 +311,30 @@ fn test_transfer_routing_fee_insufficient_allowance() {
     let metadata = BytesTrait::new_empty();
 
     let erc20Ownable = IOwnableDispatcher { contract_address: ETH_ADDRESS() };
-    start_prank(CheatTarget::One(erc20Ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        erc20Ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     // We transfer insufficient amount
     fee_token_instance.transfer(NEW_OWNER().try_into().unwrap(), PROTOCOL_FEE);
-    stop_prank(CheatTarget::One(erc20Ownable.contract_address));
 
-    start_prank(CheatTarget::One(erc20Ownable.contract_address), NEW_OWNER().try_into().unwrap());
+    cheat_caller_address(
+        erc20Ownable.contract_address, NEW_OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
+
     fee_token_instance.approve(routing_hook_addrs.contract_address, PROTOCOL_FEE / 2);
     // Insufficient allowance for dispatch
     assert(
         fee_token_instance
             .allowance(
-                NEW_OWNER().try_into().unwrap(), routing_hook_addrs.contract_address
+                NEW_OWNER().try_into().unwrap(), routing_hook_addrs.contract_address,
             ) == PROTOCOL_FEE
             / 2,
-        'Approve failed'
+        'Approve failed',
     );
-    stop_prank(CheatTarget::One(erc20Ownable.contract_address));
-    stop_prank(CheatTarget::One(ownable.contract_address));
-    start_prank(CheatTarget::One(ownable.contract_address), NEW_OWNER().try_into().unwrap());
 
+    cheat_caller_address(
+        ownable.contract_address, NEW_OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     routing_hook_addrs.post_dispatch(metadata.clone(), message_1, PROTOCOL_FEE);
 }
 
@@ -320,8 +342,9 @@ fn test_transfer_routing_fee_insufficient_allowance() {
 fn hook_set_for_destination_quote_dispatch() {
     let (routing_hook_addrs, set_routing_hook_addrs) = setup_domain_routing_hook();
     let ownable = IOwnableDispatcher { contract_address: set_routing_hook_addrs.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
-
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(2),
+    );
     // We define a first destination
     let destination: u32 = 18;
     let (protocol_fee, _) = setup_protocol_fee(Option::None);
@@ -335,11 +358,12 @@ fn hook_set_for_destination_quote_dispatch() {
     let new_protocol_fee = 3 * PROTOCOL_FEE;
     // We change the configuration
     let protocol_ownable = IOwnableDispatcher {
-        contract_address: second_protocol_fee.contract_address
+        contract_address: second_protocol_fee.contract_address,
     };
-    start_prank(CheatTarget::One(protocol_ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        protocol_ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(2),
+    );
     second_protocol_fee.set_protocol_fee(new_protocol_fee);
-    stop_prank(CheatTarget::One(protocol_ownable.contract_address));
     set_routing_hook_addrs.set_hook(second_destination, second_protocol_fee.contract_address);
 
     let message_1 = Message {

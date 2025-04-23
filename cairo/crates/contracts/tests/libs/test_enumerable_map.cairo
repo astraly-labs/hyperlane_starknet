@@ -1,13 +1,11 @@
-use contracts::libs::enumerable_map::{EnumerableMapTrait};
 use mocks::enumerable_map_holder::{
-    IEnumerableMapHolderDispatcher, IEnumerableMapHolderDispatcherTrait
+    IEnumerableMapHolderDispatcher, IEnumerableMapHolderDispatcherTrait,
 };
-use snforge_std::{declare, ContractClassTrait};
-use starknet::{ClassHash, ContractAddress};
+use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
 
 
 fn setup() -> IEnumerableMapHolderDispatcher {
-    let contract = declare("EnumerableMapHolder").unwrap();
+    let contract = declare("EnumerableMapHolder").unwrap().contract_class();
     let (contract_address, _) = contract.deploy(@array![]).unwrap();
     IEnumerableMapHolderDispatcher { contract_address }
 }
@@ -19,6 +17,7 @@ fn test_initialize_empty_map() {
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_set(key: u32, val: u256) {
     let mut contract = setup();
     assert_eq!(contract.do_get_len(), 0, "EnumerableMap is not empty");
@@ -36,6 +35,7 @@ fn test_fuzz_set(key: u32, val: u256) {
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_contains(key: u32, val: u256, should_contain: u8) {
     let mut contract = setup();
     let should_contain: bool = should_contain % 2 == 1;
@@ -46,6 +46,7 @@ fn test_fuzz_contains(key: u32, val: u256, should_contain: u8) {
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_should_remove(key: u32, val: u256) {
     let mut contract = setup();
     contract.do_set_key(key, val);
@@ -53,7 +54,7 @@ fn test_fuzz_should_remove(key: u32, val: u256) {
     assert_eq!(contract.do_get_len(), 1, "EnumerableMap is empty");
     // check value stored in 'values' map correctly
     assert_eq!(contract.do_get_value(key), val, "Value not stored properly");
-    // check value key correctly stored in keys array 
+    // check value key correctly stored in keys array
     let (_key, _value) = contract.do_at(0);
     assert_eq!(key, key, "Key mismatch");
     assert_eq!(_value, val, "Value mismatch");
@@ -67,8 +68,9 @@ fn test_fuzz_should_remove(key: u32, val: u256) {
 }
 
 #[test]
+#[fuzzer]
 fn test_fuzz_get_keys(
-    mut key1: u32, mut key2: u32, mut key3: u32, val1: u256, val2: u256, val3: u256
+    mut key1: u32, mut key2: u32, mut key3: u32, val1: u256, val2: u256, val3: u256,
 ) {
     if key1 == key2 {
         key2 += 1;

@@ -1,5 +1,4 @@
 use alexandria_bytes::Bytes;
-use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IRouter<TState> {
@@ -24,20 +23,19 @@ pub trait IRouter<TState> {
 pub mod RouterComponent {
     use alexandria_bytes::Bytes;
     use contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
+        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
     };
-    use contracts::interfaces::{
-        IMailboxClient, IMailboxDispatcher, IMailboxDispatcherTrait, ETH_ADDRESS
-    };
+    use contracts::interfaces::{ETH_ADDRESS, IMailboxDispatcherTrait};
     use contracts::libs::enumerable_map::{EnumerableMap, EnumerableMapTrait};
     use openzeppelin::access::ownable::{
-        OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
+        OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl,
     };
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::ContractAddress;
+    use starknet::storage::StoragePointerReadAccess;
 
     #[storage]
-    struct Storage {
+    pub struct Storage {
         routers: EnumerableMap<u32, u256>,
     }
 
@@ -52,7 +50,7 @@ pub mod RouterComponent {
 
     pub trait IMessageRecipientInternalHookTrait<TContractState> {
         fn _handle(
-            ref self: ComponentState<TContractState>, origin: u32, sender: u256, message: Bytes
+            ref self: ComponentState<TContractState>, origin: u32, sender: u256, message: Bytes,
         );
     }
 
@@ -63,7 +61,7 @@ pub mod RouterComponent {
         impl MailboxClient: MailboxclientComponent::HasComponent<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>,
         +Drop<TContractState>,
-        impl Hook: IMessageRecipientInternalHookTrait<TContractState>
+        impl Hook: IMessageRecipientInternalHookTrait<TContractState>,
     > of super::IRouter<ComponentState<TContractState>> {
         /// Enrolls a remote router for the specified `domain`.
         ///
@@ -75,7 +73,7 @@ pub mod RouterComponent {
         /// * `domain` - A `u32` representing the domain for which the router is being enrolled.
         /// * `router` - A `u256` representing the address of the router to be enrolled.
         fn enroll_remote_router(
-            ref self: ComponentState<TContractState>, domain: u32, router: u256
+            ref self: ComponentState<TContractState>, domain: u32, router: u256,
         ) {
             let ownable_comp = get_dep_component!(@self, Owner);
             ownable_comp.assert_only_owner();
@@ -90,14 +88,16 @@ pub mod RouterComponent {
         ///
         /// # Arguments
         ///
-        /// * `domains` - An array of `u32` values representing the domains for which routers are being enrolled.
-        /// * `addresses` - An array of `u256` values representing the addresses of the routers to be enrolled.
+        /// * `domains` - An array of `u32` values representing the domains for which routers are
+        /// being enrolled.
+        /// * `addresses` - An array of `u256` values representing the addresses of the routers to
+        /// be enrolled.
         ///
         /// # Panics
         ///
         /// Panics if the lengths of `domains` and `addresses` do not match.
         fn enroll_remote_routers(
-            ref self: ComponentState<TContractState>, domains: Array<u32>, addresses: Array<u256>
+            ref self: ComponentState<TContractState>, domains: Array<u32>, addresses: Array<u256>,
         ) {
             let ownable_comp = get_dep_component!(@self, Owner);
             ownable_comp.assert_only_owner();
@@ -116,8 +116,8 @@ pub mod RouterComponent {
 
         /// Unenrolls the router for the specified `domain`.
         ///
-        /// This function requires ownership verification. Once verified, it calls the internal method
-        /// `_unenroll_remote_router` to complete the unenrollment.
+        /// This function requires ownership verification. Once verified, it calls the internal
+        /// method `_unenroll_remote_router` to complete the unenrollment.
         ///
         /// # Arguments
         ///
@@ -136,7 +136,8 @@ pub mod RouterComponent {
         ///
         /// # Arguments
         ///
-        /// * `domains` - An array of `u32` values representing the domains for which routers are being unenrolled.
+        /// * `domains` - An array of `u32` values representing the domains for which routers are
+        /// being unenrolled.
         fn unenroll_remote_routers(ref self: ComponentState<TContractState>, domains: Array<u32>) {
             let ownable_comp = get_dep_component!(@self, Owner);
             ownable_comp.assert_only_owner();
@@ -150,9 +151,9 @@ pub mod RouterComponent {
 
         /// Handles an incoming message from a remote router.
         ///
-        /// This function checks if a remote router is enrolled for the `origin` domain, verifies that the
-        /// `sender` matches the enrolled router, and calls the `_handle` method on the `Hook` to process
-        /// the message.
+        /// This function checks if a remote router is enrolled for the `origin` domain, verifies
+        /// that the `sender` matches the enrolled router, and calls the `_handle` method on the
+        /// `Hook` to process the message.
         ///
         /// # Arguments
         ///
@@ -164,7 +165,7 @@ pub mod RouterComponent {
         ///
         /// Panics if the sender does not match the enrolled router for the origin domain.
         fn handle(
-            ref self: ComponentState<TContractState>, origin: u32, sender: u256, message: Bytes
+            ref self: ComponentState<TContractState>, origin: u32, sender: u256, message: Bytes,
         ) {
             let mailbox_client_comp = get_dep_component!(@self, MailboxClient);
             mailbox_client_comp.assert_only_mailbox();
@@ -193,7 +194,8 @@ pub mod RouterComponent {
         ///
         /// # Arguments
         ///
-        /// * `domain` - A `u32` representing the domain for which the router address is being queried.
+        /// * `domain` - A `u32` representing the domain for which the router address is being
+        /// queried.
         ///
         /// # Returns
         ///
@@ -208,10 +210,10 @@ pub mod RouterComponent {
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
-        impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>
+        impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
         fn _enroll_remote_router(
-            ref self: ComponentState<TContractState>, domain: u32, address: u256
+            ref self: ComponentState<TContractState>, domain: u32, address: u256,
         ) {
             let mut routers = self.routers.read();
             let _ = routers.set(domain, address);
@@ -223,7 +225,7 @@ pub mod RouterComponent {
         }
 
         fn _is_remote_router(
-            self: @ComponentState<TContractState>, domain: u32, address: u256
+            self: @ComponentState<TContractState>, domain: u32, address: u256,
         ) -> bool {
             let routers = self.routers.read();
             let router = routers.get(domain);
@@ -247,7 +249,7 @@ pub mod RouterComponent {
             value: u256,
             message_body: Bytes,
             hook_metadata: Bytes,
-            hook: ContractAddress
+            hook: ContractAddress,
         ) -> u256 {
             let router = self._must_have_remote_router(destination_domain);
             let mut mailbox_comp = get_dep_component!(self, MailBoxClient);
@@ -256,7 +258,7 @@ pub mod RouterComponent {
                 let mut fee_token_dispatcher = IERC20Dispatcher { contract_address: ETH_ADDRESS() };
                 if !fee_token_dispatcher
                     .transfer_from(
-                        starknet::get_caller_address(), starknet::get_contract_address(), value
+                        starknet::get_caller_address(), starknet::get_contract_address(), value,
                     ) {
                     Err::fee_transfer_failed();
                 }
@@ -279,7 +281,7 @@ pub mod RouterComponent {
             destination_domain: u32,
             message_body: Bytes,
             hook_metadata: Bytes,
-            hook: ContractAddress
+            hook: ContractAddress,
         ) -> u256 {
             let router = self._must_have_remote_router(destination_domain);
             let mut mailbox_comp = get_dep_component!(self, MailBoxClient);
@@ -291,7 +293,7 @@ pub mod RouterComponent {
                     router,
                     message_body,
                     Option::Some(hook_metadata),
-                    Option::Some(hook)
+                    Option::Some(hook),
                 )
         }
     }

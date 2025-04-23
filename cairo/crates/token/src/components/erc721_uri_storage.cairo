@@ -10,13 +10,15 @@ pub mod ERC721URIStorageComponent {
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::interface::IERC721Metadata;
     use openzeppelin::token::erc721::{
-        ERC721Component, ERC721Component::InternalTrait as ERC721InternalTrait,
-        ERC721Component::ERC721HooksTrait, ERC721Component::ERC721MetadataImpl
+        ERC721Component, ERC721Component::ERC721HooksTrait, ERC721Component::ERC721MetadataImpl,
+        ERC721Component::InternalTrait as ERC721InternalTrait,
     };
+    use starknet::{storage::Map};
+
 
     #[storage]
     struct Storage {
-        token_uris: LegacyMap<u256, ByteArray>
+        token_uris: Map<u256, ByteArray>,
     }
 
     #[event]
@@ -53,8 +55,9 @@ pub mod ERC721URIStorageComponent {
 
         /// Returns the URI associated with a given `token_id`.
         ///
-        /// This function retrieves the URI for an ERC721 token based on its `token_id`. 
-        /// It first ensures that the token is owned by the caller, then checks the token-specific URI.
+        /// This function retrieves the URI for an ERC721 token based on its `token_id`.
+        /// It first ensures that the token is owned by the caller, then checks the token-specific
+        /// URI.
         /// If the token has no specific URI, it appends the token's base URI if one exists.
         ///
         /// # Arguments
@@ -63,8 +66,8 @@ pub mod ERC721URIStorageComponent {
         ///
         /// # Returns
         ///
-        /// A `ByteArray` representing the URI associated with the token. If a specific URI is not found, 
-        /// it may return the base URI or the token's metadata URI.
+        /// A `ByteArray` representing the URI associated with the token. If a specific URI is not
+        /// found, it may return the base URI or the token's metadata URI.
         fn token_uri(self: @ComponentState<TContractState>, token_id: u256) -> ByteArray {
             let erc721_component = get_dep_component!(self, ERC721);
             erc721_component._require_owned(token_id);
@@ -96,8 +99,9 @@ pub mod ERC721URIStorageComponent {
     > of InternalTrait<TContractState> {
         // Sets the URI for a specific `token_id`.
         ///
-        /// This internal function allows setting a URI for an ERC721 token. After setting the URI, 
-        /// it emits a `MetadataUpdate` event to indicate that the token's metadata has been updated.
+        /// This internal function allows setting a URI for an ERC721 token. After setting the URI,
+        /// it emits a `MetadataUpdate` event to indicate that the token's metadata has been
+        /// updated.
         ///
         /// # Arguments
         ///
@@ -108,7 +112,7 @@ pub mod ERC721URIStorageComponent {
         ///
         /// Emits a `MetadataUpdate` event once the token URI has been updated.
         fn _set_token_uri(
-            ref self: ComponentState<TContractState>, token_id: u256, token_uri: ByteArray
+            ref self: ComponentState<TContractState>, token_id: u256, token_uri: ByteArray,
         ) {
             self.token_uris.write(token_id, token_uri);
             self.emit(MetadataUpdate { token_id });

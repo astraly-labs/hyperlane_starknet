@@ -1,25 +1,17 @@
-use alexandria_bytes::{Bytes, BytesTrait};
-use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
+use alexandria_bytes::BytesTrait;
 use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::VARIANT;
-use mocks::test_erc721::{ITestERC721Dispatcher, ITestERC721DispatcherTrait};
-use snforge_std::cheatcodes::contract_class::{ContractClass, ContractClassTrait};
-use snforge_std::{
-    declare, CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn, start_prank, stop_prank,
-    EventFetcher, event_name_hash
-};
-use starknet::ContractAddress;
+use mocks::test_erc721::ITestERC721DispatcherTrait;
+use snforge_std::{ContractClassTrait, DeclareResultTrait, declare};
 use super::common::{
-    setup, DESTINATION, INITIAL_SUPPLY, Setup, IHypErc721TestDispatcher,
-    IHypErc721TestDispatcherTrait, ALICE, BOB, deploy_remote_token, perform_remote_transfer,
-    ZERO_ADDRESS, NAME, SYMBOL, URI, TRANSFER_ID, process_transfer, FEE_CAP,
-    test_transfer_with_hook_specified
+    DESTINATION, FEE_CAP, IHypErc721TestDispatcher, IHypErc721TestDispatcherTrait, INITIAL_SUPPLY,
+    Setup, TRANSFER_ID, deploy_remote_token, process_transfer, setup,
+    test_transfer_with_hook_specified,
 };
-use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
 
 fn setup_erc721_collateral_uri_storage() -> Setup {
     let mut setup = setup();
 
-    let contract = declare("HypERC721URICollateral").unwrap();
+    let contract = declare("HypERC721URICollateral").unwrap().contract_class();
     let mut calldata: Array<felt252> = array![];
     setup.local_primary_token.contract_address.serialize(ref calldata);
     setup.local_mailbox.contract_address.serialize(ref calldata);
@@ -27,7 +19,7 @@ fn setup_erc721_collateral_uri_storage() -> Setup {
     starknet::get_contract_address().serialize(ref calldata);
     let (hyp_erc721_uri_collateral, _) = contract.deploy(@calldata).unwrap();
     let hyp_erc721_uri_collateral = IHypErc721TestDispatcher {
-        contract_address: hyp_erc721_uri_collateral
+        contract_address: hyp_erc721_uri_collateral,
     };
 
     let remote_token_address: felt252 = setup.remote_token.contract_address.into();
@@ -38,7 +30,7 @@ fn setup_erc721_collateral_uri_storage() -> Setup {
         .transfer_from(
             starknet::get_contract_address(),
             hyp_erc721_uri_collateral.contract_address,
-            INITIAL_SUPPLY + 1
+            INITIAL_SUPPLY + 1,
         );
 
     setup.local_token = hyp_erc721_uri_collateral;
@@ -56,18 +48,19 @@ fn test_erc721_collateral_uri_storage_remote_transfer_revert_burned() {
     setup
         .local_token
         .transfer_remote(
-            DESTINATION, bob_address.into(), TRANSFER_ID, 2500, Option::None, Option::None
+            DESTINATION, bob_address.into(), TRANSFER_ID, 2500, Option::None, Option::None,
         );
     process_transfer(@setup, setup.bob, 0);
     assert_eq!(setup.remote_token.balance_of(setup.bob), 1);
     assert_eq!(
-        setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY * 2 - 2
+        setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY * 2 - 2,
     );
 }
 
 #[test]
-fn test_erc721_collateral_uri_storage_remote_transfer_with_hook_specified(
-    mut fee: u256, metadata: u256
+#[fuzzer]
+fn test_fuzz_erc721_collateral_uri_storage_remote_transfer_with_hook_specified(
+    mut fee: u256, metadata: u256,
 ) {
     let fee = fee % FEE_CAP;
     let mut metadata_bytes = BytesTrait::new_empty();
@@ -79,7 +72,7 @@ fn test_erc721_collateral_uri_storage_remote_transfer_with_hook_specified(
     setup.local_primary_token.approve(setup.local_token.contract_address, 0);
     test_transfer_with_hook_specified(@setup, 0, fee, metadata_bytes);
     assert_eq!(
-        setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY * 2 - 2
+        setup.local_token.balance_of(starknet::get_contract_address()), INITIAL_SUPPLY * 2 - 2,
     );
 }
 

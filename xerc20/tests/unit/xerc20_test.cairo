@@ -64,6 +64,7 @@ pub mod unit_mint_burn {
     use xerc20::xerc20::interface::XERC20ABIDispatcherTrait;
 
     #[test]
+    #[fuzzer]
     #[should_panic(expected: 'User does not have enough limit')]
     fn test_mint_should_panic_when_not_approve(mut amount: u256) {
         let setup = setup();
@@ -75,6 +76,7 @@ pub mod unit_mint_burn {
     }
 
     #[test]
+    #[fuzzer]
     #[should_panic(expected: 'User does not have enough limit')]
     fn test_burn_should_panic_when_limit_is_too_low(mut amount_0: u256, mut amount_1: u256) {
         let setup = setup();
@@ -92,6 +94,7 @@ pub mod unit_mint_burn {
     }
 
     #[test]
+    #[fuzzer]
     #[should_panic(expected: 'Limits too high')]
     fn test_set_limit_should_panic_when_limit_is_too_high_after(mut limit: u256) {
         let setup = setup();
@@ -103,6 +106,7 @@ pub mod unit_mint_burn {
     }
 
     #[test]
+    #[fuzzer]
     fn test_mint(mut amount: u256) {
         let setup = setup();
         amount = bound(amount, 1, U256MAX_DIV_2);
@@ -125,6 +129,7 @@ pub mod unit_mint_burn {
     }
 
     #[test]
+    #[fuzzer]
     fn test_burn(mut amount: u256) {
         let setup = setup();
         amount = bound(amount, 1, E40);
@@ -149,6 +154,7 @@ pub mod unit_mint_burn {
     }
 
     #[test]
+    #[fuzzer]
     #[should_panic(expected: 'ERC20: insufficient allowance')]
     fn test_burn_should_panic_when_not_have_approval(mut amount: u256) {
         let setup = setup();
@@ -161,6 +167,7 @@ pub mod unit_mint_burn {
     }
 
     #[test]
+    #[fuzzer]
     fn test_burn_should_reduces_allowance(mut amount: u256, mut approval_amount: u256) {
         let setup = setup();
         amount = bound(amount, 1, E40);
@@ -202,6 +209,7 @@ pub mod unit_create_params {
     use xerc20::xerc20::{component::XERC20Component as XERC20, interface::XERC20ABIDispatcherTrait};
 
     #[test]
+    #[fuzzer]
     fn test_should_change_limit(mut amount: u256, mut random_address_u128: u128) {
         let setup = setup();
 
@@ -235,6 +243,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_should_add_minters_and_limits(
         mut amount_0: u256,
         mut amount_1: u256,
@@ -285,6 +294,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_change_bridge_minting_limit_emits_event(mut limit: u256, minter: u128) {
         let setup = setup();
         let minter_address: ContractAddress = Into::<u128, felt252>::into(minter)
@@ -313,6 +323,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_change_bridge_burning_limit_emits_event(mut limit: u256, minter: u128) {
         let setup = setup();
         let minter_address: ContractAddress = Into::<u128, felt252>::into(minter)
@@ -341,6 +352,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_setting_limits_to_unapproved_user(mut amount: u256) {
         let setup = setup();
         amount = bound(amount, 1, U256MAX_DIV_2);
@@ -360,6 +372,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_use_limit_updates_limit(mut limit: u256, mut minter_u128: u128) {
         let setup = setup();
 
@@ -400,6 +413,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_current_limit_is_max_limit_if_unused(mut limit: u256, mut minter_u128: u128) {
         let setup = setup();
 
@@ -431,6 +445,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_current_limit_is_max_limit_if_over_24_hours(mut limit: u256, mut minter_u128: u128) {
         let setup = setup();
 
@@ -468,6 +483,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_limit_vests_linearly(mut limit: u256, mut minter_u128: u128) {
         let setup = setup();
 
@@ -502,6 +518,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_overflow_limit_makes_it_max(
         mut limit: u256, mut minter_u128: u128, mut used_limit: u256,
     ) {
@@ -541,6 +558,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_change_bridge_minting_limit_increase_current_limit_by_the_difference_it_was_changed(
         mut limit: u256, mut minter_u128: u128, mut used_limit: u256,
     ) {
@@ -575,6 +593,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_change_bridge_minting_limit_decrease_current_limit_by_the_difference_it_was_changed(
         mut limit: u256, mut minter_u128: u128, mut used_limit: u256,
     ) {
@@ -613,6 +632,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_changing_used_limits_to_zero(mut limit: u256, mut amount: u256) {
         let setup = setup();
         limit = bound(limit, 1, E40);
@@ -648,6 +668,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_set_lockbox(mut lockbox: u128) {
         let setup = setup();
         let lockbox_address: ContractAddress = Into::<u128, felt252>::into(lockbox)
@@ -662,6 +683,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_set_lockbox_emits_events(mut lockbox: u128) {
         let setup = setup();
         let lockbox_address: ContractAddress = Into::<u128, felt252>::into(lockbox)
@@ -686,6 +708,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_lockbox_doesnt_need_minter_rights(mut lockbox_u128: u128) {
         let setup = setup();
 
@@ -712,6 +735,7 @@ pub mod unit_create_params {
     }
 
     #[test]
+    #[fuzzer]
     fn test_remove_bridge(mut limit: u256) {
         let setup = setup();
         limit = bound(limit, 1, U256MAX_DIV_2);

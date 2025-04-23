@@ -11,14 +11,14 @@ pub trait ITestERC721<TState> {
         from: ContractAddress,
         to: ContractAddress,
         token_id: u256,
-        data: Span<felt252>
+        data: Span<felt252>,
     );
     fn transfer_from(ref self: TState, from: ContractAddress, to: ContractAddress, token_id: u256);
     fn approve(ref self: TState, to: ContractAddress, token_id: u256);
     fn set_approval_for_all(ref self: TState, operator: ContractAddress, approved: bool);
     fn get_approved(self: @TState, token_id: u256) -> ContractAddress;
     fn is_approved_for_all(
-        self: @TState, owner: ContractAddress, operator: ContractAddress
+        self: @TState, owner: ContractAddress, operator: ContractAddress,
     ) -> bool;
     fn token_uri(self: @TState, token_id: u256) -> ByteArray;
 }
@@ -79,13 +79,13 @@ mod TestERC721 {
             from: ContractAddress,
             to: ContractAddress,
             token_id: u256,
-            data: Span<felt252>
+            data: Span<felt252>,
         ) {
             self.erc721.safe_transfer_from(from, to, token_id, data)
         }
 
         fn transfer_from(
-            ref self: ContractState, from: ContractAddress, to: ContractAddress, token_id: u256
+            ref self: ContractState, from: ContractAddress, to: ContractAddress, token_id: u256,
         ) {
             self.erc721.transfer_from(from, to, token_id)
         }
@@ -95,7 +95,7 @@ mod TestERC721 {
         }
 
         fn set_approval_for_all(
-            ref self: ContractState, operator: ContractAddress, approved: bool
+            ref self: ContractState, operator: ContractAddress, approved: bool,
         ) {
             self.erc721.set_approval_for_all(operator, approved)
         }
@@ -105,7 +105,7 @@ mod TestERC721 {
         }
 
         fn is_approved_for_all(
-            self: @ContractState, owner: ContractAddress, operator: ContractAddress
+            self: @ContractState, owner: ContractAddress, operator: ContractAddress,
         ) -> bool {
             self.erc721.is_approved_for_all(owner, operator)
         }

@@ -14,10 +14,12 @@ contracts = { path = "../contracts" }
 mocks = { path = "../mocks" }
 
 [dev-dependencies]
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v0.22.0" }
+assert_macros.workspace = true
+snforge_std.workspace = true
 
 [tool]
 fmt.workspace = true
+scarb.workspace = true
 
 [[target.starknet-contract]]
 allowed-libfuncs-list.name = "experimental"

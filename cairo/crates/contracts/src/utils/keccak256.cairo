@@ -2,9 +2,7 @@ use alexandria_math::BitShift;
 use contracts::libs::checkpoint_lib::checkpoint_lib::HYPERLANE_ANNOUNCEMENT;
 use core::byte_array::{ByteArray, ByteArrayTrait};
 use core::integer::u128_byte_reverse;
-use core::keccak::cairo_keccak;
 use core::starknet::SyscallResultTrait;
-use core::to_byte_array::{FormatAsByteArray, AppendFormattedToByteArray};
 use starknet::{EthAddress, eth_signature::is_eth_signature_valid, secp256_trait::Signature};
 
 pub const ETH_SIGNED_MESSAGE: felt252 = '\x19Ethereum Signed Message:\n32';
@@ -21,13 +19,14 @@ pub const ADDRESS_SIZE: usize = 32;
 pub const HASH_SIZE: usize = 32;
 const KECCAK_FULL_RATE_IN_U64S: usize = 17;
 
-/// 
-/// Structure specifying for each element, the value of this element as u256 and the size (in bytes) of this element 
-/// 
+///
+/// Structure specifying for each element, the value of this element as u256 and the size (in bytes)
+/// of this element
+///
 #[derive(Copy, Drop, Serde, starknet::Store, Debug, PartialEq)]
 pub struct ByteData {
     pub value: u256,
-    pub size: usize
+    pub size: usize,
 }
 
 fn zero_keccak_hash(index: u32) -> u256 {
@@ -64,20 +63,20 @@ fn zero_keccak_hash(index: u32) -> u256 {
         0x6f00c6b91b5194e948cefb0042862c5f36525b11ccf87581a3debd79cbcd1c47,
         0x7c312f53e36ec8bcca3e9530f94cc0d5acc3fd2cdf88258cd72e52321ce748f5,
         0xcfb409c77e66d490e1b4b57818f255deb978c8415aecf3952d51991445d0fe15,
-        0x63e5f30e16932f36f608404895bca64bc86f3888a94503d6a8628b54d9ec0d29
+        0x63e5f30e16932f36f608404895bca64bc86f3888a94503d6a8628b54d9ec0d29,
     ];
     *zero_hashes.at(index)
 }
 
 /// Reverses the endianness of an u256
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `value` - Value to reverse
-/// 
-/// # Returns 
-/// 
-/// the reverse equivalent 
+///
+/// # Returns
+///
+/// the reverse equivalent
 pub fn reverse_endianness(value: u256) -> u256 {
     let new_low = u128_byte_reverse(value.high);
     let new_high = u128_byte_reverse(value.low);
@@ -87,52 +86,53 @@ pub fn reverse_endianness(value: u256) -> u256 {
 
 /// Determines the Ethereum compatible signature for a given hash
 /// dev : Since call this function for hash only, the ETH_SIGNED_MESSAGE size will always be 32
-/// 
+///
 ///  # Arguments
-/// 
+///
 ///  * `hash` - Hash to sign
-/// 
+///
 /// # Returns the corresponding hash as big endian
 pub fn to_eth_signature(hash: u256) -> u256 {
     let input = array![
         ByteData {
-            value: ETH_SIGNED_MESSAGE.into(), size: u256_word_size(ETH_SIGNED_MESSAGE.into()).into()
+            value: ETH_SIGNED_MESSAGE.into(),
+            size: u256_word_size(ETH_SIGNED_MESSAGE.into()).into(),
         },
-        ByteData { value: hash, size: HASH_SIZE }
+        ByteData { value: hash, size: HASH_SIZE },
     ];
     let hash = compute_keccak(input.span());
     reverse_endianness(hash)
 }
 
-/// Determines the correctness of an ethereum signature given a digest, signer and signature 
-/// 
-/// # Arguments 
-/// 
+/// Determines the correctness of an ethereum signature given a digest, signer and signature
+///
+/// # Arguments
+///
 /// * - `_msg_hash` - to digest used to sign the message
 /// * - `_signature` - the signature to check
 /// * - `_signer` - the signer ethereum address
-/// 
-/// # Returns 
-/// 
+///
+/// # Returns
+///
 /// boolean - True if valid
 pub fn bool_is_eth_signature_valid(
-    msg_hash: u256, signature: Signature, signer: EthAddress
+    msg_hash: u256, signature: Signature, signer: EthAddress,
 ) -> bool {
     match is_eth_signature_valid(msg_hash, signature, signer) {
         Result::Ok(()) => true,
-        Result::Err(_) => false
+        Result::Err(_) => false,
     }
 }
 
 
-/// Determines the size of a u64 element, by successive division 
+/// Determines the size of a u64 element, by successive division
 ///
 /// # Arguments
-/// 
+///
 /// * `word` - u64 word to consider
-/// 
+///
 /// # Returns
-/// 
+///
 /// The size (in bytes) for the given word
 pub fn u64_word_size(word: u64) -> u8 {
     let mut word_len = 0;
@@ -146,14 +146,14 @@ pub fn u64_word_size(word: u64) -> u8 {
 }
 
 
-/// Determines the size of a u256 element, by successive division 
+/// Determines the size of a u256 element, by successive division
 ///
 /// # Arguments
-/// 
+///
 /// * `word` - u256 word to consider
-/// 
+///
 /// # Returns
-/// 
+///
 /// The size (in bytes) for the given word
 pub fn u256_word_size(word: u256) -> u8 {
     let mut word_len = 0;
@@ -169,13 +169,13 @@ pub fn u256_word_size(word: u256) -> u8 {
 
 /// Shifts helper for u64
 /// dev : panics if u64 overflow
-/// 
+///
 /// # Arguments
-/// 
-/// * `n_bytes` - The number of bytes shift 
-/// 
-/// # Returns 
-/// 
+///
+/// * `n_bytes` - The number of bytes shift
+///
+/// # Returns
+///
 /// u64 representing the shifting number associated to the given number
 pub fn one_shift_left_bytes_u64(n_bytes: u8) -> u64 {
     match n_bytes {
@@ -194,13 +194,13 @@ pub fn one_shift_left_bytes_u64(n_bytes: u8) -> u64 {
 
 /// Shifts helper for u256
 /// dev : panics if u256 overflow
-/// 
+///
 /// # Arguments
-/// 
-/// * `n_bytes` - The number of bytes shift 
-/// 
-/// # Returns 
-/// 
+///
+/// * `n_bytes` - The number of bytes shift
+///
+/// # Returns
+///
 /// u256 representing the shifting number associated to the given number
 pub fn one_shift_left_bytes_u256(n_bytes: u8) -> u256 {
     match n_bytes {
@@ -242,13 +242,13 @@ pub fn one_shift_left_bytes_u256(n_bytes: u8) -> u256 {
 
 /// Shifts equivalent u128 mask for a given number of bytes
 /// dev : panics if u128 overflow
-/// 
+///
 /// # Arguments
-/// 
-/// * `n_bytes` - The number of bytes shift 
-/// 
-/// # Returns 
-/// 
+///
+/// * `n_bytes` - The number of bytes shift
+///
+/// # Returns
+///
 /// u256 representing the associated mask
 pub fn u128_mask(n_bytes: u8) -> u128 {
     match n_bytes {
@@ -274,14 +274,14 @@ pub fn u128_mask(n_bytes: u8) -> u128 {
 }
 
 /// Givens a span of ByteData, returns a concatenated string (ByteArray) of the input
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `bytes` - a span of ByteData containing the information that need to be hash
-/// 
-/// # Returns 
-/// 
-/// ByteArray representing the concatenation of the input (bytes31). 
+///
+/// # Returns
+///
+/// ByteArray representing the concatenation of the input (bytes31).
 fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
     let mut output_string: ByteArray = Default::default();
     let mut cur_idx = 0;
@@ -308,27 +308,27 @@ fn concatenate_input(bytes: Span<ByteData>) -> ByteArray {
 
 
 // --------------------------------------------------------
-// This section is part of the cairo core contract (see: https://github.com/starkware-libs/cairo/blob/953afd5e7ede296c99deaf189e18e361229517c0/corelib/src/keccak.cairo)
+// This section is part of the cairo core contract (see:
+// https://github.com/starkware-libs/cairo/blob/953afd5e7ede296c99deaf189e18e361229517c0/corelib/src/keccak.cairo)
 pub fn compute_keccak_byte_array(arr: @ByteArray) -> u256 {
     let mut input = array![];
     let mut i = 0;
     let mut inner = 0;
     let mut limb: u64 = 0;
     let mut factor: u64 = 1;
-    while let Option::Some(b) = arr
-        .at(i) {
-            limb = limb + b.into() * factor;
-            i += 1;
-            inner += 1;
-            if inner == 8 {
-                input.append(limb);
-                inner = 0;
-                limb = 0;
-                factor = 1;
-            } else {
-                factor *= 0x100;
-            }
-        };
+    while let Option::Some(b) = arr.at(i) {
+        limb = limb + b.into() * factor;
+        i += 1;
+        inner += 1;
+        if inner == 8 {
+            input.append(limb);
+            inner = 0;
+            limb = 0;
+            factor = 1;
+        } else {
+            factor *= 0x100;
+        }
+    };
     add_padding(ref input, limb, inner);
     starknet::syscalls::keccak_syscall(input.span()).unwrap_syscall()
 }
@@ -367,7 +367,7 @@ fn add_padding(ref input: Array<u64>, last_input_word: u64, last_input_num_bytes
             core::panic_with_felt252('Keccak last input word >7b')
         };
         let (_, r) = core::integer::u64_safe_divmod(
-            last_input_word, first_padding_byte_part.try_into().unwrap()
+            last_input_word, first_padding_byte_part.try_into().unwrap(),
         );
         first_padding_byte_part + r
     };
@@ -407,13 +407,13 @@ fn down_bytes(input: u256) -> u256 {
 }
 
 /// The general function that computes the keccak hash for an input span of ByteData
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `bytes` - a span of ByteData containing the information for the hash computation
-/// 
+///
 /// # Returns
-/// 
+///
 /// The corresponding keccak hash for the input arguments
 pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
     if (bytes.is_empty()) {
@@ -429,11 +429,9 @@ pub fn compute_keccak(bytes: Span<ByteData>) -> u256 {
 
 #[cfg(test)]
 mod tests {
-    use alexandria_bytes::{Bytes, BytesTrait};
-    use starknet::contract_address_const;
     use super::{
-        reverse_endianness, ByteData, HYPERLANE_ANNOUNCEMENT, compute_keccak, u64_word_size,
-        zero_keccak_hash, ADDRESS_SIZE, up_bytes, down_bytes
+        ADDRESS_SIZE, ByteData, HYPERLANE_ANNOUNCEMENT, compute_keccak, down_bytes,
+        reverse_endianness, u64_word_size, up_bytes, zero_keccak_hash,
     };
     const TEST_STARKNET_DOMAIN: u32 = 23448594;
 
@@ -467,7 +465,7 @@ mod tests {
         let big_endian_number: u256 = u256 { high: 0x12345678, low: 0 };
         let expected_result: u256 = u256 { high: 0, low: 0x78563412000000000000000000000000 };
         assert(
-            reverse_endianness(big_endian_number) == expected_result, 'Failed to realise reverse'
+            reverse_endianness(big_endian_number) == expected_result, 'Failed to realise reverse',
         );
     }
 
@@ -476,64 +474,64 @@ mod tests {
         let array = array![ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 }];
         assert_eq!(
             compute_keccak(array.span()),
-            0x4CE82A3F02824445F403FB5B69D4AB0FFFFC358BBAF61B0A130C971AB0CB15DA
+            0x4CE82A3F02824445F403FB5B69D4AB0FFFFC358BBAF61B0A130C971AB0CB15DA,
         );
 
         let array = array![
             ByteData {
                 value: 0x007a9a2e1663480b3845df0d714e8caa49f9241e13a826a678da3f366e546f2a,
-                size: ADDRESS_SIZE
-            }
+                size: ADDRESS_SIZE,
+            },
         ];
         assert_eq!(
             compute_keccak(array.span()),
-            0x9D3185A7830200BD62EF9D26D44D9169A544C1FFA0FB98D0D56AAAA3BA8FE354
+            0x9D3185A7830200BD62EF9D26D44D9169A544C1FFA0FB98D0D56AAAA3BA8FE354,
         );
 
         let array = array![ByteData { value: TEST_STARKNET_DOMAIN.into(), size: 4 }];
         assert_eq!(
             compute_keccak(array.span()),
-            0xBC54A343AEF444F26F67F8538FE9F045A340D250AE50D019CB7528444FA32AEC
+            0xBC54A343AEF444F26F67F8538FE9F045A340D250AE50D019CB7528444FA32AEC,
         );
 
         let array = array![
             ByteData { value: TEST_STARKNET_DOMAIN.into(), size: 4 },
             ByteData {
                 value: 0x007a9a2e1663480b3845df0d714e8caa49f9241e13a826a678da3f366e546f2a,
-                size: ADDRESS_SIZE
-            }
-        ];
-        assert_eq!(
-            compute_keccak(array.span()),
-            0x5DD6FF889DE1B20CF9B497A6716210C826DE3739FCAF50CD66F42F1DBE8626F2
-        );
-
-        let array = array![
-            ByteData { value: TEST_STARKNET_DOMAIN.into(), size: 4 },
-            ByteData {
-                value: 0x007a9a2e1663480b3845df0d714e8caa49f9241e13a826a678da3f366e546f2a,
-                size: ADDRESS_SIZE
+                size: ADDRESS_SIZE,
             },
-            ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 }
         ];
         assert_eq!(
             compute_keccak(array.span()),
-            0xFD8977CB20EE179678A5008D11A591D101FBDCC7669BC5CA31B92439A7E7FB4E
+            0x5DD6FF889DE1B20CF9B497A6716210C826DE3739FCAF50CD66F42F1DBE8626F2,
+        );
+
+        let array = array![
+            ByteData { value: TEST_STARKNET_DOMAIN.into(), size: 4 },
+            ByteData {
+                value: 0x007a9a2e1663480b3845df0d714e8caa49f9241e13a826a678da3f366e546f2a,
+                size: ADDRESS_SIZE,
+            },
+            ByteData { value: HYPERLANE_ANNOUNCEMENT.into(), size: 22 },
+        ];
+        assert_eq!(
+            compute_keccak(array.span()),
+            0xFD8977CB20EE179678A5008D11A591D101FBDCC7669BC5CA31B92439A7E7FB4E,
         );
 
         let array = array![
             ByteData {
                 value: 0x61a4bcca63b5e8a46da3abe2080f75c16c18467d5838f00b375d9ba4c7c313dd,
-                size: ADDRESS_SIZE
+                size: ADDRESS_SIZE,
             },
             ByteData {
                 value: 0x49d35915d0abec0a28990198bb32aa570e681e7eb41a001c0094c7c36a712671,
-                size: ADDRESS_SIZE
-            }
+                size: ADDRESS_SIZE,
+            },
         ];
         assert_eq!(
             compute_keccak(array.span()),
-            0x8310DAC21721349FCFA72BB5499303F0C6FAB4006FA2A637D02F7D6BB2188B47
+            0x8310DAC21721349FCFA72BB5499303F0C6FAB4006FA2A637D02F7D6BB2188B47,
         );
 
         let array = array![ByteData { value: 0, size: 1 }];
@@ -542,12 +540,12 @@ mod tests {
         let array = array![
             ByteData { value: 0, size: 10 },
             ByteData {
-                value: 0x007a9a2e1663480b3845df0d714e8caa49f9241e13a826a678da3f366e546f2a, size: 32
+                value: 0x007a9a2e1663480b3845df0d714e8caa49f9241e13a826a678da3f366e546f2a, size: 32,
             },
         ];
         assert_eq!(
             compute_keccak(array.span()),
-            0xA9EC21A66254DD00FA8F01E445CACEAA0D16A1E91700C85FB3ED6C1229B38D2A
+            0xA9EC21A66254DD00FA8F01E445CACEAA0D16A1E91700C85FB3ED6C1229B38D2A,
         );
     }
 

@@ -2,10 +2,7 @@
 pub mod merkleroot_multisig_ism {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::hooks::merkle_tree_hook::merkle_tree_hook::MerkleInternalImpl;
-    use contracts::interfaces::{
-        ModuleType, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
-        IInterchainSecurityModuleDispatcherTrait, IValidatorConfiguration,
-    };
+    use contracts::interfaces::{IInterchainSecurityModule, IValidatorConfiguration, ModuleType};
     use contracts::libs::checkpoint_lib::checkpoint_lib::CheckpointLib;
     use contracts::libs::message::{Message, MessageTrait};
     use contracts::libs::multisig::merkleroot_ism_metadata::merkleroot_ism_metadata::MerkleRootIsmMetadata;
@@ -14,7 +11,10 @@ pub mod merkleroot_multisig_ism {
     use starknet::ContractAddress;
     use starknet::EthAddress;
     use starknet::secp256_trait::{Signature, signature_from_vrs};
-
+    use starknet::storage::{
+        Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
+        StoragePointerWriteAccess,
+    };
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
@@ -23,7 +23,7 @@ pub mod merkleroot_multisig_ism {
 
     #[storage]
     struct Storage {
-        validators: LegacyMap<u32, EthAddress>,
+        validators: Map<u32, EthAddress>,
         threshold: u32,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
@@ -51,7 +51,7 @@ pub mod merkleroot_multisig_ism {
         ref self: ContractState,
         _owner: ContractAddress,
         _validators: Span<felt252>,
-        _threshold: u32
+        _threshold: u32,
     ) {
         self.ownable.initializer(_owner);
         assert(_threshold <= 0xffffffff, Errors::THRESHOLD_TOO_HIGH);
@@ -68,16 +68,16 @@ pub mod merkleroot_multisig_ism {
         /// Requires that m-of-n ISMs verify the provided interchain message.
         /// Dev: Can change based on the content of _message
         /// Dev: Reverts if threshold is not set or no match for signature
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - encoded metadata (see merkleroot_ism_metadata.cairo)
         /// * - `_message` - message structure containing relevant information (see message.cairo)
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// boolean - wheter the verification succeed or not.
-        fn verify(self: @ContractState, _metadata: Bytes, _message: Message,) -> bool {
+        fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
             assert(_metadata.clone().size() > 0, Errors::EMPTY_METADATA);
             let digest = self.digest(_metadata.clone(), _message.clone());
             let (validators, threshold) = self.validators_and_threshold(_message);
@@ -121,19 +121,19 @@ pub mod merkleroot_multisig_ism {
             self.threshold.read()
         }
 
-        /// Returns the set of validators responsible for verifying _message and the number of signatures required
-        /// Dev: Can change based on the content of _message
-        /// 
+        /// Returns the set of validators responsible for verifying _message and the number of
+        /// signatures required Dev: Can change based on the content of _message
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_message` - message structure containing relevant information (see message.cairo)
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// Span<EthAddress> - a span of ethereum validator addresses
         /// u32  - The number of validator signatures needed
         fn validators_and_threshold(
-            self: @ContractState, _message: Message
+            self: @ContractState, _message: Message,
         ) -> (Span<EthAddress>, u32) {
             // USER CONTRACT DEFINITION HERE
             // USER CAN SPECIFY VALIDATORS SELECTION CONDITIONS
@@ -146,24 +146,24 @@ pub mod merkleroot_multisig_ism {
     #[generate_trait]
     pub impl MerkleISMInternalImpl of InternalTrait {
         /// Returns the digest to be used for signature verification.
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - encoded metadata (see merkleroot_ism_metadata.cairo)
         /// * - `_message` - message structure containing relevant information (see message.cairo)
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// u256 - The digest to be signed by validators
         fn digest(self: @ContractState, _metadata: Bytes, _message: Message) -> u256 {
             assert(
                 MerkleRootIsmMetadata::message_index(
-                    _metadata.clone()
+                    _metadata.clone(),
                 ) <= MerkleRootIsmMetadata::signed_index(_metadata.clone()),
-                Errors::INVALID_MERKLE_INDEX
+                Errors::INVALID_MERKLE_INDEX,
             );
             let origin_merkle_tree_hook = MerkleRootIsmMetadata::origin_merkle_tree_hook(
-                _metadata.clone()
+                _metadata.clone(),
             );
             let signed_index = MerkleRootIsmMetadata::signed_index(_metadata.clone());
             let signed_message_id = MerkleRootIsmMetadata::signed_message_id(_metadata.clone());
@@ -182,26 +182,26 @@ pub mod merkleroot_multisig_ism {
             let signed_root = MerkleInternalImpl::_branch_root(
                 ByteData { value: id, size: HASH_SIZE },
                 formatted_proof.span(),
-                message_index.into()
+                message_index.into(),
             );
             CheckpointLib::digest(
                 _message.origin,
                 origin_merkle_tree_hook.into(),
                 signed_root.into(),
                 signed_index,
-                signed_message_id
+                signed_message_id,
             )
         }
 
         /// Returns the signature at a given index from the metadata.
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - encoded metadata (see merkleroot_ism_metadata.cairo)
         /// * - `_index` - The index of the signature to return
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// Signature  - A formatted signature (see Signature structure)
         fn get_signature_at(self: @ContractState, _metadata: Bytes, _index: u32) -> Signature {
             let (v, r, s) = MerkleRootIsmMetadata::signature_at(_metadata, _index);
@@ -226,8 +226,8 @@ pub mod merkleroot_multisig_ism {
         /// Sets a span of validators responsible to verify the message
         /// Dev: callable only during initialization
         /// Dev: reverts if null validator address or empty span
-        /// 
-        /// # Arguments 
+        ///
+        /// # Arguments
         ///
         /// * - `_validators` - a span of validators to set
         fn set_validators(ref self: ContractState, _validators: Span<felt252>) {
@@ -240,7 +240,7 @@ pub mod merkleroot_multisig_ism {
                 }
                 let validator: EthAddress = (*_validators.at(cur_idx)).try_into().unwrap();
                 assert(
-                    validator != 0.try_into().unwrap(), Errors::VALIDATOR_ADDRESS_CANNOT_BE_NULL
+                    validator != 0.try_into().unwrap(), Errors::VALIDATOR_ADDRESS_CANNOT_BE_NULL,
                 );
                 self.validators.write(cur_idx.into(), validator);
                 cur_idx += 1;

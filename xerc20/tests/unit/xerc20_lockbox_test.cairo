@@ -56,6 +56,7 @@ mod unit_deposit {
     };
 
     #[test]
+    #[fuzzer]
     fn test_deposit(mut amount: u256) {
         let setup = setup();
 
@@ -93,6 +94,7 @@ mod unit_deposit {
     }
 
     #[test]
+    #[fuzzer]
     #[should_panic(expected: 'ERC20 transfer_from failed')]
     fn test_deposit_should_panic_when_transfer_from_returns_false(mut amount: u256) {
         let setup = setup();
@@ -107,6 +109,7 @@ mod unit_deposit {
     }
 
     #[test]
+    #[fuzzer]
     fn test_deposit_to(mut amount: u256) {
         let setup = setup();
 
@@ -144,6 +147,7 @@ mod unit_deposit {
     }
 
     #[test]
+    #[fuzzer]
     #[should_panic(expected: 'ERC20 transfer_from failed')]
     fn test_deposit_to_should_panic_when_transfer_from_returns_false(mut amount: u256) {
         let setup = setup();
@@ -158,6 +162,7 @@ mod unit_deposit {
     }
 
     #[test]
+    #[fuzzer]
     fn test_deposit_emits_event(mut amount: u256) {
         let setup = setup();
 
@@ -198,6 +203,7 @@ pub mod unit_withdraw {
     };
 
     #[test]
+    #[fuzzer]
     fn test_withdraw(mut amount: u256) {
         let setup = setup();
 
@@ -235,6 +241,7 @@ pub mod unit_withdraw {
     }
 
     #[test]
+    #[fuzzer]
     #[should_panic(expected: 'ERC20 transfer failed')]
     fn test_withdraw_should_panic_when_transfer_returns_false(mut amount: u256) {
         let setup = setup();
@@ -249,6 +256,7 @@ pub mod unit_withdraw {
     }
 
     #[test]
+    #[fuzzer]
     fn test_withdraw_to(mut amount: u256) {
         let setup = setup();
 
@@ -284,6 +292,7 @@ pub mod unit_withdraw {
     }
 
     #[test]
+    #[fuzzer]
     #[should_panic(expected: 'ERC20 transfer failed')]
     fn test_withdraw_to_should_panic_when_transfer_returns_false(mut amount: u256) {
         let setup = setup();
@@ -298,6 +307,7 @@ pub mod unit_withdraw {
     }
 
     #[test]
+    #[fuzzer]
     fn test_withdraw_emit_events(mut amount: u256) {
         let setup = setup();
 

@@ -4,13 +4,11 @@ pub mod protocol_fee {
     use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::{
         StandardHookMetadata, VARIANT,
     };
-    use contracts::interfaces::{IPostDispatchHook, Types, IProtocolFee, ETH_ADDRESS};
+    use contracts::interfaces::{IPostDispatchHook, IProtocolFee, Types};
     use contracts::libs::message::Message;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{
-        ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait
-    };
-    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, contract_address_const, get_contract_address};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     #[abi(embed_v0)]
@@ -44,7 +42,7 @@ pub mod protocol_fee {
     }
 
     /// Constructor of the contract
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `_max_protocol_fee` - The maximum protocol fee that can be set.
@@ -59,7 +57,7 @@ pub mod protocol_fee {
         _protocol_fee: u256,
         _beneficiary: ContractAddress,
         _owner: ContractAddress,
-        _token_address: ContractAddress
+        _token_address: ContractAddress,
     ) {
         self.max_protocol_fee.write(_max_protocol_fee);
         self._set_protocol_fee(_protocol_fee);
@@ -74,13 +72,13 @@ pub mod protocol_fee {
             Types::PROTOCOL_FEE(())
         }
         /// Returns whether the hook supports metadata
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - metadata
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// boolean - whether the hook supports metadata
         fn supports_metadata(self: @ContractState, _metadata: Bytes) -> bool {
             _metadata.size() == 0 || StandardHookMetadata::variant(_metadata) == VARIANT.into()
@@ -88,14 +86,14 @@ pub mod protocol_fee {
 
         /// Post action after a message is dispatched via the Mailbox
         /// Dev: reverts if invalid metadata variant
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - the metadata required for the hook
         /// * - `_message` - the message passed from the Mailbox.dispatch() call
         /// * - `_fee_amount` - the payment provided for sending the message
         fn post_dispatch(
-            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
+            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256,
         ) {
             assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
             self._post_dispatch(_metadata, _message, _fee_amount);
@@ -103,14 +101,14 @@ pub mod protocol_fee {
 
         ///  Computes the payment required by the postDispatch call
         /// Dev: reverts if invalid metadata variant
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - The metadata required for the hook
         /// * - `_message` - the message passed from the Mailbox.dispatch() call
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// u256 - Quoted payment for the postDispatch call
         fn quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
             assert(self.supports_metadata(_metadata.clone()), Errors::INVALID_METADATA_VARIANT);
@@ -125,9 +123,9 @@ pub mod protocol_fee {
         }
 
         /// Sets the protocol fee.
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_protocol_fee` - The new protocol fee.
         fn set_protocol_fee(ref self: ContractState, _protocol_fee: u256) {
             self.ownable.assert_only_owner();
@@ -139,9 +137,9 @@ pub mod protocol_fee {
         }
 
         ///  Sets the beneficiary of protocol fees.
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_beneficiary` - The new beneficiary.
         fn set_beneficiary(ref self: ContractState, _beneficiary: ContractAddress) {
             self.ownable.assert_only_owner();
@@ -162,27 +160,28 @@ pub mod protocol_fee {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        /// Post action after a message is dispatched via the Mailbox (in our case, nothing because the )
-        /// 
+        /// Post action after a message is dispatched via the Mailbox (in our case, nothing because
+        /// the )
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - the metadata required for the hook
         /// * - `_message` - the message passed from the Mailbox.dispatch() call
         /// * - `_fee_amount` - the payment provided for sending the message
         fn _post_dispatch(
-            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256
+            ref self: ContractState, _metadata: Bytes, _message: Message, _fee_amount: u256,
         ) { // Since payment is exact, no need for further operation
         }
 
-        ///  Returns the static protocol fee 
-        /// 
+        ///  Returns the static protocol fee
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_metadata` - The metadata required for the hook
         /// * - `_message` - the message passed from the Mailbox.dispatch() call
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// u256 - Quoted payment for the postDispatch call
         fn _quote_dispatch(ref self: ContractState, _metadata: Bytes, _message: Message) -> u256 {
             self.protocol_fee.read()
@@ -190,9 +189,9 @@ pub mod protocol_fee {
 
         ///  Sets the protocol fee.
         /// Dev: reverts if protocol exceeds max protocol fee
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_protocol_fee` - The new protocol fee.
         fn _set_protocol_fee(ref self: ContractState, _protocol_fee: u256) {
             assert(_protocol_fee <= self.max_protocol_fee.read(), Errors::EXCEEDS_MAX_PROTOCOL_FEE);
@@ -201,9 +200,9 @@ pub mod protocol_fee {
 
         /// Sets the beneficiary of protocol fees.
         /// Dev: reverts if beneficiary is null address
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_beneficiary` - The new beneficiary.
         fn _set_beneficiary(ref self: ContractState, _beneficiary: ContractAddress) {
             assert(_beneficiary != contract_address_const::<0>(), Errors::INVALID_BENEFICARY);

@@ -5,20 +5,18 @@ trait IHypNativeScaled<TState> {
 
 #[starknet::contract]
 pub mod HypNativeScaled {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_bytes::Bytes;
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
     use token::components::hyp_native_component::HypNativeComponent;
     use token::components::token_router::{
-        TokenRouterComponent, ITokenRouter, TokenRouterComponent::TokenRouterHooksTrait,
-        TokenRouterComponent::MessageRecipientInternalHookImpl,
-        TokenRouterTransferRemoteHookDefaultImpl
+        ITokenRouter, TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+        TokenRouterComponent::TokenRouterHooksTrait, TokenRouterTransferRemoteHookDefaultImpl,
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -70,7 +68,7 @@ pub mod HypNativeScaled {
         #[substorage(v0)]
         hyp_native: HypNativeComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -94,7 +92,7 @@ pub mod HypNativeScaled {
 
     #[constructor]
     fn constructor(
-        ref self: ContractState, owner: ContractAddress, scale: u256, mailbox: ContractAddress
+        ref self: ContractState, owner: ContractAddress, scale: u256, mailbox: ContractAddress,
     ) {
         self.mailboxclient.initialize(mailbox, Option::None, Option::None);
         self.ownable.initializer(owner);
@@ -129,7 +127,7 @@ pub mod HypNativeScaled {
             amount_or_id: u256,
             value: u256,
             hook_metadata: Option<Bytes>,
-            hook: Option<ContractAddress>
+            hook: Option<ContractAddress>,
         ) -> u256 {
             let hook_payment = value - amount_or_id;
             let scaled_amount = amount_or_id / self.scale.read();
@@ -140,14 +138,14 @@ pub mod HypNativeScaled {
                 scaled_amount,
                 hook_payment,
                 Option::None,
-                Option::None
+                Option::None,
             )
         }
     }
 
     impl TokenRouterHooksImpl of TokenRouterHooksTrait<ContractState> {
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<ContractState>, amount_or_id: u256,
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let amount_to_transfer = amount_or_id * contract_state.scale.read();
@@ -158,7 +156,7 @@ pub mod HypNativeScaled {
             ref self: TokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let scaled_amount = amount_or_id * contract_state.scale.read();

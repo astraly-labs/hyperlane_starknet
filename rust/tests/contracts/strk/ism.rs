@@ -1,6 +1,6 @@
 use cainome::cairo_serde::ContractAddress;
 use futures::{stream::FuturesUnordered, StreamExt};
-use starknet::{accounts::Account, core::types::FieldElement, macros::felt};
+use starknet::{accounts::Account, core::types::Felt, macros::felt};
 
 use super::bind::multisig_ism::messageid_multisig_ism;
 use super::bind::routing::domain_routing_ism;
@@ -36,7 +36,7 @@ impl Ism {
 }
 
 impl Ism {
-    async fn deploy_mock(codes: &Codes, deployer: &StarknetAccount) -> eyre::Result<FieldElement> {
+    async fn deploy_mock(codes: &Codes, deployer: &StarknetAccount) -> eyre::Result<Felt> {
         let res = deploy_contract(codes.test_mock_ism, vec![], deployer).await;
         Ok(res.0)
     }
@@ -46,15 +46,15 @@ impl Ism {
         set: validator::TestValidators,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<FieldElement> {
-        let params: Vec<FieldElement> = std::iter::once(owner.address())
+    ) -> eyre::Result<Felt> {
+        let params: Vec<Felt> = std::iter::once(owner.address())
             .chain(
                 set.validators
                     .iter()
                     .map(|validator| validator.eth_addr().0),
             )
             .collect();
-        let res: (FieldElement, starknet::core::types::InvokeTransactionResult) =
+        let res: (Felt, starknet::core::types::InvokeTransactionResult) =
             deploy_contract(codes.ism_multisig, params, deployer).await;
 
         let contract = messageid_multisig_ism::new(res.0, owner);
@@ -66,7 +66,7 @@ impl Ism {
         isms: Vec<(u32, Self)>,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<FieldElement> {
+    ) -> eyre::Result<Felt> {
         let res = deploy_contract(codes.ism_routing, vec![owner.address()], deployer).await;
 
         let futures = FuturesUnordered::new();
@@ -102,7 +102,7 @@ impl Ism {
         threshold: u8,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<FieldElement> {
+    ) -> eyre::Result<Felt> {
         let futures = FuturesUnordered::new();
 
         for i in isms.iter() {
@@ -128,7 +128,7 @@ impl Ism {
         codes: &Codes,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<FieldElement> {
+    ) -> eyre::Result<Felt> {
         match self {
             Self::Mock => Self::deploy_mock(codes, deployer).await,
             Self::Multisig { validators: set } => {

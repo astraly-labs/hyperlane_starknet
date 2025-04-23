@@ -1,21 +1,20 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::hooks::merkle_tree_hook::merkle_tree_hook;
 use contracts::interfaces::{
-    Types, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait, IMerkleTreeHook,
-    IMailboxDispatcher, IMailboxDispatcherTrait, IMerkleTreeHookDispatcher,
-    IMerkleTreeHookDispatcherTrait
+    IMailboxDispatcher, IMailboxDispatcherTrait, IMerkleTreeHook, IMerkleTreeHookDispatcher,
+    IMerkleTreeHookDispatcherTrait, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait,
+    Types,
 };
-use contracts::libs::message::{Message, MessageTrait, HYPERLANE_VERSION};
+use contracts::libs::message::{HYPERLANE_VERSION, Message, MessageTrait};
 use contracts::utils::keccak256::{ByteData, HASH_SIZE};
 use contracts::utils::utils::U256TryIntoContractAddress;
-use merkle_tree_hook::{InternalTrait, treeContractMemberStateTrait, countContractMemberStateTrait};
-use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::cheatcodes::events::EventAssertions;
-use snforge_std::{start_prank, CheatTarget};
+use merkle_tree_hook::{InternalTrait};
+use openzeppelin::access::ownable::interface::IOwnableDispatcher;
+use snforge_std::{CheatSpan, EventSpyAssertionsTrait, cheat_caller_address};
+use starknet::storage::{StorageMapReadAccess, StoragePointerReadAccess};
 use super::super::setup::{
-    setup_merkle_tree_hook, MAILBOX, LOCAL_DOMAIN, VALID_OWNER, VALID_RECIPIENT, DESTINATION_DOMAIN
+    DESTINATION_DOMAIN, MAILBOX, VALID_OWNER, VALID_RECIPIENT, setup_merkle_tree_hook,
 };
-
 #[test]
 fn test_merkle_tree_hook_type() {
     let (_, merkle_tree_hook, _) = setup_merkle_tree_hook();
@@ -40,7 +39,9 @@ fn test_post_dispatch() {
     let (merkle_tree, post_dispatch_hook, mut spy) = setup_merkle_tree_hook();
     let mailbox = IMailboxDispatcher { contract_address: MAILBOX() };
     let ownable = IOwnableDispatcher { contract_address: MAILBOX() };
-    start_prank(CheatTarget::One(ownable.contract_address), VALID_OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, VALID_OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     let id = mailbox
         .dispatch(
             DESTINATION_DOMAIN,
@@ -48,7 +49,7 @@ fn test_post_dispatch() {
             BytesTrait::new_empty(),
             0,
             Option::None,
-            Option::None
+            Option::None,
         );
     assert(mailbox.get_latest_dispatched_id() == id, 'Dispatch failed');
     let nonce = 0;
@@ -68,9 +69,9 @@ fn test_post_dispatch() {
     };
     post_dispatch_hook.post_dispatch(metadata, message, 0);
     let expected_event = merkle_tree_hook::Event::InsertedIntoTree(
-        merkle_tree_hook::InsertedIntoTree { id: id, index: count.try_into().unwrap() }
+        merkle_tree_hook::InsertedIntoTree { id: id, index: count.try_into().unwrap() },
     );
-    spy.assert_emitted(@array![(merkle_tree.contract_address, expected_event),]);
+    spy.assert_emitted(@array![(merkle_tree.contract_address, expected_event)]);
     assert_eq!(merkle_tree.count(), count + 1);
 }
 
@@ -132,7 +133,7 @@ fn test_count() {
 }
 
 
-// Test internal functions 
+// Test internal functions
 
 #[test]
 fn test_insert_node_into_merkle_tree_hook() {

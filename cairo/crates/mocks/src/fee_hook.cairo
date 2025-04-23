@@ -1,8 +1,8 @@
 #[starknet::contract]
 pub mod fee_hook {
-    use alexandria_bytes::{Bytes, BytesTrait, BytesStore};
+    use alexandria_bytes::{Bytes, BytesStore, BytesTrait};
     use contracts::interfaces::{
-        IPostDispatchHook, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait, Types
+        IPostDispatchHook, IPostDispatchHookDispatcher, IPostDispatchHookDispatcherTrait, Types,
     };
     use contracts::libs::message::Message;
     use starknet::ContractAddress;

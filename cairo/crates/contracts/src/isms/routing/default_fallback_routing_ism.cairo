@@ -2,20 +2,20 @@
 pub mod default_fallback_routing_ism {
     use alexandria_bytes::Bytes;
     use contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
-        MailboxclientComponent::MailboxClientImpl
+        MailboxclientComponent, MailboxclientComponent::MailboxClientImpl,
+        MailboxclientComponent::MailboxClientInternalImpl,
     };
     use contracts::interfaces::{
-        IDomainRoutingIsm, IRoutingIsm, IInterchainSecurityModule, ModuleType,
-        IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-        IMailboxDispatcher, IMailboxDispatcherTrait
+        IDomainRoutingIsm, IInterchainSecurityModule, IInterchainSecurityModuleDispatcher,
+        IInterchainSecurityModuleDispatcherTrait, IMailboxDispatcher, IMailboxDispatcherTrait,
+        IRoutingIsm, ModuleType,
     };
-    use contracts::libs::message::{Message, MessageTrait};
+    use contracts::libs::message::Message;
     use core::panic_with_felt252;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
-
-    use starknet::{ContractAddress, ClassHash, contract_address_const};
+    use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
+    use starknet::{ClassHash, ContractAddress, contract_address_const};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -31,8 +31,8 @@ pub mod default_fallback_routing_ism {
 
     #[storage]
     struct Storage {
-        modules: LegacyMap<Domain, ContractAddress>,
-        domains: LegacyMap<Domain, Domain>,
+        modules: Map<Domain, ContractAddress>,
+        domains: Map<Domain, Domain>,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
@@ -82,13 +82,13 @@ pub mod default_fallback_routing_ism {
         /// Initializes the contract with domains and ISMs
         /// Dev: Callable only by the owner
         /// Dev: Panics if domains and ISMs spans length mismatch or if module address is null
-        /// 
+        ///
         /// # Arguments
         ///
         /// * `_domains` - A span of origin domains
         /// * `_modules` - A span of module addresses associated to the domains
         fn initialize(
-            ref self: ContractState, _domains: Span<u32>, _modules: Span<ContractAddress>
+            ref self: ContractState, _domains: Span<u32>, _modules: Span<ContractAddress>,
         ) {
             self.ownable.assert_only_owner();
             assert(_domains.len() == _modules.len(), Errors::LENGTH_MISMATCH);
@@ -99,7 +99,7 @@ pub mod default_fallback_routing_ism {
                 }
                 assert(
                     *_modules.at(cur_idx) != contract_address_const::<0>(),
-                    Errors::MODULE_CANNOT_BE_ZERO
+                    Errors::MODULE_CANNOT_BE_ZERO,
                 );
                 self._set(*_domains.at(cur_idx), *_modules.at(cur_idx));
                 cur_idx += 1;
@@ -107,9 +107,9 @@ pub mod default_fallback_routing_ism {
         }
 
         /// Sets the ISM to be used for the specified origin domain
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_domain` - The origin domain
         /// * - `_module` -The ISM to use to verify messages
         fn set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
@@ -119,9 +119,9 @@ pub mod default_fallback_routing_ism {
         }
 
         /// Removes the specified origin domain
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_domain` - The origin domain
         fn remove(ref self: ContractState, _domain: u32) {
             self.ownable.assert_only_owner();
@@ -129,9 +129,9 @@ pub mod default_fallback_routing_ism {
         }
 
         /// Builds a span of domains
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// Span<u32> - a span of the stored domains
         fn domains(self: @ContractState) -> Span<u32> {
             let mut current_domain = self.domains.read(0);
@@ -149,13 +149,13 @@ pub mod default_fallback_routing_ism {
         }
 
         /// Retrieve the module associated to a given origin
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_origin` - The origin domain
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// ContractAddress - the module contract address
         fn module(self: @ContractState, _origin: u32) -> ContractAddress {
             let module = self.modules.read(_origin);
@@ -172,13 +172,13 @@ pub mod default_fallback_routing_ism {
     impl IRoutingIsmImpl of IRoutingIsm<ContractState> {
         ///  Returns the ISM responsible for verifying _message
         /// Dev: Can change based on the content of _message
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_message` - message structure containing relevant information (see message.cairo)
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// ContractAddress - The ISM address to use to verify _message
         fn route(self: @ContractState, _message: Message) -> ContractAddress {
             self.module(_message.origin)
@@ -195,19 +195,19 @@ pub mod default_fallback_routing_ism {
         /// Requires that m-of-n ISMs verify the provided interchain message.
         /// Dev: Can change based on the content of _message
         /// Dev: Reverts if threshold is not set
-        /// 
+        ///
         /// # Arguments
-        /// 
-        /// * - `_metadata` - encoded metadata 
+        ///
+        /// * - `_metadata` - encoded metadata
         /// * - `_message` - message structure containing relevant information (see message.cairo)
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// boolean - wheter the verification succeed or not.
         fn verify(self: @ContractState, _metadata: Bytes, _message: Message) -> bool {
             let ism_address = self.route(_message.clone());
             let ism_dispatcher = IInterchainSecurityModuleDispatcher {
-                contract_address: ism_address
+                contract_address: ism_address,
             };
             ism_dispatcher.verify(_metadata, _message)
         }
@@ -217,9 +217,9 @@ pub mod default_fallback_routing_ism {
     impl InternalImpl of InternalTrait {
         /// Removes the specified origin domain
         /// Dev: Callable only by the admin
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_domain` - The origin domain
         fn _remove(ref self: ContractState, _domain: u32) {
             let domain_index = match self.find_domain_index(_domain) {
@@ -227,7 +227,7 @@ pub mod default_fallback_routing_ism {
                 Option::None => {
                     panic_with_felt252(Errors::DOMAIN_NOT_FOUND);
                     0
-                }
+                },
             };
             let next_domain = self.domains.read(_domain);
             self.modules.write(_domain, contract_address_const::<0>());
@@ -235,9 +235,9 @@ pub mod default_fallback_routing_ism {
         }
 
         /// Sets the ISM to be used for the specified origin domain
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_domain` - The origin domain
         /// * - `_module` -The ISM to use to verify messages
         fn _set(ref self: ContractState, _domain: u32, _module: ContractAddress) {
@@ -246,15 +246,15 @@ pub mod default_fallback_routing_ism {
                 Option::None => {
                     let latest_domain = self.find_last_domain();
                     self.domains.write(latest_domain, _domain);
-                }
+                },
             }
             self.modules.write(_domain, _module);
         }
 
         /// Helper: finds the last domain in the storage Legacy Map
-        /// 
-        /// # Returns 
-        /// 
+        ///
+        /// # Returns
+        ///
         /// u32 - the last domain stored
         fn find_last_domain(self: @ContractState) -> u32 {
             let mut current_domain = self.domains.read(0);
@@ -268,13 +268,13 @@ pub mod default_fallback_routing_ism {
         }
 
         /// Retrieves the index for a given domain
-        /// 
+        ///
         /// # Arguments
-        /// 
+        ///
         /// * - `_domain` - The origin domain
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// Option<u32> - the index if found, else None
         fn find_domain_index(self: @ContractState, _domain: u32) -> Option<u32> {
             let mut current_domain = 0;

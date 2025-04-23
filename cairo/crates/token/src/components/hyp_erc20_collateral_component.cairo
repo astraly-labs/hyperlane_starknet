@@ -10,20 +10,20 @@ pub trait IHypErc20Collateral<TState> {
 pub mod HypErc20CollateralComponent {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::client::{
-        gas_router_component::GasRouterComponent, router_component::RouterComponent,
-        mailboxclient_component::MailboxclientComponent
+        gas_router_component::GasRouterComponent, mailboxclient_component::MailboxclientComponent,
+        router_component::RouterComponent,
     };
     use contracts::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use starknet::ContractAddress;
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
     };
 
     #[storage]
     struct Storage {
-        wrapped_token: ERC20ABIDispatcher
+        wrapped_token: ERC20ABIDispatcher,
     }
 
     pub mod Errors {
@@ -42,7 +42,7 @@ pub mod HypErc20CollateralComponent {
         +TokenRouterComponent::HasComponent<TContractState>,
     > of TokenRouterHooksTrait<TContractState> {
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256,
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let mut component_state = HasComponent::get_component_mut(ref contract_state);
@@ -53,7 +53,7 @@ pub mod HypErc20CollateralComponent {
             ref self: TokenRouterComponent::ComponentState<TContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let mut component_state = HasComponent::get_component_mut(ref contract_state);
@@ -74,12 +74,13 @@ pub mod HypErc20CollateralComponent {
     > of super::IHypErc20Collateral<ComponentState<TContractState>> {
         /// Returns the balance of the given account for the wrapped ERC20 token.
         ///
-        /// This function retrieves the balance of the wrapped ERC20 token for a specified account by calling the
-        /// `balance_of` function on the wrapped token dispatcher.
+        /// This function retrieves the balance of the wrapped ERC20 token for a specified account
+        /// by calling the `balance_of` function on the wrapped token dispatcher.
         ///
         /// # Arguments
         ///
-        /// * `account` - A `ContractAddress` representing the account whose balance is being queried.
+        /// * `account` - A `ContractAddress` representing the account whose balance is being
+        /// queried.
         ///
         /// # Returns
         ///
@@ -90,7 +91,8 @@ pub mod HypErc20CollateralComponent {
 
         /// Returns the contract address of the wrapped ERC20 token.
         ///
-        /// This function retrieves the contract address of the wrapped ERC20 token from the token dispatcher.
+        /// This function retrieves the contract address of the wrapped ERC20 token from the token
+        /// dispatcher.
         ///
         /// # Returns
         ///
@@ -122,9 +124,9 @@ pub mod HypErc20CollateralComponent {
                     .wrapped_token
                     .read()
                     .transfer_from(
-                        starknet::get_caller_address(), starknet::get_contract_address(), amount
+                        starknet::get_caller_address(), starknet::get_contract_address(), amount,
                     ),
-                Errors::ERC20_TRANSFER_FROM_FAILED
+                Errors::ERC20_TRANSFER_FROM_FAILED,
             );
             BytesTrait::new_empty()
         }
@@ -135,9 +137,9 @@ pub mod HypErc20CollateralComponent {
                     .wrapped_token
                     .read()
                     .transfer(
-                        recipient.try_into().expect('u256 to ContractAddress failed'), amount
+                        recipient.try_into().expect('u256 to ContractAddress failed'), amount,
                     ),
-                Errors::ERC20_TRANSFER_FAILED
+                Errors::ERC20_TRANSFER_FAILED,
             );
         }
     }

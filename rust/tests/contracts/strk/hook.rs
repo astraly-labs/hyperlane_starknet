@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use starknet::core::types::FieldElement;
+use starknet::core::types::Felt;
 
 use super::{deploy_contract, types::Codes, StarknetAccount};
 use eyre::Result;
@@ -8,7 +8,7 @@ use eyre::Result;
 #[allow(dead_code)]
 pub enum Hook {
     Mock {
-        gas: FieldElement,
+        gas: Felt,
     },
 
     Merkle {},
@@ -22,7 +22,7 @@ pub enum Hook {
 
     RoutingCustom {
         routes: Vec<(u32, Self)>,
-        custom_hooks: BTreeMap<(u32, FieldElement), Self>,
+        custom_hooks: BTreeMap<(u32, Felt), Self>,
     },
 
     RoutingFallback {
@@ -37,7 +37,7 @@ pub enum Hook {
 
 #[allow(dead_code)]
 impl Hook {
-    pub fn mock(gas: FieldElement) -> Self {
+    pub fn mock(gas: Felt) -> Self {
         Self::Mock { gas }
     }
 
@@ -49,9 +49,9 @@ impl Hook {
 impl Hook {
     async fn deploy_mock(
         codes: &Codes,
-        gas: FieldElement,
+        gas: Felt,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<FieldElement> {
+    ) -> eyre::Result<Felt> {
         let res = deploy_contract(codes.test_mock_hook, vec![], deployer).await;
 
         Ok(res.0)
@@ -59,52 +59,52 @@ impl Hook {
 
     async fn deploy_merkle(
         codes: &Codes,
-        mailbox: FieldElement,
+        mailbox: Felt,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<FieldElement> {
+    ) -> eyre::Result<Felt> {
         // deploy merkle hook
 
-        Ok(FieldElement::ZERO)
+        Ok(Felt::ZERO)
     }
 
     async fn deploy_pausable(
         codes: &Codes,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<FieldElement> {
+    ) -> eyre::Result<Felt> {
         todo!("not implemented")
     }
 
     async fn deploy_routing(
         code: u64,
         codes: &Codes,
-        mailbox: FieldElement,
+        mailbox: Felt,
         routes: Vec<(u32, Self)>,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<FieldElement> {
+    ) -> eyre::Result<Felt> {
         todo!("not implemented")
     }
 
     async fn deploy_aggregate(
         code: u64,
         codes: &Codes,
-        mailbox: FieldElement,
+        mailbox: Felt,
         hooks: Vec<Self>,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> eyre::Result<FieldElement> {
+    ) -> eyre::Result<Felt> {
         todo!("not implemented")
     }
 
     pub async fn deploy(
         self,
         codes: &Codes,
-        mailbox: Option<FieldElement>,
+        mailbox: Option<Felt>,
         owner: &StarknetAccount,
         deployer: &StarknetAccount,
-    ) -> Result<FieldElement> {
+    ) -> Result<Felt> {
         match self {
             Hook::Mock { gas } => Self::deploy_mock(codes, gas, deployer).await,
             Hook::Igp(igp) => todo!("not implemented"),

@@ -5,19 +5,33 @@ members = ["crates/*"]
 name = "hyperlane_starknet"
 description = "Implementation of the Hyperlane protocol on Starknet."
 version = "0.0.6"
-edition = "2023_11"
-cairo-version = "2.6.3"
+edition = "2024_07"
+cairo-version = "2.10.1"
+scarb-version = "2.10.1"
 license-file = "../LICENSE"
 readme = "../README.md"
 
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
 [workspace.dependencies]
-starknet = "2.6.3"
-alexandria_bytes = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "bcdca70" }
-alexandria_storage = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "bcdca70" }
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.14.0" }
+assert_macros = "2.10.1"
+starknet = "2.10.1"
+alexandria_bytes = "0.4.0"
+alexandria_storage = "0.4.0"
+alexandria_data_structures = "0.4.0"
+alexandria_math = "0.4.0"
+openzeppelin = "0.20.0"
+snforge_std = "0.38.3"
+snforge_scarb_plugin = "0.38.3"
 
+[dev-dependencies]
+snforge_std.workspace = true
 
 [workspace.tool.fmt]
 sort-module-level-items = true
+
+[scripts]
+test = "snforge test"
+
+[workspace.tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]

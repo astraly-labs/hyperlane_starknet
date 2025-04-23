@@ -1,6 +1,6 @@
 pub mod aggregation_ism_metadata {
     use alexandria_bytes::{Bytes, BytesTrait};
-    use core::result::{ResultTrait, Result};
+    use core::result::Result;
 
     pub trait AggregationIsmMetadata {
         fn metadata_at(_metadata: Bytes, _index: u8) -> Bytes;
@@ -18,19 +18,19 @@ pub mod aggregation_ism_metadata {
         /// Returns the metadata provided for the ISM at `_index`
         /// Dev: Callers must ensure _index is less than the number of metadatas provided
         /// Dev: Callers must ensure `hasMetadata(_metadata, _index)`
-        /// 
+        ///
         /// # Arguments
         ///
         /// * - `_metadata` -Encoded Aggregation ISM metadata
         /// * - `_index` - The index of the ISM to check for metadata for
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// Bytes -  The metadata provided for the ISM at `_index`
         fn metadata_at(_metadata: Bytes, _index: u8) -> Bytes {
             let (mut start, end) = match metadata_range(_metadata.clone(), _index) {
                 Result::Ok((start, end)) => (start, end),
-                Result::Err(_) => (0, 0)
+                Result::Err(_) => (0, 0),
             };
             let mut bytes_array = BytesTrait::new(496, array![]);
             loop {
@@ -47,34 +47,35 @@ pub mod aggregation_ism_metadata {
         }
         /// Returns whether or not metadata was provided for the ISM at _index
         /// Dev: Callers must ensure _index is less than the number of metadatas provided
-        /// 
+        ///
         /// # Arguments
         ///
         /// * - `_metadata` -Encoded Aggregation ISM metadata
         /// * - `_index` - The index of the ISM to check for metadata for
-        /// 
+        ///
         /// # Returns
-        /// 
+        ///
         /// boolean -  Whether or not metadata was provided for the ISM at `_index`
         fn has_metadata(_metadata: Bytes, _index: u8) -> bool {
             match metadata_range(_metadata, _index) {
                 Result::Ok((start, _)) => start > 0,
-                Result::Err(_) => false
+                Result::Err(_) => false,
             }
         }
     }
 
     /// Returns the range of the metadata provided for the ISM at _index
     /// Dev: Callers must ensure _index is less than the number of metadatas provided
-    /// 
+    ///
     /// # Arguments
     ///
     /// * - `_metadata` -Encoded Aggregation ISM metadata
     /// * - `_index` - The index of the ISM to check for metadata for
-    /// 
+    ///
     /// # Returns
-    /// 
-    /// Result<u32, u32), u8> -  Result on whether or not metadata was provided for the ISM at `_index`
+    ///
+    /// Result<u32, u32), u8> -  Result on whether or not metadata was provided for the ISM at
+    /// `_index`
     fn metadata_range(_metadata: Bytes, _index: u8) -> Result<(u32, u32), u8> {
         let start = _index.into() * RANGE_SIZE * 2;
         let mid = start + RANGE_SIZE;
@@ -87,7 +88,7 @@ pub mod aggregation_ism_metadata {
 
 #[cfg(test)]
 mod test {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_bytes::BytesTrait;
     use super::aggregation_ism_metadata::AggregationIsmMetadata;
 
     #[test]
@@ -98,11 +99,11 @@ mod test {
                 0x0000001800000024000000240000002C,
                 0x0000002C00000034AAAAAAAAAAAAAAAA,
                 0xBBBBCCCCDDDDDDDDEEEEEEEEFFFFFFFF,
-                0x00000000000000000000000000000000
-            ]
+                0x00000000000000000000000000000000,
+            ],
         );
         let mut expected_result = array![
-            0xAAAAAAAAAAAAAAAABBBBCCCC_u256, 0xDDDDDDDDEEEEEEEE_u256, 0xFFFFFFFF00000000_u256
+            0xAAAAAAAAAAAAAAAABBBBCCCC_u256, 0xDDDDDDDDEEEEEEEE_u256, 0xFFFFFFFF00000000_u256,
         ];
         let mut cur_idx = 0;
         loop {
@@ -112,7 +113,7 @@ mod test {
             let result = AggregationIsmMetadata::metadata_at(encoded_metadata.clone(), cur_idx);
             assert(
                 *BytesTrait::data(result.clone())[0] == *expected_result.at(cur_idx.into()).low,
-                'Agg metadata extract failed'
+                'Agg metadata extract failed',
             );
             cur_idx += 1;
         };
@@ -126,8 +127,8 @@ mod test {
                 0x00000018000000240000000000000000,
                 0x0000002C00000034AAAAAAAAAAAAAAAA,
                 0xBBBBCCCCDDDDDDDDEEEEEEEEFFFFFFFF,
-                0x00000000000000000000000000000000
-            ]
+                0x00000000000000000000000000000000,
+            ],
         );
         assert_eq!(AggregationIsmMetadata::has_metadata(encoded_metadata.clone(), 0), true);
         assert_eq!(AggregationIsmMetadata::has_metadata(encoded_metadata.clone(), 1), false);

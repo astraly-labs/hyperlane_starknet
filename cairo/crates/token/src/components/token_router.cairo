@@ -1,10 +1,10 @@
-use alexandria_bytes::{Bytes, BytesTrait};
+use alexandria_bytes::Bytes;
 use contracts::client::gas_router_component::{
-    GasRouterComponent, GasRouterComponent::InternalTrait as GasRouterComponentInternalTrait
+    GasRouterComponent, GasRouterComponent::InternalTrait as GasRouterComponentInternalTrait,
 };
 use contracts::client::mailboxclient_component::MailboxclientComponent;
 use contracts::client::router_component::{
-    RouterComponent, RouterComponent::InternalTrait as RouterComponentInternalTrait
+    RouterComponent, RouterComponent::InternalTrait as RouterComponentInternalTrait,
 };
 use contracts::interfaces::IMailboxClient;
 use openzeppelin::access::ownable::OwnableComponent;
@@ -20,26 +20,26 @@ pub trait ITokenRouter<TState> {
         amount_or_id: u256,
         value: u256,
         hook_metadata: Option<Bytes>,
-        hook: Option<ContractAddress>
+        hook: Option<ContractAddress>,
     ) -> u256;
 }
 
 #[starknet::component]
 pub mod TokenRouterComponent {
-    use alexandria_bytes::{Bytes, BytesTrait};
+    use alexandria_bytes::Bytes;
     use contracts::client::gas_router_component::{
-        GasRouterComponent, GasRouterComponent::GasRouterInternalImpl
+        GasRouterComponent, GasRouterComponent::GasRouterInternalImpl,
     };
     use contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
-        MailboxclientComponent::MailboxClient
+        MailboxclientComponent, MailboxclientComponent::MailboxClient,
+        MailboxclientComponent::MailboxClientInternalImpl,
     };
     use contracts::client::router_component::{
-        RouterComponent, RouterComponent::RouterComponentInternalImpl,
-        RouterComponent::IMessageRecipientInternalHookTrait,
+        RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait,
+        RouterComponent::RouterComponentInternalImpl,
     };
     use openzeppelin::access::ownable::{
-        OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
+        OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl,
     };
     use starknet::ContractAddress;
     use token::components::token_message::TokenMessageTrait;
@@ -74,14 +74,14 @@ pub mod TokenRouterComponent {
 
     pub trait TokenRouterHooksTrait<TContractState> {
         fn transfer_from_sender_hook(
-            ref self: ComponentState<TContractState>, amount_or_id: u256
+            ref self: ComponentState<TContractState>, amount_or_id: u256,
         ) -> Bytes;
 
         fn transfer_to_hook(
             ref self: ComponentState<TContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         );
     }
 
@@ -93,7 +93,7 @@ pub mod TokenRouterComponent {
             amount_or_id: u256,
             value: u256,
             hook_metadata: Option<Bytes>,
-            hook: Option<ContractAddress>
+            hook: Option<ContractAddress>,
         ) -> u256;
     }
 
@@ -106,9 +106,11 @@ pub mod TokenRouterComponent {
     > of IMessageRecipientInternalHookTrait<TContractState> {
         /// Handles the receipt of a message and processes a token transfer.
         ///
-        /// This function is invoked when a message is received, processing the transfer of tokens to the recipient.
-        /// It retrieves the recipient, amount, and metadata from the message and triggers the appropriate hook to
-        /// handle the transfer. The function also emits a `ReceivedTransferRemote` event after processing the transfer.
+        /// This function is invoked when a message is received, processing the transfer of tokens
+        /// to the recipient.
+        /// It retrieves the recipient, amount, and metadata from the message and triggers the
+        /// appropriate hook to handle the transfer. The function also emits a
+        /// `ReceivedTransferRemote` event after processing the transfer.
         ///
         /// # Arguments
         ///
@@ -119,7 +121,7 @@ pub mod TokenRouterComponent {
             ref self: RouterComponent::ComponentState<TContractState>,
             origin: u32,
             sender: u256,
-            message: Bytes
+            message: Bytes,
         ) {
             let recipient = message.recipient();
             let amount = message.amount();
@@ -141,13 +143,14 @@ pub mod TokenRouterComponent {
         +OwnableComponent::HasComponent<TContractState>,
         +GasRouterComponent::HasComponent<TContractState>,
         +TokenRouterHooksTrait<TContractState>,
-        impl TransferRemoteHook: TokenRouterTransferRemoteHookTrait<TContractState>
+        impl TransferRemoteHook: TokenRouterTransferRemoteHookTrait<TContractState>,
     > of super::ITokenRouter<ComponentState<TContractState>> {
         /// Initiates a token transfer to a remote domain.
         ///
-        /// This function dispatches a token transfer to the specified recipient on a remote domain, transferring
-        /// either an amount of tokens or a token ID. It supports optional hooks and metadata for additional
-        /// processing during the transfer. The function emits a `SentTransferRemote` event once the transfer is initiated.
+        /// This function dispatches a token transfer to the specified recipient on a remote domain,
+        /// transferring either an amount of tokens or a token ID. It supports optional hooks and
+        /// metadata for additional processing during the transfer. The function emits a
+        /// `SentTransferRemote` event once the transfer is initiated.
         ///
         /// # Arguments
         ///
@@ -156,7 +159,8 @@ pub mod TokenRouterComponent {
         /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
         /// * `value` - A `u256` representing the value of the transfer.
         /// * `hook_metadata` - An optional `Bytes` object representing metadata for the hook.
-        /// * `hook` - An optional `ContractAddress` representing the contract hook to invoke during the transfer.
+        /// * `hook` - An optional `ContractAddress` representing the contract hook to invoke during
+        /// the transfer.
         ///
         /// # Returns
         ///
@@ -168,7 +172,7 @@ pub mod TokenRouterComponent {
             amount_or_id: u256,
             value: u256,
             hook_metadata: Option<Bytes>,
-            hook: Option<ContractAddress>
+            hook: Option<ContractAddress>,
         ) -> u256 {
             match hook_metadata {
                 Option::Some(hook_metadata) => {
@@ -179,7 +183,7 @@ pub mod TokenRouterComponent {
                         amount_or_id,
                         value,
                         Option::Some(hook_metadata),
-                        hook
+                        hook,
                     )
                 },
                 Option::None => {
@@ -190,9 +194,9 @@ pub mod TokenRouterComponent {
                         amount_or_id,
                         value,
                         Option::None,
-                        Option::None
+                        Option::None,
                     )
-                }
+                },
             }
         }
     }
@@ -206,10 +210,10 @@ pub mod TokenRouterComponent {
         impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
         impl Router: RouterComponent::HasComponent<TContractState>,
         impl GasRouter: GasRouterComponent::HasComponent<TContractState>,
-        impl Hooks: TokenRouterHooksTrait<TContractState>
+        impl Hooks: TokenRouterHooksTrait<TContractState>,
     > of InternalTrait<TContractState> {
         fn _transfer_from_sender(
-            ref self: ComponentState<TContractState>, amount_or_id: u256
+            ref self: ComponentState<TContractState>, amount_or_id: u256,
         ) -> Bytes {
             Hooks::transfer_from_sender_hook(ref self, amount_or_id)
         }
@@ -218,7 +222,7 @@ pub mod TokenRouterComponent {
             ref self: ComponentState<TContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             Hooks::transfer_to_hook(ref self, recipient, amount_or_id, metadata);
         }
@@ -233,7 +237,7 @@ pub impl TokenRouterTransferRemoteHookDefaultImpl<
     +RouterComponent::HasComponent<TContractState>,
     +GasRouterComponent::HasComponent<TContractState>,
     +OwnableComponent::HasComponent<TContractState>,
-    +TokenRouterComponent::TokenRouterHooksTrait<TContractState>
+    +TokenRouterComponent::TokenRouterHooksTrait<TContractState>,
 > of TokenRouterComponent::TokenRouterTransferRemoteHookTrait<TContractState> {
     fn _transfer_remote(
         ref self: TokenRouterComponent::ComponentState<TContractState>,
@@ -242,10 +246,10 @@ pub impl TokenRouterTransferRemoteHookDefaultImpl<
         amount_or_id: u256,
         value: u256,
         hook_metadata: Option<Bytes>,
-        hook: Option<ContractAddress>
+        hook: Option<ContractAddress>,
     ) -> u256 {
         let token_metadata = TokenRouterComponent::TokenRouterInternalImpl::_transfer_from_sender(
-            ref self, amount_or_id
+            ref self, amount_or_id,
         );
         let token_message = TokenMessageTrait::format(recipient, amount_or_id, token_metadata);
         let contract_state = TokenRouterComponent::HasComponent::get_contract(@self);
@@ -263,7 +267,7 @@ pub impl TokenRouterTransferRemoteHookDefaultImpl<
 
                 message_id = router_comp
                     ._Router_dispatch(
-                        destination, value, token_message, hook_metadata, hook.unwrap()
+                        destination, value, token_message, hook_metadata, hook.unwrap(),
                     );
             },
             Option::None => {
@@ -271,14 +275,14 @@ pub impl TokenRouterTransferRemoteHookDefaultImpl<
                 let hook = mailbox_comp.get_hook();
                 message_id = router_comp
                     ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
-            }
+            },
         }
 
         self
             .emit(
                 TokenRouterComponent::SentTransferRemote {
                     destination, recipient, amount: amount_or_id,
-                }
+                },
             );
 
         message_id

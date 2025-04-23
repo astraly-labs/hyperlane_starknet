@@ -15,24 +15,23 @@ mod HypErc20Vault {
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::{
-        RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait
+        RouterComponent, RouterComponent::IMessageRecipientInternalHookTrait,
     };
     use contracts::libs::math;
-    use core::zeroable::NonZero;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::{
-        ERC20Component, ERC20HooksEmptyImpl, interface::{IERC20, IERC20CamelOnly}
+        ERC20Component, ERC20HooksEmptyImpl, interface::{IERC20, IERC20CamelOnly},
     };
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
     use token::components::token_message::TokenMessageTrait;
     use token::components::{
-        hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl,},
+        hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl},
         token_router::{
             TokenRouterComponent,
-            TokenRouterComponent::{TokenRouterHooksTrait, TokenRouterTransferRemoteHookTrait}
-        }
+            TokenRouterComponent::{TokenRouterHooksTrait, TokenRouterTransferRemoteHookTrait},
+        },
     };
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
@@ -99,7 +98,7 @@ mod HypErc20Vault {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -120,7 +119,7 @@ mod HypErc20Vault {
         #[flat]
         TokenRouterEvent: TokenRouterComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     #[constructor]
@@ -135,7 +134,7 @@ mod HypErc20Vault {
         wrapped_token: ContractAddress,
         owner: ContractAddress,
         hook: ContractAddress,
-        interchain_security_module: ContractAddress
+        interchain_security_module: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self
@@ -151,9 +150,10 @@ mod HypErc20Vault {
     impl TokenRouterTransferRemoteHookImpl of TokenRouterTransferRemoteHookTrait<ContractState> {
         /// Initiates a remote token transfer with optional hooks and metadata.
         ///
-        /// This function handles the transfer of tokens to a recipient on a remote domain. It converts
-        /// the token amount to shares, generates the token message, and dispatches the message to the
-        /// specified destination. The transfer can optionally use a hook for additional processing.
+        /// This function handles the transfer of tokens to a recipient on a remote domain. It
+        /// converts the token amount to shares, generates the token message, and dispatches the
+        /// message to the specified destination. The transfer can optionally use a hook for
+        /// additional processing.
         ///
         /// # Arguments
         ///
@@ -162,7 +162,8 @@ mod HypErc20Vault {
         /// * `amount_or_id` - A `u256` representing the amount of tokens or token ID to transfer.
         /// * `value` - A `u256` representing the value associated with the transfer.
         /// * `hook_metadata` - An optional `Bytes` object containing metadata for the hook.
-        /// * `hook` - An optional `ContractAddress` representing the hook for additional processing.
+        /// * `hook` - An optional `ContractAddress` representing the hook for additional
+        /// processing.
         ///
         /// # Returns
         ///
@@ -174,13 +175,13 @@ mod HypErc20Vault {
             amount_or_id: u256,
             value: u256,
             hook_metadata: Option<Bytes>,
-            hook: Option<ContractAddress>
+            hook: Option<ContractAddress>,
         ) -> u256 {
             let contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let shares = contract_state.assets_to_shares(amount_or_id);
             TokenRouterHooksImpl::transfer_from_sender_hook(ref self, shares);
             let token_message = TokenMessageTrait::format(
-                recipient, shares, BytesTrait::new_empty()
+                recipient, shares, BytesTrait::new_empty(),
             );
             let mut message_id = 0;
 
@@ -193,7 +194,7 @@ mod HypErc20Vault {
                     message_id = contract_state
                         .router
                         ._Router_dispatch(
-                            destination, value, token_message, hook_metadata, hook.unwrap()
+                            destination, value, token_message, hook_metadata, hook.unwrap(),
                         );
                 },
                 Option::None => {
@@ -204,14 +205,14 @@ mod HypErc20Vault {
                     message_id = contract_state
                         .router
                         ._Router_dispatch(destination, value, token_message, hook_metadata, hook);
-                }
+                },
             }
 
             self
                 .emit(
                     TokenRouterComponent::SentTransferRemote {
                         destination, recipient, amount: amount_or_id,
-                    }
+                    },
                 );
 
             message_id
@@ -236,8 +237,8 @@ mod HypErc20Vault {
     impl HypeErc20Vault of super::IHypErc20Vault<ContractState> {
         // Converts a specified amount of assets to shares based on the current exchange rate.
         ///
-        /// This function calculates the number of shares corresponding to the given amount of assets
-        /// by using the exchange rate stored in the contract.
+        /// This function calculates the number of shares corresponding to the given amount of
+        /// assets by using the exchange rate stored in the contract.
         ///
         /// # Arguments
         ///
@@ -252,8 +253,8 @@ mod HypErc20Vault {
 
         /// Converts a specified number of shares to assets based on the current exchange rate.
         ///
-        /// This function calculates the number of assets corresponding to the given number of shares
-        /// by using the exchange rate stored in the contract.
+        /// This function calculates the number of assets corresponding to the given number of
+        /// shares by using the exchange rate stored in the contract.
         ///
         /// # Arguments
         ///
@@ -269,12 +270,13 @@ mod HypErc20Vault {
 
         /// Returns the balance of shares for the specified account.
         ///
-        /// This function retrieves the number of shares owned by the given account. The shares are represented
-        /// by the balance in the ERC20 component.
+        /// This function retrieves the number of shares owned by the given account. The shares are
+        /// represented by the balance in the ERC20 component.
         ///
         /// # Arguments
         ///
-        /// * `account` - A `ContractAddress` representing the account whose share balance is being queried.
+        /// * `account` - A `ContractAddress` representing the account whose share balance is being
+        /// queried.
         ///
         /// # Returns
         ///
@@ -285,8 +287,8 @@ mod HypErc20Vault {
 
         /// Returns the precision value used for calculations in the vault.
         ///
-        /// This function returns the precision value applied to vault calculations, which is a constant
-        /// defined in the contract.
+        /// This function returns the precision value applied to vault calculations, which is a
+        /// constant defined in the contract.
         ///
         /// # Returns
         ///
@@ -297,8 +299,8 @@ mod HypErc20Vault {
 
         /// Returns the collateral domain used by the vault.
         ///
-        /// This function retrieves the collateral domain in which the vault operates, which is defined
-        /// at the time of contract deployment.
+        /// This function retrieves the collateral domain in which the vault operates, which is
+        /// defined at the time of contract deployment.
         ///
         /// # Returns
         ///
@@ -309,8 +311,8 @@ mod HypErc20Vault {
 
         /// Returns the current exchange rate between assets and shares.
         ///
-        /// This function retrieves the current exchange rate used by the vault for converting assets
-        /// to shares and vice versa.
+        /// This function retrieves the current exchange rate used by the vault for converting
+        /// assets to shares and vice versa.
         ///
         /// # Returns
         ///
@@ -324,8 +326,8 @@ mod HypErc20Vault {
         /// Handles incoming messages and updates the exchange rate if necessary.
         ///
         /// This internal function processes messages received from remote domains. If the message
-        /// is from the collateral domain, it updates the vault's exchange rate based on the metadata
-        /// contained in the message.
+        /// is from the collateral domain, it updates the vault's exchange rate based on the
+        /// metadata contained in the message.
         ///
         /// # Arguments
         ///
@@ -336,7 +338,7 @@ mod HypErc20Vault {
             ref self: RouterComponent::ComponentState<ContractState>,
             origin: u32,
             sender: u256,
-            message: Bytes
+            message: Bytes,
         ) {
             let mut contract_state = RouterComponent::HasComponent::get_contract_mut(ref self);
             if origin == contract_state.collateral_domain.read() {
@@ -344,7 +346,7 @@ mod HypErc20Vault {
                 contract_state.exchange_rate.write(exchange_rate);
             }
             TokenRouterComponent::MessageRecipientInternalHookImpl::_handle(
-                ref self, origin, sender, message
+                ref self, origin, sender, message,
             );
         }
     }
@@ -362,7 +364,7 @@ mod HypErc20Vault {
         }
 
         fn allowance(
-            self: @ContractState, owner: ContractAddress, spender: ContractAddress
+            self: @ContractState, owner: ContractAddress, spender: ContractAddress,
         ) -> u256 {
             self.erc20.allowance(owner, spender)
         }
@@ -376,7 +378,7 @@ mod HypErc20Vault {
             ref self: ContractState,
             sender: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) -> bool {
             self.erc20.transfer_from(sender, recipient, amount)
         }
@@ -402,7 +404,7 @@ mod HypErc20Vault {
             ref self: ContractState,
             sender: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) -> bool {
             self.erc20.transfer_from(sender, recipient, amount)
         }

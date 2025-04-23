@@ -6,45 +6,49 @@ pub trait IGasRouter<TState> {
         ref self: TState,
         gas_configs: Option<Array<GasRouterConfig>>,
         domain: Option<u32>,
-        gas: Option<u256>
+        gas: Option<u256>,
     );
     fn quote_gas_payment(self: @TState, destination_domain: u32) -> u256;
 }
 
 /// # Gas Router Component Module
 ///
-/// This module provides a gas management mechanism for routing messages across domains. 
-/// It allows setting gas limits for specific destinations and quoting gas payments for 
+/// This module provides a gas management mechanism for routing messages across domains.
+/// It allows setting gas limits for specific destinations and quoting gas payments for
 /// message dispatches.
 ///
 /// ## Key Concepts
 ///
-/// - **Gas Configuration**: This module allows users to set gas limits for specific destination 
+/// - **Gas Configuration**: This module allows users to set gas limits for specific destination
 ///   domains, either individually or through an array of configurations.
 ///
-/// - **Message Dispatching**: Gas management is integrated with the message dispatch system, 
+/// - **Message Dispatching**: Gas management is integrated with the message dispatch system,
 ///   enabling the module to quote gas payments for dispatching messages to other domains.
 ///
-/// - **Ownership-based Access Control**: The ability to set gas limits is restricted to the 
+/// - **Ownership-based Access Control**: The ability to set gas limits is restricted to the
 ///   contract owner.
 ///
-/// - **Component Composition**: The `GasRouterComponent` integrates with other components such as 
-///   `RouterComponent` for dispatching messages and `MailboxclientComponent` for mailbox interactions.
+/// - **Component Composition**: The `GasRouterComponent` integrates with other components such as
+///   `RouterComponent` for dispatching messages and `MailboxclientComponent` for mailbox
+///   interactions.
 #[starknet::component]
 pub mod GasRouterComponent {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::client::mailboxclient_component::{
-        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl
+        MailboxclientComponent, MailboxclientComponent::MailboxClientInternalImpl,
     };
     use contracts::client::router_component::{
-        RouterComponent, RouterComponent::RouterComponentInternalImpl, IRouter,
+        RouterComponent, RouterComponent::RouterComponentInternalImpl,
     };
     use contracts::hooks::libs::standard_hook_metadata::standard_hook_metadata::StandardHookMetadata;
     use contracts::interfaces::{IMailboxClient};
     use openzeppelin::access::ownable::{
-        OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl
+        OwnableComponent, OwnableComponent::InternalImpl as OwnableInternalImpl,
     };
     use starknet::ContractAddress;
+    use starknet::storage::{Map};
+    use starknet::storage::{StorageMapReadAccess, StorageMapWriteAccess};
+
 
     #[derive(Copy, Drop, Serde)]
     pub struct GasRouterConfig {
@@ -53,8 +57,8 @@ pub mod GasRouterComponent {
     }
 
     #[storage]
-    struct Storage {
-        destination_gas: LegacyMap<u32, u256>,
+    pub struct Storage {
+        destination_gas: Map<u32, u256>,
     }
 
     #[embeddable_as(GasRouterImpl)]
@@ -68,15 +72,18 @@ pub mod GasRouterComponent {
     > of super::IGasRouter<ComponentState<TContractState>> {
         /// Sets the gas limit for a specified domain or applies an array of gas configurations.
         ///
-        /// This function allows the contract owner to configure gas limits for one or multiple domains.
-        /// If an array of `GasRouterConfig` is provided via `gas_configs`, the function iterates over
-        /// the array and applies each configuration. If a specific `domain` and `gas` are provided,
-        /// the function sets the gas limit for that domain.
+        /// This function allows the contract owner to configure gas limits for one or multiple
+        /// domains.
+        /// If an array of `GasRouterConfig` is provided via `gas_configs`, the function iterates
+        /// over the array and applies each configuration. If a specific `domain` and `gas` are
+        /// provided, the function sets the gas limit for that domain.
         ///
         /// # Arguments
         ///
-        /// * `gas_configs` - An optional array of `GasRouterConfig`, each containing a `domain` and a `gas` value.
-        /// * `domain` - An optional `u32` representing the domain for which the gas limit is being set.
+        /// * `gas_configs` - An optional array of `GasRouterConfig`, each containing a `domain` and
+        /// a `gas` value.
+        /// * `domain` - An optional `u32` representing the domain for which the gas limit is being
+        /// set.
         /// * `gas` - An optional `u256` representing the gas limit for the given domain.
         ///
         /// # Panics
@@ -86,7 +93,7 @@ pub mod GasRouterComponent {
             ref self: ComponentState<TContractState>,
             gas_configs: Option<Array<GasRouterConfig>>,
             domain: Option<u32>,
-            gas: Option<u256>
+            gas: Option<u256>,
         ) {
             let owner_comp = get_dep_component!(@self, Owner);
             owner_comp.assert_only_owner();
@@ -105,11 +112,11 @@ pub mod GasRouterComponent {
                 Option::None => {
                     match (domain, gas) {
                         (
-                            Option::Some(domain), Option::Some(gas)
+                            Option::Some(domain), Option::Some(gas),
                         ) => { self._set_destination_gas(domain, gas); },
-                        _ => { panic!("Set destination gas: Invalid arguments"); }
+                        _ => { panic!("Set destination gas: Invalid arguments"); },
                     }
-                }
+                },
             }
         }
 
@@ -121,13 +128,14 @@ pub mod GasRouterComponent {
         ///
         /// # Arguments
         ///
-        /// * `destination_domain` - A `u32` representing the domain to which the message is being sent.
+        /// * `destination_domain` - A `u32` representing the domain to which the message is being
+        /// sent.
         ///
         /// # Returns
         ///
         /// A `u256` value representing the quoted gas payment.
         fn quote_gas_payment(
-            self: @ComponentState<TContractState>, destination_domain: u32
+            self: @ComponentState<TContractState>, destination_domain: u32,
         ) -> u256 {
             let mailbox_comp = get_dep_component!(self, MailBoxClient);
             let hook = mailbox_comp.get_hook();
@@ -141,10 +149,10 @@ pub mod GasRouterComponent {
         +HasComponent<TContractState>,
         impl MailBoxClient: MailboxclientComponent::HasComponent<TContractState>,
         impl Router: RouterComponent::HasComponent<TContractState>,
-        +Drop<TContractState>
+        +Drop<TContractState>,
     > of InternalTrait<TContractState> {
         fn _Gas_router_hook_metadata(
-            self: @ComponentState<TContractState>, destination: u32
+            self: @ComponentState<TContractState>, destination: u32,
         ) -> Bytes {
             StandardHookMetadata::override_gas_limits(self.destination_gas.read(destination))
         }
@@ -158,7 +166,7 @@ pub mod GasRouterComponent {
             destination: u32,
             value: u256,
             message_body: Bytes,
-            hook: ContractAddress
+            hook: ContractAddress,
         ) -> u256 {
             let mut router_comp = get_dep_component_mut!(ref self, Router);
             router_comp
@@ -167,7 +175,7 @@ pub mod GasRouterComponent {
                     value,
                     message_body,
                     self._Gas_router_hook_metadata(destination),
-                    hook
+                    hook,
                 )
         }
 
@@ -175,12 +183,12 @@ pub mod GasRouterComponent {
             self: @ComponentState<TContractState>,
             destination: u32,
             message_body: Bytes,
-            hook: ContractAddress
+            hook: ContractAddress,
         ) -> u256 {
             let mut router_comp = get_dep_component!(self, Router);
             router_comp
                 ._Router_quote_dispatch(
-                    destination, message_body, self._Gas_router_hook_metadata(destination), hook
+                    destination, message_body, self._Gas_router_hook_metadata(destination), hook,
                 )
         }
     }

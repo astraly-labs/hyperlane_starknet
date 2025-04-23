@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use starknet::{
-    accounts::SingleOwnerAccount, core::types::FieldElement, providers::AnyProvider,
+    accounts::SingleOwnerAccount, core::types::Felt, providers::AnyProvider,
     signers::LocalWallet,
 };
 
@@ -18,32 +18,32 @@ impl FromIterator<(String, u64)> for CodesMap {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Codes {
-    pub mailbox: FieldElement,
+    pub mailbox: Felt,
     #[serde(rename = "validator_announce")]
-    pub va: FieldElement,
+    pub va: Felt,
 
-    pub hook_aggregate: FieldElement,
-    pub hook_merkle: FieldElement,
-    pub hook_pausable: FieldElement,
-    pub hook_routing: FieldElement,
-    pub hook_routing_custom: FieldElement,
-    pub hook_routing_fallback: FieldElement,
+    pub hook_aggregate: Felt,
+    pub hook_merkle: Felt,
+    pub hook_pausable: Felt,
+    pub hook_routing: Felt,
+    pub hook_routing_custom: Felt,
+    pub hook_routing_fallback: Felt,
 
-    pub igp: FieldElement,
-    pub igp_oracle: FieldElement,
+    pub igp: Felt,
+    pub igp_oracle: Felt,
 
-    pub ism_aggregate: FieldElement,
-    pub ism_multisig: FieldElement,
-    pub ism_routing: FieldElement,
+    pub ism_aggregate: Felt,
+    pub ism_multisig: Felt,
+    pub ism_routing: Felt,
 
-    pub test_mock_hook: FieldElement,
-    pub test_mock_ism: FieldElement,
-    pub test_mock_msg_receiver: FieldElement,
+    pub test_mock_hook: Felt,
+    pub test_mock_ism: Felt,
+    pub test_mock_msg_receiver: Felt,
 
-    pub warp_strk20: FieldElement,
-    pub warp_native: FieldElement,
+    pub warp_strk20: Felt,
+    pub warp_native: Felt,
 
-    pub strk20_base: FieldElement,
+    pub strk20_base: Felt,
 }
 
 impl TryFrom<CodesMap> for Codes {
@@ -60,11 +60,11 @@ impl TryFrom<CodesMap> for Codes {
 
 #[derive(Default, serde::Serialize, serde::Deserialize)]
 pub struct CoreDeployments {
-    pub mailbox: FieldElement,
-    pub default_ism: FieldElement,
-    pub default_hook: FieldElement,
-    pub required_hook: FieldElement,
-    pub msg_receiver: FieldElement,
+    pub mailbox: Felt,
+    pub default_ism: Felt,
+    pub default_hook: Felt,
+    pub required_hook: Felt,
+    pub msg_receiver: Felt,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]

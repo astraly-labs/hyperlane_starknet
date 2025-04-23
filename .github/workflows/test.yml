@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       working-directory: ./cairo
-      SCARB_VERSION: "2.6.5"
-      SNFOUNDRY_VERSION: "0.22.0"
+      SCARB_VERSION: "2.10.1"
+      SNFOUNDRY_VERSION: "0.38.3"
     steps:
       - uses: actions/checkout@v3
 
@@ -18,7 +18,7 @@ jobs:
         with:
           scarb-version: ${{ env.SCARB_VERSION }}
 
-      - uses: foundry-rs/setup-snfoundry@v3
+      - uses: foundry-rs/setup-snfoundry@v4
         with:
           starknet-foundry-version: ${{ env.SNFOUNDRY_VERSION }}
 
@@ -45,8 +45,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       working-directory: ./xerc20
-      SCARB_VERSION: "2.9.2"
-      SNFOUNDRY_VERSION: "0.34.0"
+      SCARB_VERSION: "2.10.1"
+      SNFOUNDRY_VERSION: "0.38.3"
     steps:
       - uses: actions/checkout@v3
 
@@ -54,7 +54,7 @@ jobs:
         with:
           scarb-version: ${{ env.SCARB_VERSION }}
 
-      - uses: foundry-rs/setup-snfoundry@v3
+      - uses: foundry-rs/setup-snfoundry@v4
         with:
           starknet-foundry-version: ${{ env.SNFOUNDRY_VERSION }}
 

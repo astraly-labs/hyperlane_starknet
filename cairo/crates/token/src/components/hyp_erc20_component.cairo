@@ -2,20 +2,19 @@
 pub mod HypErc20Component {
     use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::client::{
-        gas_router_component::GasRouterComponent, router_component::RouterComponent,
-        mailboxclient_component::MailboxclientComponent
+        gas_router_component::GasRouterComponent, mailboxclient_component::MailboxclientComponent,
+        router_component::RouterComponent,
     };
     use contracts::utils::utils::U256TryIntoContractAddress;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::ERC20Component;
     use openzeppelin::token::erc20::{
-        ERC20Component::{InternalImpl as ERC20InternalImpl, ERC20HooksTrait},
+        ERC20Component::{ERC20HooksTrait, InternalImpl as ERC20InternalImpl},
         interface::IERC20Metadata,
     };
 
-    use starknet::ContractAddress;
     use token::components::token_router::{
-        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait
+        TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
     };
 
     #[storage]
@@ -33,10 +32,10 @@ pub mod HypErc20Component {
         +GasRouterComponent::HasComponent<TContractState>,
         +TokenRouterComponent::HasComponent<TContractState>,
         +ERC20HooksTrait<TContractState>,
-        +ERC20Component::HasComponent<TContractState>
+        +ERC20Component::HasComponent<TContractState>,
     > of TokenRouterHooksTrait<TContractState> {
         fn transfer_from_sender_hook(
-            ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256
+            ref self: TokenRouterComponent::ComponentState<TContractState>, amount_or_id: u256,
         ) -> Bytes {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let mut component_state = HasComponent::get_component_mut(ref contract_state);
@@ -47,7 +46,7 @@ pub mod HypErc20Component {
             ref self: TokenRouterComponent::ComponentState<TContractState>,
             recipient: u256,
             amount_or_id: u256,
-            metadata: Bytes
+            metadata: Bytes,
         ) {
             let mut contract_state = TokenRouterComponent::HasComponent::get_contract_mut(ref self);
             let mut component_state = HasComponent::get_component_mut(ref contract_state);
@@ -66,7 +65,7 @@ pub mod HypErc20Component {
         +GasRouterComponent::HasComponent<TContractState>,
         +TokenRouterComponent::HasComponent<TContractState>,
         +ERC20HooksTrait<TContractState>,
-        impl ERC20: ERC20Component::HasComponent<TContractState>
+        impl ERC20: ERC20Component::HasComponent<TContractState>,
     > of IERC20Metadata<ComponentState<TContractState>> {
         /// Returns the name of the ERC20 token.
         ///
@@ -83,7 +82,8 @@ pub mod HypErc20Component {
 
         /// Returns the symbol of the ERC20 token.
         ///
-        /// This function retrieves the symbol, or ticker, of the token by reading from the `ERC20_symbol`
+        /// This function retrieves the symbol, or ticker, of the token by reading from the
+        /// `ERC20_symbol`
         /// field of the ERC20 component.
         ///
         /// # Returns
@@ -97,8 +97,8 @@ pub mod HypErc20Component {
         /// Returns the number of decimals used to represent the token.
         ///
         /// This function returns the number of decimals defined for the token, which represents the
-        /// smallest unit of the token used in its user-facing operations. The value is read from the
-        /// `decimals` field of the component's storage.
+        /// smallest unit of the token used in its user-facing operations. The value is read from
+        /// the `decimals` field of the component's storage.
         ///
         /// # Returns
         ///
@@ -119,12 +119,12 @@ pub mod HypErc20Component {
         +GasRouterComponent::HasComponent<TContractState>,
         +TokenRouterComponent::HasComponent<TContractState>,
         +ERC20HooksTrait<TContractState>,
-        impl ERC20: ERC20Component::HasComponent<TContractState>
+        impl ERC20: ERC20Component::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
         /// Initializes the token with a specific number of decimals.
         ///
-        /// This function sets the `decimals` value for the token during the initialization phase, defining
-        /// how many decimal places the token will support.
+        /// This function sets the `decimals` value for the token during the initialization phase,
+        /// defining how many decimal places the token will support.
         ///
         /// # Arguments
         ///

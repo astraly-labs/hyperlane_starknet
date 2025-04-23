@@ -1,6 +1,5 @@
 #[starknet::contract]
 pub mod FastHypERC20 {
-    use alexandria_bytes::Bytes;
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
@@ -11,16 +10,12 @@ pub mod FastHypERC20 {
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
     use token::components::{
-        hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl},
-        token_message::TokenMessageTrait,
-        token_router::{
-            TokenRouterComponent, TokenRouterComponent::TokenRouterHooksTrait,
-            TokenRouterTransferRemoteHookDefaultImpl
-        },
         fast_token_router::{
             FastTokenRouterComponent, FastTokenRouterComponent::FastTokenRouterHooksTrait,
-            FastTokenRouterComponent::MessageRecipientInternalHookImpl
-        }
+            FastTokenRouterComponent::MessageRecipientInternalHookImpl,
+        },
+        hyp_erc20_component::{HypErc20Component, HypErc20Component::TokenRouterHooksImpl},
+        token_router::{TokenRouterComponent, TokenRouterTransferRemoteHookDefaultImpl},
     };
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
@@ -30,7 +25,7 @@ pub mod FastHypERC20 {
     component!(path: GasRouterComponent, storage: gas_router, event: GasRouterEvent);
     component!(path: TokenRouterComponent, storage: token_router, event: TokenRouterEvent);
     component!(
-        path: FastTokenRouterComponent, storage: fast_token_router, event: FastTokenRouterEvent
+        path: FastTokenRouterComponent, storage: fast_token_router, event: FastTokenRouterEvent,
     );
     component!(path: HypErc20Component, storage: hyp_erc20, event: HypErc20Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -92,7 +87,7 @@ pub mod FastHypERC20 {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -115,7 +110,7 @@ pub mod FastHypERC20 {
         #[flat]
         FastTokenRouterEvent: FastTokenRouterComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     #[constructor]
@@ -128,7 +123,7 @@ pub mod FastHypERC20 {
         symbol: ByteArray,
         hook: ContractAddress,
         interchain_security_module: ContractAddress,
-        owner: ContractAddress
+        owner: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self.hyp_erc20.initialize(decimals);
@@ -155,8 +150,8 @@ pub mod FastHypERC20 {
     pub impl FastTokenRouterHooksImpl of FastTokenRouterHooksTrait<ContractState> {
         /// Transfers tokens to the recipient as part of the fast token router process.
         ///
-        /// This function mints tokens to the recipient as part of the fast token router process by calling
-        /// the `mint` function of the ERC20 component.
+        /// This function mints tokens to the recipient as part of the fast token router process by
+        /// calling the `mint` function of the ERC20 component.
         ///
         /// # Arguments
         ///
@@ -165,10 +160,10 @@ pub mod FastHypERC20 {
         fn fast_transfer_to_hook(
             ref self: FastTokenRouterComponent::ComponentState<ContractState>,
             recipient: u256,
-            amount: u256
+            amount: u256,
         ) {
             let mut contract_state = FastTokenRouterComponent::HasComponent::get_contract_mut(
-                ref self
+                ref self,
             );
             contract_state
                 .erc20
@@ -177,8 +172,8 @@ pub mod FastHypERC20 {
 
         /// Receives tokens from the sender as part of the fast token router process.
         ///
-        /// This function burns tokens from the sender as part of the fast token router process by calling
-        /// the `burn` function of the ERC20 component.
+        /// This function burns tokens from the sender as part of the fast token router process by
+        /// calling the `burn` function of the ERC20 component.
         ///
         /// # Arguments
         ///
@@ -187,10 +182,10 @@ pub mod FastHypERC20 {
         fn fast_receive_from_hook(
             ref self: FastTokenRouterComponent::ComponentState<ContractState>,
             sender: ContractAddress,
-            amount: u256
+            amount: u256,
         ) {
             let mut contract_state = FastTokenRouterComponent::HasComponent::get_contract_mut(
-                ref self
+                ref self,
             );
             contract_state.erc20.burn(sender, amount);
         }

@@ -1,22 +1,21 @@
 #[starknet::contract]
 pub mod HypErc721Collateral {
-    use alexandria_bytes::{Bytes, BytesTrait};
     use contracts::client::gas_router_component::GasRouterComponent;
     use contracts::client::mailboxclient_component::MailboxclientComponent;
     use contracts::client::router_component::RouterComponent;
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait,};
+    use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher};
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::upgradeable::UpgradeableComponent;
     use starknet::ContractAddress;
     use token::components::{
         hyp_erc721_collateral_component::{
-            HypErc721CollateralComponent, HypErc721CollateralComponent::TokenRouterHooksImpl
+            HypErc721CollateralComponent, HypErc721CollateralComponent::TokenRouterHooksImpl,
         },
         token_router::{
-            TokenRouterComponent, TokenRouterTransferRemoteHookDefaultImpl,
-            TokenRouterComponent::MessageRecipientInternalHookImpl,
-        }
+            TokenRouterComponent, TokenRouterComponent::MessageRecipientInternalHookImpl,
+            TokenRouterTransferRemoteHookDefaultImpl,
+        },
     };
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
@@ -27,7 +26,7 @@ pub mod HypErc721Collateral {
     component!(
         path: HypErc721CollateralComponent,
         storage: hyp_erc721_collateral,
-        event: HypErc721CollateralEvent
+        event: HypErc721CollateralEvent,
     );
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
@@ -77,7 +76,7 @@ pub mod HypErc721Collateral {
         #[substorage(v0)]
         hyp_erc721_collateral: HypErc721CollateralComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
@@ -96,7 +95,7 @@ pub mod HypErc721Collateral {
         #[flat]
         HypErc721CollateralEvent: HypErc721CollateralComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     #[constructor]
@@ -106,7 +105,7 @@ pub mod HypErc721Collateral {
         mailbox: ContractAddress,
         hook: ContractAddress,
         interchain_security_module: ContractAddress,
-        owner: ContractAddress
+        owner: ContractAddress,
     ) {
         self.ownable.initializer(owner);
         self

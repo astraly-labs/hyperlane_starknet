@@ -1,20 +1,20 @@
 use alexandria_bytes::{Bytes, BytesTrait};
 use contracts::interfaces::{
-    ModuleType, IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
-    IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait, IDomainRoutingIsmDispatcher,
-    IDomainRoutingIsmDispatcherTrait, IValidatorConfigurationDispatcher,
-    IValidatorConfigurationDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait,
-    IMailboxDispatcher, IMailboxDispatcherTrait
+    IDomainRoutingIsmDispatcher, IDomainRoutingIsmDispatcherTrait,
+    IInterchainSecurityModuleDispatcher, IInterchainSecurityModuleDispatcherTrait,
+    IMailboxClientDispatcher, IMailboxClientDispatcherTrait, IMailboxDispatcher,
+    IMailboxDispatcherTrait, IRoutingIsmDispatcher, IRoutingIsmDispatcherTrait,
+    IValidatorConfigurationDispatcher, ModuleType,
 };
-use contracts::libs::message::{Message, HYPERLANE_VERSION};
+use contracts::libs::message::{HYPERLANE_VERSION, Message};
 use contracts::utils::utils::U256TryIntoContractAddress;
-use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
-use snforge_std::{start_prank, CheatTarget, ContractClassTrait, declare};
+use openzeppelin::access::ownable::interface::IOwnableDispatcher;
+use snforge_std::{CheatSpan, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare};
 use starknet::{ContractAddress, contract_address_const};
 use super::super::setup::{
-    OWNER, setup_default_fallback_routing_ism, build_messageid_metadata, LOCAL_DOMAIN, VALID_OWNER,
-    VALID_RECIPIENT, DESTINATION_DOMAIN, setup_messageid_multisig_ism, get_message_and_signature,
-    setup_mailbox, MAILBOX
+    DESTINATION_DOMAIN, LOCAL_DOMAIN, MAILBOX, OWNER, VALID_OWNER, VALID_RECIPIENT,
+    build_messageid_metadata, get_message_and_signature, setup_default_fallback_routing_ism,
+    setup_mailbox, setup_messageid_multisig_ism,
 };
 
 #[test]
@@ -23,11 +23,13 @@ fn test_initialize() {
     let _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
-        contract_address_const::<0x333>()
+        contract_address_const::<0x333>(),
     ];
     let (_, _, fallback_routing_ism) = setup_default_fallback_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
     assert(fallback_routing_ism.domains() == _domains.span(), 'wrong domains init');
     let mut cur_idx = 0;
@@ -44,20 +46,24 @@ fn test_initialize() {
 #[test]
 fn get_default_module() {
     let (mailbox, _, _, _) = setup_mailbox(MAILBOX(), Option::None, Option::None);
-    let default_fallback_routing_ism = declare("default_fallback_routing_ism").unwrap();
+    let default_fallback_routing_ism = declare("default_fallback_routing_ism")
+        .unwrap()
+        .contract_class();
     let params: Array<felt252> = array![
-        OWNER().try_into().unwrap(), mailbox.contract_address.into()
+        OWNER().try_into().unwrap(), mailbox.contract_address.into(),
     ];
     let (default_fallback_routing_ism_addr, _) = default_fallback_routing_ism
         .deploy(@params)
         .unwrap();
     let test_address = contract_address_const::<0x1331341>();
     let dispatcher = IDomainRoutingIsmDispatcher {
-        contract_address: default_fallback_routing_ism_addr
+        contract_address: default_fallback_routing_ism_addr,
     };
     let mailbox = IMailboxDispatcher { contract_address: mailbox.contract_address };
     let ownable = IOwnableDispatcher { contract_address: mailbox.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     mailbox.set_default_ism(test_address);
     assert_eq!(dispatcher.module(1234), test_address);
 }
@@ -69,7 +75,7 @@ fn test_initialize_fails_if_caller_not_owner() {
     let _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
-        contract_address_const::<0x333>()
+        contract_address_const::<0x333>(),
     ];
     fallback_routing_ism.initialize(_domains.span(), _modules.span())
 }
@@ -82,10 +88,12 @@ fn test_initialize_fails_if_module_is_zero() {
     let _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
-        contract_address_const::<0>()
+        contract_address_const::<0>(),
     ];
     let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     fallback_routing_ism.initialize(_domains.span(), _modules.span())
 }
 
@@ -96,11 +104,13 @@ fn test_initialize_fails_if_length_mismatch() {
     let _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
-        contract_address_const::<0x333>()
+        contract_address_const::<0x333>(),
     ];
     let (_, _, fallback_routing_ism) = setup_default_fallback_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
 }
 
@@ -111,11 +121,13 @@ fn test_remove_domain() {
     let _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
-        contract_address_const::<0x333>()
+        contract_address_const::<0x333>(),
     ];
     let (_, _, fallback_routing_ism) = setup_default_fallback_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(2),
+    );
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
     fallback_routing_ism.remove(12345);
     _domains.pop_front().unwrap();
@@ -127,11 +139,13 @@ fn test_remove_domain_module_check() {
     let _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
-        contract_address_const::<0x333>()
+        contract_address_const::<0x333>(),
     ];
     let (_, _, fallback_routing_ism) = setup_default_fallback_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(2),
+    );
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
     fallback_routing_ism.remove(12345);
     let mailbox_dispatcher = IMailboxDispatcher { contract_address: MAILBOX() };
@@ -146,11 +160,13 @@ fn test_remove_domain_fails_if_domain_not_found() {
     let _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
-        contract_address_const::<0x333>()
+        contract_address_const::<0x333>(),
     ];
     let (_, _, fallback_routing_ism) = setup_default_fallback_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(2),
+    );
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
     fallback_routing_ism.remove(1);
 }
@@ -162,7 +178,7 @@ fn test_remove_domain_fails_if_caller_not_owner() {
     let _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
-        contract_address_const::<0x333>()
+        contract_address_const::<0x333>(),
     ];
     let (_, _, fallback_routing_ism) = setup_default_fallback_routing_ism();
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
@@ -176,11 +192,13 @@ fn test_set_domain_and_module() {
     let mut _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
-        contract_address_const::<0x333>()
+        contract_address_const::<0x333>(),
     ];
     let (_, _, fallback_routing_ism) = setup_default_fallback_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(2),
+    );
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
     let new_domain = 111111;
     let new_module = contract_address_const::<0x2134242342342>();
@@ -205,7 +223,7 @@ fn test_set_domain_and_module_fails_if_caller_is_not_owner() {
     let mut _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
-        contract_address_const::<0x333>()
+        contract_address_const::<0x333>(),
     ];
     let (_, _, fallback_routing_ism) = setup_default_fallback_routing_ism();
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
@@ -230,11 +248,13 @@ fn test_route_ism() {
     let mut _modules: Array<ContractAddress> = array![
         contract_address_const::<0x111>(),
         contract_address_const::<0x222>(),
-        contract_address_const::<0x333>()
+        contract_address_const::<0x333>(),
     ];
     let (_, ism, fallback_routing_ism) = setup_default_fallback_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
     assert_eq!(ism.route(message), *_modules.at(0));
     message =
@@ -288,7 +308,7 @@ fn test_verify() {
     let array = array![
         0x01020304050607080910111213141516,
         0x01020304050607080910111213141516,
-        0x01020304050607080910000000000000
+        0x01020304050607080910000000000000,
     ];
     let message_body = BytesTrait::new(42, array);
     let message = Message {
@@ -298,7 +318,7 @@ fn test_verify() {
         sender: VALID_OWNER(),
         destination: DESTINATION_DOMAIN,
         recipient: VALID_RECIPIENT(),
-        body: message_body.clone()
+        body: message_body.clone(),
     };
     let (_, validators_address, _) = get_message_and_signature();
     let (messageid, _) = setup_messageid_multisig_ism(validators_address.span(), threshold);
@@ -312,11 +332,13 @@ fn test_verify() {
     let mut _modules: Array<ContractAddress> = array![
         messageid.contract_address,
         contract_address_const::<0x222>(),
-        contract_address_const::<0x333>()
+        contract_address_const::<0x333>(),
     ];
     let (ism, _, fallback_routing_ism) = setup_default_fallback_routing_ism();
     let ownable = IOwnableDispatcher { contract_address: fallback_routing_ism.contract_address };
-    start_prank(CheatTarget::One(ownable.contract_address), OWNER().try_into().unwrap());
+    cheat_caller_address(
+        ownable.contract_address, OWNER().try_into().unwrap(), CheatSpan::TargetCalls(1),
+    );
     fallback_routing_ism.initialize(_domains.span(), _modules.span());
     assert_eq!(ism.verify(metadata, message), true);
 }

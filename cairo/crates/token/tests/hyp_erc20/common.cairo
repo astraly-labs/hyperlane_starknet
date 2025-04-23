@@ -1,29 +1,20 @@
 use alexandria_bytes::{Bytes, BytesTrait};
-use contracts::client::gas_router_component::{
-    GasRouterComponent::GasRouterConfig, IGasRouterDispatcher, IGasRouterDispatcherTrait
-};
+use contracts::client::gas_router_component::{GasRouterComponent::GasRouterConfig};
 use contracts::client::router_component::{IRouterDispatcher, IRouterDispatcherTrait};
-use contracts::interfaces::{
-    IMailboxDispatcher, IMailboxDispatcherTrait, IMessageRecipientDispatcher,
-    IMessageRecipientDispatcherTrait, IMailboxClientDispatcher, IMailboxClientDispatcherTrait,
-    ETH_ADDRESS
-};
+use contracts::interfaces::{ETH_ADDRESS, IMailboxClientDispatcher};
 use core::integer::BoundedInt;
 use mocks::{
-    test_post_dispatch_hook::{
-        ITestPostDispatchHookDispatcher, ITestPostDispatchHookDispatcherTrait
-    },
+    mock_eth::{MockEthDispatcher, MockEthDispatcherTrait},
     mock_mailbox::{IMockMailboxDispatcher, IMockMailboxDispatcherTrait},
     test_erc20::{ITestERC20Dispatcher, ITestERC20DispatcherTrait},
-    test_interchain_gas_payment::{
-        ITestInterchainGasPaymentDispatcher, ITestInterchainGasPaymentDispatcherTrait
+    test_interchain_gas_payment::{ITestInterchainGasPaymentDispatcher},
+    test_post_dispatch_hook::{
+        ITestPostDispatchHookDispatcher, ITestPostDispatchHookDispatcherTrait,
     },
-    mock_eth::{MockEthDispatcher, MockEthDispatcherTrait}
 };
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 use snforge_std::{
-    declare, ContractClassTrait, ContractClass, CheatTarget, EventSpy, EventAssertions, spy_events,
-    SpyOn, start_prank, stop_prank, EventFetcher, event_name_hash
+    CheatSpan, ContractClass, ContractClassTrait, DeclareResultTrait, cheat_caller_address, declare,
 };
 use starknet::ContractAddress;
 use token::components::token_router::{ITokenRouterDispatcher, ITokenRouterDispatcherTrait};
@@ -73,7 +64,7 @@ pub trait IHypERC20Test<TContractState> {
     // Collateral
     fn transfer_from_sender_hook(ref self: TContractState, amount_or_id: u256) -> Bytes;
     fn transfer_to_hook(
-        ref self: TContractState, recipient: ContractAddress, amount: u256, metadata: Bytes
+        ref self: TContractState, recipient: ContractAddress, amount: u256, metadata: Bytes,
     ) -> bool;
     fn get_wrapped_token(self: @TContractState) -> ContractAddress;
     // MailboxClient
@@ -95,7 +86,7 @@ pub trait IHypERC20Test<TContractState> {
         ref self: TContractState,
         gas_configs: Option<Array<GasRouterConfig>>,
         domain: Option<u32>,
-        gas: Option<u256>
+        gas: Option<u256>,
     );
     fn quote_gas_payment(self: @TContractState, destination_domain: u32) -> u256;
     // TokenRouter
@@ -106,7 +97,7 @@ pub trait IHypERC20Test<TContractState> {
         amount_or_id: u256,
         value: u256,
         hook_metadata: Option<Bytes>,
-        hook: Option<ContractAddress>
+        hook: Option<ContractAddress>,
     ) -> u256;
     // ERC20
     fn total_supply(self: @TContractState) -> u256;
@@ -114,7 +105,7 @@ pub trait IHypERC20Test<TContractState> {
     fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
     fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
     fn transfer_from(
-        ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
+        ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256,
     ) -> bool;
     fn approve(ref self: TContractState, spender: ContractAddress, amount: u256) -> bool;
     // HypERC20
@@ -134,33 +125,35 @@ pub struct Setup {
     pub erc20_token: ITestERC20Dispatcher,
     pub eth_token: MockEthDispatcher,
     pub mock_mailbox_contract: ContractClass,
-    pub test_post_dispatch_hook_contract: ContractClass
+    pub test_post_dispatch_hook_contract: ContractClass,
 }
 
 pub fn setup() -> Setup {
-    let contract = declare("TestISM").unwrap();
+    let contract = declare("TestISM").unwrap().contract_class();
     let (default_ism, _) = contract.deploy(@array![]).unwrap();
 
-    let test_post_dispatch_hook_contract = declare("TestPostDispatchHook").unwrap();
+    let test_post_dispatch_hook_contract = declare("TestPostDispatchHook")
+        .unwrap()
+        .contract_class();
     let (noop_hook, _) = test_post_dispatch_hook_contract.deploy(@array![]).unwrap();
     let noop_hook = ITestPostDispatchHookDispatcher { contract_address: noop_hook };
 
-    let contract = declare("Ether").unwrap();
+    let contract = declare("Ether").unwrap().contract_class();
     let mut calldata: Array<felt252> = array![];
     starknet::get_contract_address().serialize(ref calldata);
     let (eth_address, _) = contract.deploy_at(@calldata, ETH_ADDRESS()).unwrap();
     let eth_token = MockEthDispatcher { contract_address: eth_address };
     eth_token.mint(ALICE(), 20 * E18);
 
-    let mock_mailbox_contract = declare("MockMailbox").unwrap();
+    let mock_mailbox_contract = declare("MockMailbox").unwrap().contract_class();
     let (local_mailbox, _) = mock_mailbox_contract
         .deploy(
             @array![
                 ORIGIN.into(),
                 default_ism.into(),
                 noop_hook.contract_address.into(),
-                eth_address.into()
-            ]
+                eth_address.into(),
+            ],
         )
         .unwrap();
     let local_mailbox = IMockMailboxDispatcher { contract_address: local_mailbox };
@@ -171,8 +164,8 @@ pub fn setup() -> Setup {
                 DESTINATION.into(),
                 default_ism.into(),
                 noop_hook.contract_address.into(),
-                eth_address.into()
-            ]
+                eth_address.into(),
+            ],
         )
         .unwrap();
     let remote_mailbox = IMockMailboxDispatcher { contract_address: remote_mailbox };
@@ -185,7 +178,7 @@ pub fn setup() -> Setup {
     remote_mailbox.set_default_hook(noop_hook.contract_address);
     remote_mailbox.set_required_hook(noop_hook.contract_address);
 
-    let contract = declare("TestERC20").unwrap();
+    let contract = declare("TestERC20").unwrap().contract_class();
     let mut calldata: Array<felt252> = array![];
     TOTAL_SUPPLY.serialize(ref calldata);
     DECIMALS.serialize(ref calldata);
@@ -195,7 +188,7 @@ pub fn setup() -> Setup {
     let (erc20_token, _) = contract.deploy(@calldata).unwrap();
     let erc20_token = ITestERC20Dispatcher { contract_address: erc20_token };
 
-    let hyp_erc20_contract = declare("HypErc20").unwrap();
+    let hyp_erc20_contract = declare("HypErc20").unwrap().contract_class();
     let mut calldata: Array<felt252> = array![];
     DECIMALS.serialize(ref calldata);
     remote_mailbox.contract_address.serialize(ref calldata);
@@ -208,12 +201,12 @@ pub fn setup() -> Setup {
     let (implementation, _) = hyp_erc20_contract.deploy(@calldata).unwrap();
     let implementation = IHypERC20TestDispatcher { contract_address: implementation };
 
-    start_prank(CheatTarget::One(eth_token.contract_address), ALICE());
+    cheat_caller_address(eth_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
+
     IERC20Dispatcher { contract_address: eth_token.contract_address }
         .approve(implementation.contract_address, BoundedInt::max());
-    stop_prank(CheatTarget::One(eth_token.contract_address));
 
-    let contract = declare("TestInterchainGasPayment").unwrap();
+    let contract = declare("TestInterchainGasPayment").unwrap().contract_class();
     let (igp, _) = contract.deploy(@array![]).unwrap();
     let igp = ITestInterchainGasPaymentDispatcher { contract_address: igp };
 
@@ -243,10 +236,10 @@ pub fn setup() -> Setup {
 
     let local_token_address: felt252 = local_token.contract_address.into();
 
-    start_prank(CheatTarget::One(eth_token.contract_address), ALICE());
+    cheat_caller_address(eth_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
+
     IERC20Dispatcher { contract_address: eth_token.contract_address }
         .approve(local_token.contract_address, BoundedInt::max());
-    stop_prank(CheatTarget::One(eth_token.contract_address));
 
     remote_token.enroll_remote_router(ORIGIN, local_token_address.into());
 
@@ -263,8 +256,8 @@ pub fn setup() -> Setup {
         igp,
         erc20_token,
         eth_token,
-        mock_mailbox_contract,
-        test_post_dispatch_hook_contract
+        mock_mailbox_contract: *mock_mailbox_contract,
+        test_post_dispatch_hook_contract: *test_post_dispatch_hook_contract,
     }
 }
 
@@ -304,30 +297,33 @@ pub fn connect_routers(setup: @Setup, domains: Span<u32>, addresses: Span<u256>)
 
 pub fn expect_remote_balance(setup: @Setup, user: ContractAddress, balance: u256) {
     let remote_token = IERC20Dispatcher {
-        contract_address: (*setup).remote_token.contract_address
+        contract_address: (*setup).remote_token.contract_address,
     };
     assert_eq!(remote_token.balance_of(user), balance);
 }
 
 pub fn process_transfers(setup: @Setup, recipient: ContractAddress, amount: u256) {
-    start_prank(
-        CheatTarget::One((*setup).remote_token.contract_address),
-        (*setup).remote_mailbox.contract_address
+    cheat_caller_address(
+        (*setup).remote_token.contract_address,
+        (*setup).remote_mailbox.contract_address,
+        CheatSpan::TargetCalls(1),
     );
+
     let mut message = BytesTrait::new_empty();
     message.append_address(recipient);
     message.append_u256(amount);
     let address_felt: felt252 = (*setup).local_token.contract_address.into();
     let local_token_address: u256 = address_felt.into();
     (*setup).remote_token.handle(ORIGIN, local_token_address, message);
-    stop_prank(CheatTarget::One((*setup).remote_token.contract_address));
 }
 
 pub fn handle_local_transfer(setup: @Setup, transfer_amount: u256) {
-    start_prank(
-        CheatTarget::One((*setup).local_token.contract_address),
-        (*setup).local_mailbox.contract_address
+    cheat_caller_address(
+        (*setup).local_token.contract_address,
+        (*setup).local_mailbox.contract_address,
+        CheatSpan::TargetCalls(1),
     );
+
     let mut message = BytesTrait::new_empty();
     message.append_address(ALICE());
     message.append_u256(transfer_amount);
@@ -335,11 +331,10 @@ pub fn handle_local_transfer(setup: @Setup, transfer_amount: u256) {
     let address_felt: felt252 = (*setup).remote_token.contract_address.into();
     let contract_address: u256 = address_felt.into();
     (*setup).local_token.handle(DESTINATION, contract_address, message);
-    stop_prank(CheatTarget::One((*setup).local_token.contract_address));
 }
 
 pub fn mint_and_approve(
-    setup: @Setup, amount: u256, mint_to: ContractAddress, approve_to: ContractAddress
+    setup: @Setup, amount: u256, mint_to: ContractAddress, approve_to: ContractAddress,
 ) {
     (*setup).primary_token.mint(mint_to, amount);
     (*setup).primary_token.approve(approve_to, amount);
@@ -352,8 +347,7 @@ pub fn set_custom_gas_config(setup: @Setup) {
 }
 
 pub fn perform_remote_transfer(setup: @Setup, msg_value: u256, amount: u256) {
-    start_prank(CheatTarget::One((*setup).local_token.contract_address), ALICE());
-
+    cheat_caller_address((*setup).local_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
     let bob_felt: felt252 = BOB().into();
     let bob_address: u256 = bob_felt.into();
     (*setup)
@@ -363,15 +357,13 @@ pub fn perform_remote_transfer(setup: @Setup, msg_value: u256, amount: u256) {
     process_transfers(setup, BOB(), amount);
 
     let remote_token = IERC20Dispatcher {
-        contract_address: (*setup).remote_token.contract_address
+        contract_address: (*setup).remote_token.contract_address,
     };
     assert_eq!(remote_token.balance_of(BOB()), amount);
-
-    stop_prank(CheatTarget::One((*setup).local_token.contract_address));
 }
 
 pub fn perform_remote_transfer_and_gas(
-    setup: @Setup, msg_value: u256, amount: u256, gas_overhead: u256
+    setup: @Setup, msg_value: u256, amount: u256, gas_overhead: u256,
 ) {
     perform_remote_transfer(setup, msg_value + gas_overhead, amount);
 }
@@ -380,11 +372,12 @@ pub fn perform_remote_transfer_and_gas(
 pub fn perform_remote_transfer_with_emit() {}
 
 pub fn perform_remote_transfer_and_gas_with_hook(
-    setup: @Setup, msg_value: u256, amount: u256, hook: ContractAddress, hook_metadata: Bytes
+    setup: @Setup, msg_value: u256, amount: u256, hook: ContractAddress, hook_metadata: Bytes,
 ) -> u256 {
-    start_prank(CheatTarget::One((*setup).local_token.contract_address), ALICE());
+    cheat_caller_address((*setup).local_token.contract_address, ALICE(), CheatSpan::TargetCalls(1));
+
     let token_router = ITokenRouterDispatcher {
-        contract_address: (*setup).local_token.contract_address
+        contract_address: (*setup).local_token.contract_address,
     };
     let bob_felt: felt252 = BOB().into();
     let bob_address: u256 = bob_felt.into();
@@ -395,15 +388,14 @@ pub fn perform_remote_transfer_and_gas_with_hook(
             amount,
             msg_value,
             Option::Some(hook_metadata),
-            Option::Some(hook)
+            Option::Some(hook),
         );
     process_transfers(setup, BOB(), amount);
 
     let remote_token = IERC20Dispatcher {
-        contract_address: (*setup).remote_token.contract_address
+        contract_address: (*setup).remote_token.contract_address,
     };
     assert_eq!(remote_token.balance_of(BOB()), amount);
-    stop_prank(CheatTarget::One((*setup).local_token.contract_address));
     message_id
 }
 
@@ -412,19 +404,20 @@ pub fn test_transfer_with_hook_specified(setup: @Setup, fee: u256, metadata: Byt
     let hook = ITestPostDispatchHookDispatcher { contract_address: hook_address };
     hook.set_fee(fee);
 
-    start_prank(CheatTarget::One((*setup).primary_token.contract_address), ALICE());
+    cheat_caller_address(
+        (*setup).primary_token.contract_address, ALICE(), CheatSpan::TargetCalls(1),
+    );
     let primary_token = IERC20Dispatcher {
-        contract_address: (*setup).primary_token.contract_address
+        contract_address: (*setup).primary_token.contract_address,
     };
     primary_token.approve((*setup).local_token.contract_address, TRANSFER_AMT);
-    stop_prank(CheatTarget::One((*setup).primary_token.contract_address));
 
     let message_id = perform_remote_transfer_and_gas_with_hook(
-        setup, fee, TRANSFER_AMT, hook.contract_address, metadata
+        setup, fee, TRANSFER_AMT, hook.contract_address, metadata,
     );
     let eth_dispatcher = IERC20Dispatcher { contract_address: *setup.eth_token.contract_address };
     assert_eq!(eth_dispatcher.balance_of(hook_address), fee, "fee didnt transferred");
-    assert!(hook.message_dispatched(message_id) == true, "Hook did not dispatch");
+    assert!(hook.message_dispatched(message_id), "Hook did not dispatch");
 }
 
 // NOTE: Not applicable on Starknet

@@ -1,12 +1,10 @@
-use alexandria_bytes::{Bytes, BytesTrait, BytesIndex};
+use alexandria_bytes::{BytesIndex, BytesTrait};
 use contracts::interfaces::{
-    IMockValidatorAnnounceDispatcher, IMockValidatorAnnounceDispatcherTrait,
-    IValidatorAnnounceDispatcher, IValidatorAnnounceDispatcherTrait,
+    IMockValidatorAnnounceDispatcherTrait, IValidatorAnnounceDispatcherTrait,
 };
 use contracts::isms::multisig::validator_announce::validator_announce;
-use contracts::libs::checkpoint_lib::checkpoint_lib::{HYPERLANE_ANNOUNCEMENT};
-use snforge_std::cheatcodes::events::EventAssertions;
-use starknet::{contract_address_const, EthAddress};
+use snforge_std::cheatcodes::events::EventSpyAssertionsTrait;
+use starknet::{EthAddress, contract_address_const};
 use super::setup::{setup_mock_validator_announce, setup_validator_announce};
 
 pub const TEST_STARKNET_DOMAIN: u32 = 23448593;
@@ -21,7 +19,7 @@ fn test_announce() {
     let mut _storage_location: Array<felt252> = array![
         180946006308525359965345158532346553211983108462325076142963585023296502126,
         90954189295124463684969781689350429239725285131197301894846683156275291225,
-        276191619276790668637754154763775604
+        276191619276790668637754154763775604,
     ];
     let mut signature = BytesTrait::new_empty();
     signature.append_u256(0x8e3c967ab6a3b9f93bb4242de0306510e688ea3db08d4e1590714aef8600f5f1);
@@ -31,10 +29,10 @@ fn test_announce() {
     assert_eq!(res, true);
     let expected_event = validator_announce::Event::ValidatorAnnouncement(
         validator_announce::ValidatorAnnouncement {
-            validator: validator_address, storage_location: _storage_location.span()
-        }
+            validator: validator_address, storage_location: _storage_location.span(),
+        },
     );
-    spy.assert_emitted(@array![(validator_announce.contract_address, expected_event),]);
+    spy.assert_emitted(@array![(validator_announce.contract_address, expected_event)]);
     let validators = validator_announce.get_announced_validators();
     assert(validators == array![validator_address].span(), 'validator array mismatch');
     let storage_location = validator_announce.get_announced_storage_locations(validators);
@@ -45,7 +43,7 @@ fn test_announce() {
 #[test]
 fn test_double_announce() {
     let mailbox_address = contract_address_const::<
-        0x0228c4f640b613dba2107cabf930564bbdb1b4e2d283ba1843b91e6327f09f8e
+        0x0228c4f640b613dba2107cabf930564bbdb1b4e2d283ba1843b91e6327f09f8e,
     >();
 
     let validator_announce = setup_mock_validator_announce(mailbox_address, TEST_STARKNET_DOMAIN);
@@ -55,7 +53,7 @@ fn test_double_announce() {
     let mut _storage_location: Array<felt252> = array![
         180946006308525359965345158532346553211983108462325076142963585023296502126,
         90954189295124463684969781689350429239725285131197301894846683156275291225,
-        276191619276790668637754154763775604
+        276191619276790668637754154763775604,
     ];
     let mut signature = BytesTrait::new_empty();
     signature.append_u256(0x8e3c967ab6a3b9f93bb4242de0306510e688ea3db08d4e1590714aef8600f5f1);
@@ -67,7 +65,7 @@ fn test_double_announce() {
     let mut _storage_location_2: Array<felt252> = array![
         90954189295124463684969781689350429239725285131197301894846683156275291225,
         180946006308525359965345158532346553211983108462325076142963585023296502126,
-        276191619276790668637754154763775604
+        276191619276790668637754154763775604,
     ];
     validator_announce.announce(validator_address, _storage_location_2.clone(), signature);
     let validators = validator_announce.get_announced_validators();
@@ -84,7 +82,7 @@ fn test_announce_fails_if_wrong_signer() {
     let mut storage_location: Array<felt252> = array![
         180946006308525359965345158532346553211983108462325076142963585023296502126,
         90954189295124463684969781689350429239725285131197301894846683156275291225,
-        276191619276790668637754154763775604
+        276191619276790668637754154763775604,
     ];
     let mut signature = BytesTrait::new_empty();
     signature.append_u256(0x8e3c967ab6a3b9f93bb4242de0306510e688ea3db08d4e1590714aef8600f5f1);
@@ -104,7 +102,7 @@ fn test_announce_fails_if_replay() {
     let mut storage_location: Array<felt252> = array![
         180946006308525359965345158532346553211983108462325076142963585023296502126,
         90954189295124463684969781689350429239725285131197301894846683156275291225,
-        276191619276790668637754154763775604
+        276191619276790668637754154763775604,
     ];
     let mut signature = BytesTrait::new_empty();
     signature.append_u256(0x8e3c967ab6a3b9f93bb4242de0306510e688ea3db08d4e1590714aef8600f5f1);
@@ -116,7 +114,7 @@ fn test_announce_fails_if_replay() {
 #[test]
 fn test_digest_computation() {
     let mailbox_address = contract_address_const::<
-        0x0228c4f640b613dba2107cabf930564bbdb1b4e2d283ba1843b91e6327f09f8e
+        0x0228c4f640b613dba2107cabf930564bbdb1b4e2d283ba1843b91e6327f09f8e,
     >();
 
     let va = setup_mock_validator_announce(mailbox_address, TEST_STARKNET_DOMAIN);
@@ -125,7 +123,7 @@ fn test_digest_computation() {
     let mut _storage_location: Array<felt252> = array![
         180946006308525359965345158532346553211983108462325076142963585023296502126,
         90954189295124463684969781689350429239725285131197301894846683156275291225,
-        276191619276790668637754154763775604
+        276191619276790668637754154763775604,
     ];
 
     let mut u256_storage_location: Array<u256> = array![];
@@ -141,6 +139,6 @@ fn test_digest_computation() {
     // digest printed in an e2e local test of the hyperlane validator
     assert(
         digest == 68490098148397702232337918459455233145663417151157276422147736490102791983827,
-        'Wrong digest'
+        'Wrong digest',
     );
 }

@@ -3,16 +3,6 @@
 > ⚠️ **This repository is no longer maintained.**  
 > Ownership and continued development have moved to [https://github.com/hyperlane-xyz/hyperlane_starknet](https://github.com/hyperlane-xyz/hyperlane_starknet). Please update your bookmarks accordingly.
 
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<p align="center">
-  <img src="assets/logo/logo.png" height="256">
-</p>
-
-<h1 align="center">⚡ Hyperlane Starknet ⚡</h1>
-...
-
-
 <p align="center">
   <img src="assets/logo/logo.png" height="256">
 </p>

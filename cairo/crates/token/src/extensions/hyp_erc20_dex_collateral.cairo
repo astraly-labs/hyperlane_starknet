@@ -28,12 +28,12 @@ mod HypErc20DexCollateral {
         },
     };
 
-    // selector for "deposit_on_behalf_of" function in the DEX contract
+    // NOTE: Starknet’s version of the Keccak hash function (denoted by sn_keccak)
+    //       is defined as the first 250 bits of Ethereum’s keccak256
+    // sn_keccak of selector for "deposit_on_behalf_of" function in the DEX contract
     const DEX_DEPOSIT_ON_BEHALF_OF_SELECTOR: felt252 =
         152884417735717128974538630286950396387019428546378603946454937413393931990;
-
-    // Selector for get_token_asset_balance syscall (override balance_of) - TODO: replace with
-    // actual computed selector if needed
+    // sn_keccak of selector for "get_token_asset_balance" function in the DEX contract
     const DEX_GET_TOKEN_ASSET_BALANCE_SELECTOR: felt252 =
         1665911467569696668939924225482764792524684689121401326234504034677351953081;
 

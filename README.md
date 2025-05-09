@@ -46,7 +46,7 @@ The contracts are located in the `contracts/` directory. It's a `scarb` project,
 
 It uses `Starknet Foundry` for tests.
 
-See the [contracts README](contracts/README.md) for more information.
+See the [contracts README](https://github.com/astraly-labs/hyperlane_starknet/blob/main/README.md) for more information.
 
 ### Pre-requisites
 - Install Scarb (see [here](https://docs.swmansion.com/scarb/download))
